@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GeometryTest1</title>
+</head>
+<body>
+    <canvas id="canvas" width="500px" height="500px" style="background-color: aliceblue"></canvas>
+    <script type="module">
+        import Geometry from "../src/component/Node/Geometry.js";
+        import Scene from "../src/component/Scene/Scene.js";
+        import RenderEngine from "../src/component/RenderEngine.js";
+        import Node from "../src/component/Node/Node.js";
+        import Mesh from "../src/component/WebGL/Mesh.js";
+        import Material from "../src/component/Material/Material.js";
+        import GuiMatDef from "../src/component/Assets/MaterialDef/GuiMatDef.js";
+        let scene = new Scene({cavnas:document.getElementById('canvas')});
+        let geometry = new Geometry(scene, {id:'testGeometry'});
+        let mesh = new Mesh();
+        mesh.setData(Mesh.S_POSITIONS, [
+            -.5, .5, .5,
+            -.5, -.5, .5,
+            .5, .5, .5,
+            .5, -.5, .5
+        ]);
+        mesh.setData(Mesh.S_INDICES, [
+            0, 1, 2,
+            1, 2, 3
+        ]);
+        let material = new Material(scene, {materialSourceDef:new GuiMatDef()});
+        geometry.setMesh(mesh);
+        geometry.updateBound();
+        geometry.setMaterial(material);
+        let rootNode = new Node(scene, {id:'rootNode'});
+        rootNode.addChildren(geometry);
+        let renderEngine = new RenderEngine();
+        renderEngine.addScene(scene);
+        renderEngine.launch();
+    </script>
+</body>
+</html>

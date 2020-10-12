@@ -4,7 +4,7 @@
 对主流渲染技术的一些整理，包含基于com的架构设计，基于场景图的架构设计，改进的batch处理，各种剔除技术，光照，阴影，MTR，渲染队列划分等。
 
 #### 软件架构
-软件架构说明
+WebGL,Com,GraphicsScene,ShadowMap,PhongLight,PBRLight,MTR,Occ,Octree,LOD,Batch,RenderList。
 
 
 #### 安装教程
