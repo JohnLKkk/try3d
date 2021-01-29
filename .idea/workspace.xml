@@ -5,38 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8a9dfb17-c0d6-4cbe-af9e-a005ce9bae6a" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/jsLibraryMappings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/example/CameraTest1.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/example/CanvasTest.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/example/GeometryTest1.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/example/RenderEngineTest.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorMatDef.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Assets/MaterialDef/GuiMatDef.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Assets/Shader/GuiFragment.glsl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Assets/Shader/GuiVertex.glsl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Component.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Device/Canvas.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Globals.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/InputControl/FirstPersonController.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/InputControl/SceneBrowsingController.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Material/Material.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Material/MaterialSource.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Math3d/Matrix44.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Math3d/Vector3.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Node/Geometry.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Node/Node.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Render/IDrawable.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Render/Render.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Scene/Camera.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Scene/Scene.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Util/AssetLoader.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/WebGL/ArrayBuf.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/WebGL/FrameContext.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/WebGL/Mesh.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/WebGL/Shader.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/WebGL/ShaderProgram.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/WebGL/ShaderSource.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/component/Assets/MaterialDef/TemplateDef.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/component/Node/Geometry.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/Node/Geometry.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/component/WebGL/ArrayBuf.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/WebGL/ArrayBuf.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/component/WebGL/Mesh.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/WebGL/Mesh.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/component/WebGL/Shader.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/WebGL/Shader.js" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
     <ignored path="$PROJECT_DIR$/temp/" />
@@ -55,21 +29,23 @@
     <session id="1241644706">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="12" />
-          <entry key="project.open.time.0" value="6" />
-          <entry key="project.open.time.1" value="3" />
+          <entry key="project.closed" value="19" />
+          <entry key="project.open.time.0" value="8" />
+          <entry key="project.open.time.1" value="6" />
           <entry key="project.open.time.15" value="1" />
           <entry key="project.open.time.27" value="1" />
           <entry key="project.open.time.4" value="2" />
+          <entry key="project.open.time.48" value="1" />
           <entry key="project.open.time.5" value="1" />
-          <entry key="project.opened" value="14" />
+          <entry key="project.open.time.71" value="1" />
+          <entry key="project.opened" value="21" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="glsl" value="7" />
-          <entry key="html" value="15" />
-          <entry key="js" value="87" />
+          <entry key="glsl" value="19" />
+          <entry key="html" value="18" />
+          <entry key="js" value="101" />
           <entry key="md" value="3" />
           <entry key="ts" value="3" />
           <entry key="txt" value="4" />
@@ -77,9 +53,9 @@
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
-          <entry key="GLSL shader file" value="7" />
-          <entry key="HTML" value="15" />
-          <entry key="JavaScript" value="87" />
+          <entry key="GLSL shader file" value="19" />
+          <entry key="HTML" value="18" />
+          <entry key="JavaScript" value="101" />
           <entry key="Markdown" value="1" />
           <entry key="PLAIN_TEXT" value="6" />
           <entry key="TypeScript" value="3" />
@@ -89,7 +65,7 @@
         <counts>
           <entry key="glsl" value="290" />
           <entry key="html" value="4547" />
-          <entry key="js" value="31402" />
+          <entry key="js" value="33143" />
           <entry key="md" value="140" />
           <entry key="txt" value="119" />
         </counts>
@@ -98,7 +74,7 @@
         <counts>
           <entry key="GLSL shader file" value="290" />
           <entry key="HTML" value="4547" />
-          <entry key="JavaScript" value="31402" />
+          <entry key="JavaScript" value="33143" />
           <entry key="PLAIN_TEXT" value="259" />
         </counts>
       </usages-collector>
@@ -107,63 +83,46 @@
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/component/WebGL/Mesh.js">
+        <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorMatDef.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="20">
-              <caret line="45" column="30" lean-forward="true" selection-start-line="45" selection-start-column="30" selection-end-line="45" selection-end-column="30" />
+            <state relative-caret-position="494">
+              <caret line="26" column="30" selection-start-line="26" selection-start-column="30" selection-end-line="26" selection-end-column="30" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/component/Render/IDrawable.js">
+        <entry file="file://$PROJECT_DIR$/src/component/Material/MaterialSource.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="191">
-              <caret line="25" column="20" lean-forward="true" selection-start-line="25" selection-start-column="20" selection-end-line="25" selection-end-column="20" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/example/GeometryTest1.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="209">
-              <caret line="23" column="23" lean-forward="true" selection-start-line="23" selection-start-column="23" selection-end-line="23" selection-end-column="23" />
-              <folding>
-                <element signature="n#style#0;n#canvas#0;n#body#0;n#html#0;n#!!top" expanded="true" />
-                <element signature="e#249#306#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="323">
+              <caret line="17" column="54" selection-start-line="17" selection-start-column="54" selection-end-line="17" selection-end-column="54" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/component/Scene/Camera.js">
+        <entry file="file://$PROJECT_DIR$/src/component/WebGL/ShaderSource.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="661">
-              <caret line="108" column="63" lean-forward="true" selection-start-line="108" selection-start-column="63" selection-end-line="108" selection-end-column="63" />
+            <state relative-caret-position="114">
+              <caret line="6" column="11" selection-start-line="6" selection-start-column="11" selection-end-line="6" selection-end-column="11" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/example/CameraTest1.html">
+        <entry file="file://$PROJECT_DIR$/src/component/WebGL/Shader.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="433">
-              <caret line="35" column="33" selection-start-line="35" selection-start-column="33" selection-end-line="35" selection-end-column="33" />
-              <folding>
-                <element signature="n#style#0;n#canvas#0;n#body#0;n#html#0;n#!!top" expanded="true" />
-                <element signature="e#235#292#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="456">
+              <caret line="32" column="47" selection-start-line="32" selection-start-column="47" selection-end-line="32" selection-end-column="47" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/example/CanvasTest.html">
+        <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/TemplateDef.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-817">
-              <caret line="23" column="30" lean-forward="true" selection-start-line="23" selection-start-column="30" selection-end-line="23" selection-end-column="30" />
+            <state relative-caret-position="266">
+              <caret line="14" column="19" selection-start-line="14" selection-start-column="19" selection-end-line="14" selection-end-column="19" />
             </state>
           </provider>
         </entry>
@@ -171,41 +130,44 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/component/Component.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="114">
-              <caret line="33" column="43" lean-forward="true" selection-start-line="33" selection-start-column="43" selection-end-line="33" selection-end-column="43" />
+            <state relative-caret-position="342">
+              <caret line="36" column="24" selection-start-line="36" selection-start-column="16" selection-end-line="36" selection-end-column="24" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/component/WebGL/ShaderProgram.js">
+        <entry file="file://$PROJECT_DIR$/example/CameraTest1.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="285">
-              <caret line="15" column="9" lean-forward="true" selection-start-line="15" selection-start-column="9" selection-end-line="15" selection-end-column="9" />
-              <folding>
-                <element signature="e#0#45#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="532">
+              <caret line="35" column="35" lean-forward="true" selection-start-line="35" selection-start-column="35" selection-end-line="35" selection-end-column="35" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/example/CanvasTest.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="437">
+              <caret line="23" column="30" lean-forward="true" selection-start-line="23" selection-start-column="30" selection-end-line="23" selection-end-column="30" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/component/Scene/Scene.js">
+        <entry file="file://$PROJECT_DIR$/src/component/Material/Material.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="152">
-              <caret line="17" column="37" selection-start-line="17" selection-start-column="37" selection-end-line="17" selection-end-column="37" />
-              <folding>
-                <element signature="e#0#40#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="209">
+              <caret line="13" column="11" selection-start-line="13" selection-start-column="11" selection-end-line="13" selection-end-column="11" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/component/Math3d/Matrix44.js">
+        <entry file="file://$PROJECT_DIR$/src/component/Globals.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="680">
-              <caret line="43" column="27" lean-forward="true" selection-start-line="43" selection-start-column="27" selection-end-line="43" selection-end-column="27" />
+            <state relative-caret-position="57">
+              <caret line="3" selection-start-line="3" selection-end-line="3" />
             </state>
           </provider>
         </entry>
@@ -249,13 +211,10 @@
         <option value="$PROJECT_DIR$/src/component/Material/MaterialShaderSource.js" />
         <option value="$PROJECT_DIR$/example/RenderEngineTest.html" />
         <option value="$PROJECT_DIR$/example/CanvasTest.html" />
-        <option value="$PROJECT_DIR$/src/component/WebGL/ArrayBuf.js" />
         <option value="$PROJECT_DIR$/src/component/RenderEngine.js" />
         <option value="$PROJECT_DIR$/src/component/Material/GuiMaterial.js" />
         <option value="$PROJECT_DIR$/src/component/Render/Render.js" />
         <option value="$PROJECT_DIR$/src/component/WebGL/FrameContext.js" />
-        <option value="$PROJECT_DIR$/src/component/WebGL/Mesh.js" />
-        <option value="$PROJECT_DIR$/src/component/Node/Geometry.js" />
         <option value="$PROJECT_DIR$/src/component/Assets/Shader/GuiFragment.glsl" />
         <option value="$PROJECT_DIR$/src/component/Assets/Shader/GuiVertex.glsl" />
         <option value="$PROJECT_DIR$/src/component/Util/AssetLoader.js" />
@@ -268,15 +227,19 @@
         <option value="$PROJECT_DIR$/src/component/WebGL/ShaderSource.js" />
         <option value="$PROJECT_DIR$/src/component/WebGL/ShaderProgram.js" />
         <option value="$PROJECT_DIR$/src/component/Scene/Scene.js" />
-        <option value="$PROJECT_DIR$/src/component/WebGL/Shader.js" />
         <option value="$PROJECT_DIR$/src/component/Material/Material.js" />
-        <option value="$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorMatDef.js" />
         <option value="$PROJECT_DIR$/src/component/Math3d/Vector3.js" />
         <option value="$PROJECT_DIR$/src/component/Math3d/Matrix44.js" />
         <option value="$PROJECT_DIR$/src/component/Component.js" />
         <option value="$PROJECT_DIR$/src/component/Scene/Camera.js" />
         <option value="$PROJECT_DIR$/example/CameraTest1.html" />
         <option value="$PROJECT_DIR$/example/GeometryTest1.html" />
+        <option value="$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorMatDef.js" />
+        <option value="$PROJECT_DIR$/src/component/WebGL/Shader.js" />
+        <option value="$PROJECT_DIR$/src/component/WebGL/ArrayBuf.js" />
+        <option value="$PROJECT_DIR$/src/component/Node/Geometry.js" />
+        <option value="$PROJECT_DIR$/src/component/WebGL/Mesh.js" />
+        <option value="$PROJECT_DIR$/src/component/Assets/MaterialDef/TemplateDef.js" />
       </list>
     </option>
   </component>
@@ -293,10 +256,10 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="186" />
-    <option name="y" value="43" />
-    <option name="width" value="1535" />
-    <option name="height" value="945" />
+    <option name="x" value="398" />
+    <option name="y" value="30" />
+    <option name="width" value="1549" />
+    <option name="height" value="968" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -304,7 +267,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -418,6 +380,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -463,18 +426,25 @@
       <workItem from="1601456112118" duration="3676000" />
       <workItem from="1602296331658" duration="19566000" />
       <workItem from="1602470326057" duration="5270000" />
-      <workItem from="1602481290503" duration="13518000" />
+      <workItem from="1602481290503" duration="16238000" />
+      <workItem from="1602641912774" duration="1248000" />
+      <workItem from="1602834237406" duration="10536000" />
+      <workItem from="1603160474077" duration="1633000" />
+      <workItem from="1603443831639" duration="3481000" />
+      <workItem from="1603787191770" duration="140000" />
+      <workItem from="1603875578640" duration="4466000" />
+      <workItem from="1611902026340" duration="360000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="108273000" />
+    <option name="totallyTimeSpent" value="132857000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="149" y="35" width="1228" height="756" extended-state="0" />
+    <frame x="398" y="30" width="1549" height="968" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.1940171" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.18670249" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -486,13 +456,13 @@
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" order="8" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Terminal" order="9" visible="true" weight="0.068910256" />
+      <window_info anchor="bottom" id="Terminal" order="9" visible="true" weight="0.18465228" />
       <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
       <window_info anchor="bottom" id="Elm Compiler" order="11" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
-      <window_info anchor="right" id="Elm" order="3" weight="0.32934132" />
+      <window_info anchor="right" id="Elm" order="3" weight="0.32853514" />
     </layout>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -502,13 +472,6 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/component/Globals.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="57">
-          <caret line="3" column="8" selection-start-line="3" selection-start-column="8" selection-end-line="3" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/README.en.md">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="399">
@@ -545,13 +508,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/WebGL/FrameContext.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="152">
-          <caret line="8" column="36" selection-start-line="8" selection-start-column="36" selection-end-line="8" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/example/RenderEngineTest.html">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="190">
@@ -563,20 +519,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="38">
           <caret line="2" column="14" selection-start-line="2" selection-start-column="14" selection-end-line="2" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Assets/Shader/GuiFragment.glsl">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="76">
-          <caret line="4" column="41" lean-forward="true" selection-start-line="4" selection-start-column="41" selection-end-line="4" selection-end-column="41" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Assets/Shader/GuiVertex.glsl">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="57">
-          <caret line="3" column="39" lean-forward="true" selection-start-line="3" selection-start-column="39" selection-end-line="3" selection-end-column="39" />
         </state>
       </provider>
     </entry>
@@ -608,55 +550,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/WebGL/ArrayBuf.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="17" column="11" selection-start-line="17" selection-start-column="11" selection-end-line="17" selection-end-column="11" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Node/Geometry.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="380">
-          <caret line="20" column="18" lean-forward="true" selection-start-line="20" selection-start-column="18" selection-end-line="20" selection-end-column="18" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Material/MaterialSource.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="228">
-          <caret line="12" column="36" selection-start-line="12" selection-start-column="36" selection-end-line="12" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/WebGL/ShaderSource.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1121">
-          <caret line="59" column="5" selection-start-line="59" selection-start-column="5" selection-end-line="59" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$APPLICATION_HOME_DIR$/plugins/JavaScriptLanguage/jsLanguageServicesImpl/external/lib.dom.d.ts">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1380">
           <caret line="15566" column="13" selection-start-line="15566" selection-start-column="13" selection-end-line="15566" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/GuiMatDef.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="304">
-          <caret line="19" column="4" lean-forward="true" selection-start-line="19" selection-start-column="4" selection-end-line="24" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Material/Material.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="362">
-          <caret line="41" column="79" lean-forward="true" selection-start-line="41" selection-start-column="79" selection-end-line="41" selection-end-column="79" />
-          <folding>
-            <element signature="e#0#40#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -667,51 +564,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/WebGL/Shader.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="76">
-          <caret line="4" column="29" lean-forward="true" selection-start-line="4" selection-start-column="29" selection-end-line="4" selection-end-column="29" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorMatDef.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="57">
-          <caret line="3" column="32" lean-forward="true" selection-start-line="3" selection-start-column="32" selection-end-line="3" selection-end-column="32" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Render/IDrawable.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="191">
-          <caret line="25" column="20" lean-forward="true" selection-start-line="25" selection-start-column="20" selection-end-line="25" selection-end-column="20" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/WebGL/Mesh.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="20">
-          <caret line="45" column="30" lean-forward="true" selection-start-line="45" selection-start-column="30" selection-end-line="45" selection-end-column="30" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Math3d/Matrix44.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="680">
-          <caret line="43" column="27" lean-forward="true" selection-start-line="43" selection-start-column="27" selection-end-line="43" selection-end-column="27" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/WebGL/ShaderProgram.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="285">
-          <caret line="15" column="9" lean-forward="true" selection-start-line="15" selection-start-column="9" selection-end-line="15" selection-end-column="9" />
-          <folding>
-            <element signature="e#0#45#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/component/Render/Render.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="114">
@@ -719,56 +571,164 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Scene/Scene.js">
+    <entry file="file://$PROJECT_DIR$/src/component/Render/IDrawable.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="152">
-          <caret line="17" column="37" selection-start-line="17" selection-start-column="37" selection-end-line="17" selection-end-column="37" />
-          <folding>
-            <element signature="e#0#40#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="475">
+          <caret line="25" column="20" lean-forward="true" selection-start-line="25" selection-start-column="20" selection-end-line="25" selection-end-column="20" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Component.js">
+    <entry file="file://$PROJECT_DIR$/src/component/WebGL/ShaderProgram.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="114">
-          <caret line="33" column="43" lean-forward="true" selection-start-line="33" selection-start-column="43" selection-end-line="33" selection-end-column="43" />
+        <state relative-caret-position="266">
+          <caret line="15" column="9" lean-forward="true" selection-start-line="15" selection-start-column="9" selection-end-line="15" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Scene/Scene.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="266">
+          <caret line="17" column="37" selection-start-line="17" selection-start-column="37" selection-end-line="17" selection-end-column="37" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Math3d/Matrix44.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="817">
+          <caret line="43" column="27" lean-forward="true" selection-start-line="43" selection-start-column="27" selection-end-line="43" selection-end-column="27" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/component/Scene/Camera.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="661">
-          <caret line="108" column="63" lean-forward="true" selection-start-line="108" selection-start-column="63" selection-end-line="108" selection-end-column="63" />
+        <state relative-caret-position="1238">
+          <caret line="79" column="27" lean-forward="true" selection-start-line="79" selection-start-column="27" selection-end-line="79" selection-end-column="27" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/example/CameraTest1.html">
+    <entry file="file://$PROJECT_DIR$/src/component/WebGL/Mesh.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="433">
-          <caret line="35" column="33" selection-start-line="35" selection-start-column="33" selection-end-line="35" selection-end-column="33" />
-          <folding>
-            <element signature="n#style#0;n#canvas#0;n#body#0;n#html#0;n#!!top" expanded="true" />
-            <element signature="e#235#292#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="1102">
+          <caret line="59" column="42" selection-start-line="59" selection-start-column="42" selection-end-line="59" selection-end-column="42" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/example/CanvasTest.html">
+    <entry file="file://$PROJECT_DIR$/src/component/Node/Geometry.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-817">
-          <caret line="23" column="30" lean-forward="true" selection-start-line="23" selection-start-column="30" selection-end-line="23" selection-end-column="30" />
+        <state relative-caret-position="133">
+          <caret line="7" column="43" lean-forward="true" selection-start-line="7" selection-start-column="43" selection-end-line="7" selection-end-column="43" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/WebGL/ArrayBuf.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="152">
+          <caret line="8" column="17" selection-start-line="8" selection-start-column="17" selection-end-line="8" selection-end-column="17" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/example/GeometryTest1.html">
       <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="513">
+          <caret line="33" column="56" selection-start-line="33" selection-start-column="56" selection-end-line="33" selection-end-column="56" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Assets/Shader/GuiVertex.glsl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="57">
+          <caret line="3" column="39" lean-forward="true" selection-start-line="3" selection-start-column="39" selection-end-line="3" selection-end-column="39" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Assets/Shader/GuiFragment.glsl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="76">
+          <caret line="4" column="41" lean-forward="true" selection-start-line="4" selection-start-column="41" selection-end-line="4" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/GuiMatDef.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="76">
+          <caret line="4" column="3" selection-start-line="4" selection-start-column="3" selection-end-line="4" selection-end-column="3" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/WebGL/FrameContext.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="76">
+          <caret line="4" column="3" selection-start-line="4" selection-start-column="3" selection-end-line="4" selection-end-column="3" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorMatDef.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="494">
+          <caret line="26" column="30" selection-start-line="26" selection-start-column="30" selection-end-line="26" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Material/MaterialSource.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="323">
+          <caret line="17" column="54" selection-start-line="17" selection-start-column="54" selection-end-line="17" selection-end-column="54" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/WebGL/ShaderSource.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="114">
+          <caret line="6" column="11" selection-start-line="6" selection-start-column="11" selection-end-line="6" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/TemplateDef.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="266">
+          <caret line="14" column="19" selection-start-line="14" selection-start-column="19" selection-end-line="14" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Globals.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="57">
+          <caret line="3" selection-start-line="3" selection-end-line="3" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Material/Material.js">
+      <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="209">
-          <caret line="23" column="23" lean-forward="true" selection-start-line="23" selection-start-column="23" selection-end-line="23" selection-end-column="23" />
-          <folding>
-            <element signature="n#style#0;n#canvas#0;n#body#0;n#html#0;n#!!top" expanded="true" />
-            <element signature="e#249#306#0" expanded="true" />
-          </folding>
+          <caret line="13" column="11" selection-start-line="13" selection-start-column="11" selection-end-line="13" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Component.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="342">
+          <caret line="36" column="24" selection-start-line="36" selection-start-column="16" selection-end-line="36" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/WebGL/Shader.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="456">
+          <caret line="32" column="47" selection-start-line="32" selection-start-column="47" selection-end-line="32" selection-end-column="47" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/example/CameraTest1.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="532">
+          <caret line="35" column="35" lean-forward="true" selection-start-line="35" selection-start-column="35" selection-end-line="35" selection-end-column="35" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/example/CanvasTest.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="437">
+          <caret line="23" column="30" lean-forward="true" selection-start-line="23" selection-start-column="30" selection-end-line="23" selection-end-column="30" />
         </state>
       </provider>
     </entry>

@@ -13,6 +13,7 @@ export default class Mesh {
 
     constructor() {
         this._m_Datas = {};
+        this._m_Bufs = {};
         this._m_VAO = null;
         this._m_GL = null;
         this._m_ElementCount = 0;
@@ -26,10 +27,24 @@ export default class Mesh {
             return false;
         }
     }
-    setData(type, data){
+    setData(type, data, options){
         if(this._checkDataType(type)){
             this._m_Datas[type] = data;
         }
+        else{
+            //根据options来指定参数
+            this._m_Datas[type] = data;
+        }
+    }
+    _refreshBufLocal(gl, customAttrs){
+        // 更新几何属性列表local属性
+        let buf = null;
+        customAttrs.forEach(attr=>{
+            buf = this._m_Bufs[attr.name];
+            if(buf){
+
+            }
+        });
     }
 
     /**
@@ -53,6 +68,10 @@ export default class Mesh {
                     case Mesh.S_INDICES:
                         this._m_ElementCount = this._m_Datas[key].length;
                         ArrayBuf.setIndicesBuf(gl, this._m_VAO, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this._m_Datas[key]), gl.STATIC_DRAW);
+                        break;
+                    default:
+                        //自定义,由于自定义的属性在没有绑定着色器之前,是无法显式知道属性位置的,所以需要在绑定着色器后,设定属性位置。
+                        // ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_NORMAL, 3, gl.FLOAT, this._m_Datas[key].length, 0);
                         break;
                 }
             }

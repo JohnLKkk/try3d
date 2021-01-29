@@ -14,12 +14,18 @@ export default class Geometry extends Node{
     }
     setMaterial(material){
         this._m_Material = material;
+        if(this._m_Mesh){
+            this._refreshBufLocal();
+        }
     }
     getMaterial(){
         return this._m_Material;
     }
     setMesh(mesh){
         this._m_Mesh = mesh;
+        if(this._m_Material){
+            this._refreshBufLocal();
+        }
     }
     getMesh(){
         return this._m_Mesh;
@@ -27,6 +33,18 @@ export default class Geometry extends Node{
     updateBound(){
         if(this._m_Mesh){
             this._m_Mesh._updateBound(this._m_Scene.getCanvas().getGLContext());
+        }
+    }
+
+    /**
+     * 在设置材质后,更新自定义几何属性的位置属性
+     * @private
+     */
+    _refreshBufLocal(){
+        // 获取材质的自定义几何属性
+        let customAttrs = null;
+        if(customAttrs){
+            this._m_Mesh._refreshBufLocal(this._m_Scene.getCanvas().getGLContext(), customAttrs);
         }
     }
     /**

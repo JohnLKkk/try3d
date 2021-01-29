@@ -3,6 +3,30 @@
  * @author Kkk
  */
 export default class Shader {
+    static S_TYPE = {
+        "float":"float",
+        "mat4":"mat4"
+    };
+    /**
+     * 全局变量
+     * @type {string}
+     */
+    static S_GLOBALS_MAT =
+        'layout (std140) uniform S_GLOBALS_MAT\n' +
+        '{\n' +
+        'mat4 Globals_ViewMatrix;\n' +
+        'mat4 Globals_ProjectMatrix;\n' +
+        'mat4 Globals_ViewProjectMatrix;\n' +
+        '};\n';
+    /**
+     * 全局参数
+     * @type {{viewMatrix: string, projectMatrix: string, viewProjectMatrix: string}}
+     */
+    static S_GLOBALS_PARAMS = {
+        "viewMatrix":"Globals_ViewProjectMatrix",
+        "projectMatrix":"Globals_ProjectMatrix",
+        "viewProjectMatrix":"Globals_ViewProjectMatrix"
+    };
 
     constructor(gl, type, soucre) {
         this._m_GL = gl;
