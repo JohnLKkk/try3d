@@ -62,6 +62,8 @@ export default class Node extends Component{
             }
             else{
                 // 执行世界变换
+                // 获取父变换矩阵,只要一个父节点获取了父节点变换矩阵,那么父节点变换矩阵就已经被计算了(即只会计算一次)
+                // 由于渲染不会按照场景图进行渲染,而是按照排序算法，遮挡算法进行处理，所以更新节点成本很低(每个需要更新的节点只会计算一次)
             }
             // ...
             this._m_UpdateWorldMatrix = false;

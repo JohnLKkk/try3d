@@ -1,5 +1,11 @@
 import Globals from "./Globals.js";
+import Events from "./Util/Events.js";
 
+/**
+ * 所有组件基类。<br/>
+ * @author Kkk
+ * @date 2021年2月1日16点03分
+ */
 export default class Component {
 
     getType(){
@@ -8,6 +14,9 @@ export default class Component {
 
     constructor(owner, cfg) {
         cfg = cfg || {};
+        // 事件观察者
+        this._mEvents = new Events();
+
         this._m_Id = cfg.id || Globals.nextId();
         // 保存附加组件
         this._m_Components = [];
@@ -39,6 +48,40 @@ export default class Component {
         }
     }
 
+    /**
+     * 注册观察者
+     * @param {Object}[event 事件类型]
+     * @param {Object}[callback 观察者]
+     * @param {Object}[object 可选]
+     */
+    on(event, callback, object){
+        this._mEvents.register(event, callback, object);
+    }
+
+    /**
+     * 移除一个观察者
+     * @param {Object}[event 事件类型]
+     * @param {Object}[callback 观察者]
+     * @param {Object}[object 可选]
+     */
+    off(event, callback, object){
+        this._mEvents.unregister(event, callback, object);
+    }
+
+    /**
+     * 广播事件
+     * @param {Object}[event 事件类型]
+     * @param {Object}[eventArguments 事件参数列表]
+     * @param {Object}[object 可选]
+     */
+    fire(event, eventArguments, object){
+        this._mEvents.trigger(event, eventArguments, object);
+    }
+
+    /**
+     * 返回组件id
+     * @returns {*}
+     */
     getId(){
         return this._m_Id;
     }

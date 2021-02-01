@@ -47,19 +47,6 @@ export default class Camera extends Component{
     }
 
     /**
-     * 设置镜头eye，at，up。<br/>
-     * @param {Vector3}[eye]
-     * @param {Vector3}[at]
-     * @param {Vector3}[up]
-     */
-    lookAt(eye, at, up){
-        this.setEye(eye);
-        this.setAt(at);
-        this.setUp(up);
-        this._doUpdate();
-    }
-
-    /**
      * 设置观察点。<br/>
      * @param {Vector3}[at]
      */
@@ -95,7 +82,7 @@ export default class Camera extends Component{
         this._m_Up.setTo(up);
         this._m_ViewMatrix.lookAt(this._m_Eye, this._m_At, this._m_Up);
         this._m_ViewMatrixUpdate = true;
-        this._update();
+        this._doUpdate();
     }
 
     /**

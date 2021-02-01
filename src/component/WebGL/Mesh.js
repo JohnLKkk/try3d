@@ -1,15 +1,43 @@
 /**
  * Mesh包含GL渲染需要的数据,其数据由用于包装GL数据块的GLVBO和GLVAO表示。<br/>
  * @author Kkk
+ * @date 2021年2月1日16点23分
  */
 import ArrayBuf from "./ArrayBuf.js";
 import ShaderSource from "./ShaderSource.js";
 
 export default class Mesh {
+    // 以下属性表明引擎的Mesh数据块仅支持这些属性(不要设计自定义属性,这样会加大复杂度)
+    // 位置属性
     static S_POSITIONS = "positions";
+    // 顶点颜色属性
+    static S_COLORS = "colors";
+    // 法线属性
     static S_NORMALS = "normals";
+    // 索引属性
     static S_INDICES = "indices";
-    static S_DATAS = {"positions":"positions", "normals":"normals", "indices":"indices"};
+    // 切线属性
+    static S_TANGENTS = "tangents";
+    // 最多支持4道uv(正常来说2道已经足够了)
+    // uv0
+    static S_UV0 = "uv0";
+    // uv1
+    static S_UV1 = "uv1";
+    // uv2
+    static S_UV2 = "uv2";
+    // uv3
+    static S_UV3 = "uv3";
+    static S_DATAS = {
+        "positions":"positions",
+        "colors":"colors",
+        "normals":"normals",
+        "indices":"indices",
+        "tangents":"tangents",
+        "uv0":"uv0",
+        "uv1":"uv1",
+        "uv2":"uv2",
+        "uv3":"uv3"
+    };
 
     constructor() {
         this._m_Datas = {};
@@ -62,12 +90,30 @@ export default class Mesh {
                     case Mesh.S_POSITIONS:
                         ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_POSITION, 3, gl.FLOAT, this._m_Datas[key].length, 0);
                         break;
+                    case Mesh.S_COLORS:
+                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_COLOR, 4, gl.FLOAT, this._m_Datas[key].length, 0);
+                        break;
                     case Mesh.S_NORMALS:
                         ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_NORMAL, 3, gl.FLOAT, this._m_Datas[key].length, 0);
+                        break;
+                    case Mesh.S_TANGENTS:
+                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_TANGENT, 3, gl.FLOAT, this._m_Datas[key].length, 0);
                         break;
                     case Mesh.S_INDICES:
                         this._m_ElementCount = this._m_Datas[key].length;
                         ArrayBuf.setIndicesBuf(gl, this._m_VAO, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this._m_Datas[key]), gl.STATIC_DRAW);
+                        break;
+                    case Mesh.S_UV0:
+                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_UV0, 2, gl.FLOAT, this._m_Datas[key].length, 0);
+                        break;
+                    case Mesh.S_UV1:
+                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_UV1, 2, gl.FLOAT, this._m_Datas[key].length, 0);
+                        break;
+                    case Mesh.S_UV2:
+                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_UV2, 2, gl.FLOAT, this._m_Datas[key].length, 0);
+                        break;
+                    case Mesh.S_UV3:
+                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_UV3, 2, gl.FLOAT, this._m_Datas[key].length, 0);
                         break;
                     default:
                         //自定义,由于自定义的属性在没有绑定着色器之前,是无法显式知道属性位置的,所以需要在绑定着色器后,设定属性位置。
@@ -78,6 +124,8 @@ export default class Mesh {
         }
     }
     draw(gl){
+        // 应该获取FrameContext,然后查看是否需要更新gl最新绑定的vao
+        // 以尽可能减少状态机切换
         gl.bindVertexArray(this._m_VAO);
         gl.drawElements(gl.TRIANGLES, this._m_ElementCount, gl.UNSIGNED_SHORT, 0);
     }

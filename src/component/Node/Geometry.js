@@ -84,8 +84,11 @@ export default class Geometry extends Node{
         // 根据材质
         if(frameContext.m_LastMaterila != this._m_Material){
             frameContext.m_LastMaterila = this._m_Material;
+            // 查看材质参数,将视图,投影矩阵等矩阵提交到材质中
             this._m_Material.use();
         }
+        // 提交模型矩阵到材质中
+        // 通过getW
         this._m_Mesh.draw(gl);
     }
 

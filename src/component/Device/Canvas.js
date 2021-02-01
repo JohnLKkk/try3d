@@ -16,6 +16,14 @@ export default class Canvas {
             }
         }
     }
+
+    /**
+     * 返回canvas元素
+     * @returns {Document}
+     */
+    getCanvasElement(){
+        return this._m_Canvas;
+    }
     _init(){
         let gl = this._m_GL;
         gl.clearColor(.3, .3, .3, 1.0);

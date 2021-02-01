@@ -10,26 +10,30 @@ export default class ShaderSource {
 
     // 枚举,这些是作为引擎内置可能存在的输入属性，变量
     static S_POSITION = 0x001;
-    static S_NORMAL = 0x002;
-    static S_UV = 0x003;
-    static S_UV2 = 0x004;
-    static S_UV3 = 0x005;
-    static S_UV4 = 0x006;
-    static S_MODEL_MATRIX = 0x007;
-    static S_VIEW_MATRIX = 0x008;
-    static S_PROJECT_MATRIX = 0x009;
-    static S_MVP = 0x011;
-    static S_MV = 0x012;
-    static S_VP = 0x013;
-    static S_NDP = 0x014;
+    static S_COLOR = 0x002;
+    static S_NORMAL = 0x003;
+    static S_TANGENT = 0x004;
+    static S_UV0 = 0x005;
+    static S_UV1 = 0x006;
+    static S_UV2 = 0x007;
+    static S_UV3 = 0x008;
+    static S_MODEL_MATRIX = 0x009;
+    static S_VIEW_MATRIX = 0x010;
+    static S_PROJECT_MATRIX = 0x011;
+    static S_MVP = 0x012;
+    static S_MV = 0x013;
+    static S_VP = 0x014;
+    static S_NDP = 0x015;
 
 
     static S_POSITION_SRC = "position";
+    static S_COLOR_SRC = "color";
     static S_NORMAL_SRC = "normal";
-    static S_UV_SRC = "uv";
+    static S_TANGENT_SRC = "tangent";
+    static S_UV0_SRC = "uv0";
+    static S_UV1_SRC = "uv1";
     static S_UV2_SRC = "uv2";
     static S_UV3_SRC = "uv3";
-    static S_UV4_SRC = "uv4";
     static S_MODEL_MATRIX_SRC = "model_matrix";
     static S_VIEW_MATRIX_SRC = "view_matrix";
     static S_PROJECT_MATRIX_SRC = "project_matrix";
