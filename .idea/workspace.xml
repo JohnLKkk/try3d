@@ -4,19 +4,7 @@
     <bookmark url="file://$PROJECT_DIR$/src/component/Math3d/Vector3.js" line="102" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a9dfb17-c0d6-4cbe-af9e-a005ce9bae6a" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/example/InputTest.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/InputControl/Input.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/component/Util/Events.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/component/Component.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/Component.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/component/Device/Canvas.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/Device/Canvas.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/component/Node/Geometry.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/Node/Geometry.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/component/Node/Node.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/Node/Node.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/component/Scene/Camera.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/Scene/Camera.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/component/WebGL/Mesh.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/WebGL/Mesh.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/component/WebGL/ShaderSource.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/WebGL/ShaderSource.js" afterDir="false" />
-    </list>
+    <list default="true" id="8a9dfb17-c0d6-4cbe-af9e-a005ce9bae6a" name="Default Changelist" comment="" />
     <ignored path="$PROJECT_DIR$/.tmp/" />
     <ignored path="$PROJECT_DIR$/temp/" />
     <ignored path="$PROJECT_DIR$/tmp/" />
@@ -34,7 +22,7 @@
     <session id="1241644706">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="20" />
+          <entry key="project.closed" value="21" />
           <entry key="project.open.time.0" value="8" />
           <entry key="project.open.time.1" value="7" />
           <entry key="project.open.time.15" value="1" />
@@ -120,8 +108,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/component/InputControl/Input.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="177">
-              <caret line="213" column="33" lean-forward="true" selection-start-line="213" selection-start-column="33" selection-end-line="213" selection-end-column="33" />
+            <state relative-caret-position="557">
+              <caret line="233" column="33" lean-forward="true" selection-start-line="233" selection-start-column="33" selection-end-line="233" selection-end-column="33" />
             </state>
           </provider>
         </entry>
@@ -281,8 +269,8 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="356" />
-    <option name="y" value="68" />
+    <option name="x" value="136" />
+    <option name="y" value="98" />
     <option name="width" value="1549" />
     <option name="height" value="968" />
   </component>
@@ -435,18 +423,17 @@
       <workItem from="1603787191770" duration="140000" />
       <workItem from="1603875578640" duration="4466000" />
       <workItem from="1611902026340" duration="1044000" />
-      <workItem from="1612165418598" duration="11381000" />
+      <workItem from="1612165418598" duration="11581000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="144922000" />
+    <option name="totallyTimeSpent" value="145122000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="356" y="68" width="1549" height="968" extended-state="0" />
-    <editor active="true" />
+    <frame x="136" y="98" width="1549" height="968" extended-state="0" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.18334453" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.18334453" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -458,7 +445,7 @@
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" order="8" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Terminal" order="9" visible="true" weight="0.15707435" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="9" visible="true" weight="0.15707435" />
       <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
       <window_info anchor="bottom" id="Elm Compiler" order="11" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -757,8 +744,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/component/InputControl/Input.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="177">
-          <caret line="213" column="33" lean-forward="true" selection-start-line="213" selection-start-column="33" selection-end-line="213" selection-end-column="33" />
+        <state relative-caret-position="557">
+          <caret line="233" column="33" lean-forward="true" selection-start-line="233" selection-start-column="33" selection-end-line="233" selection-end-column="33" />
         </state>
       </provider>
     </entry>
