@@ -19,6 +19,15 @@ export default class Scene extends Component{
     }
 
     /**
+     * 返回当前场景主相机。<br/>
+     * 场景可以有多个相机,但是只能有一个主相机。<br/>
+     * @returns {Camera}[当前场景主相机]
+     */
+    getMainCamera(){
+        return this._m_MainCamera;
+    }
+
+    /**
      * 返回当前渲染场景的呈现设备。<br/>
      * @returns {Object}[Canvas]
      */
@@ -68,9 +77,12 @@ export default class Scene extends Component{
         }
     }
     update(exTime){
-
+        // 通知所有观察者
+        this.fire('update', [exTime]);
+        // 然后执行其他操作
     }
     render(exTime){
+        // 通知一帧开始
         this._m_Render.render(exTime);
     }
 

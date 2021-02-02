@@ -1,6 +1,7 @@
 import Component from "../Component.js";
 import Vector3 from "../Math3d/Vector3.js";
 import Matrix44 from "../Math3d/Matrix44.js";
+import TempVars from "../Util/TempVars.js";
 
 /**
  * Camera定义了3D空间中的观察者,渲染3D世界时,3D世界中必须有一个Camera,否则无法渲染。<br/>
@@ -47,6 +48,14 @@ export default class Camera extends Component{
     }
 
     /**
+     * 返回观察点。<br/>
+     * @returns {Vector3}[at]
+     */
+    getAt(){
+        return this._m_At;
+    }
+
+    /**
      * 设置观察点。<br/>
      * @param {Vector3}[at]
      */
@@ -55,11 +64,27 @@ export default class Camera extends Component{
     }
 
     /**
+     * 返回相机位置。<br/>
+     * @returns {Vector3}[eye]
+     */
+    getEye(){
+        return this._m_Eye;
+    }
+
+    /**
      * 设置相机位置。<br/>
      * @param {Vector3}[eye]
      */
     setEye(eye){
         this._m_Eye.setTo(eye);
+    }
+
+    /**
+     * 返回相机抬头朝向。<br/>
+     * @returns {Vector3}[up]
+     */
+    getUp(){
+        return this._m_Up;
     }
 
     /**
@@ -104,11 +129,52 @@ export default class Camera extends Component{
     }
 
     /**
+     * 设置视图矩阵。<br/>
+     * @param {Matrix44}[viewMatrix]
+     */
+    setViewMatrix(viewMatrix){
+        this._m_ViewMatrix.set(viewMatrix);
+        // 从矩阵中计算eye,at,up
+        // 可能每次更新矩阵时这么去处理开销有点大,所以要更新物体时,最好调用Camera.lookAt(),而不是该方法
+        let g = this._m_ViewMatrix.inertRetNew(TempVars.S_TEMP_MAT4);
+        if(g){
+            this._m_Eye.setToInXYZ(g.m[12], g.m[13], g.m[14]);
+            this._m_Up.setToInXYZ(g.m[4], g.m[5], g.m[6]);
+            // 别忘了ndc是右手
+            TempVars.S_TEMP_VEC3.setToInXYZ(-g.m[8], -g.m[9], -g.m[10]);
+            TempVars.S_TEMP_VEC3.add(this._m_Eye, this._m_At);
+        }
+        this._m_ViewMatrixUpdate = true;
+        this._doUpdate();
+    }
+
+    /**
      * 获取视图矩阵。<br/>
      * @returns {Matrix44}[viewMatrix]
      */
     getViewMatrix(){
         return this._m_ViewMatrix;
+    }
+
+    /**
+     * 设置投影矩阵。<br/>
+     * @param {Matrix44}[projectMatrix]
+     */
+    setProjectMatrix(projectMatrix){
+        this._m_ProjectMatrix.set(projectMatrix);
+        this._m_ProjectMatrixUpdate = true;
+        this._doUpdate();
+    }
+
+    /**
+     * 滚动相机。
+     * @param {Number}[zoom 滚动量,非累计量]
+     */
+    scroll(zoom){
+        let canvas = this._m_Scene.getCanvas();
+        this._m_ProjectMatrix.perspectiveM(zoom, canvas.getWidth() * 1.0 / canvas.getHeight(), 0.1, 1000);
+        this._m_ProjectMatrixUpdate = true;
+        this._doUpdate();
     }
 
     /**

@@ -92,6 +92,18 @@ export default class Input extends Component{
     static S_MOUSE_BUTTON1 = 43;
     static S_MOUSE_BUTTON2 = 44;
 
+    static S_INPUTS = {};
+    static getInput(owner, cfg){
+        if(Input.S_INPUTS[cfg.id]){
+            return Input.S_INPUTS[cfg.id];
+        }
+        else{
+            let input = new Input(owner, cfg);
+            Input.S_INPUTS[cfg.id] = input;
+            return input;
+        }
+    }
+
     constructor(owner, cfg) {
         super(owner, cfg);
         // 注册事件
@@ -158,17 +170,17 @@ export default class Input extends Component{
             switch (event.which || event.button + 1) {
 
                 case 1:// Left button
-                    this._mouseButtons[Input.S_MOUSE_BUTTON0] = true;
+                    this._mouseButtons[Input.S_MOUSE_BUTTON0] = false;
                     mouseUpButton = Input.S_MOUSE_BUTTON0_UP;
                     break;
 
                 case 2:// Middle/both buttons
-                    this._mouseButtons[Input.S_MOUSE_BUTTON1] = true;
+                    this._mouseButtons[Input.S_MOUSE_BUTTON1] = false;
                     mouseUpButton = Input.S_MOUSE_BUTTON1_UP;
                     break;
 
                 case 3:// Right button
-                    this._mouseButtons[Input.S_MOUSE_BUTTON2] = true;
+                    this._mouseButtons[Input.S_MOUSE_BUTTON2] = false;
                     mouseUpButton = Input.S_MOUSE_BUTTON2_UP;
                     break;
 
@@ -201,6 +213,9 @@ export default class Input extends Component{
                 if(isMouseDown){
                     this._amountX = this._mouseCoords[0] - this._mouseStartDownCoords[0];
                     this._amountY = this._mouseCoords[1] - this._mouseStartDownCoords[1];
+                    // 可以试试注释下面的代码查看FirstPersonController的效果
+                    this._mouseStartDownCoords[0] = this._mouseCoords[0];
+                    this._mouseStartDownCoords[1] = this._mouseCoords[1];
                 }
                 this.fire('mousemove', [this._mouseCoords]);
             }
@@ -218,6 +233,15 @@ export default class Input extends Component{
             }
             this.fire('mousewheel', [this._wheelDelta]);
         };
+    }
+
+    /**
+     * 返回指定鼠标按钮是否按下。<br/>
+     * @param {Input.MOUSE_KEY}[mouseButtonKey 指定的鼠标按钮枚举]
+     * @returns {Boolean}
+     */
+    getMouseButtonDown(mouseButtonKey){
+        return this._mouseButtons[mouseButtonKey];
     }
 
     /**
@@ -251,7 +275,8 @@ export default class Input extends Component{
      * @returns {Number}[数值]
      */
     getAmountY(){
-        return this._amountY;
+        // 以左下角起点而不是左上角
+        return -this._amountY;
     }
 
     /**

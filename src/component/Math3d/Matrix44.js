@@ -3,7 +3,9 @@
  * @author Kkk
  * @date 2020年10月10日11点10分
  */
+
 export default class Matrix44 {
+    static _S_TEMP_MAT4 = new Matrix44();
     constructor() {
         this.m = [
             1,0,0,0,
@@ -54,13 +56,9 @@ export default class Matrix44 {
         result[10] = t._m_Z;
         result[11] = 0;
 
-        // result[12] = -(eye._m_X * r._m_X + eye._m_Y * r._m_Y + eye._m_Z * r._m_Z);
-        // result[13] = -(eye._m_X * u._m_X + eye._m_Y * u._m_Y + eye._m_Z * u._m_Z);
-        // result[14] = -(eye._m_X * t._m_X + eye._m_Y * t._m_Y + eye._m_Z * t._m_Z);
-        // console.log('t._m_Z:' + t._m_Z + ';eye._m_Z:' + eye._m_Z);
-        result[12] = -eye._m_X;
-        result[13] = -eye._m_Y;
-        result[14] = -eye._m_Z;
+        result[12] = -(eye._m_X * r._m_X + eye._m_Y * r._m_Y + eye._m_Z * r._m_Z);
+        result[13] = -(eye._m_X * u._m_X + eye._m_Y * u._m_Y + eye._m_Z * u._m_Z);
+        result[14] = -(eye._m_X * t._m_X + eye._m_Y * t._m_Y + eye._m_Z * t._m_Z);
         result[15] = 1;
         return result;
     }
@@ -75,6 +73,105 @@ export default class Matrix44 {
     lookAt(eye, at, up){
         this.m = Matrix44.lookAt(eye, at, up, this.m);
         return this;
+    }
+
+    /**
+     * 矩阵求逆。
+     */
+    inert(){
+        let ok = Matrix44.invert(this.m, Matrix44._S_TEMP_MAT4.m);
+        if(ok){
+            this.set(Matrix44._S_TEMP_MAT4);
+        }
+    }
+
+    /**
+     * 矩阵求逆并返回求逆后的结果。
+     * @param {Matrix44}[result 结果矩阵]
+     * @returns {Matrix44}[结果矩阵,求逆失败返回null]
+     */
+    inertRetNew(result){
+        let ok = Matrix44.invert(this.m, Matrix44._S_TEMP_MAT4.m);
+        if(ok){
+            result = result || new Matrix44();
+            result.set(Matrix44._S_TEMP_MAT4);
+            return result;
+        }
+        return null;
+    }
+
+    /**
+     * 矩阵求逆。
+     * @param {Number[]}[a 输入矩阵数组]
+     * @param {Number[]}[out 输出矩阵数组]
+     * @returns {Number[]}[如果求逆失败,返回null]
+     */
+    static invert(a, out){
+        let a00 = a[0],
+            a01 = a[1],
+            a02 = a[2],
+            a03 = a[3],
+            a10 = a[4],
+            a11 = a[5],
+            a12 = a[6],
+            a13 = a[7],
+            a20 = a[8],
+            a21 = a[9],
+            a22 = a[10],
+            a23 = a[11],
+            a30 = a[12],
+            a31 = a[13],
+            a32 = a[14],
+            a33 = a[15],
+
+            b00 = a00 * a11 - a01 * a10,
+            b01 = a00 * a12 - a02 * a10,
+            b02 = a00 * a13 - a03 * a10,
+            b03 = a01 * a12 - a02 * a11,
+            b04 = a01 * a13 - a03 * a11,
+            b05 = a02 * a13 - a03 * a12,
+            b06 = a20 * a31 - a21 * a30,
+            b07 = a20 * a32 - a22 * a30,
+            b08 = a20 * a33 - a23 * a30,
+            b09 = a21 * a32 - a22 * a31,
+            b10 = a21 * a33 - a23 * a31,
+            b11 = a22 * a33 - a23 * a32,
+
+            // Calculate the determinant
+            det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+
+        if (!det) {
+            return null;
+        }
+        det = 1.0 / det;
+
+        out[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
+        out[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
+        out[2] = (a31 * b05 - a32 * b04 + a33 * b03) * det;
+        out[3] = (a22 * b04 - a21 * b05 - a23 * b03) * det;
+        out[4] = (a12 * b08 - a10 * b11 - a13 * b07) * det;
+        out[5] = (a00 * b11 - a02 * b08 + a03 * b07) * det;
+        out[6] = (a32 * b02 - a30 * b05 - a33 * b01) * det;
+        out[7] = (a20 * b05 - a22 * b02 + a23 * b01) * det;
+        out[8] = (a10 * b10 - a11 * b08 + a13 * b06) * det;
+        out[9] = (a01 * b08 - a00 * b10 - a03 * b06) * det;
+        out[10] = (a30 * b04 - a31 * b02 + a33 * b00) * det;
+        out[11] = (a21 * b02 - a20 * b04 - a23 * b00) * det;
+        out[12] = (a11 * b07 - a10 * b09 - a12 * b06) * det;
+        out[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det;
+        out[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det;
+        out[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
+        return out;
+    }
+
+    /**
+     * 将当前矩阵设置为指定矩阵。<br/>
+     * @param {Matrix44}[mat44]
+     */
+    set(mat44){
+        for(let i = 0;i < 16;i++){
+            this.m[i] = mat44.m[i];
+        }
     }
 
     /**
