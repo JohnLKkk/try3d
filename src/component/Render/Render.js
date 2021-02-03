@@ -3,12 +3,16 @@
  * @author Kkk
  */
 import FrameContext from "../WebGL/FrameContext.js";
+import Component from "../Component.js";
 
-export default class Render {
-    constructor(scene) {
+export default class Render extends Component{
+    getType(){
+        return "Render";
+    }
+    constructor(owner, cfg) {
+        super(owner, cfg);
+
         // 保存所有需要渲染的元素
-
-        this._m_Scene = scene;
         this._m_Drawables = [];
         this._m_DrawableIDs = {};
 
@@ -37,6 +41,9 @@ export default class Render {
         }
     }
     _draw(exTime){
+        // 一帧的开始
+        this.fire('preFrame', [exTime]);
+
         // 重置上下文信息
         this._m_FrameContext.reset();
         // 半透明列表
@@ -44,6 +51,9 @@ export default class Render {
         // 透明列表
         let transparentBucket = [];
         // 绘制渲染列表
+
+        // 排队,各种剔除之后(考虑设计一个RenderQueue,保存剔除后的待渲染的不透明，半透明，透明列表，然后作为参数传递到postQueue中)
+        this.fire('postQueue',[exTime]);
 
         let gl = this._m_Scene.getCanvas().getGLContext();
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -73,6 +83,9 @@ export default class Render {
         for(let iDrawable in transparentBucket){
 
         }
+
+        // 一帧结束后
+        this.fire('postFrame', [exTime]);
     }
 
     /**

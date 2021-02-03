@@ -1,0 +1,32 @@
+Def{
+    // 材质参数块,表示该材质定义的所有材质参数,不必为每个技术块单独定义材质参数块
+    Params{
+        vec4 color;
+    }
+    // 技术块,材质定义可以包含多个技术块,一般来说,对于大部分渲染,都是只需要一个pass,但是对于高级渲染,需要多个pass完成,则需要定义多个Technology块
+
+    // 下面是一个基础模板
+    Technology Pass0{
+        // 表示vs阶段
+        vs_shader{
+            // 定义vs阶段的自定义输出
+            out{
+                vec4 color;
+            }
+            // 主体函数
+            void main(){
+                // vs阶段必须输出Context.OutPosition
+                Context.OutPosition = Context.ModelViewProjectMatrix * Context.InPosition;
+                out.color = color;
+            }
+        }
+        // 表示fs阶段
+        fs_shader{
+            // 主体函数
+            void main(){
+                // fs阶段不一定要指定Context.OutColor
+                Context.OutColor = vs_shader.out.color;
+            }
+        }
+    }
+}

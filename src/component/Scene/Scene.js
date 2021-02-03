@@ -13,7 +13,13 @@ export default class Scene extends Component{
     }
     constructor(cfg) {
         super(null, cfg);
-        this._m_Render = new Render(this);
+        // 创建一个默认渲染器组件,一个场景可以附加多个渲染器组件
+        // 但是每次应该只激活其中一个渲染器
+        // 这样,场景可以根据需要,使用不同的渲染器进行渲染
+        // 所有该场景的渲染器共享同一个场景实例的好处是:
+        // 可以添加一个实时渲染器,用于实时交互
+        // 然后添加一个光追渲染器,用于渲染高质量图片
+        this._m_Render = new Render(this, {id:"default_render"});
         this._m_Canvas = new Canvas(cfg.cavnas);
         this._m_MainCamera = new Camera(this, {id:"mainCamera"});
     }
