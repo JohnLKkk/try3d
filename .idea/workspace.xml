@@ -5,9 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8a9dfb17-c0d6-4cbe-af9e-a005ce9bae6a" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorDef" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/example/MaterialDefTest.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/component/Material/MaterialDef.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/component/Assets/MaterialDef/Template" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/Assets/MaterialDef/Template" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/component/Util/AssetLoader.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/Util/AssetLoader.js" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
     <ignored path="$PROJECT_DIR$/temp/" />
@@ -19,6 +20,26 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="DockManager">
+    <window id="1">
+      <content type="file-editors">
+        <state>
+          <leaf>
+            <file pinned="false" current-in-tab="true">
+              <entry file="file://$PROJECT_DIR$/src/component/Material/MaterialDef.js">
+                <provider selected="true" editor-type-id="text-editor">
+                  <state relative-caret-position="367">
+                    <caret line="71" column="45" selection-start-line="71" selection-start-column="45" selection-end-line="71" selection-end-column="45" />
+                    <folding>
+                      <element signature="e#0#40#0" expanded="true" />
+                    </folding>
+                  </state>
+                </provider>
+              </entry>
+            </file>
+          </leaf>
+        </state>
+      </content>
+    </window>
     <window id="1">
       <content type="file-editors">
         <state>
@@ -65,8 +86,8 @@
           <entry key="ColorDef" value="1" />
           <entry key="Template" value="3" />
           <entry key="glsl" value="20" />
-          <entry key="html" value="37" />
-          <entry key="js" value="156" />
+          <entry key="html" value="38" />
+          <entry key="js" value="164" />
           <entry key="md" value="3" />
           <entry key="ts" value="4" />
           <entry key="txt" value="4" />
@@ -75,8 +96,8 @@
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="GLSL shader file" value="20" />
-          <entry key="HTML" value="37" />
-          <entry key="JavaScript" value="156" />
+          <entry key="HTML" value="38" />
+          <entry key="JavaScript" value="164" />
           <entry key="Markdown" value="1" />
           <entry key="PLAIN_TEXT" value="10" />
           <entry key="TypeScript" value="4" />
@@ -87,8 +108,8 @@
           <entry key="ColorDef" value="326" />
           <entry key="Template" value="6494" />
           <entry key="glsl" value="290" />
-          <entry key="html" value="5665" />
-          <entry key="js" value="50164" />
+          <entry key="html" value="5820" />
+          <entry key="js" value="54052" />
           <entry key="md" value="140" />
           <entry key="txt" value="119" />
         </counts>
@@ -96,8 +117,8 @@
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="GLSL shader file" value="290" />
-          <entry key="HTML" value="5665" />
-          <entry key="JavaScript" value="50164" />
+          <entry key="HTML" value="5820" />
+          <entry key="JavaScript" value="54052" />
           <entry key="PLAIN_TEXT" value="7079" />
         </counts>
       </usages-collector>
@@ -113,34 +134,10 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/component/Component.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="247">
-              <caret line="14" column="21" selection-start-line="14" selection-start-column="16" selection-end-line="14" selection-end-column="21" />
+            <state relative-caret-position="152">
+              <caret line="8" column="21" selection-start-line="8" selection-start-column="21" selection-end-line="8" selection-end-column="21" />
               <folding>
                 <element signature="e#0#35#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/component/Render/Render.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1159">
-              <caret line="62" column="46" selection-start-line="62" selection-start-column="46" selection-end-line="62" selection-end-column="46" />
-              <folding>
-                <element signature="e#70#122#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/example/FirstPersonControllerTest.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="209">
-              <caret line="19" column="58" selection-start-line="19" selection-start-column="58" selection-end-line="19" selection-end-column="58" />
-              <folding>
-                <element signature="e#274#331#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -179,20 +176,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/example/CameraTest1.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="285">
+            <state relative-caret-position="238">
               <caret line="22" column="36" selection-start-line="22" selection-start-column="36" selection-end-line="22" selection-end-column="36" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/component/Scene/Camera.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="462">
-              <caret line="184" column="37" selection-start-line="184" selection-start-column="37" selection-end-line="184" selection-end-column="37" />
-              <folding>
-                <element signature="e#0#40#0" expanded="true" />
-              </folding>
             </state>
           </provider>
         </entry>
@@ -200,8 +185,35 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorDef">
           <provider selected="true" editor-type-id="text-editor">
-            <state>
-              <caret column="17" selection-start-column="17" selection-end-column="17" />
+            <state relative-caret-position="95">
+              <caret line="5" column="28" lean-forward="true" selection-start-line="5" selection-start-column="28" selection-end-line="5" selection-end-column="28" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/example/MaterialDefTest.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="177">
+              <caret line="11" column="64" lean-forward="true" selection-start-line="11" selection-start-column="64" selection-end-line="11" selection-end-column="64" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/component/Util/AssetLoader.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="608">
+              <caret line="32" column="33" lean-forward="true" selection-start-line="32" selection-start-column="33" selection-end-line="32" selection-end-column="33" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorMatDef.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="361">
+              <caret line="19" column="42" lean-forward="true" selection-start-line="19" selection-start-column="42" selection-end-line="19" selection-end-column="42" />
             </state>
           </provider>
         </entry>
@@ -272,7 +284,6 @@
         <option value="$PROJECT_DIR$/src/component/WebGL/FrameContext.js" />
         <option value="$PROJECT_DIR$/src/component/Assets/Shader/GuiFragment.glsl" />
         <option value="$PROJECT_DIR$/src/component/Assets/Shader/GuiVertex.glsl" />
-        <option value="$PROJECT_DIR$/src/component/Util/AssetLoader.js" />
         <option value="$PROJECT_DIR$/src/component/Assets/MaterialDef/GuiMatDef.js" />
         <option value="$PROJECT_DIR$/src/component/InputControl/SceneBrowsingController.js" />
         <option value="$PROJECT_DIR$/src/component/Material/MaterialSource.js" />
@@ -304,6 +315,10 @@
         <option value="$PROJECT_DIR$/src/component/WebGL/Mesh.js" />
         <option value="$PROJECT_DIR$/src/component/Assets/MaterialDef/Template" />
         <option value="$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorDef" />
+        <option value="$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorDef.js" />
+        <option value="$PROJECT_DIR$/example/MaterialDefTest.html" />
+        <option value="$PROJECT_DIR$/src/component/Util/AssetLoader.js" />
+        <option value="$PROJECT_DIR$/src/component/Material/MaterialDef.js" />
       </list>
     </option>
   </component>
@@ -320,8 +335,8 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="173" />
-    <option name="y" value="65" />
+    <option name="x" value="-29" />
+    <option name="y" value="490" />
     <option name="width" value="1706" />
     <option name="height" value="951" />
   </component>
@@ -390,6 +405,13 @@
               <item name="src" type="462c0819:PsiDirectoryNode" />
               <item name="component" type="462c0819:PsiDirectoryNode" />
               <item name="InputControl" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="TEORT_WebGL" type="b2602c69:ProjectViewProjectNode" />
+              <item name="TEORT_WebGL" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="component" type="462c0819:PsiDirectoryNode" />
+              <item name="Material" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="TEORT_WebGL" type="b2602c69:ProjectViewProjectNode" />
@@ -495,15 +517,15 @@
       <workItem from="1612165418598" duration="11581000" />
       <workItem from="1612247381993" duration="17010000" />
       <workItem from="1612335531826" duration="12888000" />
-      <workItem from="1612422322087" duration="3703000" />
+      <workItem from="1612422322087" duration="13405000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="178723000" />
+    <option name="totallyTimeSpent" value="188425000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="336" y="144" width="1706" height="951" extended-state="0" />
+    <frame x="-29" y="490" width="1706" height="951" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.15431349" />
@@ -535,13 +557,6 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/README.en.md">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="399">
-          <caret line="21" lean-forward="true" selection-start-line="21" selection-end-line="21" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/component/Material/PhongLightMaterial.js" />
     <entry file="file://$PROJECT_DIR$/src/component/Material/GuiMaterial.js" />
     <entry file="file://$PROJECT_DIR$/README.md">
@@ -568,13 +583,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="190">
           <caret line="10" column="46" lean-forward="true" selection-start-line="10" selection-start-column="46" selection-end-line="10" selection-end-column="46" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Util/AssetLoader.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="38">
-          <caret line="2" column="14" selection-start-line="2" selection-start-column="14" selection-end-line="2" selection-end-column="14" />
         </state>
       </provider>
     </entry>
@@ -755,13 +763,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorMatDef.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="342">
-          <caret line="18" column="46" selection-start-line="18" selection-start-column="46" selection-end-line="18" selection-end-column="46" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/component/Assets/Shader/GuiVertex.glsl">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="57">
@@ -780,16 +781,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="264">
           <caret line="618" column="13" selection-start-line="618" selection-start-column="13" selection-end-line="618" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Component.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="247">
-          <caret line="14" column="21" selection-start-line="14" selection-start-column="16" selection-end-line="14" selection-end-column="21" />
-          <folding>
-            <element signature="e#0#35#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -837,13 +828,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/example/CameraTest1.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="285">
-          <caret line="22" column="36" selection-start-line="22" selection-start-column="36" selection-end-line="22" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/component/InputControl/FirstPersonController.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="510">
@@ -861,9 +845,40 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Component.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="152">
+          <caret line="8" column="21" selection-start-line="8" selection-start-column="21" selection-end-line="8" selection-end-column="21" />
+          <folding>
+            <element signature="e#0#35#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorDef.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="57">
+          <caret line="3" column="86" lean-forward="true" selection-start-line="3" selection-start-column="86" selection-end-line="3" selection-end-column="86" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorMatDef.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="361">
+          <caret line="19" column="42" lean-forward="true" selection-start-line="19" selection-start-column="42" selection-end-line="19" selection-end-column="42" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/example/CameraTest1.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="238">
+          <caret line="22" column="36" selection-start-line="22" selection-start-column="36" selection-end-line="22" selection-end-column="36" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/component/Scene/Camera.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="462">
+        <state relative-caret-position="486">
           <caret line="184" column="37" selection-start-line="184" selection-start-column="37" selection-end-line="184" selection-end-column="37" />
           <folding>
             <element signature="e#0#40#0" expanded="true" />
@@ -871,10 +886,34 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/example/MaterialDefTest.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="177">
+          <caret line="11" column="64" lean-forward="true" selection-start-line="11" selection-start-column="64" selection-end-line="11" selection-end-column="64" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Util/AssetLoader.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="608">
+          <caret line="32" column="33" lean-forward="true" selection-start-line="32" selection-start-column="33" selection-end-line="32" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorDef">
       <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="17" selection-start-column="17" selection-end-column="17" />
+        <state relative-caret-position="95">
+          <caret line="5" column="28" lean-forward="true" selection-start-line="5" selection-start-column="28" selection-end-line="5" selection-end-column="28" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Material/MaterialDef.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="367">
+          <caret line="71" column="45" selection-start-line="71" selection-start-column="45" selection-end-line="71" selection-end-column="45" />
+          <folding>
+            <element signature="e#0#40#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
