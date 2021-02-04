@@ -2,31 +2,236 @@ Def{
     // 材质参数块,表示该材质定义的所有材质参数,不必为每个技术块单独定义材质参数块
     Params{
         vec4 color;
+        texture2D colorMap;
     }
-    // 技术块,材质定义可以包含多个技术块,一般来说,对于大部分渲染,都是只需要一个pass,但是对于高级渲染,需要多个pass完成,则需要定义多个Technology块
+    // 子技术块,材质定义可以包含多个技术块,一般来说,对于大部分渲染,都是只需要一个pass,但是对于高级渲染,需要多个pass完成,则需要定义多个Technology块
+    // 一个Technology块如果只需要一个pass,那么应该包含一个SubTechnology块,否则,应该包含多个SubTechnology
 
     // 下面是一个基础模板
-    Technology Pass0{
+    // 子技术块
+    SubTechnology Pass0{
+        // 定义该Technology块的成员变量
+        Vars{
+            vec4 color;
+        }
         // 表示vs阶段
-        vs_shader{
-            // 定义vs阶段的自定义输出
-            out{
-                vec4 color;
-            }
+        Vs_Shader{
             // 主体函数
             void main(){
                 // vs阶段必须输出Context.OutPosition
                 Context.OutPosition = Context.ModelViewProjectMatrix * Context.InPosition;
-                out.color = color;
+                color = Params.color * vec4(0.2f, 0.2f, 0.2f, 1.0f);
             }
         }
         // 表示fs阶段
-        fs_shader{
+        Fs_Shader{
             // 主体函数
             void main(){
                 // fs阶段不一定要指定Context.OutColor
-                Context.OutColor = vs_shader.out.color;
+                Context.OutColor = color;
             }
+        }
+    }
+    // 技术块
+    Technology Default{
+        // 指定当前Default技术的sub_pass
+        // 一个Technology可以包含多个sub_pass
+        // 一个sub_pass可以包含多个Pass,每个Pass就是一个SubTechnology
+        // 每个sub_pass可以指定需要的渲染路径
+        // 如果不指定,默认在forward路径下
+        Sub_Pass{
+            Pass0
+        }
+    }
+
+    // 有时候,一个技术块可能使用直接数据作为输入参数,也可能使用纹理作为输入参数
+    // 下面是一个模板
+    SubTechnology Pass1{
+        Vs_Shader{
+            // 主体函数
+            void main(){
+                Context.OutPosition = Context.ModelViewProjectMatrix * Context.InPosition;
+            }
+        }
+        Fs_Shader{
+            // 主体函数
+            void main(){
+                vec4 outColor = new vec4(1.0f);
+                // 基本上就是c++的宏定义
+                #ifdef Params.color
+                    outColor *= Params.color;
+                #endif
+                #ifdef Params.colorMap
+                    outColor *= Params.colorMap;
+                #endif
+                Context.OutColor = outColor;
+            }
+        }
+    }
+
+    // 有时候,需要在两个pass之间传递数据,比如在pass2输出到自定义Texture2D中,然后在pass3使用这个纹理
+    // 这需要定义自定义全局纹理变量
+    // 下面是一个模板
+    Globals Texture myTexture{
+        // 指定一个名为shadowMap的纹理
+        // 用作depth
+        depth texture2D shadowMap;
+    }
+    // 下面是创建全局变量(不是纹理变量,纹理变量是特殊的,需要使用Texture标识符)的方式(统一缓存块)
+    Globals Vars{
+        vec4 globalsColor;
+    }
+    SubTechnology Pass2{
+        // 指定我们的SubTechnology使用自定义全局变量
+        use myTexture;
+        Vs_Shader{
+            // 主体函数
+            void main(){
+                Context.OutPosition = Context.ModelViewProjectMatrix * Context.InPosition;
+            }
+        }
+        Fs_Shader{
+            // 主体函数
+            void main(){
+                // 我们不需要输出颜色,我们需要将深度缓存输出到自定义的myTexture.shadowMap中
+            }
+        }
+    }
+    SubTechnology Pass3{
+        // 指定我们的SubTechnology使用自定义全局变量
+        use myTexture;
+        Vs_Shader{
+            // 主体函数
+            void main(){
+                Context.OutPosition = Context.ModelViewProjectMatrix * Context.InPosition;
+            }
+        }
+        Fs_Shader{
+            // 测试返回shadowMap采样
+            vec4 calcShadow(vec2 uv){
+                return sampler2D(myTexture.shadowMap, uv);
+            }
+            // 主体函数
+            void main(){
+                vec4 shadow = calcShadow(vec2(1.0f));
+                Context.OutColor = shadow;
+            }
+        }
+    }
+    // 指定Shadow技术块用到的SubTechnology
+    Technology Shadow{
+        // 如果选择Shadow作为当前渲染的技术
+        // 则按照Pass2->Pass3执行渲染
+        Sub_Pass{
+            Pass2,
+            Pass3
+        }
+    }
+
+    // 默认情况下,材质将物体在前向渲染中进行,对于渲染路径,可以通过指定forward或deferred标记来指定每个Pass要在哪个渲染路径中进行
+    // 对于某些高级渲染,这可能会编写复杂的着色器,并要求所有pass在forward或所有pass都在deferredShading中进行,所以需要仔细编写
+    // 下面是一个模板
+    SubTechnology Pass4{
+        Vs_Shader{
+            void main(){
+                ...
+            }
+        }
+        Fs_Shader{
+            void main(){
+                ...
+            }
+        }
+    }
+    Technology Test{
+        Sub_Pass Forward{
+            Pass4
+        }
+    }
+    // 当你需要使用延迟渲染时,如果不指定自定义全局变量,则可以使用内置变量,如下:
+    SubTechnology GPass{
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = Context.ModelViewProjectMatrix * Context.InPosition;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                // 写入位置属性到内置延迟缓存中的Context.GPosition中
+                Context.GPosition = Context.FragPos;
+            }
+        }
+    }
+    SubTechnology DeferredPass{
+        Vs_Shader{
+            void main(){
+                ...
+            }
+        }
+        Fs_Shader{
+            void main(){
+                vec4 worldPos = sampler2D(Context.GPosition, Context.InUV0);
+                ...
+            }
+        }
+    }
+    Technology DeferredTest{
+        // 首先的sub_pass包含两个pass,分别是GPass和DeferredPass(名称顺序必须一致)
+        // 然后指定该sub_pass的渲染路径是deferredShading
+        Sub_Pass DeferredShading{
+            GPass,
+            DeferredPass
+        }
+        // 可能需要在完成延迟路径下的延迟着色器后,再在前向路径中执行其他pass
+        // 所以可以再添加一个sub_pass,然后指定渲染路径,然后包含指定的pass
+        Sub_Pass{
+            // 其他路径下的pass
+            ...
+        }
+    }
+
+    // 如果需要使用自定义纹理变量,则可以这样定义自己的延迟路径下的延迟着色
+    // 下面是一个模板
+    // 定义自定义全局纹理变量(id必须唯一)
+    Globals Texture myGBuffer{
+        color0 texture2D diffuseColor;
+        color1 texture2D normalColor;
+        ...
+    }
+    // 注意,一个Def文件中不可能包含同名的SubTechnology,这里包含了两个GPass是因为解释如何使用自定义延迟纹理变量,实际写Def时,不能在一个Def文件中定义两个同名的SubTechnology
+    SubTechnology GPass{
+        use myGBuffer;
+        Vs_Shader{
+            void main(){
+                ...
+            }
+        }
+        Fs_Shader{
+            void main(){
+                ...
+                myGBuffer.diffuseColor = ...;
+                myGBuffer.normalColor = ...;
+            }
+        }
+    }
+    SubTechnology DeferredPass{
+        use myGBuffer;
+        Vs_Shader{
+            void main(){
+                ...
+            }
+        }
+        Fs_Shader{
+            void main(){
+                Context.OutColor = sampler2D(myGBuffer.diffuseColor, Context.InUV0);
+                ...
+            }
+        }
+    }
+    Technology myDeferredShading{
+        Sub_Pass DeferredShading{
+            GPass,
+            myGBuffer
         }
     }
 }

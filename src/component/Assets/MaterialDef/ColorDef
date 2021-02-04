@@ -1,0 +1,24 @@
+// 颜色材质,提供指定颜色并渲染
+Def ColorDef{
+    Params{
+        vec4 color;
+    }
+    SubTechnology ColorPass{
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = Context.ProjectViewModelMatrix * Context.InPosition;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                Context.OutColor = Params.color;
+            }
+        }
+    }
+    // 没有名称时,就自定成为默认技术
+    Technology{
+        Sub_Pass{
+            ColorPass
+        }
+    }
+}

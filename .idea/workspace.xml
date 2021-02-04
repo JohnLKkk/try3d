@@ -5,10 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8a9dfb17-c0d6-4cbe-af9e-a005ce9bae6a" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/component/Assets/MaterialDef/Template" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorDef" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/component/Render/Render.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/Render/Render.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/component/Scene/Scene.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/Scene/Scene.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/component/Assets/MaterialDef/Template" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/Assets/MaterialDef/Template" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
     <ignored path="$PROJECT_DIR$/temp/" />
@@ -49,24 +48,25 @@
     <session id="1241644706">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="22" />
+          <entry key="project.closed" value="23" />
           <entry key="project.open.time.0" value="8" />
           <entry key="project.open.time.1" value="9" />
-          <entry key="project.open.time.15" value="1" />
+          <entry key="project.open.time.15" value="2" />
           <entry key="project.open.time.27" value="1" />
           <entry key="project.open.time.4" value="2" />
           <entry key="project.open.time.48" value="1" />
           <entry key="project.open.time.5" value="1" />
           <entry key="project.open.time.71" value="1" />
-          <entry key="project.opened" value="24" />
+          <entry key="project.opened" value="25" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="Template" value="1" />
+          <entry key="ColorDef" value="1" />
+          <entry key="Template" value="3" />
           <entry key="glsl" value="20" />
           <entry key="html" value="37" />
-          <entry key="js" value="155" />
+          <entry key="js" value="156" />
           <entry key="md" value="3" />
           <entry key="ts" value="4" />
           <entry key="txt" value="4" />
@@ -76,15 +76,16 @@
         <counts>
           <entry key="GLSL shader file" value="20" />
           <entry key="HTML" value="37" />
-          <entry key="JavaScript" value="155" />
+          <entry key="JavaScript" value="156" />
           <entry key="Markdown" value="1" />
-          <entry key="PLAIN_TEXT" value="7" />
+          <entry key="PLAIN_TEXT" value="10" />
           <entry key="TypeScript" value="4" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="Template" value="1354" />
+          <entry key="ColorDef" value="326" />
+          <entry key="Template" value="6494" />
           <entry key="glsl" value="290" />
           <entry key="html" value="5665" />
           <entry key="js" value="50164" />
@@ -97,7 +98,7 @@
           <entry key="GLSL shader file" value="290" />
           <entry key="HTML" value="5665" />
           <entry key="JavaScript" value="50164" />
-          <entry key="PLAIN_TEXT" value="1613" />
+          <entry key="PLAIN_TEXT" value="7079" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.js.language.service.starts">
@@ -112,7 +113,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/component/Component.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="256">
+            <state relative-caret-position="247">
               <caret line="14" column="21" selection-start-line="14" selection-start-column="16" selection-end-line="14" selection-end-column="21" />
               <folding>
                 <element signature="e#0#35#0" expanded="true" />
@@ -124,8 +125,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/component/Render/Render.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="323">
-              <caret line="62" column="46" lean-forward="true" selection-start-line="62" selection-start-column="46" selection-end-line="62" selection-end-column="46" />
+            <state relative-caret-position="1159">
+              <caret line="62" column="46" selection-start-line="62" selection-start-column="46" selection-end-line="62" selection-end-column="46" />
               <folding>
                 <element signature="e#70#122#0" expanded="true" />
               </folding>
@@ -136,8 +137,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/example/FirstPersonControllerTest.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="361">
-              <caret line="19" column="58" lean-forward="true" selection-start-line="19" selection-start-column="58" selection-end-line="19" selection-end-column="58" />
+            <state relative-caret-position="209">
+              <caret line="19" column="58" selection-start-line="19" selection-start-column="58" selection-end-line="19" selection-end-column="58" />
               <folding>
                 <element signature="e#274#331#0" expanded="true" />
               </folding>
@@ -148,8 +149,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/component/WebGL/Mesh.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="571">
-              <caret line="128" column="40" lean-forward="true" selection-start-line="128" selection-start-column="40" selection-end-line="128" selection-end-column="40" />
+            <state relative-caret-position="2413">
+              <caret line="128" column="40" selection-start-line="128" selection-start-column="40" selection-end-line="128" selection-end-column="40" />
             </state>
           </provider>
         </entry>
@@ -158,7 +159,7 @@
         <entry file="file://$PROJECT_DIR$/src/component/Scene/Scene.js">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="190">
-              <caret line="13" column="22" lean-forward="true" selection-start-line="13" selection-start-column="22" selection-end-line="13" selection-end-column="22" />
+              <caret line="13" column="22" selection-start-line="13" selection-start-column="22" selection-end-line="13" selection-end-column="22" />
             </state>
           </provider>
         </entry>
@@ -178,8 +179,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/example/CameraTest1.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="238">
-              <caret line="22" column="36" lean-forward="true" selection-start-line="22" selection-start-column="36" selection-end-line="22" selection-end-column="36" />
+            <state relative-caret-position="285">
+              <caret line="22" column="36" selection-start-line="22" selection-start-column="36" selection-end-line="22" selection-end-column="36" />
             </state>
           </provider>
         </entry>
@@ -187,8 +188,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/component/Scene/Camera.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="372">
-              <caret line="173" column="47" selection-start-line="173" selection-start-column="47" selection-end-line="173" selection-end-column="47" />
+            <state relative-caret-position="462">
+              <caret line="184" column="37" selection-start-line="184" selection-start-column="37" selection-end-line="184" selection-end-column="37" />
               <folding>
                 <element signature="e#0#40#0" expanded="true" />
               </folding>
@@ -197,10 +198,10 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/Template">
+        <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorDef">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="133">
-              <caret line="7" column="16" selection-start-line="7" selection-start-column="16" selection-end-line="7" selection-end-column="16" />
+            <state>
+              <caret column="17" selection-start-column="17" selection-end-column="17" />
             </state>
           </provider>
         </entry>
@@ -302,6 +303,7 @@
         <option value="$PROJECT_DIR$/src/component/Render/Render.js" />
         <option value="$PROJECT_DIR$/src/component/WebGL/Mesh.js" />
         <option value="$PROJECT_DIR$/src/component/Assets/MaterialDef/Template" />
+        <option value="$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorDef" />
       </list>
     </option>
   </component>
@@ -318,10 +320,10 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="90" />
-    <option name="y" value="30" />
+    <option name="x" value="173" />
+    <option name="y" value="65" />
     <option name="width" value="1706" />
-    <option name="height" value="957" />
+    <option name="height" value="951" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -492,21 +494,21 @@
       <workItem from="1611902026340" duration="1044000" />
       <workItem from="1612165418598" duration="11581000" />
       <workItem from="1612247381993" duration="17010000" />
-      <workItem from="1612335531826" duration="4249000" />
+      <workItem from="1612335531826" duration="12888000" />
+      <workItem from="1612422322087" duration="3703000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="166381000" />
+    <option name="totallyTimeSpent" value="178723000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="90" y="30" width="1706" height="957" extended-state="0" />
+    <frame x="336" y="144" width="1706" height="951" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.17010936" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.15431349" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info anchor="bottom" id="TypeScript" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="bottom" id="Run" order="2" />
@@ -516,9 +518,10 @@
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" order="8" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Terminal" order="9" weight="0.15917376" />
+      <window_info anchor="bottom" id="Terminal" order="9" visible="true" weight="0.1370869" />
       <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
       <window_info anchor="bottom" id="Elm Compiler" order="11" />
+      <window_info anchor="bottom" id="TypeScript" order="12" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -542,15 +545,15 @@
     <entry file="file://$PROJECT_DIR$/src/component/Material/PhongLightMaterial.js" />
     <entry file="file://$PROJECT_DIR$/src/component/Material/GuiMaterial.js" />
     <entry file="file://$PROJECT_DIR$/README.md">
-      <provider editor-type-id="text-editor">
-        <state relative-caret-position="114">
-          <caret line="6" column="79" selection-start-line="6" selection-start-column="79" selection-end-line="6" selection-end-column="79" />
-        </state>
-      </provider>
       <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
         <state split_layout="SPLIT">
           <first_editor relative-caret-position="-296" />
           <second_editor />
+        </state>
+      </provider>
+      <provider editor-type-id="text-editor">
+        <state relative-caret-position="114">
+          <caret line="6" column="79" selection-start-line="6" selection-start-column="79" selection-end-line="6" selection-end-column="79" />
         </state>
       </provider>
     </entry>
@@ -752,16 +755,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/InputControl/FirstPersonController.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="510">
-          <caret line="37" column="25" selection-start-line="37" selection-start-column="25" selection-end-line="37" selection-end-column="25" />
-          <folding>
-            <element signature="e#206#246#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorMatDef.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="342">
@@ -783,9 +776,16 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/global-types/node_modules/@types/webgl2/index.d.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="264">
+          <caret line="618" column="13" selection-start-line="618" selection-start-column="13" selection-end-line="618" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/component/Component.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="256">
+        <state relative-caret-position="247">
           <caret line="14" column="21" selection-start-line="14" selection-start-column="16" selection-end-line="14" selection-end-column="21" />
           <folding>
             <element signature="e#0#35#0" expanded="true" />
@@ -795,11 +795,35 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/component/Render/Render.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="323">
-          <caret line="62" column="46" lean-forward="true" selection-start-line="62" selection-start-column="46" selection-end-line="62" selection-end-column="46" />
+        <state relative-caret-position="1159">
+          <caret line="62" column="46" selection-start-line="62" selection-start-column="46" selection-end-line="62" selection-end-column="46" />
           <folding>
             <element signature="e#70#122#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/example/FirstPersonControllerTest.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="209">
+          <caret line="19" column="58" selection-start-line="19" selection-start-column="58" selection-end-line="19" selection-end-column="58" />
+          <folding>
+            <element signature="e#274#331#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/WebGL/Mesh.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2413">
+          <caret line="128" column="40" selection-start-line="128" selection-start-column="40" selection-end-line="128" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Scene/Scene.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="190">
+          <caret line="13" column="22" selection-start-line="13" selection-start-column="22" selection-end-line="13" selection-end-column="22" />
         </state>
       </provider>
     </entry>
@@ -813,58 +837,44 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/example/CameraTest1.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="22" column="36" selection-start-line="22" selection-start-column="36" selection-end-line="22" selection-end-column="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/InputControl/FirstPersonController.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="510">
+          <caret line="37" column="25" selection-start-line="37" selection-start-column="25" selection-end-line="37" selection-end-column="25" />
+          <folding>
+            <element signature="e#206#246#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/Template">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="304">
+          <caret line="67" column="13" lean-forward="true" selection-start-line="67" selection-start-column="13" selection-end-line="67" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/component/Scene/Camera.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="372">
-          <caret line="173" column="47" selection-start-line="173" selection-start-column="47" selection-end-line="173" selection-end-column="47" />
+        <state relative-caret-position="462">
+          <caret line="184" column="37" selection-start-line="184" selection-start-column="37" selection-end-line="184" selection-end-column="37" />
           <folding>
             <element signature="e#0#40#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/example/CameraTest1.html">
+    <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/ColorDef">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="238">
-          <caret line="22" column="36" lean-forward="true" selection-start-line="22" selection-start-column="36" selection-end-line="22" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Scene/Scene.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="190">
-          <caret line="13" column="22" lean-forward="true" selection-start-line="13" selection-start-column="22" selection-end-line="13" selection-end-column="22" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/example/FirstPersonControllerTest.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="361">
-          <caret line="19" column="58" lean-forward="true" selection-start-line="19" selection-start-column="58" selection-end-line="19" selection-end-column="58" />
-          <folding>
-            <element signature="e#274#331#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/global-types/node_modules/@types/webgl2/index.d.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="264">
-          <caret line="618" column="13" selection-start-line="618" selection-start-column="13" selection-end-line="618" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/WebGL/Mesh.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="571">
-          <caret line="128" column="40" lean-forward="true" selection-start-line="128" selection-start-column="40" selection-end-line="128" selection-end-column="40" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Assets/MaterialDef/Template">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="133">
-          <caret line="7" column="16" selection-start-line="7" selection-start-column="16" selection-end-line="7" selection-end-column="16" />
+        <state>
+          <caret column="17" selection-start-column="17" selection-end-column="17" />
         </state>
       </provider>
     </entry>
