@@ -7,6 +7,7 @@ export default class FrameContext {
     constructor() {
         this.m_LastMaterila = null;
         this.m_LastIDrawable = null;
+        this.m_SubShader = null;
     }
 
     /**

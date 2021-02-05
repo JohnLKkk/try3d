@@ -18,14 +18,29 @@ class Block{
         this.m_End = end;
         this.m_SubBlock = [];
     }
+    getType(){
+        return this.m_Type;
+    }
     addSubBlock(subBlock){
         this.m_SubBlock.push(subBlock);
+    }
+    getSubBlock(){
+        return this.m_SubBlock;
     }
     setStart(start){
         this.m_Start = start;
     }
+    getStart(){
+        return this.m_Start;
+    }
     setEnd(end){
         this.m_End = end;
+    }
+    getEnd(){
+        return this.m_End;
+    }
+    getData(){
+        return this.m_Data;
     }
     toString(){
         return "type:" + this.m_Type + "\n" + "" +
@@ -34,17 +49,67 @@ class Block{
     }
 
 }
+class Param{
+    constructor() {
+        this.m_Name = null;
+        this.m_Type = null;
+        this.m_DefaultValue = null;
+    }
+    setName(name){
+        this.m_Name = name;
+    }
+    getName(){
+        return this.m_Name;
+    }
+    setType(type){
+        this.m_Type = type;
+    }
+    getType(){
+        return this.m_Type;
+    }
+    setDefaultValue(defaultValue){
+        this.m_DefaultValue = defaultValue;
+    }
+    getDefaultVaule(){
+        return this.m_DefaultValue;
+    }
 
+}
+class SubTechnology{
+    constructor() {
+        this.m_Name = null;
+        this.m_Shaders = {};
+    }
+    setName(name){
+        this.m_Name = name;
+    }
+    getName(){
+        return this.m_Name;
+    }
+    addShader(type, shader){
+        this.m_Shaders[type] = shader;
+    }
+    getShaders(){
+        return this.m_Shaders;
+    }
+
+}
 /**
  * 材质定义。
  */
-export default class MaterialDef extends Component{
-    getType(){
-        return "MaterialDef";
-    }
-    constructor(owner, cfg) {
-        super(owner, cfg);
+export default class MaterialDef{
+    constructor() {
         // 解析
+        // 材质名称
+        this._m_Name = "";
+        // 材质参数(元素类型Param)
+        this._m_Params = {};
+    }
+    addParam(param){
+        this._m_Params[param.getName()] = param;
+    }
+    setName(name){
+        this._m_Name = name;
     }
     read(src){
         AssetLoader.loadMaterialSourceDef(src, (data)=>{MaterialDef.parse(data)});
@@ -52,6 +117,71 @@ export default class MaterialDef extends Component{
     static trim(str){
         return str.replace(/(^\s*)|(\s*$)/g, "");
     }
+
+    /**
+     * 解析材质参数块。<br/>
+     * @param {MaterialDef}[matDef 结果材质定义]
+     * @param {Block}[blockDef 定义块]
+     */
+    static parseParams(matDef, blockDef){
+        // 解析材质参数
+        let data = blockDef.getData();
+        let line = null;
+        let param = null;
+        for(let i = blockDef.getStart() + 1;i < blockDef.getEnd() - 1;i++){
+            line = data[i];
+            // 按空格分割(去掉最后的;号)
+            line = line.substring(0, line.length - 1).split(" ");
+            param = new Param();
+            param.setName(line[1]);
+            param.setType(line[0]);
+            if(line.length > 2){
+                // 默认值
+                param.setDefaultValue(line[3]);
+            }
+            matDef.addParam(param);
+        }
+    }
+
+    /**
+     * 解析SubTechnology。<br/>
+     * @param {MaterialDef}[matDef 结果材质定义]
+     * @param {Block}[blockDef 定义块]
+     */
+    static parseSubTechnology(matDef, blockDef){
+        let subTechnology = new SubTechnology();
+        blockDef.getSubBlock().forEach(subBlockDef=>{
+            MaterialDef.parseBlockDef(subTechnology, subBlockDef);
+        });
+    }
+    static parseBlockDef(blockObj, blockDef){
+        if(blockDef){
+            switch (blockDef.getType()) {
+                case "Def":
+                    // 创建一个材质定义
+                    blockObj.setName(blockDef.getName());
+                    break;
+                case "Params":
+                    // 材质参数
+                    // 解析材质参数列表
+                    MaterialDef.parseParams(blockObj, blockDef);
+                    break;
+                case "SubTechnology":
+                    // 子技术块
+                    break;
+            }
+            blockDef.getSubBlock().forEach(subBlockDef=>{
+                MaterialDef.parseBlockDef(blockObj, subBlockDef);
+            });
+        }
+    }
+
+    /**
+     * 获取块定义
+     * @param {Block}[blockDef 块定义,结果将报错到这里]
+     * @param {String}[data Def文件内容]
+     * @param {Number}[startOffset 块定义起始偏移量]
+     */
     static getBlockDef(blockDef, data, startOffset){
         let start = 1;
         let line = null;
@@ -99,7 +229,7 @@ export default class MaterialDef extends Component{
         if(data){
             // 分割每一行
             data = data.split("\n");
-            console.log("data:\n",data);
+            // console.log("data:\n",data);
             for(let i = 0;i < data.length;i++){
                 let _line = MaterialDef.trim(data[i]);
                 if(!_line.startsWith("//")){
@@ -117,7 +247,9 @@ export default class MaterialDef extends Component{
                             // 开始一个块
                             let blockDef = new Block(blockType, blockId, data, i);
                             MaterialDef.getBlockDef(blockDef, data, i);
-                            console.log("blockDef:",blockDef);
+                            // 开始解析块定义
+                            MaterialDef.parseBlockDef(blockDef);
+                            // console.log("blockDef:",blockDef);
                             break;
                         }
                     }

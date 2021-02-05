@@ -81,6 +81,12 @@ export default class Geometry extends Node{
      */
     draw(frameContext){
         let gl = this._m_Scene.getCanvas().getGLContext();
+
+        // 提交该Geometry的modelMatrix到当前上下文中
+        // // mI应该提前记录下来(记录到SubShader的local列表中,SubShader的local列表不用记录ubo blocks,因为ubo blocks不需要)
+        // let mI = gl.getUniformLocation(frameContext.m_SubShader.getProgram(), "modelMatrix");
+        // // 检测如果更新了变换矩阵才需要更新数据块
+        // gl.uniformMatrix4fv(mI, false, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]));
         // 根据材质
         if(frameContext.m_LastMaterila != this._m_Material){
             frameContext.m_LastMaterila = this._m_Material;

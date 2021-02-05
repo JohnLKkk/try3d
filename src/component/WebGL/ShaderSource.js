@@ -26,21 +26,25 @@ export default class ShaderSource {
     static S_NDP = 0x015;
 
 
-    static S_POSITION_SRC = "position";
-    static S_COLOR_SRC = "color";
-    static S_NORMAL_SRC = "normal";
-    static S_TANGENT_SRC = "tangent";
-    static S_UV0_SRC = "uv0";
-    static S_UV1_SRC = "uv1";
-    static S_UV2_SRC = "uv2";
-    static S_UV3_SRC = "uv3";
-    static S_MODEL_MATRIX_SRC = "model_matrix";
-    static S_VIEW_MATRIX_SRC = "view_matrix";
-    static S_PROJECT_MATRIX_SRC = "project_matrix";
-    static S_MVP_SRC = "model_view_project_matrix";
-    static S_MV_SRC = "model_view_matrix";
-    static S_VP_SRC = "view_project_matrix";
+    static S_POSITION_SRC = "_position";
+    static S_COLOR_SRC = "_color";
+    static S_NORMAL_SRC = "_normal";
+    static S_TANGENT_SRC = "_tangent";
+    static S_UV0_SRC = "_uv0";
+    static S_UV1_SRC = "_uv1";
+    static S_UV2_SRC = "_uv2";
+    static S_UV3_SRC = "_uv3";
+    static S_MODEL_MATRIX_SRC = "_model_matrix";
+    static S_VIEW_MATRIX_SRC = "_view_matrix";
+    static S_PROJECT_MATRIX_SRC = "_project_matrix";
+    static S_MVP_SRC = "_model_view_project_matrix";
+    static S_MV_SRC = "_model_view_matrix";
+    static S_VP_SRC = "_view_project_matrix";
     static S_NDP = "";
+
+    static Context = {
+        "Context.InPosition":{"src":ShaderSource.S_POSITION_SRC, "loc":ShaderSource.S_POSITION, "pattern":/_position/, "tagPattern":/_position/g, "type":"vec3"},
+    };
 
     constructor() {
         this._m_Source = {};
