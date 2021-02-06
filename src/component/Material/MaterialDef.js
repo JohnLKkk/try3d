@@ -1,5 +1,8 @@
 import Component from "../Component.js";
 import AssetLoader from "../Util/AssetLoader.js";
+import ShaderSource from "../WebGL/ShaderSource.js";
+import Tools from "../Util/Tools.js";
+import SubShader from "./SubShader.js";
 
 class Block{
     /**
@@ -154,6 +157,85 @@ export default class MaterialDef{
             MaterialDef.parseBlockDef(subTechnology, subBlockDef);
         });
     }
+    static parseVsShader(subShader, blockDef){
+        let vsShader = new ShaderSource()
+        // 检测vsShader的所有块定义
+        blockDef.getSubBlock().forEach(subBlock=>{
+            // 解析子块
+            MaterialDef.parseBlockDef(subShader, subBlock);
+        });
+
+        // 检测主体函数每一行
+        let line = null;
+        let useContexts = [];
+        for(let i = blockDef.getStart() + 1;i < blockDef.getEnd() - 1;i++){
+            line = data[i];
+            ShaderSource.Context_Data.forEach(context=>{
+                if(Tools.find(line, context.pattern)){
+                    // 记录该vsShader实用的context
+                    useContexts.push(context);
+                    // 替换指定上下文
+                    Tools.repSrc(line)
+                }
+            });
+        }
+    }
+    static parseShaderVaras(subShader, blockDef){
+
+    }
+    static parseVsShaderMain(subShader, blockDef){
+        let data = blockDef.getData();
+        let line = null;
+        let shader = "";
+        let useContexts = [];
+        let useVars = [];
+        let varTable = subShader.getVarTable();
+        for(let i = blockDef.getStart() + 1;i < blockDef.getEnd() - 1;i++){
+            line = data[i];
+            // 检测变量列表
+            varTable.forEach(vars=>{
+                if(Tools.find(line, vars.pattern)){
+                    useVars.push(vars);
+                }
+            });
+            ShaderSource.Context_Data.forEach(context=>{
+                if(Tools.find(line, context.pattern)){
+                    // 记录该vsShader实用的context
+                    useContexts.push(context);
+                    // 替换指定上下文
+                    shader += Tools.repSrc(line, context.pattern, context.tagPattern, context.tag) + '\n';
+                }
+                else{
+                    shader += line + '\n';
+                }
+            });
+        }
+        // 检测shader是否需要添加变量
+        if(useVars.length > 0){
+            // 加入变量块
+            let outVars = "\n";
+            useVars.forEach(vars=>{
+                outVars += "out " + vars.type + " " + vars.name + ";\n";
+            });
+            line = outVars + line;
+        }
+        // 检查context是否包含需要的几何属性
+        if(useContexts.length > 0){
+            let vertIn = "\n";
+            useContexts.forEach(context=>{
+                if(context.loc){
+                    vertIn += "layout (location=" + context.loc + ") in " + context.type + " " + context.src + ";\n";
+                }
+            });
+            shader = vertIn + shader;
+        }
+
+        // 添加shader
+        subShader.addShader(ShaderSource.VERTEX_SHADER, shader);
+        // 这里,需要在subShader中记录需要更新数据的uniform变量的loc,以及uniform blocks等.以便在真正创建Material对象时,保证渲染时可以根据实际不同的MatDef提交数据到shader中。
+        // 在创建Material时,还需要统计整个引擎需要计算哪些上下文变量(比如ViewMatrix,ProjectMatrix...),这样可以避免不必要的变量计算,同时保证所有shader可以正常运行。
+        // 每次创建一个Material时,都通过解析subShader来统计待计算的上下文变量。
+    }
     static parseBlockDef(blockObj, blockDef){
         if(blockDef){
             switch (blockDef.getType()) {
@@ -168,6 +250,19 @@ export default class MaterialDef{
                     break;
                 case "SubTechnology":
                     // 子技术块
+                    let subShader = new SubShader();
+                    break;
+                case "Vs_Shader":
+                    // vs
+                    break;
+                case "Fs_Shader":
+                    // fs
+                    break;
+                case "Vars":
+                    break;
+                case "Vs_Shader_Main":
+                    break;
+                case "Fs_Shader_Main":
                     break;
             }
             blockDef.getSubBlock().forEach(subBlockDef=>{
@@ -196,20 +291,21 @@ export default class MaterialDef{
                     // 块类型解析
                     let bsa = block.split(" ");
                     let blockType = bsa[0];
-                    if(blockType != "void"){
-                        let blockId = "";
-                        if(bsa.length > 1){
-                            blockId = bsa[bsa.length - 1];
-                        }
-                        // 开始一个块
-                        let subBlockDef = new Block(blockType, blockId, data, i);
-                        if(start == 2){
-                            // 只添加直接子块
-                            blockDef.addSubBlock(subBlockDef);
-                        }
-                        // 查找该子块定义
-                        this.getBlockDef(subBlockDef, data, i);
+                    if(blockType == "void"){
+                        blockType = blockDef.getType() + "_Main";
                     }
+                    let blockId = "";
+                    if(bsa.length > 1){
+                        blockId = bsa[bsa.length - 1];
+                    }
+                    // 开始一个块
+                    let subBlockDef = new Block(blockType, blockId, data, i);
+                    if(start == 2){
+                        // 只添加直接子块
+                        blockDef.addSubBlock(subBlockDef);
+                    }
+                    // 查找该子块定义
+                    this.getBlockDef(subBlockDef, data, i);
                 }
                 else if(line.endsWith("}")){
                     start--;

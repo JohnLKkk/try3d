@@ -42,8 +42,9 @@ export default class ShaderSource {
     static S_VP_SRC = "_view_project_matrix";
     static S_NDP = "";
 
-    static Context = {
-        "Context.InPosition":{"src":ShaderSource.S_POSITION_SRC, "loc":ShaderSource.S_POSITION, "pattern":/_position/, "tagPattern":/_position/g, "type":"vec3"},
+    // 上下文数据
+    static Context_Data = {
+        "Context.InPosition":{src:ShaderSource.S_POSITION_SRC, loc:ShaderSource.S_POSITION, pattern:/_position/, tagPattern:/_position/g, type:"vec3"},
     };
 
     constructor() {

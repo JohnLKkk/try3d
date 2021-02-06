@@ -40,6 +40,40 @@ export default class Render extends Component{
             this._m_Drawables.remove(iDrawable);
         }
     }
+    // 后期开发渲染路径模块时,把_draw2开发完成然后删掉_draw函数
+    // _draw2(exTime){
+    //     // 视锥剔除,遮挡查询
+    //     // 获取当前待渲染drawable列表
+    //
+    //     // 半透明桶(key : Material, value : List<Geometry>)
+    //     let translucentBucket = new Map();
+    //     // 透明桶
+    //     let transparentBucket = new Map();
+    //
+    //     // 延迟路径部分...
+    //
+    //     // 正向路径部分...
+    //     let forwardList = new Map();
+    //     for(let mat in forwardList.keys()){
+    //         for(let geo in forwardList.get(mat)){
+    //             if(geo.isOpaque()){
+    //                 // 获取当前选中的技术
+    //                 let currentTechnology = mat.getCurrentTechnology();
+    //                 // 获取当前技术所有Forward路径下的SubShaders
+    //                 let forwardSubShaders = currentTechnology.getSubShaders('Forward');
+    //                 if(forwardSubShaders){
+    //                     // 执行渲染
+    //                     for(let subShader in forwardSubShaders){
+    //                         // 实用指定subShader
+    //                         mat._selectSubShader(forwardSubShaders[subShader]);
+    //                         geo.draw(this._m_FrameContext);
+    //                     }
+    //                 }
+    //             }
+    //             // 加入到对应的桶,以便后续渲染
+    //         }
+    //     }
+    // }
     _draw(exTime){
         // 一帧的开始
         this.fire('preFrame', [exTime]);

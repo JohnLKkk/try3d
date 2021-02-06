@@ -5,6 +5,15 @@
  */
 export default class Tools {
     /**
+     * 查找str中是否包含指定模板字符串。<br/>
+     * @param {String}[str 源]
+     * @param {Pattern}[pattern 匹配正则表达式]
+     * @return {boolean}
+     */
+    static find(str, pattern){
+        return str.search(pattern) != -1;
+    }
+    /**
      * 将指定字符串中所有符号匹配字符串替换为指定字符串
      * @param {String}[str 源]
      * @param {Pattern}[pattern 匹配正则表达式]

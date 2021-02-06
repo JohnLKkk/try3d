@@ -2,6 +2,7 @@ export default class Technology {
     constructor(name) {
         this._m_Name = name;
         // 根据渲染路径分类
+        // key:renderPath,value:SubShader
         this._m_SubShaders = {};
     }
     setName(name){

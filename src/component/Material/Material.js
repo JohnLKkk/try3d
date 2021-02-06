@@ -20,6 +20,17 @@ export default class Material extends Component{
         this._m_SystemParams = {};
         this._m_Params = {};
         this._init();
+
+        // 记录当前激活的subShader
+        this._m_CurrentSubShader = null;
+        // 记录不同路径中的Shader
+        // key:TechnologyName,value:Technology
+        this._m_RenderTechnologys = {};
+        // 当前实用的技术
+        this._m_CurrentTechnology = null;
+    }
+    getRenderTechnology(renderPathType){
+        return this._m_RenderTechnologys.get(renderPathType);
     }
     use(){
         let gl = this._m_Scene.getCanvas().getGLContext();
@@ -35,10 +46,36 @@ export default class Material extends Component{
     }
 
     /**
+     * 添加一个技术。<br/>
+     * @param {String}[technologyName 技术名称]
+     * @param {String}[technology 技术]
+     */
+    addTechnology(technologyName, technology){
+        this._m_RenderTechnologys[technologyName] = technology;
+    }
+
+    /**
+     * 选中指定技术作为该材质渲染。<br/>
+     * @param {String}[technologyName Technology名称]
+     */
+    selectTechnology(technologyName){
+        this._m_CurrentTechnology = this._m_RenderTechnologys[technologyName];
+    }
+
+    /**
+     * 返回当前选中的技术。<br/>
+     * @return {Technology}
+     */
+    getCurrentTechnology(){
+        return this._m_CurrentTechnology;
+    }
+
+    /**
      * 使用指定subShader进行材质着色。<br/>
      * @param {SubShader}[subShader]
      */
-    use(subShader){
+    _selectSubShader(subShader){
+        this._m_CurrentSubShader = subShader;
         let gl = this._m_Scene.getCanvas().getGLContext();
         subShader.use(gl);
         // 更新参数到subShader中?

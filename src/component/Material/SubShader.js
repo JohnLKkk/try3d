@@ -1,3 +1,5 @@
+import ShaderSource from "../WebGL/ShaderSource.js";
+
 /**
  * SubShader,被Technology包含,一个Technology包含多个SubShader,用于实现高级着色中的多pass。<br/>
  * 一个SubShader就是一个具体的GLSL着色器程序。<br/>
@@ -5,11 +7,37 @@
  * @date 2021年2月5日18点14分
  */
 export default class SubShader {
-    constructor() {
-
+    constructor(sourceDef) {
+        this._m_ShaderSource = new ShaderSource();
+        // 变量列表
+        this._m_Var_Table = [];
     }
-    use(gl){
-        // 激活subShader以便进行gl渲染
+
+    /**
+     * 添加一个变量。<br/>
+     * @param {String}[type 变量类型]
+     * @param {String}[name 变量名称]
+     */
+    addVar(type, name){
+        this._m_Var_Table.push({type, name, pattern:eval("/" + name + "/")});
+    }
+
+    /**
+     * 返回变量列表。<br/>
+     * @return {{}|*}
+     */
+    getVarTable(){
+        return this._m_Var_Table;
+    }
+    addShaderSource(type, shader){
+        this._m_ShaderSource.set(type, shader);
+    }
+    /**
+     * 返回材质定义的着色器源码。<br/>
+     * @returns {Object}[ShaderSource]
+     */
+    getShaderSource(){
+        return this._m_ShaderSource;
     }
 
 }
