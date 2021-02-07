@@ -17,8 +17,9 @@
     import Vector3 from "../src/component/Math3d/Vector3.js";
     import MaterialDef from "../src/component/Material/MaterialDef.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
-    let materialDef = new MaterialDef(scene, {id:"colorDef"});
-    materialDef.read("../src/component/Assets/MaterialDef/ColorDef");
+    // 加载一个材质定义
+    let materialDef = MaterialDef.load("../src/component/Assets/MaterialDef/ColorDef");
+    console.log("materialDef:",materialDef);
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(10, 10, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let geometry = new Geometry(scene, {id:'testGeometry'});

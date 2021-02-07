@@ -4,14 +4,22 @@ Def ColorDef{
         vec4 color;
     }
     SubTechnology ColorPass{
+        Vars{
+            vec4 wordPosition;
+        }
         Vs_Shader{
             void main(){
-                Context.OutPosition = Context.ProjectViewModelMatrix * Context.InPosition;
+                Context.OutPosition = Context.ProjectViewModelMatrix * vec4(Context.InPosition, 1.0f);
+                wordPosition = Context.OutPosition;
             }
         }
         Fs_Shader{
             void main(){
-                Context.OutColor = Params.color;
+                // 先判断Params.color是否有值
+                #ifdef Params.color
+                    Context.OutColor = Params.color;
+                #endif
+                vec4 wPosition = wordPosition;
             }
         }
     }
