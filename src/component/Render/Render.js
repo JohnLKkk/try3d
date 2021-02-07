@@ -6,6 +6,11 @@ import FrameContext from "../WebGL/FrameContext.js";
 import Component from "../Component.js";
 
 export default class Render extends Component{
+    // 渲染路径
+    static FORWARD = 'Forward';
+    static DEFERRED_SHADER = 'DeferredShader';
+
+
     getType(){
         return "Render";
     }

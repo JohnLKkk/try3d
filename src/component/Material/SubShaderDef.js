@@ -23,6 +23,11 @@ export default class SubShaderDef {
     setFromMaterialDef(materialDef){
         this._m_FromMaterialDef = materialDef;
     }
+
+    /**
+     * 返回当前所属得MaterialDef。<br/>
+     * @returns {MaterialDef}[materialDef]
+     */
     getFromMaterialDef(){
         return this._m_FromMaterialDef;
     }

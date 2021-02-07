@@ -3,6 +3,8 @@ import AssetLoader from "../Util/AssetLoader.js";
 import ShaderSource from "../WebGL/ShaderSource.js";
 import Tools from "../Util/Tools.js";
 import SubShaderDef from "./SubShaderDef.js";
+import TechnologyDef from "./TechnologyDef.js";
+import Render from "../Render/Render.js";
 
 class Block{
     /**
@@ -130,6 +132,8 @@ export default class MaterialDef{
         this._m_Params = {};
         // subShaderDefs
         this._m_SubShaderDefs = {};
+        // technology
+        this._m_TechnologyDefs = {};
     }
     addSubShaderDef(name, subShaderDef){
         this._m_SubShaderDefs[name] = subShaderDef;
@@ -140,6 +144,16 @@ export default class MaterialDef{
     }
     getSubShaderDefs(){
         return this._m_SubShaderDefs;
+    }
+    addTechnologyDef(name, technologyDef){
+        this._m_TechnologyDefs[name] = technologyDef;
+        technologyDef.setFromMaterialDef(this);
+    }
+    getTechnologyDef(name){
+        return this._m_TechnologyDefs[name];
+    }
+    getTechnologyDefs(){
+        return this._m_TechnologyDefs;
     }
     addParam(param){
         this._m_Params[param.getName()] = param;
@@ -385,6 +399,19 @@ export default class MaterialDef{
         // 在创建Material时,还需要统计整个引擎需要计算哪些上下文变量(比如ViewMatrix,ProjectMatrix...),这样可以避免不必要的变量计算,同时保证所有shader可以正常运行。
         // 每次创建一个Material时,都通过解析subShader来统计待计算的上下文变量。
     }
+    static parseSubPass(blockObj, blockDef){
+        let path = blockDef.getName();
+        if(path == null || path == ""){
+            path = Render.FORWARD;
+        }
+        let data = blockDef.getData();
+        let line = null;
+        for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++) {
+            line = data[i];
+            line = Tools.trim(line);
+            blockObj.addSubPass(path, blockObj.getFromMaterialDef().getSubShaderDef(line));
+        }
+    }
     static parseBlockDef(blockObj, blockDef){
         if(blockDef){
             switch (blockDef.getType()) {
@@ -401,17 +428,14 @@ export default class MaterialDef{
                     // 子技术块
                     let subShaderDef = new SubShaderDef(blockDef.getName());
                     blockObj.addSubShaderDef(subShaderDef.getName(), subShaderDef);
-                    // MaterialDef.parseSubTechnology(subShaderDef, blockDef);
                     // 设置subBlockDef的blockObj
                     blockObj = subShaderDef;
                     break;
                 case "Vs_Shader":
                     // vs
-                    // MaterialDef.parseShader(blockObj, blockDef);
                     break;
                 case "Fs_Shader":
                     // fs
-                    // MaterialDef.parseShader(blockObj, blockDef);
                     break;
                 case "Vars":
                     MaterialDef.parseShaderVars(blockObj, blockDef);
@@ -421,6 +445,15 @@ export default class MaterialDef{
                     break;
                 case "Fs_Shader_Main":
                     MaterialDef.parseFsShaderMain(blockObj, blockDef);
+                    break;
+                case "Technology":
+                    // 技术块
+                    let technologyDef = new TechnologyDef(blockDef.getName());
+                    blockObj.addTechnologyDef(blockDef.getName(), technologyDef);
+                    blockObj = technologyDef;
+                    break;
+                case "Sub_Pass":
+                    MaterialDef.parseSubPass(blockObj, blockDef);
                     break;
             }
             blockDef.getSubBlock().forEach(subBlockDef=>{

@@ -21,6 +21,9 @@ export default class Material extends Component{
         this._m_Params = {};
         this._init();
 
+
+
+
         // 记录当前激活的subShader
         this._m_CurrentSubShader = null;
         // 记录不同路径中的Shader
@@ -28,6 +31,16 @@ export default class Material extends Component{
         this._m_RenderTechnologys = {};
         // 当前实用的技术
         this._m_CurrentTechnology = null;
+
+        // 解析材质定义
+        if(cfg.materialDef){
+            // 获取技术块
+            let materialDef = cfg.materialDef;
+        }
+        else{
+            // 错误
+            console.log("找不到materialDef...");
+        }
     }
     getRenderTechnology(renderPathType){
         return this._m_RenderTechnologys.get(renderPathType);
