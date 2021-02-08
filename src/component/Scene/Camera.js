@@ -36,13 +36,13 @@ export default class Camera extends Component{
      */
     _init(){
         let gl = this._m_Scene.getCanvas().getGLContext();
-        let ub_VP = gl.createBuffer();
-        this.ub_VP = ub_VP;
-        gl.bindBuffer(gl.UNIFORM_BUFFER, ub_VP);
-        gl.bufferData(gl.UNIFORM_BUFFER, 2 * 16 * 4, gl.STATIC_DRAW);
+        let MAT = gl.createBuffer();
+        this.MAT = MAT;
+        gl.bindBuffer(gl.UNIFORM_BUFFER, MAT);
+        gl.bufferData(gl.UNIFORM_BUFFER, 3 * 16 * 4, gl.STATIC_DRAW);
         gl.bindBuffer(gl.UNIFORM_BUFFER, null);
 
-        gl.bindBufferRange(gl.UNIFORM_BUFFER, 0x001, ub_VP, 0, 2 * 16 * 4);
+        gl.bindBufferRange(gl.UNIFORM_BUFFER, 0x001, MAT, 0, 3 * 16 * 4);
 
         this._doUpdate();
     }
@@ -116,7 +116,7 @@ export default class Camera extends Component{
      */
     _update(){
         let gl = this._m_Scene.getCanvas().getGLContext();
-        gl.bindBuffer(gl.UNIFORM_BUFFER, this.ub_VP);
+        gl.bindBuffer(gl.UNIFORM_BUFFER, this.MAT);
         if(this._m_ViewMatrixUpdate){
             gl.bufferSubData(gl.UNIFORM_BUFFER, 0, this._m_ViewMatrix.getBufferData());
             this._m_ViewMatrixUpdate = false;

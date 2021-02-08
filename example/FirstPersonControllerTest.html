@@ -14,8 +14,8 @@
         import Mesh from "../src/component/WebGL/Mesh.js";
         import Material from "../src/component/Material/Material.js";
         import FirstPersonController from "../src/component/InputControl/FirstPersonController.js";
-        import ColorMatDef from "../src/component/Assets/MaterialDef/ColorMatDef.js";
         import Vector3 from "../src/component/Math3d/Vector3.js";
+        import MaterialDef from "../src/component/Material/MaterialDef.js";
         let scene = new Scene({cavnas:document.getElementById('canvas')});
         let mainCamera = scene.getComponent('mainCamera');
         mainCamera.lookAt(new Vector3(10, 10, 10), new Vector3(-15, -15, -15), new Vector3(0, 1, 0));
@@ -32,7 +32,8 @@
             0, 1, 2,
             1, 2, 3
         ]);
-        let material = new Material(scene, {materialSourceDef:new ColorMatDef()});
+        let materialDef = MaterialDef.load("../src/component/Assets/MaterialDef/ColorDef");
+        let material = new Material(scene, {id:"colorMat", materialDef});
         geometry.setMesh(mesh);
         geometry.updateBound();
         geometry.setMaterial(material);

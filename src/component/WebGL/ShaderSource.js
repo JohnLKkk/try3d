@@ -34,6 +34,8 @@ export default class ShaderSource {
     static S_UV1_SRC = "_uv1";
     static S_UV2_SRC = "_uv2";
     static S_UV3_SRC = "_uv3";
+    static S_OUT_COLOR = "_outColor";
+    static S_OUT_POSITION = "gl_Position";
     static S_MODEL_MATRIX_SRC = "_model_matrix";
     static S_VIEW_MATRIX_SRC = "_view_matrix";
     static S_PROJECT_MATRIX_SRC = "_project_matrix";
@@ -42,9 +44,31 @@ export default class ShaderSource {
     static S_VP_SRC = "_view_project_matrix";
     static S_NDP = "";
 
+    // 上下文块
+    static ContextBlocks = {
+        S_VIEW_MATRIX_SRC:true,
+        S_PROJECT_MATRIX_SRC:true,
+        S_VP_SRC:true
+    };
+    static MAT = 'layout (std140) uniform MAT\n' +
+        '{\n' +
+        'mat4 ' + ShaderSource.S_VIEW_MATRIX_SRC + ';\n' +
+        'mat4 ' + ShaderSource.S_PROJECT_MATRIX_SRC + ';\n' +
+        'mat4 ' + ShaderSource.S_VP_SRC + ';\n' +
+        '};\n';
+    static BLOCKS = {
+        'MAT':{blockIndex:0x001, blockDef:ShaderSource.MAT},
+    };
+
     // 上下文数据
     static Context_Data = {
-        "Context.InPosition":{src:ShaderSource.S_POSITION_SRC, loc:ShaderSource.S_POSITION, pattern:/_position/, tagPattern:/_position/g, type:"vec3"},
+        "Context.InPosition":{src:ShaderSource.S_POSITION_SRC, loc:ShaderSource.S_POSITION, pattern:/Context.InPosition/, tagPattern:/Context.InPosition/g, tag:"_position", type:"vec3"},
+        "Context.OutPosition":{src:ShaderSource.S_OUT_POSITION, pattern:/Context.OutPosition/, tagPattern:/Context.OutPosition/g, tag:"gl_Position"},
+        "Context.ProjectViewModelMatrix":{src:ShaderSource.S_MVP_SRC, pattern:/Context.ProjectViewModelMatrix/, tagPattern:/Context.ProjectViewModelMatrix/g, tag:"_model_view_project_matrix", type:"mat4", utype:"uniform mat4"},
+        "Context.ViewMatrix":{src:ShaderSource.S_VIEW_MATRIX_SRC, pattern:/Context.ViewMatrix/, tagPattern:/Context.ViewMatrix/g, tag:ShaderSource.S_VIEW_MATRIX_SRC, def:'MAT'},
+        "Context.ProjectMatrix":{src:ShaderSource.S_PROJECT_MATRIX_SRC, pattern:/Context.ProjectMatrix/, tagPattern:/Context.ProjectMatrix/g, tag:ShaderSource.S_PROJECT_MATRIX_SRC, def:'MAT'},
+        "Context.ModelMatrix":{src:ShaderSource.S_MODEL_MATRIX_SRC, pattern:/Context.ModelMatrix/, tagPattern:/Context.ModelMatrix/g, tag:ShaderSource.S_MODEL_MATRIX_SRC, type:"mat4", utype:"uniform mat4"},
+        "Context.OutColor":{src:ShaderSource.S_OUT_COLOR, pattern:/Context.OutColor/, tagPattern:/Context.OutColor/g, tag:"_outColor", type:"out vec4"},
     };
 
     constructor() {

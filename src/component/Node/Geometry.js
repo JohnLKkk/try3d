@@ -75,57 +75,63 @@ export default class Geometry extends Node{
     isTransparent(){
 
     }
-    draw2(frameContext){
+    draw(frameContext){
         let gl = this._m_Scene.getCanvas().getGLContext();
         // 提交模型矩阵到材质中
         let contextVars = frameContext.m_LastSubShader.getContextVars();
-        if(contextVars && contextVars.length > 0){
-            let viewMatrix = null, projectMatrix = null;
-            for(let vN in contextVars){
-                switch (contextVars[vN].name) {
-                    case ShaderSource.S_MODEL_MATRIX_SRC:
-                        gl.uniformMatrix4fv(contextVars[vN].loc, false, this.getWorldMatrix().getBufferData());
-                        break;
-                    case ShaderSource.S_MV_SRC:
-                        viewMatrix = frameContext.getCalcContext(ShaderSource.S_VIEW_MATRIX_SRC);
-                        // 计算MV矩阵
-                        let mv = null;
-                        gl.uniformMatrix4fv(contextVars[vN].loc, false, mv.getBufferData());
-                        break;
-                    case ShaderSource.S_VP_SRC:
-                        viewMatrix = frameContext.getCalcContext(ShaderSource.S_VIEW_MATRIX_SRC);
-                        projectMatrix = frameContext.getCalcContext(ShaderSource.S_PROJECT_MATRIX_SRC);
-                        // 计算VP矩阵
-                        let vp = null;
-                        gl.uniformMatrix4fv(contextVars[vN].loc, false, vp.getBufferData());
-                        break;
-                    case ShaderSource.S_MVP_SRC:
-                        break;
-                }
+        let viewMatrix = null, projectMatrix = null;
+        for(let vN in contextVars){
+            switch (vN) {
+                case ShaderSource.S_MODEL_MATRIX_SRC:
+                    // contextVars[vN].fun(contextVars[vN].loc, false, this.getWorldMatrix().getBufferData());
+                    gl[contextVars[vN].fun](contextVars[vN].loc, false, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]));
+                    break;
+                case ShaderSource.S_MV_SRC:
+                    viewMatrix = frameContext.getCalcContext(ShaderSource.S_VIEW_MATRIX_SRC);
+                    // 计算MV矩阵
+                    let mv = null;
+                    contextVars[vN].fun(contextVars[vN].loc, false, mv.getBufferData());
+                    break;
+                case ShaderSource.S_VP_SRC:
+                    viewMatrix = frameContext.getCalcContext(ShaderSource.S_VIEW_MATRIX_SRC);
+                    projectMatrix = frameContext.getCalcContext(ShaderSource.S_PROJECT_MATRIX_SRC);
+                    // 计算VP矩阵
+                    let vp = null;
+                    contextVars[vN].fun(contextVars[vN].loc, false, vp.getBufferData());
+                    break;
+                case ShaderSource.S_MVP_SRC:
+                    viewMatrix = frameContext.getCalcContext(ShaderSource.S_VIEW_MATRIX_SRC);
+                    projectMatrix = frameContext.getCalcContext(ShaderSource.S_PROJECT_MATRIX_SRC);
+                    // // 计算mvp矩阵
+                    // let mvp = null;
+                    // contextVars[vN].fun(contextVars[vN].loc, false, mvp.getBufferData());
+                    break;
             }
-        }
-    }
-
-    /**
-     * 继承IDrawable接口函数,实现绘制逻辑。<br/>
-     * @param {FrameContext}[frameContext]
-     */
-    draw(frameContext){
-        let gl = this._m_Scene.getCanvas().getGLContext();
-
-        // 提交该Geometry的modelMatrix到当前上下文中
-        // // mI应该提前记录下来(记录到SubShader的local列表中,SubShader的local列表不用记录ubo blocks,因为ubo blocks不需要)
-        // let mI = gl.getUniformLocation(frameContext.m_SubShader.getProgram(), "modelMatrix");
-        // // 检测如果更新了变换矩阵才需要更新数据块
-        // gl.uniformMatrix4fv(mI, false, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]));
-        // 根据材质
-        if(frameContext.m_LastMaterila != this._m_Material){
-            frameContext.m_LastMaterila = this._m_Material;
-            // 查看材质参数,将视图,投影矩阵等矩阵提交到材质中
-            this._m_Material.use();
         }
         // 通过getW
         this._m_Mesh.draw(gl);
     }
+
+    /**
+     * 继承IDrawable接口函数,实现绘制逻辑。<br/>
+    //  * @param {FrameContext}[frameContext]
+    //  */
+    // draw(frameContext){
+    //     let gl = this._m_Scene.getCanvas().getGLContext();
+    //
+    //     // 提交该Geometry的modelMatrix到当前上下文中
+    //     // // mI应该提前记录下来(记录到SubShader的local列表中,SubShader的local列表不用记录ubo blocks,因为ubo blocks不需要)
+    //     // let mI = gl.getUniformLocation(frameContext.m_SubShader.getProgram(), "modelMatrix");
+    //     // // 检测如果更新了变换矩阵才需要更新数据块
+    //     // gl.uniformMatrix4fv(mI, false, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]));
+    //     // 根据材质
+    //     if(frameContext.m_LastMaterila != this._m_Material){
+    //         frameContext.m_LastMaterila = this._m_Material;
+    //         // 查看材质参数,将视图,投影矩阵等矩阵提交到材质中
+    //         this._m_Material.use();
+    //     }
+    //     // 通过getW
+    //     this._m_Mesh.draw(gl);
+    // }
 
 }

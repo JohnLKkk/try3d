@@ -1,6 +1,8 @@
 import Component from "../Component.js";
 import SubShaderSource from "./SubShaderSource.js";
 import ShaderProgram from "../WebGL/ShaderProgram.js";
+import SubShader from "./SubShader.js";
+import Technology from "./Technology.js";
 
 /**
  * 材质定义，材质定义定义了相关物体渲染时的着色材质属性，通过MaterialShaderSource完成对材质的实现。<br/>
@@ -12,16 +14,19 @@ export default class Material extends Component{
     }
     constructor(owner, cfg) {
         super(owner, cfg);
-        // 根据当前材质类型获取对应的着色器源码定义，并生成对应的着色器程序
-        this._m_MaterialSource = new SubShaderSource(cfg.materialSourceDef);
-        // 根据materialShaderSource,创建着色器程序,然后根据材质定义,获取着色器变量
-        this._m_ShaderProgram = new ShaderProgram(this._m_Scene.getCanvas().getGLContext(), this._m_MaterialSource.getShaderSource());
+        // // 根据当前材质类型获取对应的着色器源码定义，并生成对应的着色器程序
+        // this._m_MaterialSource = new SubShaderSource(cfg.materialSourceDef);
+        // // 根据materialShaderSource,创建着色器程序,然后根据材质定义,获取着色器变量
+        // this._m_ShaderProgram = new ShaderProgram(this._m_Scene.getCanvas().getGLContext(), this._m_MaterialSource.getShaderSource());
         // 变量参数
         this._m_SystemParams = {};
         this._m_Params = {};
         // 发生变化的材质参数值
         this._m_ChangeParams = [];
         this._init();
+
+
+
 
         // 记录当前激活的subShader
         this._m_CurrentSubShader = null;
@@ -30,21 +35,59 @@ export default class Material extends Component{
         this._m_RenderTechnologys = {};
         // 当前实用的技术
         this._m_CurrentTechnology = null;
+
+        // 解析材质定义
+        if(cfg.materialDef){
+            let gl = this._m_Scene.getCanvas().getGLContext();
+            // 获取技术块
+            let materialDef = cfg.materialDef;
+            // 开始解析
+            for(let p in materialDef.getParams()){
+                // 默认所有参数值为null
+                this._m_Params[materialDef.getParams[p]] = null;
+            }
+            let subShaderDefs = materialDef.getSubShaderDefs();
+            let subShaders = {};
+            for(let sS in subShaderDefs){
+                subShaders[subShaderDefs[sS].getName()] = new SubShader(gl, subShaderDefs[sS]);
+            }
+            let technologyDefs = materialDef.getTechnologyDefs();
+            let technologyDef = null;
+            let rpSubPass = null;
+            let subPass = null;
+            for(let tE in technologyDefs){
+                technologyDef = technologyDefs[tE];
+                this._m_RenderTechnologys[technologyDef.getName()] = new Technology(technologyDef.getName());
+                rpSubPass = technologyDef.getSubPass();
+                for(let renderPath in rpSubPass){
+                    subPass = rpSubPass[renderPath];
+                    subPass.forEach(subDef=>{
+                        this._m_RenderTechnologys[technologyDef.getName()].addSubShader(renderPath, subShaders[subDef.getName()]);
+                    });
+                }
+            }
+            // 设置默认技术
+            this.selectTechnology("");
+        }
+        else{
+            // 错误
+            console.log("找不到materialDef...");
+        }
     }
     getRenderTechnology(renderPathType){
         return this._m_RenderTechnologys.get(renderPathType);
     }
     use(){
-        let gl = this._m_Scene.getCanvas().getGLContext();
-        this._m_ShaderProgram.use(gl);
-        if(this._m_SystemParams){
-            // 更新系统参数
-        }
-        if(this._m_Params){
-            // 更新参数
-            for(let key in this._m_Params){
-            }
-        }
+        // let gl = this._m_Scene.getCanvas().getGLContext();
+        // this._m_ShaderProgram.use(gl);
+        // if(this._m_SystemParams){
+        //     // 更新系统参数
+        // }
+        // if(this._m_Params){
+        //     // 更新参数
+        //     for(let key in this._m_Params){
+        //     }
+        // }
     }
 
     /**
@@ -77,7 +120,7 @@ export default class Material extends Component{
      * @param {SubShader}[subShader]
      */
     _selectSubShader(subShader){
-        let frameContext = this._m_Scene.getRender();
+        let frameContext = this._m_Scene.getRender().getFrameContext();
         let gl = this._m_Scene.getCanvas().getGLContext();
         if(frameContext.m_LastSubShader != subShader){
             this._m_CurrentSubShader = subShader;
@@ -101,13 +144,13 @@ export default class Material extends Component{
         }
     }
     _init(){
-        let gl = this._m_Scene.getCanvas().getGLContext();
-        this.use();
-        let mI = gl.getUniformLocation(this._m_ShaderProgram.getProgram(), "modelMatrix");
-        gl.uniformMatrix4fv(mI, false, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]));
-        let ubi = gl.getUniformBlockIndex(this._m_ShaderProgram.getProgram(), "VP");
-        gl.uniformBlockBinding(this._m_ShaderProgram.getProgram(), ubi, 0x001);
-        gl.useProgram(null);
+        // let gl = this._m_Scene.getCanvas().getGLContext();
+        // this.use();
+        // let mI = gl.getUniformLocation(this._m_ShaderProgram.getProgram(), "modelMatrix");
+        // gl.uniformMatrix4fv(mI, false, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]));
+        // let ubi = gl.getUniformBlockIndex(this._m_ShaderProgram.getProgram(), "VP");
+        // gl.uniformBlockBinding(this._m_ShaderProgram.getProgram(), ubi, 0x001);
+        // gl.useProgram(null);
     }
 
 }

@@ -5,6 +5,30 @@
  */
 export default class Tools {
     /**
+     * 返回目标匹配符。<br/>
+     * @param {String}[str 源]
+     * @returns {TagPattern}
+     */
+    static getTagPattern(str){
+        return eval("/" + str + "/g");
+    }
+    /**
+     * 返回匹配符。<br/>
+     * @param {String}[str 源]
+     * @returns {Pattern}
+     */
+    static getPattern(str){
+        return eval("/" + str + "/");
+    }
+    /**
+     * 去掉字符串前后空格字符。<br/>
+     * @param {String}[str 源]
+     * @returns {void | string | *}
+     */
+    static trim(str){
+        return str.replace(/(^\s*)|(\s*$)/g, "");
+    }
+    /**
      * 查找str中是否包含指定模板字符串。<br/>
      * @param {String}[str 源]
      * @param {Pattern}[pattern 匹配正则表达式]
