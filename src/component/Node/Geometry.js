@@ -1,4 +1,5 @@
 import Node from "./Node.js";
+import ShaderSource from "../WebGL/ShaderSource.js";
 
 /**
  * Geometry继承Node,同时实现IDrawable接口,表示一个空间节点,同时表示一个可渲染的实例对象。<br/>
@@ -74,6 +75,36 @@ export default class Geometry extends Node{
     isTransparent(){
 
     }
+    draw2(frameContext){
+        let gl = this._m_Scene.getCanvas().getGLContext();
+        // 提交模型矩阵到材质中
+        let contextVars = frameContext.m_LastSubShader.getContextVars();
+        if(contextVars && contextVars.length > 0){
+            let viewMatrix = null, projectMatrix = null;
+            for(let vN in contextVars){
+                switch (contextVars[vN].name) {
+                    case ShaderSource.S_MODEL_MATRIX_SRC:
+                        gl.uniformMatrix4fv(contextVars[vN].loc, false, this.getWorldMatrix().getBufferData());
+                        break;
+                    case ShaderSource.S_MV_SRC:
+                        viewMatrix = frameContext.getCalcContext(ShaderSource.S_VIEW_MATRIX_SRC);
+                        // 计算MV矩阵
+                        let mv = null;
+                        gl.uniformMatrix4fv(contextVars[vN].loc, false, mv.getBufferData());
+                        break;
+                    case ShaderSource.S_VP_SRC:
+                        viewMatrix = frameContext.getCalcContext(ShaderSource.S_VIEW_MATRIX_SRC);
+                        projectMatrix = frameContext.getCalcContext(ShaderSource.S_PROJECT_MATRIX_SRC);
+                        // 计算VP矩阵
+                        let vp = null;
+                        gl.uniformMatrix4fv(contextVars[vN].loc, false, vp.getBufferData());
+                        break;
+                    case ShaderSource.S_MVP_SRC:
+                        break;
+                }
+            }
+        }
+    }
 
     /**
      * 继承IDrawable接口函数,实现绘制逻辑。<br/>
@@ -93,7 +124,6 @@ export default class Geometry extends Node{
             // 查看材质参数,将视图,投影矩阵等矩阵提交到材质中
             this._m_Material.use();
         }
-        // 提交模型矩阵到材质中
         // 通过getW
         this._m_Mesh.draw(gl);
     }

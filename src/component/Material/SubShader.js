@@ -11,6 +11,11 @@ export default class SubShader {
         this._m_ShaderSource = new ShaderSource();
         // 变量列表
         this._m_Var_Table = [];
+        // 上下文变量
+        this.m_ContextVars = {};
+    }
+    getContextVars(){
+        return this.m_ContextVars;
     }
 
     /**

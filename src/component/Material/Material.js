@@ -19,6 +19,8 @@ export default class Material extends Component{
         // 变量参数
         this._m_SystemParams = {};
         this._m_Params = {};
+        // 发生变化的材质参数值
+        this._m_ChangeParams = [];
         this._init();
 
         // 记录当前激活的subShader
@@ -75,9 +77,20 @@ export default class Material extends Component{
      * @param {SubShader}[subShader]
      */
     _selectSubShader(subShader){
-        this._m_CurrentSubShader = subShader;
+        let frameContext = this._m_Scene.getRender();
         let gl = this._m_Scene.getCanvas().getGLContext();
-        subShader.use(gl);
+        if(frameContext.m_LastSubShader != subShader){
+            this._m_CurrentSubShader = subShader;
+            subShader.use(gl);
+            frameContext.m_LastSubShader = subShader;
+        }
+        // 检查材质参数是否发生更新
+        if(this._m_ChangeParams && this._m_ChangeParams.length > 0){
+            // 更新新的材质参数到shader中
+            // 每次只需要更新一次
+            this._m_ChangeParams = [];
+        }
+
         // 更新参数到subShader中?
         // modelMatrix,蒙皮骨骼变换这些信息,只能由具体的Geometry去传递,所以应该在Geometry中更新modelMatrix,但由于是提交数据时仅需要local,所以Geometry需要持有mat SubShader,这样才能直到更新到哪个shader句柄中。
         // 而灯光的一些信息,应该由灯光模块系统去执行更新(如果使用ubo block,则可以不需要引用mat就可以独立更新,mat subShader只需要绑定指定的ubo block即可)

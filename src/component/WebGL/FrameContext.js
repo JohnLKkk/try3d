@@ -7,7 +7,26 @@ export default class FrameContext {
     constructor() {
         this.m_LastMaterila = null;
         this.m_LastIDrawable = null;
-        this.m_SubShader = null;
+        this.m_LastSubShader = null;
+        // 保持上下文变量
+        this.m_CalcContexts = {};
+    }
+
+    /**
+     * 返回上下文变量值列表。<br/.
+     * @return {{}|*}
+     */
+    getCalcContexts(){
+        return this.m_CalcContexts;
+    }
+
+    /**
+     * 返回指定的上下文变量值。<br/>
+     * @param {String}[name 变量名]
+     * @return {*}
+     */
+    getCalcContext(name){
+        return this.m_CalcContexts[name];
     }
 
     /**

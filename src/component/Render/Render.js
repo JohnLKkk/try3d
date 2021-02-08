@@ -20,6 +20,14 @@ export default class Render extends Component{
     }
 
     /**
+     * 返回上下文。<br/>
+     * @return {FrameContext}
+     */
+    getFrameContext(){
+        return this._m_FrameContext;
+    }
+
+    /**
      * 添加一个IDrawable对象,该对象必须实现IDrawable接口。<br/>
      * @param {IDrawable}[iDrawable]
      */

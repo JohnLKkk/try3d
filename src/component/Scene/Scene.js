@@ -34,6 +34,14 @@ export default class Scene extends Component{
     }
 
     /**
+     * 返回当前场景渲染器。<br/>
+     * @return {Render}
+     */
+    getRender(){
+        return this._m_Render;
+    }
+
+    /**
      * 返回当前渲染场景的呈现设备。<br/>
      * @returns {Object}[Canvas]
      */
