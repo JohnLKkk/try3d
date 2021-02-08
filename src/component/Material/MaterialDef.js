@@ -464,6 +464,8 @@ export default class MaterialDef{
         for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++) {
             line = data[i];
             line = Tools.trim(line);
+            if(line.startsWith("//"))continue;
+            line = line.substring(0, line.length - 1);
             blockObj.addSubPass(path, blockObj.getFromMaterialDef().getSubShaderDef(line));
         }
     }

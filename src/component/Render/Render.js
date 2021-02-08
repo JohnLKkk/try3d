@@ -92,7 +92,7 @@ export default class Render extends Component{
                     if(forwardSubShaders){
                         // 执行渲染
                         for(let subShader in forwardSubShaders){
-                            // 实用指定subShader
+                            // 指定subShader
                             mat._selectSubShader(forwardSubShaders[subShader]);
                             geo.draw(this._m_FrameContext);
                         }
