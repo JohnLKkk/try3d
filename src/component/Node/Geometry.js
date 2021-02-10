@@ -1,5 +1,7 @@
 import Node from "./Node.js";
 import ShaderSource from "../WebGL/ShaderSource.js";
+import Matrix44 from "../Math3d/Matrix44.js";
+import TempVars from "../Util/TempVars.js";
 
 /**
  * Geometry继承Node,同时实现IDrawable接口,表示一个空间节点,同时表示一个可渲染的实例对象。<br/>
@@ -84,27 +86,19 @@ export default class Geometry extends Node{
             switch (vN) {
                 case ShaderSource.S_MODEL_MATRIX_SRC:
                     // contextVars[vN].fun(contextVars[vN].loc, false, this.getWorldMatrix().getBufferData());
-                    gl[contextVars[vN].fun](contextVars[vN].loc, false, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]));
+                    gl[contextVars[vN].fun](contextVars[vN].loc, false, this.getWorldMatrix().getBufferData());
                     break;
                 case ShaderSource.S_MV_SRC:
                     viewMatrix = frameContext.getCalcContext(ShaderSource.S_VIEW_MATRIX_SRC);
-                    // 计算MV矩阵
-                    let mv = null;
-                    contextVars[vN].fun(contextVars[vN].loc, false, mv.getBufferData());
-                    break;
-                case ShaderSource.S_VP_SRC:
-                    viewMatrix = frameContext.getCalcContext(ShaderSource.S_VIEW_MATRIX_SRC);
-                    projectMatrix = frameContext.getCalcContext(ShaderSource.S_PROJECT_MATRIX_SRC);
-                    // 计算VP矩阵
-                    let vp = null;
-                    contextVars[vN].fun(contextVars[vN].loc, false, vp.getBufferData());
+                    Matrix44.multiplyMM(TempVars.S_TEMP_MAT4, 0, viewMatrix, 0, this.getWorldMatrix(), 0);
+                    contextVars[vN].fun(contextVars[vN].loc, false, TempVars.S_TEMP_MAT4.getBufferData());
                     break;
                 case ShaderSource.S_MVP_SRC:
                     viewMatrix = frameContext.getCalcContext(ShaderSource.S_VIEW_MATRIX_SRC);
                     projectMatrix = frameContext.getCalcContext(ShaderSource.S_PROJECT_MATRIX_SRC);
-                    // // 计算mvp矩阵
-                    // let mvp = null;
-                    // contextVars[vN].fun(contextVars[vN].loc, false, mvp.getBufferData());
+                    Matrix44.multiplyMM(TempVars.S_TEMP_MAT4, 0, viewMatrix, 0, this.getWorldMatrix(), 0);
+                    Matrix44.multiplyMM(TempVars.S_TEMP_MAT4_1, 0, projectMatrix, 0, viewMatrix, 0);
+                    gl[contextVars[vN].fun](contextVars[vN].loc, false, TempVars.S_TEMP_MAT4_1.getBufferData());
                     break;
             }
         }

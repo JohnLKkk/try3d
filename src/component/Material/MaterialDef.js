@@ -120,6 +120,37 @@ class SubTechnology{
     }
 
 }
+class SubPassDef{
+    constructor(path) {
+        this.m_RenderPath = path;
+        // {name:passName,renderState:{}}
+        this.m_Pass = [];
+        // 设置该SubShaderDef来自哪个MaterialDef
+        this._m_FromMaterialDef = null;
+    }
+    addPass(pass, renderState){
+        this.m_Pass.push({pass, renderState});
+    }
+    getPass(){
+        return this.m_Pass;
+    }
+    /**
+     * 设置该SubShaderDef来自哪个MaterialDef。<br/>
+     * @param {MaterialDef}[materialDef]
+     */
+    setFromMaterialDef(materialDef){
+        this._m_FromMaterialDef = materialDef;
+    }
+
+    /**
+     * 返回当前所属得MaterialDef。<br/>
+     * @returns {MaterialDef}[materialDef]
+     */
+    getFromMaterialDef(){
+        return this._m_FromMaterialDef;
+    }
+
+}
 /**
  * 材质定义。
  */
@@ -469,6 +500,22 @@ export default class MaterialDef{
             blockObj.addSubPass(path, blockObj.getFromMaterialDef().getSubShaderDef(line));
         }
     }
+    static parsePass(blockObj, blockDef){
+        let data = blockDef.getData();
+        let line = null;
+        // RenderState
+        let renderState = {};
+        for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++) {
+            line = data[i];
+            line = Tools.trim(line);
+            if(line.startsWith("//"))continue;
+            line = line.substring(0, line.length - 1);
+            line = line.split(' ');
+            renderState["" + line[0] + ""] = "" + line[1];
+        }
+        console.log("renderState:",renderState);
+        blockObj.addPass(blockObj.getFromMaterialDef().getSubShaderDef(blockDef.getName()), renderState);
+    }
     static parseBlockDef(blockObj, blockDef){
         if(blockDef){
             switch (blockDef.getType()) {
@@ -510,7 +557,17 @@ export default class MaterialDef{
                     blockObj = technologyDef;
                     break;
                 case "Sub_Pass":
-                    MaterialDef.parseSubPass(blockObj, blockDef);
+                    let path = blockDef.getName();
+                    if(path == null || path == ""){
+                        path = Render.FORWARD;
+                    }
+                    let subPass = new SubPassDef(path);
+                    // MaterialDef.parseSubPass(blockObj, blockDef);
+                    blockObj.addSubPass(path, subPass);
+                    blockObj = subPass;
+                    break;
+                case "Pass":
+                    MaterialDef.parsePass(blockObj, blockDef);
                     break;
             }
             blockDef.getSubBlock().forEach(subBlockDef=>{

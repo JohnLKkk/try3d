@@ -49,7 +49,7 @@ export default class Material extends Component{
             let subShaderDefs = materialDef.getSubShaderDefs();
             let subShaders = {};
             for(let sS in subShaderDefs){
-                subShaders[subShaderDefs[sS].getName()] = new SubShader(gl, subShaderDefs[sS]);
+                subShaders[subShaderDefs[sS].getName()] = new SubShader(gl, this._m_Scene.getRender().getFrameContext(), subShaderDefs[sS]);
             }
             let technologyDefs = materialDef.getTechnologyDefs();
             let technologyDef = null;
@@ -61,8 +61,11 @@ export default class Material extends Component{
                 rpSubPass = technologyDef.getSubPass();
                 for(let renderPath in rpSubPass){
                     subPass = rpSubPass[renderPath];
-                    subPass.forEach(subDef=>{
-                        this._m_RenderTechnologys[technologyDef.getName()].addSubShader(renderPath, subShaders[subDef.getName()]);
+                    subPass.forEach(sub=>{
+                        sub.getPass().forEach(pass=>{
+                            this._m_RenderTechnologys[technologyDef.getName()].addSubShader(renderPath, subShaders[pass.pass.getName()], pass.renderState);
+                        });
+                        // this._m_RenderTechnologys[technologyDef.getName()].addSubShader(renderPath, subShaders[sub.pass.getName()]);
                     });
                 }
             }

@@ -3,13 +3,19 @@ Def ColorDef{
     Params{
         vec4 color;
     }
-    SubTechnology ColorPass{
+    SubTechnology ScalePass{
         Vars{
             vec4 wordPosition;
         }
         Vs_Shader{
             void main(){
                 //Context.OutPosition = Context.ProjectViewModelMatrix * vec4(Context.InPosition, 1.0f);
+                mat4 scaleMat4 = mat4(
+                    0.2f, 0.0f, 0.0f, 0.0f,
+                    0.0f, 0.2f, 0.0f, 0.0f,
+                    0.0f, 0.0f, 0.2f, 0.0f,
+                    0.0f, 0.0f, 0.0f, 1.0f
+                );
                 Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
                 wordPosition = Context.OutPosition;
             }
@@ -26,7 +32,7 @@ Def ColorDef{
             }
         }
     }
-    SubTechnology ColorPass2{
+    SubTechnology ColorPass{
         Vars{
             vec4 wordPosition;
         }
@@ -49,13 +55,27 @@ Def ColorDef{
             }
         }
     }
-    // 默认技术
     Technology{
+        Sub_Pass{
+            Pass ColorPass{
+                // 关闭面剔除
+                FaceCull Off;
+            }
+        }
+    }
+    // ScaleColorPass
+    Technology ScaleColor{
         Sub_Pass{
             //第一个pass不应该写入深度,否则第二个pass被剔除
             //可以指定每个pass的写入状态,比如关闭深度,开启深度之类的
-            ColorPass;
-            ColorPass2;
+            Pass ScalePass{
+                // 这个pass剔除前面
+                FaceCull Front;
+            }
+            Pass ColorPass{
+                // 这个pass剔除背面
+                FaceCull Back;
+            }
         }
     }
 }

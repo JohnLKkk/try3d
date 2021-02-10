@@ -28,18 +28,19 @@ export default class TechnologyDef {
     /**
      * 添加一个subShaderDef
      * @param {String}[path 渲染路径]
-     * @param {SubShaderDef}[subShaderDef]
+     * @param {SubPass}[subPass]
      */
-    addSubPass(path, subShaderDef){
+    addSubPass(path, subPass){
         if(!this.m_SubPass[path]){
             this.m_SubPass[path] = [];
         }
-        this.m_SubPass[path].push(subShaderDef);
+        this.m_SubPass[path].push(subPass);
+        subPass.setFromMaterialDef(this._m_FromMaterialDef);
     }
 
     /**
      * 返回SubPass。<br/>
-     * @returns {SubShaderDef[]}
+     * @returns {SubPass[]}
      */
     getSubPass(){
         return this.m_SubPass;

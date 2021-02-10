@@ -20,7 +20,7 @@ export default class Scene extends Component{
         // 可以添加一个实时渲染器,用于实时交互
         // 然后添加一个光追渲染器,用于渲染高质量图片
         this._m_Render = new Render(this, {id:"default_render"});
-        this._m_Canvas = new Canvas(cfg.cavnas);
+        this._m_Canvas = new Canvas(this, {id:"default_canvas", canvas:cfg.cavnas});
         this._m_MainCamera = new Camera(this, {id:"mainCamera"});
     }
 

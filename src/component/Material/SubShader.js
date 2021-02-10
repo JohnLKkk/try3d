@@ -8,7 +8,7 @@ import ShaderProgram from "../WebGL/ShaderProgram.js";
  * @date 2021年2月5日18点14分
  */
 export default class SubShader {
-    constructor(gl, subShaderDef) {
+    constructor(gl, frameContext, subShaderDef) {
         this._m_Name = subShaderDef.getName();
         // 材质参数
         this._m_Params = {};
@@ -25,7 +25,7 @@ export default class SubShader {
         if(useParams && useParams.length > 0){
             // 解析材质参数
             useParams.forEach(param=>{
-                let loc = gl.getUniformLocation(this._m_ShaderProgram.getProgram(), "color");
+                let loc = gl.getUniformLocation(this._m_ShaderProgram.getProgram(), param.getName());
                 if(loc){
                     let fun = null;
                     switch (param.getType()) {
@@ -50,6 +50,7 @@ export default class SubShader {
                         }
                         this.m_ContextVars[context.src] = {loc, fun};
                     }
+                    frameContext.addContext(context.src);
                 }
             });
         }

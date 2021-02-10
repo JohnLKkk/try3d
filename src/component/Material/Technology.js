@@ -1,3 +1,5 @@
+import RenderState from "../WebGL/RenderState.js";
+
 export default class Technology {
     constructor(name) {
         this._m_Name = name;
@@ -13,12 +15,22 @@ export default class Technology {
      * 添加一个SubShader。<br/>
      * @param {String}[renderPath 渲染路径]
      * @param {SubShader}[subShader ]
+     * @param {RenderState}[renderStte]
      */
-    addSubShader(renderPath, subShader){
+    addSubShader(renderPath, subShader, renderState){
         if(!this._m_SubShaders[renderPath]){
             this._m_SubShaders[renderPath] = [];
         }
-        this._m_SubShaders[renderPath].push(subShader);
+        let rState = null;
+        if(renderState){
+            for(let k in renderState){
+                if(!rState){
+                    rState = new RenderState();
+                }
+                rState.setFlag(k, renderState[k]);
+            }
+        }
+        this._m_SubShaders[renderPath].push({subShader, renderState:rState});
     }
 
     /**

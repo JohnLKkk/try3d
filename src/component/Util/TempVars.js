@@ -9,6 +9,9 @@ import Matrix44 from "../Math3d/Matrix44.js";
 export default class TempVars {
     static S_TEMP_VEC3 = new Vector3();
     static S_TEMP_MAT4 = new Matrix44();
+    static S_TEMP_MAT4_1 = new Matrix44();
+    static S_TEMP_MAT4_2 = new Matrix44();
+    static S_TEMP_MAT4_3 = new Matrix44();
     constructor() {
     }
 

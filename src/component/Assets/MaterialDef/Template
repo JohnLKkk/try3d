@@ -40,7 +40,10 @@ Def{
         // 每个sub_pass可以指定需要的渲染路径
         // 如果不指定,默认在forward路径下
         Sub_Pass{
-            Pass0
+            //可以指定每个pass的写入状态,比如关闭深度,开启深度之类的
+            Pass0{
+                state{}
+            };
         }
     }
 
@@ -123,8 +126,8 @@ Def{
         // 如果选择Shadow作为当前渲染的技术
         // 则按照Pass2->Pass3执行渲染
         Sub_Pass{
-            Pass2,
-            Pass3
+            Pass2;
+            Pass3;
         }
     }
 
@@ -145,7 +148,7 @@ Def{
     }
     Technology Test{
         Sub_Pass Forward{
-            Pass4
+            Pass4;
         }
     }
     // 当你需要使用延迟渲染时,如果不指定自定义全局变量,则可以使用内置变量,如下:
@@ -179,8 +182,8 @@ Def{
         // 首先的sub_pass包含两个pass,分别是GPass和DeferredPass(名称顺序必须一致)
         // 然后指定该sub_pass的渲染路径是deferredShading
         Sub_Pass DeferredShading{
-            GPass,
-            DeferredPass
+            GPass;
+            DeferredPass;
         }
         // 可能需要在完成延迟路径下的延迟着色器后,再在前向路径中执行其他pass
         // 所以可以再添加一个sub_pass,然后指定渲染路径,然后包含指定的pass
@@ -230,8 +233,8 @@ Def{
     }
     Technology myDeferredShading{
         Sub_Pass DeferredShading{
-            GPass,
-            myGBuffer
+            GPass;
+            myGBuffer;
         }
     }
 }
