@@ -10,12 +10,34 @@ export default class FrameContext {
         this.m_LastMaterila = null;
         this.m_LastIDrawable = null;
         this.m_LastSubShader = null;
+        this.m_LastSubShaderId = null;
+        this.m_LastFrameBuffer = null;
         // 当前需要的上下文
         this.m_Contexts = {};
         // 保存已计算的当前需要的上下文变量
         this.m_CalcContexts = {};
         // 渲染状态
         this.m_RenderState = new RenderState();
+        // 渲染frameBuffer(key:id,value:fb}
+        this.m_FrameBuffers = {};
+    }
+
+    /**
+     * 返回指定的frameBuffer。<br/>
+     * @param {String}[id]
+     * @return {*}
+     */
+    getFrameBuffer(id){
+        return this.m_FrameBuffers[id];
+    }
+
+    /**
+     * 添加指定的frameBuffer。<br/>
+     * @param {String}[id]
+     * @param {*}[fb]
+     */
+    addFrameBuffer(id, fb){
+        this.m_FrameBuffers[id] = fb;
     }
 
     /**

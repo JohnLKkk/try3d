@@ -9,15 +9,27 @@ import ShaderProgram from "../WebGL/ShaderProgram.js";
  */
 export default class SubShader {
     constructor(gl, frameContext, subShaderDef) {
+        // 根据shader本身创建编码id
+        // 以便所有同种类型的shader只被切换使用一次
+        this._m_DefId = subShaderDef.getDefId();
         this._m_Name = subShaderDef.getName();
-        // 材质参数
+        // 当前该SubShader使用的所有参数(包含params和contextVars以及renderDatas)
+        this._m_MatParams = {};
+        // 当前该SubShader使用的变量参数
         this._m_Params = {};
         // 上下文变量
         // name:varName,loc:glLoc,fun:glFunc
-        this.m_ContextVars = {};
+        this._m_ContextVars = {};
+        // 保存特殊纹理数据
+        this._m_RenderDatas = {};
+        // 该pass使用的frameBuffer(默认为null)
+        // 当前subShader使用的FrameBuffer,为null使用默认的frameBuffer
+        this._m_FBId = subShaderDef.getFBId();
+        // 当前subShader引用的fb(renderDatas数据可能来自多个不同的fb)
+        this._m_RefRenderDataFBs = null;
 
         // 创建shader
-        this._m_ShaderProgram = new ShaderProgram(gl, subShaderDef.getShaderSource());
+        this._m_ShaderProgram = new ShaderProgram(gl, subShaderDef.getName(), subShaderDef.getShaderSource());
         this.use(gl);
         // 获取program变量信息
         let useParams = subShaderDef.getUseParams();
@@ -33,12 +45,15 @@ export default class SubShader {
                             fun = 'uniform4f';
                             break;
                     }
-                    this._m_Params[param.getName()] = {loc, fun};
+                    this._m_Params[param.getName()] = {type:param.getType(), loc, fun};
+                    this._m_MatParams[param.getName()] = {type:param.getType(), loc, fun};
                 }
             });
         }
         if(useContexts && useContexts.length > 0){
+            let texId = 0;
             useContexts.forEach(context=>{
+                // 过滤掉layout in和layout out(即包含loc的变量)
                 if(!context.loc){
                     let loc = gl.getUniformLocation(this._m_ShaderProgram.getProgram(), context.src);
                     if(loc){
@@ -47,8 +62,27 @@ export default class SubShader {
                             case "mat4":
                                 fun = 'uniformMatrix4fv';
                                 break;
+                            case "sampler2D":
+                                // 2D纹理
+                                gl.uniform1i(loc, texId);
+                                // 使用texId作为loc
+                                fun = null;
+                                loc = texId++;
+                                // 对于subShader,有两种类别sampler2D
+                                // 一种是普通sampler2D,其数据来自MatValue(即用户的纹理输入)
+                                // 另一种是frameBuffer的缓冲区(包括Context.Inxxx之类的纹理,以及自定义Globals_FrameBuffer.Inxxx之类的纹理)
+                                // 对于第二种情况,存在一个标识context.flag='renderData'
+                                if(context.flag == 'renderData'){
+                                    // 添加到frameBuffer.textures
+                                    // refId表示当前subShader的纹理数据来自哪个frameBuffer
+                                    // dataId表示当前subShader的纹理数据来自frameBuffer的哪个texture
+                                    // 对于Global_Textures,也做同样的处理逻辑
+                                    this._m_RenderDatas[context.src] = {type:context.type, loc, fun, refId:ShaderSource.Context_RenderDataRefFBs[context.src], dataId:context.src};
+                                }
+                                break;
                         }
-                        this.m_ContextVars[context.src] = {loc, fun};
+                        this._m_ContextVars[context.src] = {type:context.type, loc, fun};
+                        this._m_MatParams[context.src] = {type:context.type, loc, fun};
                     }
                     frameContext.addContext(context.src);
                 }
@@ -65,6 +99,28 @@ export default class SubShader {
         // gl.uniformBlockBinding(this._m_ShaderProgram.getProgram(), ubi, 0x001);
         gl.useProgram(null);
     }
+    getName(){
+        return this._m_Name;
+    }
+    getDefId(){
+        return this._m_DefId;
+    }
+
+    /**
+     * 设置使用的fbid。<br/>
+     * @param {String}[fbId]
+     */
+    setFBId(fbId){
+        this._m_FBId = fbId;
+    }
+
+    /**
+     * 返回指定的fbid。<br/>
+     * @return {String}
+     */
+    getFBId(){
+        return this._m_FBId;
+    }
 
     /**
      * 使用该SubShader。<br/>
@@ -74,7 +130,14 @@ export default class SubShader {
         this._m_ShaderProgram.use(gl);
     }
     getContextVars(){
-        return this.m_ContextVars;
+        return this._m_ContextVars;
+    }
+
+    getRenderDatas(){
+        return this._m_RenderDatas;
+    }
+    getRefRenderDataFBs(){
+        return this._m_RefRenderDataFBs;
     }
 
 }

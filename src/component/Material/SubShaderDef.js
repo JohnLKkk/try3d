@@ -1,4 +1,5 @@
 import ShaderSource from "../WebGL/ShaderSource.js";
+import Tools from "../Util/Tools.js";
 
 /**
  * SubShader,被Technology包含,一个Technology包含多个SubShader,用于实现高级着色中的多pass。<br/>
@@ -9,6 +10,8 @@ import ShaderSource from "../WebGL/ShaderSource.js";
 export default class SubShaderDef {
     constructor(name) {
         this._m_Name = name;
+        // 用于判断是否属于同一类别shaderDef
+        this._m_DefId = null;
         this._m_ShaderSource = new ShaderSource();
         // 设置该SubShaderDef来自哪个MaterialDef
         this._m_FromMaterialDef = null;
@@ -21,6 +24,29 @@ export default class SubShaderDef {
         this._m_UseParams = [];
         // 使用的块定义
         this._m_UseBlocks = [];
+        // 该subShader使用的fb,null表示使用默认
+        this._m_FBId = null;
+        // 当前subShader使用的特殊
+        this._m_RefFBs = null;
+    }
+
+    /**
+     * 设置使用的fb。<br/>
+     * @param {String}[fbId]
+     */
+    setFBId(fbId){
+        this._m_FBId = fbId;
+    }
+
+    /**
+     * 返回使用的fb。<br/>
+     * @return {String}
+     */
+    getFBId(){
+        return this._m_FBId;
+    }
+    getDefId(){
+        return this._m_DefId;
     }
     addUseContexts(useContexts){
         useContexts.forEach(context=>{
@@ -53,6 +79,9 @@ export default class SubShaderDef {
      */
     setFromMaterialDef(materialDef){
         this._m_FromMaterialDef = materialDef;
+
+        // 计算shaderId
+        this._m_DefId = Tools.uniqueId(materialDef.getName() + this.getName());
     }
 
     /**

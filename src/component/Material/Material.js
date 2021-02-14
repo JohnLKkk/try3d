@@ -63,7 +63,10 @@ export default class Material extends Component{
                     subPass = rpSubPass[renderPath];
                     subPass.forEach(sub=>{
                         sub.getPass().forEach(pass=>{
-                            this._m_RenderTechnologys[technologyDef.getName()].addSubShader(renderPath, subShaders[pass.pass.getName()], pass.renderState);
+                            // 这里,原本的思路是直接建立renderPath->subShader[]
+                            // 但是为了完整性,这里使用了renderPath->subPass(包含一个subShader[])
+                            // 其中每个subShader可以指定使用的FB
+                            this._m_RenderTechnologys[technologyDef.getName()].addSubPass(renderPath, subShaders[pass.pass.getName()], pass.renderState);
                         });
                         // this._m_RenderTechnologys[technologyDef.getName()].addSubShader(renderPath, subShaders[sub.pass.getName()]);
                     });
@@ -123,27 +126,28 @@ export default class Material extends Component{
      * @param {SubShader}[subShader]
      */
     _selectSubShader(subShader){
+        this._m_CurrentSubShader = subShader;
         let frameContext = this._m_Scene.getRender().getFrameContext();
         let gl = this._m_Scene.getCanvas().getGLContext();
-        if(frameContext.m_LastSubShader != subShader){
-            this._m_CurrentSubShader = subShader;
+        // 1.先检测是否需要切换subShader(根据shader种类)(这里检测可能与理论不一样，打印出id来调试...)
+        if(frameContext.m_LastSubShaderId != subShader.getDefId()){
+            // 切换
             subShader.use(gl);
+            frameContext.m_LastSubShaderId = subShader.getDefId();
+        }
+        // 2.检测是否需要更新参数到subShader中(同种类型subShaderId,但存在不同具体实力化subShader对象,所以参数不同需要更新)
+        if(frameContext.m_LastSubShader != subShader){
             frameContext.m_LastSubShader = subShader;
-        }
-        // 检查材质参数是否发生更新
-        if(this._m_ChangeParams && this._m_ChangeParams.length > 0){
-            // 更新新的材质参数到shader中
-            // 每次只需要更新一次
-            this._m_ChangeParams = [];
-        }
+            // 更新参数到subShader中?
+            // modelMatrix,蒙皮骨骼变换这些信息,只能由具体的Geometry去传递,所以应该在Geometry中更新modelMatrix,但由于是提交数据时仅需要local,所以Geometry需要持有mat SubShader,这样才能直到更新到哪个shader句柄中。
+            // 而灯光的一些信息,应该由灯光模块系统去执行更新(如果使用ubo block,则可以不需要引用mat就可以独立更新,mat subShader只需要绑定指定的ubo block即可)
 
-        // 更新参数到subShader中?
-        // modelMatrix,蒙皮骨骼变换这些信息,只能由具体的Geometry去传递,所以应该在Geometry中更新modelMatrix,但由于是提交数据时仅需要local,所以Geometry需要持有mat SubShader,这样才能直到更新到哪个shader句柄中。
-        // 而灯光的一些信息,应该由灯光模块系统去执行更新(如果使用ubo block,则可以不需要引用mat就可以独立更新,mat subShader只需要绑定指定的ubo block即可)
-        if(this._m_Params){
-            // 更新参数
-            for(let key in this._m_Params){
-            }
+            // for(let paramName in subShader.getParams()){
+            //     if(subShader.getParamValue(paramName) != this._m_Params[paramName]){
+            //         // 更新新的值到subShader中
+            //     }
+            // }
+
         }
     }
     _init(){

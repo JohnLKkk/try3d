@@ -13,6 +13,8 @@ export default class Geometry extends Node{
         super(owner, cfg);
         this._m_Mesh = null;
         this._m_Material = null;
+        // 剔除模式(动态,总不,总是)
+        this._m_CullMode = null;
         // 生成材质对象时,根据材质hash值查询是否存在对应的材质对象,有则直接引用。
     }
     setMaterial(material){
@@ -75,6 +77,13 @@ export default class Geometry extends Node{
      * 是否为透明。<br/>
      */
     isTransparent(){
+
+    }
+
+    /**
+     * 属于GUI元素。<br/>
+     */
+    isGUI(){
 
     }
     draw(frameContext){

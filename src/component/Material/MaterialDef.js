@@ -155,16 +155,19 @@ class SubPassDef{
  * 材质定义。
  */
 export default class MaterialDef{
-    constructor() {
+    constructor(name) {
         // 解析
         // 材质名称
-        this._m_Name = "";
+        this._m_Name = name;
         // 材质参数(元素类型Param)
         this._m_Params = {};
         // subShaderDefs
         this._m_SubShaderDefs = {};
         // technology
         this._m_TechnologyDefs = {};
+        // 当前引用的所有fb
+        // key:fbId,value:fbDef(在创建Material时,才真正创建fb)
+        this._m_FBs = {};
     }
     addSubShaderDef(name, subShaderDef){
         this._m_SubShaderDefs[name] = subShaderDef;
@@ -194,6 +197,9 @@ export default class MaterialDef{
     }
     setName(name){
         this._m_Name = name;
+    }
+    getName(){
+        return this._m_Name;
     }
     static load(src){
         return MaterialDef.parse(AssetLoader.loadMaterialSourceDef(src));
@@ -325,7 +331,7 @@ export default class MaterialDef{
                 param = useParams[k];
                 // 添加参数
                 // inParams += "#ifdef " + param.getDefType() + "\n";
-                inParams += param.getType() + " " + param.getName() + ";\n";
+                inParams += "uniform " + param.getType() + " " + param.getName() + ";\n";
                 // inParams += "#endif\n";
             }
             shader = inParams + shader;
@@ -346,7 +352,7 @@ export default class MaterialDef{
             subShaderDef.addUseContexts(useContexts);
             let vertIn = "\n";
             useContexts.forEach(context=>{
-                if(context.loc){
+                if(context.loc != null || context.loc != undefined){
                     vertIn += "layout (location=" + context.loc + ") in " + context.type + " " + context.src + ";\n";
                 }
                 else if(context.def){
@@ -392,9 +398,13 @@ export default class MaterialDef{
         let param = null;
         let useParam = false;
         let useParams = [];
+        let useGlobalTextures = [];
         let conParams = {};
         let conContexts = {};
         let conVars = {};
+        // 全局变量(一般是全局纹理,即自定义frameBuffer或内置延迟着色路径的frameBuffer的纹理数据块,需要使用一种其他解析注入方式)
+        let useGlobals = [];
+        let useFBId = null;
         for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++){
             line = Tools.trim(data[i]);
             if(line.startsWith("//"))continue;
@@ -438,6 +448,7 @@ export default class MaterialDef{
             shader += Tools.trim(line) + '\n';
         }
         shader += "}\n";
+        // 检测是否引用了GlobalTextures,以便找出需要关联的输出frameBuffer
         // 添加材质参数
         if(useParam){
             subShaderDef.addUseParams(useParams);
@@ -465,7 +476,13 @@ export default class MaterialDef{
             subShaderDef.addUseContexts(useContexts);
             let vertIn = "\n";
             useContexts.forEach(context=>{
-                if(context.utype){
+                if(context.loc != null || context.loc != undefined){
+                    // 说明当前需要引用输出frameBuffer
+                    // Context_Textures列表,以便找到关联的输出frameBuffer
+                    useFBId = ShaderSource.Context_RenderDataRefFBs[context.src];
+                    vertIn += "layout (location=" + context.loc + ") out " + context.type + " " + context.src + ";\n";
+                }
+                else if(context.utype){
                     vertIn += context.utype + " " + context.src + ";\n";
                 }
                 else if(context.type){
@@ -481,6 +498,7 @@ export default class MaterialDef{
 
         // 添加shader
         subShaderDef.addShaderSource(ShaderSource.FRAGMENT_SHADER, shader);
+        subShaderDef.setFBId(useFBId);
         // 这里,需要在subShader中记录需要更新数据的uniform变量的loc,以及uniform blocks等.以便在真正创建Material对象时,保证渲染时可以根据实际不同的MatDef提交数据到shader中。
         // 在创建Material时,还需要统计整个引擎需要计算哪些上下文变量(比如ViewMatrix,ProjectMatrix...),这样可以避免不必要的变量计算,同时保证所有shader可以正常运行。
         // 每次创建一个Material时,都通过解析subShader来统计待计算的上下文变量。
@@ -649,7 +667,7 @@ export default class MaterialDef{
                             let blockDef = new Block(blockType, blockId, data, i);
                             MaterialDef.getBlockDef(blockDef, data, i);
                             // 开始解析块定义
-                            let matDef = new MaterialDef();
+                            let matDef = new MaterialDef(blockDef.getName());
                             MaterialDef.parseBlockDef(matDef, blockDef);
                             return matDef;
                             // console.log("matDef:",matDef);

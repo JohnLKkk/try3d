@@ -10,7 +10,7 @@ export default class Canvas extends Component{
         cfg.version = cfg.version || 'webgl2';
         this._m_Canvas = cfg.canvas;
         if(this._m_Canvas){
-            this._m_GL = this._m_Canvas.getContext(cfg.version);
+            this._m_GL = this._m_Canvas.getContext(cfg.version, {antialias: true});
             if(!this._m_GL){
                 console.error("浏览器不支持webgl2.0标准!");
             }
