@@ -12,6 +12,8 @@ export default class FrameContext {
         this.m_LastSubShader = null;
         this.m_LastSubShaderId = null;
         this.m_LastFrameBuffer = null;
+        // 默认帧缓存(只存在forward渲染路径时,为null,否则创建一个fbo)
+        this._m_DefaultFrameBuffer = null;
         // 当前需要的上下文
         this.m_Contexts = {};
         // 保存已计算的当前需要的上下文变量
@@ -20,6 +22,8 @@ export default class FrameContext {
         this.m_RenderState = new RenderState();
         // 渲染frameBuffer(key:id,value:fb}
         this.m_FrameBuffers = {};
+        // 内存中所有的shader
+        this.m_Shaders = {};
     }
 
     /**

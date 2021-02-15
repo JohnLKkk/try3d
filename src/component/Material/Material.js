@@ -49,7 +49,7 @@ export default class Material extends Component{
             let subShaderDefs = materialDef.getSubShaderDefs();
             let subShaders = {};
             for(let sS in subShaderDefs){
-                subShaders[subShaderDefs[sS].getName()] = new SubShader(gl, this._m_Scene.getRender().getFrameContext(), subShaderDefs[sS]);
+                subShaders[subShaderDefs[sS].getName()] = new SubShader(gl, cfg.frameContext || this._m_Scene.getRender().getFrameContext(), subShaderDefs[sS]);
             }
             let technologyDefs = materialDef.getTechnologyDefs();
             let technologyDef = null;

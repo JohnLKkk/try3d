@@ -56,8 +56,8 @@ Def DefaultDeferredShadingTestDef2{
             void main(){
                 //vec3 pos = texture(Context.InGPosition, vec2(0.5f, 0.5f)).rgb;
                 //vec3 norm = texture(Context.InGNormal, vec2(0.5f, 0.5f)).rgb;
-                Context.OutColor = vec4(pos, 1.0f);
-                //Context.OutColor = texture(Context.InGAlbedoSpec, uv0).rgba;
+                //Context.OutColor = vec4(pos, 1.0f);
+                Context.OutColor = texture(Context.InGAlbedoSpec, uv0).rgba;
                 //Context.OutColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
             }
         }

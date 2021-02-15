@@ -29,7 +29,13 @@ export default class SubShader {
         this._m_RefRenderDataFBs = null;
 
         // 创建shader
-        this._m_ShaderProgram = new ShaderProgram(gl, subShaderDef.getName(), subShaderDef.getShaderSource());
+        if(!frameContext.m_Shaders[this._m_DefId]){
+            this._m_ShaderProgram = new ShaderProgram(gl, subShaderDef.getName(), subShaderDef.getShaderSource());
+            frameContext.m_Shaders[this._m_DefId] = this._m_ShaderProgram;
+        }
+        else{
+            this._m_ShaderProgram = frameContext.m_Shaders[this._m_DefId];
+        }
         this.use(gl);
         // 获取program变量信息
         let useParams = subShaderDef.getUseParams();

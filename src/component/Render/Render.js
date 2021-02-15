@@ -7,6 +7,8 @@ import Component from "../Component.js";
 import RenderState from "../WebGL/RenderState.js";
 import FrameBuffer from "../WebGL/FrameBuffer.js";
 import ShaderSource from "../WebGL/ShaderSource.js";
+import Material from "../Material/Material.js";
+import MaterialDef from "../Material/MaterialDef.js";
 
 export default class Render extends Component{
     // 渲染路径
@@ -18,6 +20,8 @@ export default class Render extends Component{
 
     // 默认延迟着色渲染路径frameBuffer
     static DEFAULT_DEFERRED_SHADING_FRAMEBUFFER = 'DefaultDeferredShadingFrameBuffer';
+    // 如果启用了多渲染路径,则创建默认forwardFrameBuffer而不是使用内置frameBuffer(这是因为webGL不支持从多fbo.blit到内置fbo)
+    static DEFAULT_FORWARD_SHADING_FRAMEBUFFER = 'DefaultForwardShadingFrameBuffer';
 
     // Event
     // 一帧渲染开始
@@ -52,6 +56,10 @@ export default class Render extends Component{
 
         // 创建默认DeferredShadingFrameBuffer
         let gl = this._m_Scene.getCanvas().getGLContext();
+        var DepthEXT = gl.getExtension( "WEBKIT_WEBGL_depth_texture" ) ||
+            gl.getExtension( "MOZ_WEBGL_depth_texture" );
+        console.log("depthEXT:",DepthEXT);
+        // console.log("支持的拓展:" , gl.getSupportedExtensions());
         let w = this._m_Scene.getCanvas().getWidth();
         let h = this._m_Scene.getCanvas().getHeight();
         let dfb = new FrameBuffer(gl, Render.DEFAULT_DEFERRED_SHADING_FRAMEBUFFER, w, h);
@@ -64,8 +72,26 @@ export default class Render extends Component{
         dfb.addTexture(gl, ShaderSource.S_G_ALBEDOSPEC_SRC, gl.RGBA, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT2, true);
         // 创建depth附件(使用renderBuffer来提供)
         // 渲染缓存是一种特殊缓冲区,不需要在shader中写数据,而是可以作为提供类似深度缓冲区这种类型的缓存来使用
-        dfb.addBuffer(gl, ShaderSource.S_G_DEPTH_SRC, gl.DEPTH_COMPONENT16, gl.DEPTH_ATTACHMENT);
+        // webGL2.0不支持将深度写入纹理,https://www.it1352.com/1705357.html
+        dfb.addBuffer(gl, ShaderSource.S_G_DEPTH_RENDER_BUFFER_SRC, gl.DEPTH24_STENCIL8, gl.DEPTH_STENCIL_ATTACHMENT);
+        // dfb.addTexture(gl, ShaderSource.S_G_DEPTH_SRC, gl.DEPTH_COMPONENT16 , 0, gl.DEPTH_COMPONENT16, gl.UNSIGNED_BYTE, gl.DEPTH_ATTACHMENT, false);
+        // 但由于webGL不完全兼容gl.blitFramebuffer,所以这里使用纹理附件写入的方式进行
+        // 而由于webGL不支持将深度附件作为纹理使用,所以需要同时创建一个depthRenderBuffer和一个depthTexture
+        // dfb.addTexture(gl, ShaderSource.S_G_DEPTH_SRC, gl.RGBA, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT3, true);
+        // 这里使用另一种解决方案(由于webGL不支持从自定义frameBuffer.blit数据到默认frameBuffer,所以一旦启用了延迟渲染路径,则创建一个默认的forwardFrameBuffer而不是使用默认内置frameBuffer
         dfb.finish(gl, this._m_Scene, true);
+
+        // 创建备用默认fbo
+        let ffb = new FrameBuffer(gl, Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER, w, h);
+        this._m_FrameContext.addFrameBuffer(Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER, ffb);
+        // ffb.addBuffer(gl, 'outColor', gl.RGBA4, gl.COLOR_ATTACHMENT0);
+        ffb.addTexture(gl, ShaderSource.S_FORWARD_COLOR_MAP_SRC, gl.RGBA, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT0, false);
+        // ffb.addTexture(gl, 'outColor', gl.RGB, 0, gl.RGB, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT0, false);
+        ffb.addBuffer(gl, 'depth', gl.DEPTH24_STENCIL8, gl.DEPTH_STENCIL_ATTACHMENT);
+        ffb.finish(gl, this._m_Scene, true);
+        let forwardMat = new Material(this._m_Scene, {id:'for_m', frameContext:this.getFrameContext(), materialDef:MaterialDef.load("../src/component/Assets/MaterialDef/DefaultOutColorDef")});
+        ffb.getFramePicture().setMaterial(forwardMat);
+        this._m_FrameContext._m_DefaultFrameBuffer = ffb.getFrameBuffer();
     }
 
     /**
@@ -263,8 +289,8 @@ export default class Render extends Component{
         }
         if(renderInDeferredShading && deferredShadingPass){
             let dfb = this._m_FrameContext.m_LastFrameBuffer;
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-            this._m_FrameContext.m_LastFrameBuffer = null;
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
+            this._m_FrameContext.m_LastFrameBuffer = this._m_FrameContext._m_DefaultFrameBuffer;
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             // 下面是待实现的内容---------------------↓
             // DeferredShadingPass
@@ -302,18 +328,20 @@ export default class Render extends Component{
             // draw call
             if(this._m_FrameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){
                 gl.disable(gl.DEPTH_TEST);
+                // gl.depthMask(false);
             }
             dfbFramePicture.draw(this._m_FrameContext);
             if(this._m_FrameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){
                 gl.enable(gl.DEPTH_TEST);
+                // gl.depthMask(true);
             }
             // 绑定renderData
-            dfb.getTextures().forEach(texture=>{
-                if(renderDatas[texture.getName()]){
-                    gl.activeTexture(gl.TEXTURE0 + renderDatas[texture.getName()].loc);
-                    gl.bindTexture(gl.TEXTURE_2D, null);
-                }
-            });
+            // dfb.getTextures().forEach(texture=>{
+            //     if(renderDatas[texture.getName()]){
+            //         gl.activeTexture(gl.TEXTURE0 + renderDatas[texture.getName()].loc);
+            //         gl.bindTexture(gl.TEXTURE_2D, null);
+            //     }
+            // });
             // 获取所有可见灯光并进行提交数据
             // (判断材质是否需要灯光?)
             // ...
@@ -327,13 +355,13 @@ export default class Render extends Component{
             // 复制geometry深度到下一个渲染缓存(默认缓存)并继续后续渲染
             // 设置写入默认缓存
             gl.bindFramebuffer(gl.READ_FRAMEBUFFER, dfb.getFrameBuffer());
-            gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
+            gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
             // 复制数据到默认缓存
             // 请注意，这可能会也可能不会，因为FBO和默认帧缓冲区的内部格式必须匹配。
             // 内部格式由实现定义。 这适用于我的所有系统，但是如果您的系统不适用，则可能必须在另一个着色器阶段写入深度缓冲区（或以某种方式将默认帧缓冲区的内部格式与FBO的内部格式进行匹配）。
             gl.blitFramebuffer(0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), gl.DEPTH_BUFFER_BIT, gl.NEAREST);
             // 切换回默认fb1
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
         }
         else{
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -380,7 +408,7 @@ export default class Render extends Component{
                 let mat = this._m_Scene.getComponent(matId);
                 let currentTechnology = mat.getCurrentTechnology();
                 // 获取当前技术所有Forward路径下的SubShaders
-                let forwardSubPasss = currentTechnology.getSubShaders(Render.FORWARD);
+                let forwardSubPasss = currentTechnology.getSubPasss(Render.FORWARD);
                 // 如果该物体存在Forward路径渲染的需要,则执行Forward渲染
                 if(forwardSubPasss){
                     subShaders = forwardSubPasss.getSubShaders();
@@ -399,6 +427,30 @@ export default class Render extends Component{
             });
         }
 
+        // 检测是否启用了自定义forwardFrameBuffer
+        if(this._m_FrameContext._m_DefaultFrameBuffer){
+            // 则在这里渲染到默认内置frameBuffer
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            // 渲染forwardPicture
+            let forwardPicture = this._m_FrameContext.getFrameBuffer(Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER).getFramePicture();
+            let currentTechnology = forwardPicture.getMaterial().getCurrentTechnology();
+            // 获取当前技术所有Forward路径下的SubShaders
+            let forwardSubPasss = currentTechnology.getSubPasss(Render.FORWARD);
+            forwardPicture.getMaterial()._selectSubShader(forwardSubPasss.getSubShaders()[0].subShader);
+            let renderDatas = forwardSubPasss.getSubShaders()[0].subShader.getRenderDatas();
+            if(this._m_FrameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){
+                gl.disable(gl.DEPTH_TEST);
+            }
+            for(let k in renderDatas){
+                gl.activeTexture(gl.TEXTURE0 + renderDatas[k].loc);
+                gl.bindTexture(gl.TEXTURE_2D, this._m_FrameContext.getFrameBuffer(renderDatas[k].refId).getTexture(renderDatas[k].dataId).getLoc());
+            }
+            forwardPicture.draw(this._m_FrameContext);
+            if(this._m_FrameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){
+                gl.enable(gl.DEPTH_TEST);
+            }
+            this._m_FrameContext.m_LastFrameBuffer = null;
+        }
         // 一帧结束后
         this.fire(Render.POST_FRAME, [exTime]);
     }

@@ -123,7 +123,8 @@ export default class FrameBuffer {
      */
     finish(gl, scene, makeFramePicture){
         gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_Framebuffer);
-        gl.drawBuffers(this._m_DrawBuffers);
+        if(this._m_DrawBuffers.length > 0)
+            gl.drawBuffers(this._m_DrawBuffers);
         if(!gl.isFramebuffer(this._m_Framebuffer)){
             console.log("[[" + this._m_Name + "]]无效frameBuffer!");
         }

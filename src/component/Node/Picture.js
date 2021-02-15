@@ -13,11 +13,12 @@ export default class Picture extends Geometry{
         this._m_Height = cfg.height || this._m_Scene.getCanvas().getHeight();
         // 创建mesh
         let mesh = new Mesh();
+        // 创建一个最远的picture
         mesh.setData(Mesh.S_POSITIONS, [
-            -1, 1, 0,
-            -1, -1, 0,
-            1, 1, 0,
-            1, -1, 0
+            -1, 1, 1,
+            -1, -1, 1,
+            1, 1, 1,
+            1, -1, 1
         ]);
         mesh.setData(Mesh.S_UV0, [
             0, 1,
