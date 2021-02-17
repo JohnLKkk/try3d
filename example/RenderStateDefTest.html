@@ -20,14 +20,14 @@
     import MaterialDef from "../src/component/Material/MaterialDef.js";
     import FirstPersonController from "../src/component/InputControl/FirstPersonController.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(10, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     // 加载一个材质定义
     let materialDef = MaterialDef.load("../src/component/Assets/MaterialDef/RenderStateDef");
     let mat = new Material(scene, {id:"colorMat", materialDef});
     console.log("materialDef:",materialDef);
     mat.selectTechnology('FaceCullTechnology');
-    let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(10, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     let geometry = new Geometry(scene, {id:'testGeometry'});
     let mesh = new Mesh();
     mesh.setData(Mesh.S_POSITIONS, [

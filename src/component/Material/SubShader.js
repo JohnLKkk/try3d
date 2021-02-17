@@ -27,6 +27,8 @@ export default class SubShader {
         this._m_FBId = subShaderDef.getFBId();
         // 当前subShader引用的fb(renderDatas数据可能来自多个不同的fb)
         this._m_RefRenderDataFBs = null;
+        // 渲染程序类型
+        this._m_RenderProgramType = subShaderDef.getRenderProgramType();
 
         // 创建shader
         if(!frameContext.m_Shaders[this._m_DefId]){
@@ -105,9 +107,31 @@ export default class SubShader {
         // gl.uniformBlockBinding(this._m_ShaderProgram.getProgram(), ubi, 0x001);
         gl.useProgram(null);
     }
+
+    /**
+     * 返回渲染程序类型。<br/>
+     * null表示使用默认渲染程序。<br/>
+     * @return {null}
+     */
+    getRenderProgramType(){
+        return this._m_RenderProgramType;
+    }
+
+    /**
+     * 返回当前SubShader名称。<br/>
+     * @return {*|String}
+     */
     getName(){
         return this._m_Name;
     }
+
+    /**
+     * 返回当前SubShader定义Id。<br/>
+     * 只有完全一致的着色源码定义，材质同一种类型的SubShader。<br/>
+     * 一旦存在不同宏定义导致源码不一致，则也是不同DefId。<br/>
+     * 但目前仅用MaterDef+SubShaderName计算该DefId，所以需要后续完善。<br/>
+     * @return {Number}
+     */
     getDefId(){
         return this._m_DefId;
     }

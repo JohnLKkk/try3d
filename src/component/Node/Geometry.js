@@ -58,6 +58,9 @@ export default class Geometry extends Node{
     isDrawable(){
         return true;
     }
+    isFramePicture(){
+        return false;
+    }
 
     /**
      * 是否为非透明

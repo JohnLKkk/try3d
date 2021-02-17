@@ -261,9 +261,25 @@ export default class MaterialDef{
         for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++) {
             line = data[i];
             line = Tools.trim(line);
+            if(line.startsWith("//"))continue;
             line = line.substring(0, line.length - 1);
             line = line.split(" ");
             subShaderDef.addVar(line[0], line[1]);
+        }
+    }
+    static parseAdvanced(subShaderDef, blockDef){
+        let data = blockDef.getData();
+        let line = null;
+        for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++) {
+            line = data[i];
+            line = Tools.trim(line);
+            if(line.startsWith("//"))continue;
+            line = line.substring(0, line.length - 1);
+            line = line.split(" ");
+            // 指定渲染程序
+            if(line[0].startsWith("RenderProgram")){
+                subShaderDef.setRenderProgramType(line[1]);
+            }
         }
     }
     static parseVsShaderMain(subShaderDef, blockDef){
@@ -561,6 +577,9 @@ export default class MaterialDef{
                     break;
                 case "Vars":
                     MaterialDef.parseShaderVars(blockObj, blockDef);
+                    break;
+                case "Advanced":
+                    MaterialDef.parseAdvanced(blockObj, blockDef);
                     break;
                 case "Vs_Shader_Main":
                     MaterialDef.parseVsShaderMain(blockObj, blockDef);

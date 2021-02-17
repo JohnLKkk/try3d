@@ -1,6 +1,7 @@
 import {Buffer} from "./Buffer.js";
 import Texture from "./Texture.js";
 import Picture from "../Node/Picture.js";
+import FramePicture from "../Node/FramePicture.js";
 
 export default class FrameBuffer {
     constructor(gl, name, w, h) {
@@ -148,7 +149,7 @@ export default class FrameBuffer {
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
         if(makeFramePicture){
-            this._m_FramePicture = new Picture(scene, {id:this._m_Name + "_picture"});
+            this._m_FramePicture = new FramePicture(scene, {id:this._m_Name + "_picture"});
         }
     }
 

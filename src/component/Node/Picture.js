@@ -7,6 +7,10 @@ import Mesh from "../WebGL/Mesh.js";
  * @data 2021年2月14日615点32分
  */
 export default class Picture extends Geometry{
+    getType() {
+        return 'Picture';
+    }
+
     constructor(owner, cfg) {
         super(owner, cfg);
         this._m_Width = cfg.width || this._m_Scene.getCanvas().getWidth();
@@ -34,7 +38,7 @@ export default class Picture extends Geometry{
         this.updateBound();
     }
     isDrawable() {
-        return false;
+        return true;
     }
 
 }

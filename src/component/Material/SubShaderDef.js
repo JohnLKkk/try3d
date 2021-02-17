@@ -28,6 +28,24 @@ export default class SubShaderDef {
         this._m_FBId = null;
         // 当前subShader使用的特殊
         this._m_RefFBs = null;
+        // 设置指定的渲染程序类型(默认为null)
+        this._m_RenderProgramType = null;
+    }
+
+    /**
+     * 设置渲染程序类型。<br/>
+     * @param {renderProgramType}[String]
+     */
+    setRenderProgramType(renderProgramType){
+        this._m_RenderProgramType = renderProgramType;
+    }
+
+    /**
+     * 返回渲染程序类型。<br/>
+     * @return {null}
+     */
+    getRenderProgramType(){
+        return this._m_RenderProgramType;
     }
 
     /**

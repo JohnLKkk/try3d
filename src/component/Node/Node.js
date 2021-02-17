@@ -6,6 +6,10 @@ import Matrix44 from "../Math3d/Matrix44.js";
  * @author Kkk
  */
 export default class Node extends Component{
+    getType() {
+        return 'Node';
+    }
+
     constructor(owner, cfg) {
         super(owner, cfg);
         this._m_LocalMatrix = new Matrix44();

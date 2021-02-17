@@ -157,6 +157,10 @@ export default class Camera extends Component{
             this._m_ProjectVieMatrixUpdate = false;
         }
         gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+
+        if(this._m_ViewMatrixUpdate || this._m_ProjectMatrixUpdate){
+            this._doUpdate();
+        }
     }
 
     /**

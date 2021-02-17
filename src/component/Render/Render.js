@@ -9,6 +9,8 @@ import FrameBuffer from "../WebGL/FrameBuffer.js";
 import ShaderSource from "../WebGL/ShaderSource.js";
 import Material from "../Material/Material.js";
 import MaterialDef from "../Material/MaterialDef.js";
+import DefaultRenderProgram from "./DefaultRenderProgram.js";
+import SinglePassLightingRenderProgram from "./SinglePassLightingRenderProgram.js";
 
 export default class Render extends Component{
     // 渲染路径
@@ -41,8 +43,14 @@ export default class Render extends Component{
         // 保存所有需要渲染的元素
         this._m_Drawables = [];
         this._m_DrawableIDs = {};
+        // 保存所有FramePicture对象
+        this._m_FramePictures = [];
+        this._m_FramePictureIDs = [];
 
+        // 帧上下文
         this._m_FrameContext = new FrameContext();
+        // 所有可用渲染程序
+        this._m_RenderPrograms = {};
 
         // 不透明队列的默认渲染状态
         this._m_OpaqueRenderState = new RenderState();
@@ -54,6 +62,13 @@ export default class Render extends Component{
         this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[1], 'Off');
         // 设置默认blend方程
 
+
+    }
+
+    /**
+     * 启动渲染器。<br/>
+     */
+    startUp(){
         // 创建默认DeferredShadingFrameBuffer
         let gl = this._m_Scene.getCanvas().getGLContext();
         var DepthEXT = gl.getExtension( "WEBKIT_WEBGL_depth_texture" ) ||
@@ -92,6 +107,10 @@ export default class Render extends Component{
         let forwardMat = new Material(this._m_Scene, {id:'for_m', frameContext:this.getFrameContext(), materialDef:MaterialDef.load("../src/component/Assets/MaterialDef/DefaultOutColorDef")});
         ffb.getFramePicture().setMaterial(forwardMat);
         this._m_FrameContext._m_DefaultFrameBuffer = ffb.getFrameBuffer();
+
+        // 加载可用渲染程序
+        this._m_RenderPrograms[DefaultRenderProgram.PROGRAM_TYPE] = new DefaultRenderProgram();
+        this._m_RenderPrograms[SinglePassLightingRenderProgram.PROGRAM_TYPE] = new SinglePassLightingRenderProgram();
     }
 
     /**
@@ -107,6 +126,14 @@ export default class Render extends Component{
      * @param {IDrawable}[iDrawable]
      */
     addDrawable(iDrawable){
+        if(iDrawable.isFramePicture && iDrawable.isFramePicture()){
+            // 添加到FramesPicture列表中
+            if(!this._m_FramePictureIDs[iDrawable.getId()]){
+                this._m_FramePictureIDs[iDrawable.getId()] = iDrawable;
+                this._m_FramePictures.push(iDrawable);
+            }
+            return;
+        }
         // 每次添加一个drawable时,根据材质提前做好分区
         if(!this._m_DrawableIDs[iDrawable.getId()]){
             this._m_DrawableIDs[iDrawable.getId()] = iDrawable;
@@ -207,16 +234,15 @@ export default class Render extends Component{
         // 暂时使用方法1
         let hasOpaque = false;
         let hasTranslucent = false;
-        let matDrawables = {};
+        // 使用后置缓存?
+        let useBackForwardFrameBuffer = false;
+        // 灯光列表
+        let lights = this._m_Scene.getLights();
         // 不透明队列
         let opaqueBucket = {};
         // 半透明队列
         let translucentBucket = {};
         visDrawables.forEach(drawable=>{
-            if(!matDrawables[drawable.getMaterial().getId()]){
-                matDrawables[drawable.getMaterial().getId()] = [];
-            }
-            matDrawables[drawable.getMaterial().getId()].push(drawable);
             if(drawable.isOpaque()){
                 hasOpaque = true;
                 if(!opaqueBucket[drawable.getMaterial().getId()]){
@@ -288,6 +314,7 @@ export default class Render extends Component{
             });
         }
         if(renderInDeferredShading && deferredShadingPass){
+            useBackForwardFrameBuffer = true;
             let dfb = this._m_FrameContext.m_LastFrameBuffer;
             gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
             this._m_FrameContext.m_LastFrameBuffer = this._m_FrameContext._m_DefaultFrameBuffer;
@@ -330,6 +357,7 @@ export default class Render extends Component{
                 gl.disable(gl.DEPTH_TEST);
                 // gl.depthMask(false);
             }
+            this._m_RenderPrograms[deferredShadingPass.subShader.getRenderProgramType()].draw(gl, this._m_FrameContext, dfbFramePicture, lights);
             dfbFramePicture.draw(this._m_FrameContext);
             if(this._m_FrameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){
                 gl.enable(gl.DEPTH_TEST);
@@ -388,7 +416,8 @@ export default class Render extends Component{
                         }
                         // 指定subShader
                         mat._selectSubShader(subShaders[subShader].subShader);
-                        geo.draw(this._m_FrameContext);
+                        this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].draw(gl, this._m_FrameContext, geo, lights);
+                        // geo.draw(this._m_FrameContext);
                     }
                 }
             });
@@ -421,14 +450,15 @@ export default class Render extends Component{
                         }
                         // 指定subShader
                         mat._selectSubShader(subShaders[subShader].subShader);
-                        geo.draw(this._m_FrameContext);
+                        this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].draw(gl, this._m_FrameContext, geo, lights);
+                        // geo.draw(this._m_FrameContext);
                     }
                 }
             });
         }
 
         // 检测是否启用了自定义forwardFrameBuffer
-        if(this._m_FrameContext._m_DefaultFrameBuffer){
+        if(useBackForwardFrameBuffer){
             // 则在这里渲染到默认内置frameBuffer
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             // 渲染forwardPicture
@@ -436,6 +466,7 @@ export default class Render extends Component{
             let currentTechnology = forwardPicture.getMaterial().getCurrentTechnology();
             // 获取当前技术所有Forward路径下的SubShaders
             let forwardSubPasss = currentTechnology.getSubPasss(Render.FORWARD);
+            // 这里按照架构严格设计应该是遍历所有subShaders,但由于该阶段是完全引擎内置操作,所以直接取[0]第一个元素subShader进行渲染,从而跳过多余的遍历
             forwardPicture.getMaterial()._selectSubShader(forwardSubPasss.getSubShaders()[0].subShader);
             let renderDatas = forwardSubPasss.getSubShaders()[0].subShader.getRenderDatas();
             if(this._m_FrameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){
