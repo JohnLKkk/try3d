@@ -1,3 +1,8 @@
+/**
+ * 对RenderBuffer的封制。<br/>
+ * @author Kkk
+ * @date 2021年2月12日15点49分
+ */
 export class Buffer {
     constructor(name, loc, w, h, format) {
         this._m_Name = name;

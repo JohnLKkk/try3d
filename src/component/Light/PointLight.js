@@ -11,6 +11,9 @@ export default class PointLight extends Light{
     getType() {
         return 'PointLight';
     }
+    getTypeId() {
+        return 1;
+    }
 
     constructor(owner, cfg) {
         super(owner, cfg);

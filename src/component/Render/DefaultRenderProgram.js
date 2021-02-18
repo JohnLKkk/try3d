@@ -13,11 +13,12 @@ export default class DefaultRenderProgram {
     /**
      * 渲染指定iDrawable。<br/>
      * @param {WebGLContext}[gl]
+     * @param {Scene}[scene]
      * @param {FrameContext}[frameContext]
      * @param {IDrawable}[iDrawable]
      * @param {Light[]}[lights灯光信息列表]
      */
-    draw(gl, frameContext, iDrawable, lights){
+    draw(gl, scene, frameContext, iDrawable, lights){
         iDrawable.draw(frameContext);
     }
 

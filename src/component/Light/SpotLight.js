@@ -10,6 +10,9 @@ export default class SpotLight extends Light{
     getType() {
         return 'SpotLight';
     }
+    getTypeId() {
+        return 2;
+    }
 
     constructor(owner, cfg) {
         super(owner, cfg);

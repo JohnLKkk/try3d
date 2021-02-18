@@ -19,6 +19,9 @@ export default class SubShader {
         this._m_Params = {};
         // 上下文变量
         // name:varName,loc:glLoc,fun:glFunc
+        // 这里有一个优化是根据不同类型上下文变量提前分为不同的列表保存
+        // 比如geometry的上下文变量(在geometry中提交modelMatrix和骨骼变换之类的变量)
+        // 比如光照的上下文变量(在renderProgram中提交对应变量)
         this._m_ContextVars = {};
         // 保存特殊纹理数据
         this._m_RenderDatas = {};

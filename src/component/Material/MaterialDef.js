@@ -282,6 +282,27 @@ export default class MaterialDef{
             }
         }
     }
+    static parseVsShader(subShaderDef, blockDef){
+        let shaderSource = "";
+        blockDef.getSubBlock().forEach(subBlockDef=>{
+            switch (subBlockDef.getType()) {
+                case 'Vs_Shader_Main':
+                    shaderSource += MaterialDef.parseVsShaderMain(subShaderDef, subBlockDef);
+                    break;
+                default:
+                    // 追加为当前着色器源码的其他部分(因为shader不仅仅包含main函数,还有很多自定义函数体)
+                    shaderSource += MaterialDef.parseVsShaderFun(subShaderDef, subBlockDef);
+                    break;
+            }
+        });
+        console.log("shaderSource:",shaderSource);
+        subShaderDef.addShaderSource(ShaderSource.VERTEX_SHADER, shaderSource);
+    }
+    static parseVsShaderFun(subShaderDef, blockDef){
+        // 解析VsShader的其他函数
+        // 单独定义parseFsShaderFun和parseVsShaderFun的目的在于,Fs和Vs对于某些变量的插入定义是不同的,所以最好单独进行
+        // 比如对layout变量,vs是in而fs是out
+    }
     static parseVsShaderMain(subShaderDef, blockDef){
         let data = blockDef.getData();
         let line = null;
@@ -379,7 +400,11 @@ export default class MaterialDef{
                     BLOCKS[context.def] = context.def;
                 }
                 else if(context.utype){
-                    vertIn += context.utype + " " + context.src + ";\n";
+                    vertIn += context.utype + " " + context.src;
+                    if(context.modifier){
+                        vertIn += context.modifier;
+                    }
+                    vertIn += ";\n";
                 }
                 else if(context.type){
                     vertIn += context.type + " " + context.src + ";\n";
@@ -398,10 +423,32 @@ export default class MaterialDef{
             shader;
 
         // 添加shader
-        subShaderDef.addShaderSource(ShaderSource.VERTEX_SHADER, shader);
+        // subShaderDef.addShaderSource(ShaderSource.VERTEX_SHADER, shader);
         // 这里,需要在subShader中记录需要更新数据的uniform变量的loc,以及uniform blocks等.以便在真正创建Material对象时,保证渲染时可以根据实际不同的MatDef提交数据到shader中。
         // 在创建Material时,还需要统计整个引擎需要计算哪些上下文变量(比如ViewMatrix,ProjectMatrix...),这样可以避免不必要的变量计算,同时保证所有shader可以正常运行。
         // 每次创建一个Material时,都通过解析subShader来统计待计算的上下文变量。
+        return shader;
+    }
+    static parseFsShader(subShaderDef, blockDef){
+        let shaderSource = "";
+        blockDef.getSubBlock().forEach(subBlockDef=>{
+            switch (subBlockDef.getType()) {
+                case 'Fs_Shader_Main':
+                    shaderSource += MaterialDef.parseFsShaderMain(subShaderDef, subBlockDef);
+                    break;
+                default:
+                    // 追加为当前着色器源码的其他部分(因为shader不仅仅包含main函数,还有很多自定义函数体)
+                    shaderSource += MaterialDef.parseFsShaderFun(subShaderDef, subBlockDef);
+                    break;
+            }
+        });
+        console.log("shaderSource:",shaderSource);
+        subShaderDef.addShaderSource(ShaderSource.FRAGMENT_SHADER, shaderSource);
+    }
+    static parseFsShaderFun(subShaderDef, blockDef){
+        // 解析FsShader的其他函数
+        // 单独定义parseFsShaderFun和parseVsShaderFun的目的在于,Fs和Vs对于某些变量的插入定义是不同的,所以最好单独进行
+        // 比如对layout变量,vs是in而fs是out
     }
     static parseFsShaderMain(subShaderDef, blockDef){
         let data = blockDef.getData();
@@ -513,11 +560,12 @@ export default class MaterialDef{
             shader;
 
         // 添加shader
-        subShaderDef.addShaderSource(ShaderSource.FRAGMENT_SHADER, shader);
+        // subShaderDef.addShaderSource(ShaderSource.FRAGMENT_SHADER, shader);
         subShaderDef.setFBId(useFBId);
         // 这里,需要在subShader中记录需要更新数据的uniform变量的loc,以及uniform blocks等.以便在真正创建Material对象时,保证渲染时可以根据实际不同的MatDef提交数据到shader中。
         // 在创建Material时,还需要统计整个引擎需要计算哪些上下文变量(比如ViewMatrix,ProjectMatrix...),这样可以避免不必要的变量计算,同时保证所有shader可以正常运行。
         // 每次创建一个Material时,都通过解析subShader来统计待计算的上下文变量。
+        return shader;
     }
     static parseSubPass(blockObj, blockDef){
         let path = blockDef.getName();
@@ -571,10 +619,12 @@ export default class MaterialDef{
                     break;
                 case "Vs_Shader":
                     // vs
-                    break;
+                    MaterialDef.parseVsShader(blockObj, blockDef);
+                    return;
                 case "Fs_Shader":
                     // fs
-                    break;
+                    MaterialDef.parseFsShader(blockObj, blockDef);
+                    return;
                 case "Vars":
                     MaterialDef.parseShaderVars(blockObj, blockDef);
                     break;
@@ -582,10 +632,10 @@ export default class MaterialDef{
                     MaterialDef.parseAdvanced(blockObj, blockDef);
                     break;
                 case "Vs_Shader_Main":
-                    MaterialDef.parseVsShaderMain(blockObj, blockDef);
+                    // MaterialDef.parseVsShaderMain(blockObj, blockDef);
                     break;
                 case "Fs_Shader_Main":
-                    MaterialDef.parseFsShaderMain(blockObj, blockDef);
+                    // MaterialDef.parseFsShaderMain(blockObj, blockDef);
                     break;
                 case "Technology":
                     // 技术块

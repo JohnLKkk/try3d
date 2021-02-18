@@ -5,6 +5,9 @@ export default class DirectionalLight extends Light{
     getType() {
         return 'DirectionalLight';
     }
+    getTypeId() {
+        return 0;
+    }
 
     constructor(owner, cfg) {
         super(owner, cfg);

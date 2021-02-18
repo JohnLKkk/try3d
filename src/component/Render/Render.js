@@ -357,7 +357,7 @@ export default class Render extends Component{
                 gl.disable(gl.DEPTH_TEST);
                 // gl.depthMask(false);
             }
-            this._m_RenderPrograms[deferredShadingPass.subShader.getRenderProgramType()].draw(gl, this._m_FrameContext, dfbFramePicture, lights);
+            this._m_RenderPrograms[deferredShadingPass.subShader.getRenderProgramType()].draw(gl, this._m_Scene, this._m_FrameContext, dfbFramePicture, lights);
             dfbFramePicture.draw(this._m_FrameContext);
             if(this._m_FrameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){
                 gl.enable(gl.DEPTH_TEST);
@@ -416,7 +416,7 @@ export default class Render extends Component{
                         }
                         // 指定subShader
                         mat._selectSubShader(subShaders[subShader].subShader);
-                        this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].draw(gl, this._m_FrameContext, geo, lights);
+                        this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].draw(gl, this._m_Scene, this._m_FrameContext, geo, lights);
                         // geo.draw(this._m_FrameContext);
                     }
                 }
@@ -450,7 +450,7 @@ export default class Render extends Component{
                         }
                         // 指定subShader
                         mat._selectSubShader(subShaders[subShader].subShader);
-                        this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].draw(gl, this._m_FrameContext, geo, lights);
+                        this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].draw(gl, this._m_Scene, this._m_FrameContext, geo, lights);
                         // geo.draw(this._m_FrameContext);
                     }
                 }

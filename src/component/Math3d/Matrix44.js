@@ -238,6 +238,19 @@ export default class Matrix44 {
         result.m[resultOffset + 14] = rhs.m[12] * lhs.m[2] + rhs.m[13] * lhs.m[6] + rhs.m[14] * lhs.m[10] + rhs.m[15] * lhs.m[14];
         result.m[resultOffset + 15] = rhs.m[12] * lhs.m[3] + rhs.m[13] * lhs.m[7] + rhs.m[14] * lhs.m[11] + rhs.m[15] * lhs.m[15];
     }
+
+    /**
+     * result = v * m;
+     * @param {Vector4}[result 结果向量]
+     * @param {Vector4}[v 源向量]
+     * @param {Matrix44}[m 目标矩阵]
+     */
+    static multiplyMV(result, v, m) {
+        result._m_X = v._m_X * m.m[0] + v._m_Y * m.m[4] + v._m_Z * m.m[8] + v._m_W * m.m[12];
+        result._m_Y = v._m_X * m.m[1] + v._m_Y * m.m[5] + v._m_Z * m.m[9] + v._m_W * m.m[13];
+        result._m_Z = v._m_X * m.m[2] + v._m_Y * m.m[6] + v._m_Z * m.m[10] + v._m_W * m.m[14];
+        result._m_W = v._m_X * m.m[3] + v._m_Y * m.m[7] + v._m_Z * m.m[11] + v._m_W * m.m[15];
+    }
     /**
      * 根据视场角度定义投影矩阵，纵横比和Z剪裁平面。
      * @param {Array}[m保存透视矩阵的浮点数组]

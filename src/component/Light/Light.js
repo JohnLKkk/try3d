@@ -9,6 +9,9 @@ export default class Light extends Node{
     getType() {
         return 'Light';
     }
+    getTypeId(){
+        return -1;
+    }
 
     constructor(owner, cfg) {
         super(owner, cfg);

@@ -48,6 +48,12 @@ export default class ShaderSource {
     static S_VP_SRC = "_view_project_matrix";
     static S_NDP = "";
 
+    // 灯光系统
+    static S_LIGHT_DATA_SRC = '_lightData';
+    static S_CUR_LIGHT_COUNT_SRC = '_curLightCount';
+    static S_NB_LIGHTS = '_NB_LIGHTS';
+    static S_BATCH_LIGHT_SIZE = 4;
+
     static S_G_POSITION_SRC = "_gPosition";
     static S_G_NORMAL_SRC = "_gNormal";
     static S_G_ALBEDOSPEC_SRC = "_gAlbedoSpec";
@@ -91,6 +97,8 @@ export default class ShaderSource {
         "Context.ModelMatrix":{src:ShaderSource.S_MODEL_MATRIX_SRC, pattern:/Context.ModelMatrix/, tagPattern:/Context.ModelMatrix/g, tag:ShaderSource.S_MODEL_MATRIX_SRC, type:"mat4", utype:"uniform mat4"},
         "Context.ProjectViewMatrix":{src:ShaderSource.S_VP_SRC, pattern:/Context.ProjectViewMatrix/, tagPattern:/Context.ProjectViewMatrix/g, tag:ShaderSource.S_VP_SRC, def:'MAT'},
         "Context.OutColor":{src:ShaderSource.S_OUT_COLOR, pattern:/Context.OutColor/, tagPattern:/Context.OutColor/g, tag:"_outColor", type:"out vec4"},
+        "Context.LightData":{src:ShaderSource.S_LIGHT_DATA_SRC, pattern:/Context.ModelMatrix/, tagPattern:/Context.ModelMatrix/g, tag:ShaderSource.S_MODEL_MATRIX_SRC, type:"vec4", utype:"uniform vec4", modifier:'[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']'},
+        "Context.CurLightCount":{src:ShaderSource.S_CUR_LIGHT_COUNT_SRC, pattern:/Context.CurLightCount/, tagPattern:/Context.CurLightCount/g, tag:ShaderSource.S_CUR_LIGHT_COUNT_SRC, type:"int", utype:'uniform int'},
 
         // 输入类型缓存
         "Context.InGPosition":{src:ShaderSource.S_G_POSITION_SRC, pattern:/Context.InGPosition/, tagPattern:/Context.InGPosition/g, tag:ShaderSource.S_G_POSITION_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
