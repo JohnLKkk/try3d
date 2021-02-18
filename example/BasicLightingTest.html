@@ -27,7 +27,7 @@
     let materialDef = MaterialDef.load("../src/component/Assets/MaterialDef/DefaultDeferredShadingTestDef");
 
     let deferredMat = new Material(scene, {id:"def", materialDef});
-    console.log("materialDef:" , materialDef);
+    console.log("materialDef:" , MaterialDef.load("../src/component/Assets/MaterialDef/BasicLightingDef"));
     deferredMat.selectTechnology('TestDeferredShading');
     let geometry1 = new Geometry(scene, {id:'testGeometry'});
     let mesh1 = new Mesh();

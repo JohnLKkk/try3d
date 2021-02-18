@@ -10,13 +10,23 @@ Def BasicLightingDef{
         Vars{
             vec3 wvNormal;
             vec3 wvPosition;
+            // 三种成分用于调和光照,可来自材质颜色的定义,也可以来自vertex_light
+            vec3 ambientSumAdjust;
+            vec4 diffuseSumAdjust;
+            vec3 specularSumAdjust;
         }
         Advanced{
             RenderProgram SinglePassLighting;
         }
         Vs_Shader{
             void main(){
-                Context.OutPosition = Context.ProjectViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                vec4 wvPos = Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                wvPosition = wvPos.xyz;
+                wvNormal = Context.InNormal;
+                ambientSumAdjust = vec3(0.2f);
+                diffuseSumAdjust = vec4(0.5f, 0.5f, 0.5f, 1.0f);
+                specularSumAdjust = vec3(1.0f);
+                Context.OutPosition = Context.ProjectMatrix * wvPos;
             }
         }
         Fs_Shader{
@@ -61,6 +71,9 @@ Def BasicLightingDef{
                 vec4 lightDir;
                 vec3 lightVec;
                 vec2 lightBRDF;
+                vec4 diffuseColor = vec4(0.5f, 0.5f, 0.5f, 1.0f);
+                vec4 specularColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+                Context.OutColor.rgb = diffuseColor.rgb * ambientSumAdjust;
                 for( int i = 0;i < Context.CurLightCount;i+=3 ){
                     // 后期改为Context.GetLightDir(Context.LightData[i]);
                     lightColor = Context.LightData[i];
@@ -73,11 +86,12 @@ Def BasicLightingDef{
                     // 如果存在法线纹理,则进一步计算lightDir
 
                     // 计算反射率
-                    ComputeLighting(wvNormal, viewDir, lightDir.xyz, lightDir.w * spotFallOff , Params.shininess, lightBRDF);
+                    ComputeLighting(wvNormal, viewDir, lightDir.xyz, lightDir.w * spotFallOff , Params.Shininess, lightBRDF);
 
                     // 乘以颜色部分
+                    Context.OutColor.rgb += lightColor.rgb * (vec3(lightBRDF.x) * diffuseColor.rgb * diffuseSumAdjust + vec3(lightBRDF.y) * specularColor.rgb * specularSumAdjust);
                 }
-                Context.OutColor = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+                Context.OutColor.a = diffuseSumAdjust.a * diffuseColor.a;
             }
         }
     }
