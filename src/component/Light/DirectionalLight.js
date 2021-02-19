@@ -39,6 +39,7 @@ export default class DirectionalLight extends Light{
      */
     setDirectionXYZ(x, y, z){
         this._m_Direction.setToInXYZ(x, y, z);
+        this._m_Direction.normal();
     }
 
 }

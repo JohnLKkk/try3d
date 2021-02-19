@@ -643,7 +643,11 @@ export default class MaterialDef{
                     vertIn += "layout (location=" + context.loc + ") out " + context.type + " " + context.src + ";\n";
                 }
                 else if(context.utype){
-                    vertIn += context.utype + " " + context.src + ";\n";
+                    vertIn += context.utype + " " + context.src;
+                    if(context.modifier){
+                        vertIn += context.modifier;
+                    }
+                    vertIn += ";\n";
                 }
                 else if(context.type){
                     vertIn += context.type + " " + context.src + ";\n";
@@ -806,6 +810,7 @@ export default class MaterialDef{
             line = data[i];
             line = Tools.trim(line);
             if(line.startsWith("//"))continue;
+            if(line.length == 0)continue;
             line = line.substring(0, line.length - 1);
             line = line.split(' ');
             renderState["" + line[0] + ""] = "" + line[1];

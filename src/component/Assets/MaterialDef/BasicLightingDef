@@ -22,7 +22,8 @@ Def BasicLightingDef{
             void main(){
                 vec4 wvPos = Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
                 wvPosition = wvPos.xyz;
-                wvNormal = Context.InNormal;
+                vec3 norm = mat3(transpose(inverse(Context.ModelMatrix))) * Context.InNormal;
+                wvNormal = (Context.ViewMatrix * vec4(norm, 0.0f)).xyz;
                 ambientSumAdjust = vec3(0.2f);
                 diffuseSumAdjust = vec4(0.5f, 0.5f, 0.5f, 1.0f);
                 specularSumAdjust = vec3(1.0f);
@@ -47,7 +48,7 @@ Def BasicLightingDef{
                 // 对于PointLight,w = 0-1之间的半径比率
                 lightDir.w = clamp(1.0 - position.w * dist * posLight, 0.0f, 1.0f);
                 // 归一化
-                lightDir.xyz = tempVec / vec3(dist);
+                lightDir.xyz = lightVec / vec3(dist);
             }
             // 基于BlinnPhong光照模型计算光照因子
             // brdf.x保存漫反射部分;brdf.y保存镜面反射部分
@@ -62,18 +63,21 @@ Def BasicLightingDef{
 
                 // 衰减,对于PointLight和SpotLight来说有效,对于DirLight而言,attenuation一直为1
                 brdf.x = diffuseBRDF * attenuation;
-                brdf.y = specularBRDF * attenuation;
+                brdf.y = specularBRDF * diffuseBRDF * attenuation;
             }
             void main(){
                 // 计算光照
                 vec4 lightColor;
                 vec4 lightData1;
-                vec4 lightDir;
-                vec3 lightVec;
-                vec2 lightBRDF;
+                vec4 lightDir = vec4(0.0f);
+                vec3 lightVec = vec3(0.0f);
+                vec2 lightBRDF = vec2(0.0f);
                 vec4 diffuseColor = vec4(0.5f, 0.5f, 0.5f, 1.0f);
                 vec4 specularColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+                // 已经处于view空间,所以viewDir = 0 - wvPosition
+                vec3 viewDir = normalize(-wvPosition.xyz);
                 Context.OutColor.rgb = diffuseColor.rgb * ambientSumAdjust;
+                float shininess = 32.0f;
                 for( int i = 0;i < Context.CurLightCount;i+=3 ){
                     // 后期改为Context.GetLightDir(Context.LightData[i]);
                     lightColor = Context.LightData[i];
@@ -86,18 +90,38 @@ Def BasicLightingDef{
                     // 如果存在法线纹理,则进一步计算lightDir
 
                     // 计算反射率
-                    ComputeLighting(wvNormal, viewDir, lightDir.xyz, lightDir.w * spotFallOff , Params.Shininess, lightBRDF);
+                    ComputeLighting(wvNormal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, Params.Shininess, lightBRDF);
 
-                    // 乘以颜色部分
-                    Context.OutColor.rgb += lightColor.rgb * (vec3(lightBRDF.x) * diffuseColor.rgb * diffuseSumAdjust + vec3(lightBRDF.y) * specularColor.rgb * specularSumAdjust);
+                    // 最终光照值
+                    Context.OutColor.rgb += lightColor.rgb * (vec3(lightBRDF.x) * diffuseColor.rgb * diffuseSumAdjust.rgb + vec3(lightBRDF.y) * specularColor.rgb * specularSumAdjust.rgb);
                 }
+                //Context.OutColor.rgb = lightBRDF.xyx;
                 Context.OutColor.a = diffuseSumAdjust.a * diffuseColor.a;
+            }
+        }
+    }
+    SubTechnology ColorSubTechnology{
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = Context.ProjectViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+            }
+        }
+        Fs_Shader{
+            void main(){
+                Context.OutColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
             }
         }
     }
     Technology{
         Sub_Pass Forward{
             Pass BlinnPhongLighting{
+                FaceCull Off;
+            }
+        }
+    }
+    Technology Color{
+        Sub_Pass Forward{
+            Pass ColorSubTechnology{
             }
         }
     }

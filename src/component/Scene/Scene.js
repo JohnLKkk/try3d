@@ -72,9 +72,11 @@ export default class Scene extends Component{
         let callback;
         let scope;
         let tasksRun = 0;
-        while (this._m_TaskQueue.length > 0 && (until < 0 || time < until)) {
+        let l = this._m_TaskQueue.length;
+        while (l > 0 && (until < 0 || time < until)) {
             callback = this._m_TaskQueue.shift();
             scope = this._m_TaskQueue.shift();
+            l -= 2;
             if (scope) {
                 callback.call(scope);
             } else {

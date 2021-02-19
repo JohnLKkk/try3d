@@ -81,8 +81,8 @@ export default class SinglePassLightingRenderProgram extends DefaultRenderProgra
         // 上载数据
         let conVars = frameContext.m_LastSubShader.getContextVars();
         // gl[conVars[SinglePassLightingRenderProgram.S_LIGHT_DATA].fun]
-        gl.uniform4fv(conVars[SinglePassLightingRenderProgram.S_LIGHT_DATA].loc, lightData.getBufferData(), 0, 48);
-        gl.uniform1i(conVars[SinglePassLightingRenderProgram.S_CUR_LIGHT_COUNT], curLightCount);
+        gl.uniform4fv(conVars[SinglePassLightingRenderProgram.S_LIGHT_DATA].loc, lightData.getBufferData(), 0, curLightCount * 12);
+        gl.uniform1i(conVars[SinglePassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, curLightCount);
     }
     draw(gl, scene, frameContext, iDrawable, lights) {
 
@@ -100,7 +100,7 @@ export default class SinglePassLightingRenderProgram extends DefaultRenderProgra
         let lastIndex = 0;
         while(lastIndex < lights.length){
             // 更新灯光信息
-            lastIndex = this._uploadLights(gl, lights, batchSize, lastIndex);
+            lastIndex = this._uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex);
             // 最后draw
             iDrawable.draw(frameContext);
         }

@@ -89,6 +89,7 @@ export default class ShaderSource {
     // 上下文数据
     static Context_Data = {
         "Context.InPosition":{src:ShaderSource.S_POSITION_SRC, loc:ShaderSource.S_POSITION, pattern:/Context.InPosition/, tagPattern:/Context.InPosition/g, tag:"_position", type:"vec3"},
+        "Context.InNormal":{src:ShaderSource.S_NORMAL_SRC, loc:ShaderSource.S_NORMAL, pattern:/Context.InNormal/, tagPattern:/Context.InNormal/g, tag:"_normal", type:"vec3"},
         "Context.InUv0":{src:ShaderSource.S_UV0_SRC, loc:ShaderSource.S_UV0, pattern:/Context.InUv0/, tagPattern:/Context.InUv0/g, tag:ShaderSource.S_UV0_SRC, type:"vec2"},
         "Context.OutPosition":{src:ShaderSource.S_OUT_POSITION, pattern:/Context.OutPosition/, tagPattern:/Context.OutPosition/g, tag:"gl_Position"},
         "Context.ProjectViewModelMatrix":{src:ShaderSource.S_MVP_SRC, pattern:/Context.ProjectViewModelMatrix/, tagPattern:/Context.ProjectViewModelMatrix/g, tag:"_model_view_project_matrix", type:"mat4", utype:"uniform mat4"},
@@ -97,7 +98,7 @@ export default class ShaderSource {
         "Context.ModelMatrix":{src:ShaderSource.S_MODEL_MATRIX_SRC, pattern:/Context.ModelMatrix/, tagPattern:/Context.ModelMatrix/g, tag:ShaderSource.S_MODEL_MATRIX_SRC, type:"mat4", utype:"uniform mat4"},
         "Context.ProjectViewMatrix":{src:ShaderSource.S_VP_SRC, pattern:/Context.ProjectViewMatrix/, tagPattern:/Context.ProjectViewMatrix/g, tag:ShaderSource.S_VP_SRC, def:'MAT'},
         "Context.OutColor":{src:ShaderSource.S_OUT_COLOR, pattern:/Context.OutColor/, tagPattern:/Context.OutColor/g, tag:"_outColor", type:"out vec4"},
-        "Context.LightData":{src:ShaderSource.S_LIGHT_DATA_SRC, pattern:/Context.ModelMatrix/, tagPattern:/Context.ModelMatrix/g, tag:ShaderSource.S_MODEL_MATRIX_SRC, type:"vec4", utype:"uniform vec4", modifier:'[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']'},
+        "Context.LightData":{src:ShaderSource.S_LIGHT_DATA_SRC, pattern:/Context.LightData/, tagPattern:/Context.LightData/g, tag:ShaderSource.S_LIGHT_DATA_SRC, type:"vec4", utype:"uniform vec4", modifier:'[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']'},
         "Context.CurLightCount":{src:ShaderSource.S_CUR_LIGHT_COUNT_SRC, pattern:/Context.CurLightCount/, tagPattern:/Context.CurLightCount/g, tag:ShaderSource.S_CUR_LIGHT_COUNT_SRC, type:"int", utype:'uniform int'},
 
         // 输入类型缓存
