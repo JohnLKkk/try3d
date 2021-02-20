@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BasicLightingTest</title>
+</head>
+<body>
+<div style="width: 60%;height: 100%;position:fixed">
+    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script type="module">
+    import Geometry from "../src/component/Node/Geometry.js";
+    import Scene from "../src/component/Scene/Scene.js";
+    import RenderEngine from "../src/component/RenderEngine.js";
+    import Node from "../src/component/Node/Node.js";
+    import Mesh from "../src/component/WebGL/Mesh.js";
+    import Material from "../src/component/Material/Material.js";
+    import ColorMatDef from "../src/component/Assets/MaterialDef/ColorMatDef.js";
+    import Vector3 from "../src/component/Math3d/Vector3.js";
+    import MaterialDef from "../src/component/Material/MaterialDef.js";
+    import FirstPersonController from "../src/component/InputControl/FirstPersonController.js";
+    import DirectionalLight from "../src/component/Light/DirectionalLight.js";
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(2, 2, 2), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    // // 加载一个材质定义
+    let materialDef = MaterialDef.load("../src/component/Assets/MaterialDef/BasicLightingDef");
+    //
+    let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
+    // console.log("materialDef:" , MaterialDef.load("../src/component/Assets/MaterialDef/BasicLightingDef"));
+    // deferredMat.selectTechnology('TestDeferredShading');
+    let cubeGeometry = new Geometry(scene, {id:'cube'});
+    let cubeMesh = new Mesh();
+    cubeMesh.setData(Mesh.S_POSITIONS, [
+        -0.5, -0.5, -0.5,
+        0.5, -0.5, -0.5,
+        0.5, 0.5, -0.5,
+        0.5, 0.5, -0.5,
+        -0.5, 0.5, -0.5,
+        -0.5, -0.5, -0.5,
+
+        -0.5, -0.5, 0.5,
+        0.5, -0.5, 0.5,
+        0.5, 0.5, 0.5,
+        0.5, 0.5, 0.5,
+        -0.5, 0.5, 0.5,
+        -0.5, -0.5, 0.5,
+
+        -0.5, 0.5, 0.5,
+        -0.5, 0.5, -0.5,
+        -0.5, -0.5, -0.5,
+        -0.5, -0.5, -0.5,
+        -0.5, -0.5, 0.5,
+        -0.5, 0.5, 0.5,
+
+        0.5, 0.5, 0.5,
+        0.5, 0.5, -0.5,
+        0.5, -0.5, -0.5,
+        0.5, -0.5, -0.5,
+        0.5, -0.5, 0.5,
+        0.5, 0.5, 0.5,
+
+        -0.5, 0.5, -0.5,
+        0.5, 0.5, -0.5,
+        0.5, 0.5, 0.5,
+        0.5, 0.5, 0.5,
+        -0.5, 0.5, 0.5,
+        -0.5, 0.5, -0.5
+    ]);
+    cubeMesh.setData(Mesh.S_NORMALS, [
+        0.0, 0.0, -1.0,
+        0.0, 0.0, -1.0,
+        0.0, 0.0, -1.0,
+        0.0, 0.0, -1.0,
+        0.0, 0.0, -1.0,
+        0.0, 0.0, -1.0,
+
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+
+        -1.0, 0.0, 0.0,
+        -1.0, 0.0, 0.0,
+        -1.0, 0.0, 0.0,
+        -1.0, 0.0, 0.0,
+        -1.0, 0.0, 0.0,
+        -1.0, 0.0, 0.0,
+
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+
+        0.0, -1.0, 0.0,
+        0.0, -1.0, 0.0,
+        0.0, -1.0, 0.0,
+        0.0, -1.0, 0.0,
+        0.0, -1.0, 0.0,
+        0.0, -1.0, 0.0,
+
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0
+    ]);
+    cubeMesh.setData(Mesh.S_INDICES, [
+        0, 1, 2,
+        3, 4, 5,
+
+        6, 7, 8,
+        9, 10, 11,
+
+        12, 13, 14,
+        15, 16, 17,
+
+        18, 19, 20,
+        21, 22, 23,
+
+        24, 25, 26,
+        27, 28, 29,
+
+        30, 31, 32,
+        33, 34, 35
+    ]);
+    cubeGeometry.setMesh(cubeMesh);
+    cubeGeometry.updateBound();
+    cubeGeometry.setMaterial(basicLightingMat);
+
+    let rootNode = new Node(scene, {id:'rootNode'});
+    rootNode.addChildren(cubeGeometry);
+
+    let dirLight = new DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(-1, -1, -1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dirLight);
+
+    let renderEngine = new RenderEngine();
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+</script>
+</body>
+</html>

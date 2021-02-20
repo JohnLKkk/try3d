@@ -3,11 +3,96 @@
  * 同时为了减少对GL的API访问,使用状态机记录加速渲染调用。<br/>
  * @author Kkk
  */
+import RenderState from "./RenderState.js";
+
 export default class FrameContext {
     constructor() {
         this.m_LastMaterila = null;
         this.m_LastIDrawable = null;
-        this.m_SubShader = null;
+        this.m_LastSubShader = null;
+        this.m_LastSubShaderId = null;
+        this.m_LastFrameBuffer = null;
+        // 默认帧缓存(只存在forward渲染路径时,为null,否则创建一个fbo)
+        this._m_DefaultFrameBuffer = null;
+        // 当前需要的上下文
+        this.m_Contexts = {};
+        // 保存已计算的当前需要的上下文变量
+        this.m_CalcContexts = {};
+        // 渲染状态
+        this.m_RenderState = new RenderState();
+        // 渲染frameBuffer(key:id,value:fb}
+        this.m_FrameBuffers = {};
+        // 内存中所有的shader
+        this.m_Shaders = {};
+    }
+
+    /**
+     * 返回指定的frameBuffer。<br/>
+     * @param {String}[id]
+     * @return {*}
+     */
+    getFrameBuffer(id){
+        return this.m_FrameBuffers[id];
+    }
+
+    /**
+     * 添加指定的frameBuffer。<br/>
+     * @param {String}[id]
+     * @param {*}[fb]
+     */
+    addFrameBuffer(id, fb){
+        this.m_FrameBuffers[id] = fb;
+    }
+
+    /**
+     * 渲染状态。<br/>
+     * @return {RenderState}
+     */
+    getRenderState(){
+        return this.m_RenderState;
+    }
+
+    /**
+     * 添加当前需要的上下文。<br/>
+     * @param {String}[context]
+     */
+    addContext(context){
+        this.m_Contexts[context] = true;
+    }
+
+    /**
+     * 返回是否存在该上下文变量。<br/>
+     * @param {String}[context]
+     * @return {Boolean}
+     */
+    getContext(context){
+        return this.m_Contexts[context];
+    }
+
+    /**
+     * 返回上下文变量值列表。<br/.
+     * @return {{}|*}
+     */
+    getCalcContexts(){
+        return this.m_CalcContexts;
+    }
+
+    /**
+     * 返回指定的上下文变量值。<br/>
+     * @param {String}[name 变量名]
+     * @return {*}
+     */
+    getCalcContext(name){
+        return this.m_CalcContexts[name];
+    }
+
+    /**
+     * 保存指定的上下文变量值。<br/>
+     * @param {String}[name 变量名]
+     * @param {Object}[value 值]
+     */
+    setCalcContext(name, value){
+        this.m_CalcContexts[name] = value;
     }
 
     /**

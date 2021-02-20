@@ -1,0 +1,79 @@
+// 测试默认延迟渲染路径
+Def DefaultDeferredShadingTestDef2{
+    Params{
+        vec4 color;
+    }
+    SubTechnology GreenColorPass{
+        Vars{
+            vec4 fragPos;
+        }
+        Vs_Shader{
+            void main(){
+                //Context.OutPosition = Context.ProjectViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                //fragPos = Context.OutPosition.xyz;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                Context.OutColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+            }
+        }
+    }
+    SubTechnology GBufferPass{
+        Vars{
+            vec3 fragPos;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = Context.ProjectViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                //Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                fragPos = Context.OutPosition.xyz;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                Context.OutGPosition = fragPos;
+                Context.OutGNormal = vec3(1.0f, 0.2f, 0.2f);
+                Context.OutGAlbedoSpec.rgb = vec3(0.0f, 1.0f, 0.0f);
+                Context.OutGAlbedoSpec.a = 1.0f;
+            }
+        }
+    }
+    SubTechnology DeferredShadingPass{
+        Vars{
+            vec4 wordPosition;
+            vec2 uv0;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = vec4(Context.InPosition, 1.0f);
+                wordPosition = Context.OutPosition;
+                uv0 = Context.InUv0;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                //vec3 pos = texture(Context.InGPosition, vec2(0.5f, 0.5f)).rgb;
+                //vec3 norm = texture(Context.InGNormal, vec2(0.5f, 0.5f)).rgb;
+                //Context.OutColor = vec4(pos, 1.0f);
+                Context.OutColor = texture(Context.InGAlbedoSpec, uv0).rgba;
+                //Context.OutColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+            }
+        }
+    }
+    Technology{
+        Sub_Pass{
+            Pass GreenColorPass{
+            }
+        }
+    }
+    Technology TestDeferredShading{
+        Sub_Pass DeferredShading{
+            Pass GBufferPass{
+            }
+            Pass DeferredShadingPass{
+            }
+        }
+    }
+}

@@ -17,6 +17,9 @@ export default class Component {
         // 事件观察者
         this._mEvents = new Events();
 
+        // 是否需要更新
+        this._m_NeedUpdate = false;
+
         this._m_Id = cfg.id || Globals.nextId();
         // 保存附加组件
         this._m_Components = [];
@@ -125,10 +128,19 @@ export default class Component {
      * 所有组件继承这个函数,用于触发更新函数。<br/>
      * @private
      */
-    _doUpdate(){
-        // 在这之前做一些判断,比如是否立即调用update(),是在帧前,帧后进行的时间?
-        if(this._update){
-            this._update();
+    _doUpdate(immediately){
+        // 设置为false,如果_update()重新将该值设置为true,则表明需要下一次更新
+        this._m_NeedUpdate = false;
+        if(immediately){
+            // Component注册
+            // 在这之前做一些判断,比如是否立即调用update(),是在帧前,帧后进行的时间?
+            if(this._update){
+                this._update();
+            }
+        }
+        else{
+            // 添加到更新队列中
+            this._m_Scene.scheduleTask(this._update, this);
         }
     }
 

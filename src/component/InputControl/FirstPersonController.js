@@ -108,7 +108,7 @@ export default class FirstPersonController extends Component{
             }
 
             if(needUpdateViewMatrix){
-                this._doUpdate();
+                this._doUpdate(true);
             }
         });
         sceneInput.on("mousewheel", (offset)=>{

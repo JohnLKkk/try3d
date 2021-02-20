@@ -209,6 +209,49 @@ export default class Matrix44 {
         m[offset + 15] = 0.0;
     }
     /**
+     * 两个矩阵相乘,结果存放于result
+     * @param result
+     * @param resultOffset
+     * @param lhs
+     * @param lhsOffset
+     * @param rhs
+     * @param rhsOffset
+     */
+    static multiplyMM(result, resultOffset, lhs, lhsOffset, rhs, rhsOffset){
+        result.m[resultOffset + 0] = rhs.m[0] * lhs.m[0] + rhs.m[1] * lhs.m[4] + rhs.m[2] * lhs.m[8] + rhs.m[3] * lhs.m[12];
+        result.m[resultOffset + 1] = rhs.m[0] * lhs.m[1] + rhs.m[1] * lhs.m[5] + rhs.m[2] * lhs.m[9] + rhs.m[3] * lhs.m[13];
+        result.m[resultOffset + 2] = rhs.m[0] * lhs.m[2] + rhs.m[1] * lhs.m[6] + rhs.m[2] * lhs.m[10] + rhs.m[3] * lhs.m[14];
+        result.m[resultOffset + 3] = rhs.m[0] * lhs.m[3] + rhs.m[1] * lhs.m[7] + rhs.m[2] * lhs.m[11] + rhs.m[3] * lhs.m[15];
+
+        result.m[resultOffset + 4] = rhs.m[4] * lhs.m[0] + rhs.m[5] * lhs.m[4] + rhs.m[6] * lhs.m[8] + rhs.m[7] * lhs.m[12];
+        result.m[resultOffset + 5] = rhs.m[4] * lhs.m[1] + rhs.m[5] * lhs.m[5] + rhs.m[6] * lhs.m[9] + rhs.m[7] * lhs.m[13];
+        result.m[resultOffset + 6] = rhs.m[4] * lhs.m[2] + rhs.m[5] * lhs.m[6] + rhs.m[6] * lhs.m[10] + rhs.m[7] * lhs.m[14];
+        result.m[resultOffset + 7] = rhs.m[4] * lhs.m[3] + rhs.m[5] * lhs.m[7] + rhs.m[6] * lhs.m[11] + rhs.m[7] * lhs.m[15];
+
+        result.m[resultOffset + 8] = rhs.m[8] * lhs.m[0] + rhs.m[9] * lhs.m[4] + rhs.m[10] * lhs.m[8] + rhs.m[11] * lhs.m[12];
+        result.m[resultOffset + 9] = rhs.m[8] * lhs.m[1] + rhs.m[9] * lhs.m[5] + rhs.m[10] * lhs.m[9] + rhs.m[11] * lhs.m[13];
+        result.m[resultOffset + 10] = rhs.m[8] * lhs.m[2] + rhs.m[9] * lhs.m[6] + rhs.m[10] * lhs.m[10] + rhs.m[11] * lhs.m[14];
+        result.m[resultOffset + 11] = rhs.m[8] * lhs.m[3] + rhs.m[9] * lhs.m[7] + rhs.m[10] * lhs.m[11] + rhs.m[11] * lhs.m[15];
+
+        result.m[resultOffset + 12] = rhs.m[12] * lhs.m[0] + rhs.m[13] * lhs.m[4] + rhs.m[14] * lhs.m[8] + rhs.m[15] * lhs.m[12];
+        result.m[resultOffset + 13] = rhs.m[12] * lhs.m[1] + rhs.m[13] * lhs.m[5] + rhs.m[14] * lhs.m[9] + rhs.m[15] * lhs.m[13];
+        result.m[resultOffset + 14] = rhs.m[12] * lhs.m[2] + rhs.m[13] * lhs.m[6] + rhs.m[14] * lhs.m[10] + rhs.m[15] * lhs.m[14];
+        result.m[resultOffset + 15] = rhs.m[12] * lhs.m[3] + rhs.m[13] * lhs.m[7] + rhs.m[14] * lhs.m[11] + rhs.m[15] * lhs.m[15];
+    }
+
+    /**
+     * result = v * m;
+     * @param {Vector4}[result 结果向量]
+     * @param {Vector4}[v 源向量]
+     * @param {Matrix44}[m 目标矩阵]
+     */
+    static multiplyMV(result, v, m) {
+        result._m_X = v._m_X * m.m[0] + v._m_Y * m.m[4] + v._m_Z * m.m[8] + v._m_W * m.m[12];
+        result._m_Y = v._m_X * m.m[1] + v._m_Y * m.m[5] + v._m_Z * m.m[9] + v._m_W * m.m[13];
+        result._m_Z = v._m_X * m.m[2] + v._m_Y * m.m[6] + v._m_Z * m.m[10] + v._m_W * m.m[14];
+        result._m_W = v._m_X * m.m[3] + v._m_Y * m.m[7] + v._m_Z * m.m[11] + v._m_W * m.m[15];
+    }
+    /**
      * 根据视场角度定义投影矩阵，纵横比和Z剪裁平面。
      * @param {Array}[m保存透视矩阵的浮点数组]
      * @param {Number}[offset将偏移量偏移到写入透视矩阵数据的浮点数组m中]

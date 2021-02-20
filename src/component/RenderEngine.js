@@ -45,6 +45,9 @@ export default class RenderEngine {
             let time = Date.now();
             let exTime = (time - startTime) * _t;
             startTime = time;
+            // 执行所有下一帧之前的任务
+            // 比如组件的更新
+            // 之所以这样设计,是为了避免在scene.update中遍历场景图进行更新组件
             this._m_Scenes.forEach(scene=>{
                 scene.update(exTime);
                 scene.render(exTime);

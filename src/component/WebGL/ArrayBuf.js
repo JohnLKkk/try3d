@@ -29,15 +29,15 @@ export default class ArrayBuf {
      * @param localtion
      * @param arrayBufWidth
      * @param arrayBufValueType
-     * @param arrayBufLength
+     * @param arrayBufStride
      * @param arrayBufOffset
      */
-    static setVertexBuf(gl, vao, arrayBufType, arrayBufData, arrayBufUsage, localtion, arrayBufWidth, arrayBufValueType, arrayBufLength, arrayBufOffset) {
+    static setVertexBuf(gl, vao, arrayBufType, arrayBufData, arrayBufUsage, localtion, arrayBufWidth, arrayBufValueType, arrayBufStride, arrayBufOffset) {
         gl.bindVertexArray(vao);
         let buf = gl.createBuffer();
         gl.bindBuffer(arrayBufType, buf);
         gl.bufferData(arrayBufType, arrayBufData, arrayBufUsage);
-        gl.vertexAttribPointer(localtion, arrayBufWidth, arrayBufValueType, false, arrayBufLength, arrayBufOffset);
+        gl.vertexAttribPointer(localtion, arrayBufWidth, arrayBufValueType, false, arrayBufStride, arrayBufOffset);
         gl.enableVertexAttribArray(localtion);
         gl.bindBuffer(arrayBufType, null);
         gl.bindVertexArray(null);

@@ -1,0 +1,25 @@
+// 输出颜色缓冲材质
+Def DefaultOutColorDef{
+    SubTechnology DefaultOutColor{
+        Vars{
+            vec2 uv0;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = vec4(Context.InPosition, 1.0f);
+                uv0 = Context.InUv0;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                Context.OutColor = texture(Context.InForwardColorMap, uv0);
+            }
+        }
+    }
+    Technology{
+        Sub_Pass{
+            Pass DefaultOutColor{
+            }
+        }
+    }
+}

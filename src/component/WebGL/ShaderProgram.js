@@ -6,7 +6,7 @@ import Shader from "./Shader.js";
  * @author Kkk
  */
 export default class ShaderProgram {
-    constructor(gl, shaderSource) {
+    constructor(gl, name, shaderSource) {
         if(shaderSource.get(ShaderSource.VERTEX_SHADER)){
             this._m_vs = new Shader(gl, gl.VERTEX_SHADER, shaderSource.get(ShaderSource.VERTEX_SHADER));
         }
@@ -23,13 +23,17 @@ export default class ShaderProgram {
                 let linkStatus = gl.getProgramParameter(this._m_Program, gl.LINK_STATUS);
                 if(!linkStatus){
                     let pil = gl.getProgramInfoLog(this._m_Program);
-                    console.error("链接ShaderProgram异常:" + pil);
+                    console.error("[[" + name + "]]链接ShaderProgram异常:" + pil);
+                    console.log("vs:\n" + shaderSource.get(ShaderSource.VERTEX_SHADER));
+                    console.log("fs:\n" + shaderSource.get(ShaderSource.FRAGMENT_SHADER));
                 }
                 this._m_vs.deleteShader();
                 this._m_fs.deleteShader();
             }
             else{
-                console.error("无法创建着色器程序,vs或fs编译失败!!");
+                console.error("[[" + name + "]]无法创建着色器程序,vs或fs编译失败!!");
+                console.log("vs:\n" + shaderSource.get(ShaderSource.VERTEX_SHADER));
+                console.log("fs:\n" + shaderSource.get(ShaderSource.FRAGMENT_SHADER));
             }
         }
     }

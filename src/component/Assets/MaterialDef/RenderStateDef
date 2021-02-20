@@ -1,0 +1,70 @@
+// 测试渲染状态
+Def RenderStateDef{
+    Params{
+        vec4 color;
+    }
+    SubTechnology GreenColorPass{
+            Vars{
+                vec4 wordPosition;
+            }
+            Vs_Shader{
+                void main(){
+                    Context.OutPosition = Context.ProjectViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                    //Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                    wordPosition = Context.OutPosition;
+                }
+            }
+            Fs_Shader{
+                void main(){
+                    // 先判断Params.color是否有值
+                    #ifdef Params.color
+                        Context.OutColor = Params.color;
+                    #else
+                        Context.OutColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+                    #endif
+                    vec4 wPosition = wordPosition;
+                }
+            }
+        }
+    SubTechnology RedColorPass{
+        Vars{
+            vec4 wordPosition;
+        }
+        Vs_Shader{
+            void main(){
+                //Context.OutPosition = Context.ProjectViewModelMatrix * vec4(Context.InPosition, 1.0f);
+                Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                wordPosition = Context.OutPosition;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                // 先判断Params.color是否有值
+                #ifdef Params.color
+                    Context.OutColor = Params.color;
+                #else
+                    Context.OutColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+                #endif
+                vec4 wPosition = wordPosition;
+            }
+        }
+    }
+    Technology{
+        Sub_Pass{
+            Pass RedColorPass{
+                // 关闭面剔除
+                FaceCull Off;
+            }
+        }
+    }
+    Technology FaceCullTechnology{
+        Sub_Pass{
+            Pass GreenColorPass{
+                FaceCull Front;
+            }
+            Pass RedColorPass{
+                FaceCull Back;
+            }
+        }
+    }
+}

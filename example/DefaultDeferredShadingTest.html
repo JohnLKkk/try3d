@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DefaultDeferredShadingTest</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed">
+    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script type="module">
+    import Geometry from "../src/component/Node/Geometry.js";
+    import Scene from "../src/component/Scene/Scene.js";
+    import RenderEngine from "../src/component/RenderEngine.js";
+    import Node from "../src/component/Node/Node.js";
+    import Mesh from "../src/component/WebGL/Mesh.js";
+    import Material from "../src/component/Material/Material.js";
+    import ColorMatDef from "../src/component/Assets/MaterialDef/ColorMatDef.js";
+    import Vector3 from "../src/component/Math3d/Vector3.js";
+    import MaterialDef from "../src/component/Material/MaterialDef.js";
+    import FirstPersonController from "../src/component/InputControl/FirstPersonController.js";
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(0, 0, 20), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    // 加载一个材质定义
+    let materialDef = MaterialDef.load("../src/component/Assets/MaterialDef/DefaultDeferredShadingTestDef");
+
+    let deferredMat = new Material(scene, {id:"def", materialDef});
+    console.log("materialDef:" , materialDef);
+    deferredMat.selectTechnology('TestDeferredShading');
+    let geometry1 = new Geometry(scene, {id:'testGeometry'});
+    let mesh1 = new Mesh();
+    mesh1.setData(Mesh.S_POSITIONS, [
+        -5, 5, 2,
+        -5, -5, 2,
+        5, 5, 2,
+        5, -5, 2
+    ]);
+    mesh1.setData(Mesh.S_INDICES, [
+        0, 1, 2,
+        2, 1, 3
+    ]);
+    geometry1.setMesh(mesh1);
+    geometry1.updateBound();
+    geometry1.setMaterial(deferredMat);
+
+    let forwardMat = new Material(scene, {id:"def2", materialDef});
+    let geometry2 = new Geometry(scene, {id:'testGeometry2'});
+    let mesh2 = new Mesh();
+    mesh2.setData(Mesh.S_POSITIONS, [
+        -5, 5, -5,
+        -5, -5, -5,
+        5, 5, 5,
+        5, -5, 5
+    ]);
+    mesh2.setData(Mesh.S_INDICES, [
+        0, 1, 2,
+        2, 1, 3
+    ]);
+    geometry2.setMesh(mesh2);
+    geometry2.updateBound();
+    geometry2.setMaterial(forwardMat);
+
+
+    let rootNode = new Node(scene, {id:'rootNode'});
+    rootNode.addChildren(geometry1);
+    rootNode.addChildren(geometry2);
+    let renderEngine = new RenderEngine();
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+</script>
+</body>
+</html>

@@ -14,6 +14,13 @@ export default class IDrawable {
     }
 
     /**
+     * 是否属于Post帧提交渲染
+     */
+    isFramePicture(){
+
+    }
+
+    /**
      * 是否为非透明
      */
     isOpaque(){

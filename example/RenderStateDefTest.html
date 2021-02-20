@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MaterialDefTest</title>
+    <title>RenderStateDefTest</title>
 </head>
 <body>
-<canvas id="canvas" width="600px" height="400px" style="background-color: aliceblue"></canvas>
+<div style="width: 40%;height: 100%;position:fixed">
+    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
 <script type="module">
     import Geometry from "../src/component/Node/Geometry.js";
     import Scene from "../src/component/Scene/Scene.js";
@@ -16,13 +18,16 @@
     import ColorMatDef from "../src/component/Assets/MaterialDef/ColorMatDef.js";
     import Vector3 from "../src/component/Math3d/Vector3.js";
     import MaterialDef from "../src/component/Material/MaterialDef.js";
+    import FirstPersonController from "../src/component/InputControl/FirstPersonController.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
-    // 加载一个材质定义
-    let materialDef = MaterialDef.load("../src/component/Assets/MaterialDef/ColorDef");
-    let mat = new Material(scene, {id:"colorMat", materialDef});
-    mat.selectTechnology('ScaleColor');
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(10, 10, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(10, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    // 加载一个材质定义
+    let materialDef = MaterialDef.load("../src/component/Assets/MaterialDef/RenderStateDef");
+    let mat = new Material(scene, {id:"colorMat", materialDef});
+    console.log("materialDef:",materialDef);
+    mat.selectTechnology('FaceCullTechnology');
     let geometry = new Geometry(scene, {id:'testGeometry'});
     let mesh = new Mesh();
     mesh.setData(Mesh.S_POSITIONS, [

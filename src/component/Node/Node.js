@@ -1,14 +1,19 @@
 import Component from "../Component.js";
+import Matrix44 from "../Math3d/Matrix44.js";
 
 /**
  * 节点组件表示场景的一个关节，用于对场景进行场景图管理。<br/>
  * @author Kkk
  */
 export default class Node extends Component{
+    getType() {
+        return 'Node';
+    }
+
     constructor(owner, cfg) {
         super(owner, cfg);
-        this._m_LocalMatrix = null;
-        this._m_WorldMatrix = null;
+        this._m_LocalMatrix = new Matrix44();
+        this._m_WorldMatrix = new Matrix44();
         this._m_Parent = null;
         this._m_Children = [];
         this._m_ChildrenIDs = {};

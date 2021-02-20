@@ -120,20 +120,54 @@ class SubTechnology{
     }
 
 }
+class SubPassDef{
+    constructor(path) {
+        this.m_RenderPath = path;
+        // {name:passName,renderState:{}}
+        this.m_Pass = [];
+        // 设置该SubShaderDef来自哪个MaterialDef
+        this._m_FromMaterialDef = null;
+    }
+    addPass(pass, renderState){
+        this.m_Pass.push({pass, renderState});
+    }
+    getPass(){
+        return this.m_Pass;
+    }
+    /**
+     * 设置该SubShaderDef来自哪个MaterialDef。<br/>
+     * @param {MaterialDef}[materialDef]
+     */
+    setFromMaterialDef(materialDef){
+        this._m_FromMaterialDef = materialDef;
+    }
+
+    /**
+     * 返回当前所属得MaterialDef。<br/>
+     * @returns {MaterialDef}[materialDef]
+     */
+    getFromMaterialDef(){
+        return this._m_FromMaterialDef;
+    }
+
+}
 /**
  * 材质定义。
  */
 export default class MaterialDef{
-    constructor() {
+    constructor(name) {
         // 解析
         // 材质名称
-        this._m_Name = "";
+        this._m_Name = name;
         // 材质参数(元素类型Param)
         this._m_Params = {};
         // subShaderDefs
         this._m_SubShaderDefs = {};
         // technology
         this._m_TechnologyDefs = {};
+        // 当前引用的所有fb
+        // key:fbId,value:fbDef(在创建Material时,才真正创建fb)
+        this._m_FBs = {};
     }
     addSubShaderDef(name, subShaderDef){
         this._m_SubShaderDefs[name] = subShaderDef;
@@ -163,6 +197,9 @@ export default class MaterialDef{
     }
     setName(name){
         this._m_Name = name;
+    }
+    getName(){
+        return this._m_Name;
     }
     static load(src){
         return MaterialDef.parse(AssetLoader.loadMaterialSourceDef(src));
@@ -224,35 +261,62 @@ export default class MaterialDef{
         for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++) {
             line = data[i];
             line = Tools.trim(line);
+            if(line.startsWith("//"))continue;
             line = line.substring(0, line.length - 1);
             line = line.split(" ");
             subShaderDef.addVar(line[0], line[1]);
         }
     }
-    static parseVsShaderMain(subShaderDef, blockDef){
+    static parseAdvanced(subShaderDef, blockDef){
         let data = blockDef.getData();
         let line = null;
-        let shader = "void main(){\n";
+        for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++) {
+            line = data[i];
+            line = Tools.trim(line);
+            if(line.startsWith("//"))continue;
+            line = line.substring(0, line.length - 1);
+            line = line.split(" ");
+            // 指定渲染程序
+            if(line[0].startsWith("RenderProgram")){
+                subShaderDef.setRenderProgramType(line[1]);
+            }
+        }
+    }
+    static parseVsShader(subShaderDef, blockDef){
+        let data = blockDef.getData();
+        let line = null;
+        let shader = "";
         let useContexts = [];
         let useVars = [];
         let varTable = subShaderDef.getVarTable();
         let params = subShaderDef.getFromMaterialDef().getParams();
         let param = null;
         let useParam = false;
+        let useParams = [];
+        let conParams = {};
+        let conContexts = {};
+        let conVars = {};
         for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++){
-            line = data[i];
+            line = Tools.trim(data[i]);
+            if(line.startsWith("//"))continue;
             // 检测变量列表
             varTable.forEach(vars=>{
                 if(Tools.find(line, vars.pattern)){
-                    useVars.push(vars);
+                    if(!conVars[vars.name]){
+                        conVars[vars.name] = true;
+                        useVars.push(vars);
+                    }
                 }
             });
             // 检测材质参数列表
             for(let k in params){
                 param = params[k];
                 if(Tools.find(line, param.getPattern())){
-                    // 记录使用的材质参数
-                    // ...
+                    if(!conParams[param.getName()]){
+                        // 记录使用的材质参数
+                        useParams.push(param);
+                        conParams[param.getName()] = true;
+                    }
                     // 设置材质参数
                     line = Tools.repSrc(line, param.getPattern(), param.getTagPattern(), param.getName());
                     useParam = true;
@@ -264,23 +328,26 @@ export default class MaterialDef{
                 context = ShaderSource.Context_Data[k];
                 if(Tools.find(line, context.pattern)){
                     // 记录该vsShader使用的context
-                    useContexts.push(context);
+                    if(!conContexts[context.src]){
+                        conContexts[context.src] = true;
+                        useContexts.push(context);
+                    }
                     // 替换指定上下文
                     line = Tools.repSrc(line, context.pattern, context.tagPattern, context.tag);
                 }
             }
             shader += Tools.trim(line) + '\n';
         }
-        shader += "}\n";
         // 添加材质参数
         if(useParam){
+            subShaderDef.addUseParams(useParams);
             let inParams = "\n";
-            for(let k in params){
-                param = params[k];
+            for(let k in useParams){
+                param = useParams[k];
                 // 添加参数
-                inParams += "#ifdef " + param.getDefType() + "\n";
-                inParams += param.getType() + " " + param.getName() + "\n";
-                inParams += "#endif\n";
+                // inParams += "#ifdef " + param.getDefType() + "\n";
+                inParams += "uniform " + param.getType() + " " + param.getName() + ";\n";
+                // inParams += "#endif\n";
             }
             shader = inParams + shader;
         }
@@ -295,15 +362,38 @@ export default class MaterialDef{
         }
         // 检查context是否包含需要的几何属性
         if(useContexts.length > 0){
+            let BLOCKS = {};
+            let useBlocks = [];
+            subShaderDef.addUseContexts(useContexts);
             let vertIn = "\n";
             useContexts.forEach(context=>{
-                if(context.loc){
+                if(context.loc != null || context.loc != undefined){
                     vertIn += "layout (location=" + context.loc + ") in " + context.type + " " + context.src + ";\n";
+                }
+                else if(context.def){
+                    if(!BLOCKS[context.def]){
+                        useBlocks.push(context.def);
+                    }
+                    // 块定义
+                    BLOCKS[context.def] = context.def;
+                }
+                else if(context.utype){
+                    vertIn += context.utype + " " + context.src;
+                    if(context.modifier){
+                        vertIn += context.modifier;
+                    }
+                    vertIn += ";\n";
                 }
                 else if(context.type){
                     vertIn += context.type + " " + context.src + ";\n";
                 }
             });
+            subShaderDef.addUseBlocks(useBlocks);
+            // 检测块部分
+            for(let b in BLOCKS){
+                // 定义块
+                vertIn = vertIn + ShaderSource.BLOCKS[b].blockDef;
+            }
             shader = vertIn + shader;
         }
 
@@ -312,11 +402,13 @@ export default class MaterialDef{
 
         // 添加shader
         subShaderDef.addShaderSource(ShaderSource.VERTEX_SHADER, shader);
-        // 这里,需要在subShader中记录需要更新数据的uniform变量的loc,以及uniform blocks等.以便在真正创建Material对象时,保证渲染时可以根据实际不同的MatDef提交数据到shader中。
-        // 在创建Material时,还需要统计整个引擎需要计算哪些上下文变量(比如ViewMatrix,ProjectMatrix...),这样可以避免不必要的变量计算,同时保证所有shader可以正常运行。
-        // 每次创建一个Material时,都通过解析subShader来统计待计算的上下文变量。
     }
-    static parseFsShaderMain(subShaderDef, blockDef){
+    static parseVsShaderFun(subShaderDef, blockDef){
+        // 解析VsShader的其他函数
+        // 单独定义parseFsShaderFun和parseVsShaderFun的目的在于,Fs和Vs对于某些变量的插入定义是不同的,所以最好单独进行
+        // 比如对layout变量,vs是in而fs是out
+    }
+    static parseVsShaderMain(subShaderDef, blockDef){
         let data = blockDef.getData();
         let line = null;
         let shader = "void main(){\n";
@@ -326,20 +418,31 @@ export default class MaterialDef{
         let params = subShaderDef.getFromMaterialDef().getParams();
         let param = null;
         let useParam = false;
+        let useParams = [];
+        let conParams = {};
+        let conContexts = {};
+        let conVars = {};
         for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++){
-            line = data[i];
+            line = Tools.trim(data[i]);
+            if(line.startsWith("//"))continue;
             // 检测变量列表
             varTable.forEach(vars=>{
                 if(Tools.find(line, vars.pattern)){
-                    useVars.push(vars);
+                    if(!conVars[vars.name]){
+                        conVars[vars.name] = true;
+                        useVars.push(vars);
+                    }
                 }
             });
             // 检测材质参数列表
             for(let k in params){
                 param = params[k];
                 if(Tools.find(line, param.getPattern())){
-                    // 记录使用的材质参数
-                    // ...
+                    if(!conParams[param.getName()]){
+                        // 记录使用的材质参数
+                        useParams.push(param);
+                        conParams[param.getName()] = true;
+                    }
                     // 设置材质参数
                     line = Tools.repSrc(line, param.getPattern(), param.getTagPattern(), param.getName());
                     useParam = true;
@@ -350,8 +453,11 @@ export default class MaterialDef{
             for(let k in ShaderSource.Context_Data){
                 context = ShaderSource.Context_Data[k];
                 if(Tools.find(line, context.pattern)){
-                    // 记录该vsShader实用的context
-                    useContexts.push(context);
+                    // 记录该vsShader使用的context
+                    if(!conContexts[context.src]){
+                        conContexts[context.src] = true;
+                        useContexts.push(context);
+                    }
                     // 替换指定上下文
                     line = Tools.repSrc(line, context.pattern, context.tagPattern, context.tag);
                 }
@@ -361,13 +467,158 @@ export default class MaterialDef{
         shader += "}\n";
         // 添加材质参数
         if(useParam){
+            subShaderDef.addUseParams(useParams);
             let inParams = "\n";
+            for(let k in useParams){
+                param = useParams[k];
+                // 添加参数
+                // inParams += "#ifdef " + param.getDefType() + "\n";
+                inParams += "uniform " + param.getType() + " " + param.getName() + ";\n";
+                // inParams += "#endif\n";
+            }
+            shader = inParams + shader;
+        }
+        // 检测shader是否需要添加变量
+        if(useVars.length > 0){
+            // 加入变量块
+            let outVars = "\n";
+            useVars.forEach(vars=>{
+                outVars += "out " + vars.type + " " + vars.name + ";\n";
+            });
+            shader = outVars + shader;
+        }
+        // 检查context是否包含需要的几何属性
+        if(useContexts.length > 0){
+            let BLOCKS = {};
+            let useBlocks = [];
+            subShaderDef.addUseContexts(useContexts);
+            let vertIn = "\n";
+            useContexts.forEach(context=>{
+                if(context.loc != null || context.loc != undefined){
+                    vertIn += "layout (location=" + context.loc + ") in " + context.type + " " + context.src + ";\n";
+                }
+                else if(context.def){
+                    if(!BLOCKS[context.def]){
+                        useBlocks.push(context.def);
+                    }
+                    // 块定义
+                    BLOCKS[context.def] = context.def;
+                }
+                else if(context.utype){
+                    vertIn += context.utype + " " + context.src;
+                    if(context.modifier){
+                        vertIn += context.modifier;
+                    }
+                    vertIn += ";\n";
+                }
+                else if(context.type){
+                    vertIn += context.type + " " + context.src + ";\n";
+                }
+            });
+            subShaderDef.addUseBlocks(useBlocks);
+            // 检测块部分
+            for(let b in BLOCKS){
+                // 定义块
+                vertIn = vertIn + ShaderSource.BLOCKS[b].blockDef;
+            }
+            shader = vertIn + shader;
+        }
+
+        shader = '#version 300 es\n' +
+            shader;
+
+        // 添加shader
+        // subShaderDef.addShaderSource(ShaderSource.VERTEX_SHADER, shader);
+        // 这里,需要在subShader中记录需要更新数据的uniform变量的loc,以及uniform blocks等.以便在真正创建Material对象时,保证渲染时可以根据实际不同的MatDef提交数据到shader中。
+        // 在创建Material时,还需要统计整个引擎需要计算哪些上下文变量(比如ViewMatrix,ProjectMatrix...),这样可以避免不必要的变量计算,同时保证所有shader可以正常运行。
+        // 每次创建一个Material时,都通过解析subShader来统计待计算的上下文变量。
+        return shader;
+    }
+    static parseFsShader(subShaderDef, blockDef){
+        // let shaderSource = "";
+        // blockDef.getSubBlock().forEach(subBlockDef=>{
+        //     switch (subBlockDef.getType()) {
+        //         case 'Fs_Shader_Main':
+        //             shaderSource += MaterialDef.parseFsShaderMain(subShaderDef, subBlockDef);
+        //             break;
+        //         default:
+        //             // 追加为当前着色器源码的其他部分(因为shader不仅仅包含main函数,还有很多自定义函数体)
+        //             shaderSource += MaterialDef.parseFsShaderFun(subShaderDef, subBlockDef);
+        //             break;
+        //     }
+        // });
+        // console.log("shaderSource:",shaderSource);
+        // subShaderDef.addShaderSource(ShaderSource.FRAGMENT_SHADER, shaderSource);
+        let data = blockDef.getData();
+        let line = null;
+        let shader = "";
+        let useContexts = [];
+        let useVars = [];
+        let varTable = subShaderDef.getVarTable();
+        let params = subShaderDef.getFromMaterialDef().getParams();
+        let param = null;
+        let useParam = false;
+        let useParams = [];
+        let useGlobalTextures = [];
+        let conParams = {};
+        let conContexts = {};
+        let conVars = {};
+        // 全局变量(一般是全局纹理,即自定义frameBuffer或内置延迟着色路径的frameBuffer的纹理数据块,需要使用一种其他解析注入方式)
+        let useGlobals = [];
+        let useFBId = null;
+        for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++){
+            line = Tools.trim(data[i]);
+            if(line.startsWith("//"))continue;
+            // 检测变量列表
+            varTable.forEach(vars=>{
+                if(Tools.find(line, vars.pattern)){
+                    if(!conVars[vars.name]){
+                        conVars[vars.name] = true;
+                        useVars.push(vars);
+                    }
+                }
+            });
+            // 检测材质参数列表
             for(let k in params){
                 param = params[k];
+                if(Tools.find(line, param.getPattern())){
+                    if(!conParams[param.getName()]){
+                        // 记录使用的材质参数
+                        useParams.push(param);
+                        conParams[param.getName()] = true;
+                    }
+                    // 设置材质参数
+                    line = Tools.repSrc(line, param.getPattern(), param.getTagPattern(), param.getName());
+                    useParam = true;
+                }
+            }
+            // 检测上下文列表
+            let context = null;
+            for(let k in ShaderSource.Context_Data){
+                context = ShaderSource.Context_Data[k];
+                if(Tools.find(line, context.pattern)){
+                    // 记录该fsShader使用的context
+                    if(!conContexts[context.src]){
+                        conContexts[context.src] = true;
+                        useContexts.push(context);
+                    }
+                    // 替换指定上下文
+                    line = Tools.repSrc(line, context.pattern, context.tagPattern, context.tag);
+                }
+            }
+            shader += Tools.trim(line) + '\n';
+        }
+        // 检测是否引用了GlobalTextures,以便找出需要关联的输出frameBuffer
+        // 添加材质参数
+        if(useParam){
+            subShaderDef.addUseParams(useParams);
+            let inParams = "\n";
+            for(let k in useParams){
+                param = useParams[k];
                 // 添加参数
-                inParams += "#ifdef " + param.getDefType() + "\n";
-                inParams += param.getType() + " " + param.getName() + "\n";
-                inParams += "#endif\n";
+                // inParams += "#ifdef " + param.getDefType() + "\n";
+                inParams += "uniform " + param.getType() + " " + param.getName() + ";\n";
+                // inParams += "#endif\n";
             }
             shader = inParams + shader;
         }
@@ -382,9 +633,25 @@ export default class MaterialDef{
         }
         // 检查context是否包含需要的几何属性
         if(useContexts.length > 0){
+            subShaderDef.addUseContexts(useContexts);
             let vertIn = "\n";
             useContexts.forEach(context=>{
-                vertIn += context.type + " " + context.src + ";\n";
+                if(context.loc != null || context.loc != undefined){
+                    // 说明当前需要引用输出frameBuffer
+                    // Context_Textures列表,以便找到关联的输出frameBuffer
+                    useFBId = ShaderSource.Context_RenderDataRefFBs[context.src];
+                    vertIn += "layout (location=" + context.loc + ") out " + context.type + " " + context.src + ";\n";
+                }
+                else if(context.utype){
+                    vertIn += context.utype + " " + context.src;
+                    if(context.modifier){
+                        vertIn += context.modifier;
+                    }
+                    vertIn += ";\n";
+                }
+                else if(context.type){
+                    vertIn += context.type + " " + context.src + ";\n";
+                }
             });
             shader = vertIn + shader;
         }
@@ -395,9 +662,129 @@ export default class MaterialDef{
 
         // 添加shader
         subShaderDef.addShaderSource(ShaderSource.FRAGMENT_SHADER, shader);
+        subShaderDef.setFBId(useFBId);
+    }
+    static parseFsShaderFun(subShaderDef, blockDef){
+        // 解析FsShader的其他函数
+        // 单独定义parseFsShaderFun和parseVsShaderFun的目的在于,Fs和Vs对于某些变量的插入定义是不同的,所以最好单独进行
+        // 比如对layout变量,vs是in而fs是out
+    }
+    static parseFsShaderMain(subShaderDef, blockDef){
+        let data = blockDef.getData();
+        let line = null;
+        let shader = "void main(){\n";
+        let useContexts = [];
+        let useVars = [];
+        let varTable = subShaderDef.getVarTable();
+        let params = subShaderDef.getFromMaterialDef().getParams();
+        let param = null;
+        let useParam = false;
+        let useParams = [];
+        let useGlobalTextures = [];
+        let conParams = {};
+        let conContexts = {};
+        let conVars = {};
+        // 全局变量(一般是全局纹理,即自定义frameBuffer或内置延迟着色路径的frameBuffer的纹理数据块,需要使用一种其他解析注入方式)
+        let useGlobals = [];
+        let useFBId = null;
+        for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++){
+            line = Tools.trim(data[i]);
+            if(line.startsWith("//"))continue;
+            // 检测变量列表
+            varTable.forEach(vars=>{
+                if(Tools.find(line, vars.pattern)){
+                    if(!conVars[vars.name]){
+                        conVars[vars.name] = true;
+                        useVars.push(vars);
+                    }
+                }
+            });
+            // 检测材质参数列表
+            for(let k in params){
+                param = params[k];
+                if(Tools.find(line, param.getPattern())){
+                    if(!conParams[param.getName()]){
+                        // 记录使用的材质参数
+                        useParams.push(param);
+                        conParams[param.getName()] = true;
+                    }
+                    // 设置材质参数
+                    line = Tools.repSrc(line, param.getPattern(), param.getTagPattern(), param.getName());
+                    useParam = true;
+                }
+            }
+            // 检测上下文列表
+            let context = null;
+            for(let k in ShaderSource.Context_Data){
+                context = ShaderSource.Context_Data[k];
+                if(Tools.find(line, context.pattern)){
+                    // 记录该fsShader使用的context
+                    if(!conContexts[context.src]){
+                        conContexts[context.src] = true;
+                        useContexts.push(context);
+                    }
+                    // 替换指定上下文
+                    line = Tools.repSrc(line, context.pattern, context.tagPattern, context.tag);
+                }
+            }
+            shader += Tools.trim(line) + '\n';
+        }
+        shader += "}\n";
+        // 检测是否引用了GlobalTextures,以便找出需要关联的输出frameBuffer
+        // 添加材质参数
+        if(useParam){
+            subShaderDef.addUseParams(useParams);
+            let inParams = "\n";
+            for(let k in useParams){
+                param = useParams[k];
+                // 添加参数
+                // inParams += "#ifdef " + param.getDefType() + "\n";
+                inParams += "uniform " + param.getType() + " " + param.getName() + ";\n";
+                // inParams += "#endif\n";
+            }
+            shader = inParams + shader;
+        }
+        // 检测shader是否需要添加变量
+        if(useVars.length > 0){
+            // 加入变量块
+            let inVars = "\n";
+            useVars.forEach(vars=>{
+                inVars += "in " + vars.type + " " + vars.name + ";\n";
+            });
+            shader = inVars + shader;
+        }
+        // 检查context是否包含需要的几何属性
+        if(useContexts.length > 0){
+            subShaderDef.addUseContexts(useContexts);
+            let vertIn = "\n";
+            useContexts.forEach(context=>{
+                if(context.loc != null || context.loc != undefined){
+                    // 说明当前需要引用输出frameBuffer
+                    // Context_Textures列表,以便找到关联的输出frameBuffer
+                    useFBId = ShaderSource.Context_RenderDataRefFBs[context.src];
+                    vertIn += "layout (location=" + context.loc + ") out " + context.type + " " + context.src + ";\n";
+                }
+                else if(context.utype){
+                    vertIn += context.utype + " " + context.src + ";\n";
+                }
+                else if(context.type){
+                    vertIn += context.type + " " + context.src + ";\n";
+                }
+            });
+            shader = vertIn + shader;
+        }
+
+        shader = '#version 300 es\n' +
+            'precision mediump float;\n' +
+            shader;
+
+        // 添加shader
+        // subShaderDef.addShaderSource(ShaderSource.FRAGMENT_SHADER, shader);
+        subShaderDef.setFBId(useFBId);
         // 这里,需要在subShader中记录需要更新数据的uniform变量的loc,以及uniform blocks等.以便在真正创建Material对象时,保证渲染时可以根据实际不同的MatDef提交数据到shader中。
         // 在创建Material时,还需要统计整个引擎需要计算哪些上下文变量(比如ViewMatrix,ProjectMatrix...),这样可以避免不必要的变量计算,同时保证所有shader可以正常运行。
         // 每次创建一个Material时,都通过解析subShader来统计待计算的上下文变量。
+        return shader;
     }
     static parseSubPass(blockObj, blockDef){
         let path = blockDef.getName();
@@ -409,8 +796,27 @@ export default class MaterialDef{
         for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++) {
             line = data[i];
             line = Tools.trim(line);
+            if(line.startsWith("//"))continue;
+            line = line.substring(0, line.length - 1);
             blockObj.addSubPass(path, blockObj.getFromMaterialDef().getSubShaderDef(line));
         }
+    }
+    static parsePass(blockObj, blockDef){
+        let data = blockDef.getData();
+        let line = null;
+        // RenderState
+        let renderState = {};
+        for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++) {
+            line = data[i];
+            line = Tools.trim(line);
+            if(line.startsWith("//"))continue;
+            if(line.length == 0)continue;
+            line = line.substring(0, line.length - 1);
+            line = line.split(' ');
+            renderState["" + line[0] + ""] = "" + line[1];
+        }
+        console.log("renderState:",renderState);
+        blockObj.addPass(blockObj.getFromMaterialDef().getSubShaderDef(blockDef.getName()), renderState);
     }
     static parseBlockDef(blockObj, blockDef){
         if(blockDef){
@@ -433,18 +839,23 @@ export default class MaterialDef{
                     break;
                 case "Vs_Shader":
                     // vs
-                    break;
+                    MaterialDef.parseVsShader(blockObj, blockDef);
+                    return;
                 case "Fs_Shader":
                     // fs
-                    break;
+                    MaterialDef.parseFsShader(blockObj, blockDef);
+                    return;
                 case "Vars":
                     MaterialDef.parseShaderVars(blockObj, blockDef);
                     break;
+                case "Advanced":
+                    MaterialDef.parseAdvanced(blockObj, blockDef);
+                    break;
                 case "Vs_Shader_Main":
-                    MaterialDef.parseVsShaderMain(blockObj, blockDef);
+                    // MaterialDef.parseVsShaderMain(blockObj, blockDef);
                     break;
                 case "Fs_Shader_Main":
-                    MaterialDef.parseFsShaderMain(blockObj, blockDef);
+                    // MaterialDef.parseFsShaderMain(blockObj, blockDef);
                     break;
                 case "Technology":
                     // 技术块
@@ -453,7 +864,17 @@ export default class MaterialDef{
                     blockObj = technologyDef;
                     break;
                 case "Sub_Pass":
-                    MaterialDef.parseSubPass(blockObj, blockDef);
+                    let path = blockDef.getName();
+                    if(path == null || path == ""){
+                        path = Render.FORWARD;
+                    }
+                    let subPass = new SubPassDef(path);
+                    // MaterialDef.parseSubPass(blockObj, blockDef);
+                    blockObj.addSubPass(path, subPass);
+                    blockObj = subPass;
+                    break;
+                case "Pass":
+                    MaterialDef.parsePass(blockObj, blockDef);
                     break;
             }
             blockDef.getSubBlock().forEach(subBlockDef=>{
@@ -535,7 +956,7 @@ export default class MaterialDef{
                             let blockDef = new Block(blockType, blockId, data, i);
                             MaterialDef.getBlockDef(blockDef, data, i);
                             // 开始解析块定义
-                            let matDef = new MaterialDef();
+                            let matDef = new MaterialDef(blockDef.getName());
                             MaterialDef.parseBlockDef(matDef, blockDef);
                             return matDef;
                             // console.log("matDef:",matDef);
