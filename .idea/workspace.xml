@@ -4,13 +4,7 @@
     <bookmark url="file://$PROJECT_DIR$/src/component/Math3d/Vector3.js" line="102" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a9dfb17-c0d6-4cbe-af9e-a005ce9bae6a" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/src/component/Material/Material.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/Material/Material.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/component/Material/MaterialDef.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/Material/MaterialDef.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/component/Material/SubShaderDef.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/Material/SubShaderDef.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/component/Material/TechnologyDef.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/Material/TechnologyDef.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/component/Render/Render.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/component/Render/Render.js" afterDir="false" />
-    </list>
+    <list default="true" id="8a9dfb17-c0d6-4cbe-af9e-a005ce9bae6a" name="Default Changelist" comment="" />
     <ignored path="$PROJECT_DIR$/.tmp/" />
     <ignored path="$PROJECT_DIR$/temp/" />
     <ignored path="$PROJECT_DIR$/tmp/" />
@@ -29,7 +23,7 @@
               <entry file="file://$PROJECT_DIR$/src/component/Material/MaterialDef.js">
                 <provider selected="true" editor-type-id="text-editor">
                   <state relative-caret-position="235">
-                    <caret line="411" column="31" selection-start-line="411" selection-start-column="31" selection-end-line="411" selection-end-column="31" />
+                    <caret line="411" column="48" selection-start-line="411" selection-start-column="48" selection-end-line="411" selection-end-column="48" />
                     <folding>
                       <element signature="e#0#40#0" expanded="true" />
                     </folding>
@@ -131,7 +125,7 @@
     <session id="1241644706">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="1" />
+          <entry key="project.closed" value="2" />
           <entry key="project.open.time.1" value="1" />
           <entry key="project.opened" value="1" />
         </counts>
@@ -183,8 +177,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/component/Render/Render.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="171">
-              <caret line="9" column="18" selection-start-line="9" selection-start-column="11" selection-end-line="9" selection-end-column="18" />
+            <state relative-caret-position="513">
+              <caret line="42" column="44" selection-start-line="42" selection-start-column="44" selection-end-line="42" selection-end-column="44" />
               <folding>
                 <element signature="e#70#122#0" expanded="true" />
               </folding>
@@ -449,27 +443,6 @@
               <item name="TEORT_WebGL" type="462c0819:PsiDirectoryNode" />
               <item name="src" type="462c0819:PsiDirectoryNode" />
               <item name="component" type="462c0819:PsiDirectoryNode" />
-              <item name="Device" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="TEORT_WebGL" type="b2602c69:ProjectViewProjectNode" />
-              <item name="TEORT_WebGL" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="component" type="462c0819:PsiDirectoryNode" />
-              <item name="InputControl" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="TEORT_WebGL" type="b2602c69:ProjectViewProjectNode" />
-              <item name="TEORT_WebGL" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="component" type="462c0819:PsiDirectoryNode" />
-              <item name="Material" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="TEORT_WebGL" type="b2602c69:ProjectViewProjectNode" />
-              <item name="TEORT_WebGL" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="component" type="462c0819:PsiDirectoryNode" />
               <item name="Math3d" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
@@ -580,18 +553,17 @@
       <workItem from="1612422322087" duration="13513000" />
       <workItem from="1612507883571" duration="11084000" />
       <workItem from="1612595808417" duration="14217000" />
-      <workItem from="1612678802838" duration="12768000" />
+      <workItem from="1612678802838" duration="12925000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="227226000" />
+    <option name="totallyTimeSpent" value="227383000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="97" y="25" width="1706" height="966" extended-state="0" />
-    <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.15978129" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.15978129" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -603,7 +575,7 @@
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" order="8" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Terminal" order="9" visible="true" weight="0.109375" />
+      <window_info anchor="bottom" id="Terminal" order="9" weight="0.1298077" />
       <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
       <window_info anchor="bottom" id="Elm Compiler" order="11" />
       <window_info anchor="bottom" id="TypeScript" order="12" />
@@ -979,22 +951,22 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Render/Render.js">
+    <entry file="file://$PROJECT_DIR$/src/component/Material/MaterialDef.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="171">
-          <caret line="9" column="18" selection-start-line="9" selection-start-column="11" selection-end-line="9" selection-end-column="18" />
+        <state relative-caret-position="235">
+          <caret line="411" column="48" selection-start-line="411" selection-start-column="48" selection-end-line="411" selection-end-column="48" />
           <folding>
-            <element signature="e#70#122#0" expanded="true" />
+            <element signature="e#0#40#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/component/Material/MaterialDef.js">
+    <entry file="file://$PROJECT_DIR$/src/component/Render/Render.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="235">
-          <caret line="411" column="31" selection-start-line="411" selection-start-column="31" selection-end-line="411" selection-end-column="31" />
+        <state relative-caret-position="513">
+          <caret line="42" column="44" selection-start-line="42" selection-start-column="44" selection-end-line="42" selection-end-column="44" />
           <folding>
-            <element signature="e#0#40#0" expanded="true" />
+            <element signature="e#70#122#0" expanded="true" />
           </folding>
         </state>
       </provider>
