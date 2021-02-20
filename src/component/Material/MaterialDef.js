@@ -633,6 +633,8 @@ export default class MaterialDef{
         }
         // 检查context是否包含需要的几何属性
         if(useContexts.length > 0){
+            let BLOCKS = {};
+            let useBlocks = [];
             subShaderDef.addUseContexts(useContexts);
             let vertIn = "\n";
             useContexts.forEach(context=>{
@@ -641,6 +643,13 @@ export default class MaterialDef{
                     // Context_Textures列表,以便找到关联的输出frameBuffer
                     useFBId = ShaderSource.Context_RenderDataRefFBs[context.src];
                     vertIn += "layout (location=" + context.loc + ") out " + context.type + " " + context.src + ";\n";
+                }
+                else if(context.def){
+                    if(!BLOCKS[context.def]){
+                        useBlocks.push(context.def);
+                    }
+                    // 块定义
+                    BLOCKS[context.def] = context.def;
                 }
                 else if(context.utype){
                     vertIn += context.utype + " " + context.src;
@@ -653,6 +662,12 @@ export default class MaterialDef{
                     vertIn += context.type + " " + context.src + ";\n";
                 }
             });
+            subShaderDef.addUseBlocks(useBlocks);
+            // 检测块部分
+            for(let b in BLOCKS){
+                // 定义块
+                vertIn = vertIn + ShaderSource.BLOCKS[b].blockDef;
+            }
             shader = vertIn + shader;
         }
 

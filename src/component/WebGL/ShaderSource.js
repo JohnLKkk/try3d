@@ -49,10 +49,13 @@ export default class ShaderSource {
     static S_NDP = "";
 
     // 灯光系统
-    static S_LIGHT_DATA_SRC = '_lightData';
+    static S_V_LIGHT_DATA_SRC = '_vLightData';
+    static S_W_LIGHT_DATA_SRC = '_wLightData';
     static S_CUR_LIGHT_COUNT_SRC = '_curLightCount';
     static S_NB_LIGHTS = '_NB_LIGHTS';
     static S_BATCH_LIGHT_SIZE = 4;
+
+    static S_CAMERA_POSITION_SRC = "_cameraPosition";
 
     static S_G_POSITION_SRC = "_gPosition";
     static S_G_NORMAL_SRC = "_gNormal";
@@ -75,8 +78,13 @@ export default class ShaderSource {
         'mat4 ' + ShaderSource.S_PROJECT_MATRIX_SRC + ';\n' +
         'mat4 ' + ShaderSource.S_VP_SRC + ';\n' +
         '};\n';
+    static VIEW = 'layout (std140) uniform VIEW\n' +
+        '{\n' +
+        'vec3 ' + ShaderSource.S_CAMERA_POSITION_SRC + ';\n' +
+        '};\n';
     static BLOCKS = {
         'MAT':{blockIndex:0x001, blockDef:ShaderSource.MAT},
+        'VIEW':{blockIndex:0x002, blockDef:ShaderSource.VIEW},
     };
     static Context_RenderDataRefFBs = {
         "_gPosition":'DefaultDeferredShadingFrameBuffer',
@@ -98,8 +106,10 @@ export default class ShaderSource {
         "Context.ModelMatrix":{src:ShaderSource.S_MODEL_MATRIX_SRC, pattern:/Context.ModelMatrix/, tagPattern:/Context.ModelMatrix/g, tag:ShaderSource.S_MODEL_MATRIX_SRC, type:"mat4", utype:"uniform mat4"},
         "Context.ProjectViewMatrix":{src:ShaderSource.S_VP_SRC, pattern:/Context.ProjectViewMatrix/, tagPattern:/Context.ProjectViewMatrix/g, tag:ShaderSource.S_VP_SRC, def:'MAT'},
         "Context.OutColor":{src:ShaderSource.S_OUT_COLOR, pattern:/Context.OutColor/, tagPattern:/Context.OutColor/g, tag:"_outColor", type:"out vec4"},
-        "Context.LightData":{src:ShaderSource.S_LIGHT_DATA_SRC, pattern:/Context.LightData/, tagPattern:/Context.LightData/g, tag:ShaderSource.S_LIGHT_DATA_SRC, type:"vec4", utype:"uniform vec4", modifier:'[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']'},
+        "Context.VLightData":{src:ShaderSource.S_V_LIGHT_DATA_SRC, pattern:/Context.VLightData/, tagPattern:/Context.VLightData/g, tag:ShaderSource.S_V_LIGHT_DATA_SRC, type:"vec4", utype:"uniform vec4", modifier:'[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']'},
+        "Context.WLightData":{src:ShaderSource.S_W_LIGHT_DATA_SRC, pattern:/Context.WLightData/, tagPattern:/Context.WLightData/g, tag:ShaderSource.S_W_LIGHT_DATA_SRC, type:"vec4", utype:"uniform vec4", modifier:'[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']'},
         "Context.CurLightCount":{src:ShaderSource.S_CUR_LIGHT_COUNT_SRC, pattern:/Context.CurLightCount/, tagPattern:/Context.CurLightCount/g, tag:ShaderSource.S_CUR_LIGHT_COUNT_SRC, type:"int", utype:'uniform int'},
+        "Context.CameraPosition":{src:ShaderSource.S_CAMERA_POSITION_SRC, pattern:/Context.CameraPosition/, tagPattern:/Context.CameraPosition/g, tag:ShaderSource.S_CAMERA_POSITION_SRC, def:'VIEW'},
 
         // 输入类型缓存
         "Context.InGPosition":{src:ShaderSource.S_G_POSITION_SRC, pattern:/Context.InGPosition/, tagPattern:/Context.InGPosition/g, tag:ShaderSource.S_G_POSITION_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},

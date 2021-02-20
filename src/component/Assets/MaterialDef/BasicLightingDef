@@ -6,7 +6,7 @@ Def BasicLightingDef{
         //texture2D specularMap;
         float Shininess;
     }
-    SubTechnology BlinnPhongLighting{
+    SubTechnology BlinnPhongLighting1{
         Vars{
             vec3 wvNormal;
             vec3 wvPosition;
@@ -80,8 +80,8 @@ Def BasicLightingDef{
                 float shininess = 32.0f;
                 for( int i = 0;i < Context.CurLightCount;i+=3 ){
                     // 后期改为Context.GetLightDir(Context.LightData[i]);
-                    lightColor = Context.LightData[i];
-                    lightData1 = Context.LightData[i + 1];
+                    lightColor = Context.VLightData[i];
+                    lightData1 = Context.VLightData[i + 1];
                     ComputeLightDir(wvPosition, lightColor.w, lightData1, lightDir,lightVec);
 
                     // 计算SpotLight的衰减
@@ -100,6 +100,109 @@ Def BasicLightingDef{
             }
         }
     }
+
+    SubTechnology BlinnPhongLighting2{
+        Vars{
+            vec3 wNormal;
+            vec3 wPosition;
+            // 三种成分用于调和光照,可来自材质颜色的定义,也可以来自vertex_light
+            vec3 ambientSumAdjust;
+            vec4 diffuseSumAdjust;
+            vec3 specularSumAdjust;
+        }
+        Advanced{
+            RenderProgram SinglePassLighting;
+        }
+        Vs_Shader{
+            void main(){
+                vec4 wPos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                wPosition = wPos.xyz;
+                vec3 norm = mat3(transpose(inverse(Context.ModelMatrix))) * Context.InNormal;
+                wNormal = norm.xyz;
+                ambientSumAdjust = vec3(0.2f);
+                diffuseSumAdjust = vec4(0.5f, 0.5f, 0.5f, 1.0f);
+                specularSumAdjust = vec3(1.0f);
+                Context.OutPosition = Context.ProjectViewMatrix * wPos;
+            }
+        }
+        Fs_Shader{
+            // 计算光照方向
+            // 对于DirLight,PointLight以及SpotLight,lightType依次为0.0,1.0,2.0
+            // 输出光照方向以及半角向量
+            void ComputeLightDir(in vec3 worldPos, in float lightType, in vec4 position, out vec4 lightDir, out vec3 lightVec){
+                // 只有lightType = 0.0时,posLight为0.0,否则posLight为1.0
+                float posLight = step(0.5f, lightType);
+
+                // 计算光照位置
+                // 对于DirLight,lightVec = position.xyz * sign(-0.5f) = position.xyz * -1.0f;其中position代表DirLight的方向
+                // 对于PointLight和SpotLight,lightVec = position.xyz * sign(1.0f - 0.5f) - (worldPos * 1.0f) = positions.xyz * 1.0f - worldPos;其中position代表Light的位置
+                lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);
+                float dist = length(lightVec);
+
+                // 对于DirLight,lightDir.w = 1.0f
+                // 对于PointLight,w = 0-1之间的半径比率
+                lightDir.w = clamp(1.0 - position.w * dist * posLight, 0.0f, 1.0f);
+                // 归一化
+                lightDir.xyz = lightVec / vec3(dist);
+            }
+            // 基于BlinnPhong光照模型计算光照因子
+            // brdf.x保存漫反射部分;brdf.y保存镜面反射部分
+            void ComputeLighting(in vec3 normal, in vec3 viewDir, in vec3 lightDir, in float attenuation, in float shininess, out vec2 brdf){
+                // diffuse部分
+                float diffuseBRDF = max(0.0f, dot(normal, lightDir));
+                // specular部分
+                // 半角向量代替viewDir参与光照计算
+                vec3 H = normalize(viewDir + lightDir);
+                float HdotN = max(0.0f, dot(H, normal));
+                float specularBRDF = pow( HdotN, shininess );
+
+                // 衰减,对于PointLight和SpotLight来说有效,对于DirLight而言,attenuation一直为1
+                brdf.x = diffuseBRDF * attenuation;
+                brdf.y = specularBRDF * attenuation;
+            }
+            void main(){
+                // 计算光照
+                vec4 lightColor;
+                vec4 lightData1;
+                vec4 lightDir = vec4(0.0f);
+                vec3 lightVec = vec3(0.0f);
+                vec2 lightBRDF = vec2(0.0f);
+                vec4 diffuseColor = vec4(0.5f, 0.5f, 0.5f, 1.0f);
+                vec4 specularColor = vec4(0.7f, 0.7f, 0.7f, 1.0f);
+                vec3 viewDir = normalize(Context.CameraPosition.xyz - wPosition.xyz);
+                Context.OutColor.rgb = diffuseColor.rgb * ambientSumAdjust;
+                float shininess = 32.0f;
+                for( int i = 0;i < Context.CurLightCount;i+=3 ){
+                    // 后期改为Context.GetLightDir(Context.LightData[i]);
+                    lightColor = Context.WLightData[i];
+                    lightData1 = Context.WLightData[i + 1];
+                    ComputeLightDir(wPosition, lightColor.w, lightData1, lightDir, lightVec);
+                    //lightBRDF.x = max( 0.0f, dot( wNormal, lightDir.xyz ) );
+
+                    // BlinnPhongLighting
+                    //vec3 h = normalize( viewDir + lightDir.xzy );
+                    //lightBRDF.y = pow( max( 0.0f, dot( wNormal, h ) ), 32.0f );
+                    // 标准PhongLighting
+                    //vec3 refDir = reflect( lightData1.xyz, wNormal );
+                    //lightBRDF.y = pow( max( 0.0f, dot( viewDir, refDir ) ), 32.0f);
+
+                    // 计算SpotLight的衰减
+                    float spotFallOff = 1.0;
+
+                    // 如果存在法线纹理,则进一步计算lightDir
+
+                    // 计算反射率
+                    ComputeLighting(wNormal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, 32.0f, lightBRDF);
+
+                    // 最终光照值
+                    //Context.OutColor.rgb += lightColor.rgb * (vec3(lightBRDF.x) * diffuseColor.rgb * diffuseSumAdjust.rgb + vec3(lightBRDF.y) * specularColor.rgb * specularSumAdjust.rgb);
+                    Context.OutColor.rgb += lightColor.rgb * ( diffuseColor.rgb * diffuseSumAdjust.rgb * vec3( lightBRDF.x ) + specularColor.rgb * specularSumAdjust.rgb * vec3( lightBRDF.y ));
+                }
+                Context.OutColor.a = diffuseSumAdjust.a * diffuseColor.a;
+            }
+        }
+    }
+
     SubTechnology ColorSubTechnology{
         Vs_Shader{
             void main(){
@@ -114,11 +217,18 @@ Def BasicLightingDef{
     }
     Technology{
         Sub_Pass Forward{
-            Pass BlinnPhongLighting{
+            Pass BlinnPhongLighting1{
                 FaceCull Off;
             }
         }
     }
+    Technology BlinnPhongLight2{
+            Sub_Pass Forward{
+                Pass BlinnPhongLighting2{
+                    FaceCull Off;
+                }
+            }
+        }
     Technology Color{
         Sub_Pass Forward{
             Pass ColorSubTechnology{

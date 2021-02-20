@@ -8,6 +8,11 @@ export default class Vector3 {
         this._m_X = x || 0;
         this._m_Y = y || 0;
         this._m_Z = z || 0;
+        this.bufferData = new Float32Array(3);
+    }
+    getBufferData(){
+        this.bufferData.set([this._m_X, this._m_Y, this._m_Z]);
+        return this.bufferData;
     }
     setTo(vec3){
         this._m_X = vec3._m_X;

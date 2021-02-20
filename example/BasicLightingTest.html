@@ -27,6 +27,7 @@
     // // 加载一个材质定义
     let materialDef = MaterialDef.load("../src/component/Assets/MaterialDef/BasicLightingDef");
     //
+    console.log("materialDef:",materialDef);
     let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
     // console.log("materialDef:" , MaterialDef.load("../src/component/Assets/MaterialDef/BasicLightingDef"));
     // deferredMat.selectTechnology('TestDeferredShading');
@@ -60,6 +61,13 @@
         0.5, -0.5, -0.5,
         0.5, -0.5, 0.5,
         0.5, 0.5, 0.5,
+
+        -0.5, -0.5, -0.5,
+        0.5, -0.5, -0.5,
+        0.5, -0.5, 0.5,
+        0.5, -0.5, 0.5,
+        -0.5, -0.5, 0.5,
+        -0.5, -0.5, -0.5,
 
         -0.5, 0.5, -0.5,
         0.5, 0.5, -0.5,
@@ -132,6 +140,7 @@
     ]);
     cubeGeometry.setMesh(cubeMesh);
     cubeGeometry.updateBound();
+    basicLightingMat.selectTechnology('BlinnPhongLight2');
     cubeGeometry.setMaterial(basicLightingMat);
 
     let rootNode = new Node(scene, {id:'rootNode'});

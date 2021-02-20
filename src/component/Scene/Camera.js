@@ -21,7 +21,7 @@ export default class Camera extends Component{
         this._m_ProjectViewMatrix = new Matrix44();
         this._m_ViewMatrixUpdate = false;
         this._m_ProjectMatrixUpdate = false;
-        this._m_ProjectVieMatrixUpdate = false;
+        this._m_ProjectViewMatrixUpdate = false;
 
 
         // 初始化
@@ -54,7 +54,15 @@ export default class Camera extends Component{
         gl.bufferData(gl.UNIFORM_BUFFER, 3 * 16 * 4, gl.STATIC_DRAW);
         gl.bindBuffer(gl.UNIFORM_BUFFER, null);
 
-        gl.bindBufferRange(gl.UNIFORM_BUFFER, 0x001, MAT, 0, 3 * 16 * 4);
+        gl.bindBufferRange(gl.UNIFORM_BUFFER, ShaderSource.BLOCKS['MAT'].blockIndex, MAT, 0, 3 * 16 * 4);
+
+        let VIEW = gl.createBuffer();
+        this.VIEW = VIEW;
+        gl.bindBuffer(gl.UNIFORM_BUFFER, VIEW);
+        gl.bufferData(gl.UNIFORM_BUFFER, 3 * 4, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+
+        gl.bindBufferRange(gl.UNIFORM_BUFFER, ShaderSource.BLOCKS['VIEW'].blockIndex, VIEW, 0, 3 * 4);
 
         this._doUpdate();
     }
@@ -131,9 +139,10 @@ export default class Camera extends Component{
         gl.bindBuffer(gl.UNIFORM_BUFFER, this.MAT);
 
         let frameContext = this._m_Scene.getRender().getFrameContext();
+        let updateCamera = this._m_ViewMatrixUpdate;
 
         if(this._m_ViewMatrixUpdate){
-            this._m_ProjectVieMatrixUpdate = true;
+            this._m_ProjectViewMatrixUpdate = true;
             if(frameContext.getContext(ShaderSource.S_VIEW_MATRIX_SRC) || frameContext.getContext(ShaderSource.S_VP_SRC) || frameContext.getContext(ShaderSource.S_MVP_SRC)){
                 gl.bufferSubData(gl.UNIFORM_BUFFER, 0, this._m_ViewMatrix.getBufferData());
                 frameContext.setCalcContext(ShaderSource.S_VIEW_MATRIX_SRC, this._m_ViewMatrix);
@@ -141,7 +150,7 @@ export default class Camera extends Component{
             }
         }
         if(this._m_ProjectMatrixUpdate){
-            this._m_ProjectVieMatrixUpdate = true;
+            this._m_ProjectViewMatrixUpdate = true;
             if(frameContext.getContext(ShaderSource.S_PROJECT_MATRIX_SRC) || frameContext.getContext(ShaderSource.S_VP_SRC) || frameContext.getContext(ShaderSource.S_MVP_SRC)){
                 gl.bufferSubData(gl.UNIFORM_BUFFER, 16 * 4, this._m_ProjectMatrix.getBufferData());
                 frameContext.setCalcContext(ShaderSource.S_PROJECT_MATRIX_SRC, this._m_ProjectMatrix);
@@ -150,13 +159,22 @@ export default class Camera extends Component{
         }
 
         // 检测其他需要的context
-        if(this._m_ProjectVieMatrixUpdate && frameContext.getContext(ShaderSource.S_VP_SRC)){
+        if(this._m_ProjectViewMatrixUpdate && frameContext.getContext(ShaderSource.S_VP_SRC)){
             Matrix44.multiplyMM(this._m_ProjectViewMatrix, 0, this._m_ProjectMatrix, 0, this._m_ViewMatrix, 0);
             gl.bufferSubData(gl.UNIFORM_BUFFER, 32 * 4, this._m_ProjectViewMatrix.getBufferData());
             frameContext.setCalcContext(ShaderSource.S_VP_SRC, this._m_ProjectViewMatrix);
-            this._m_ProjectVieMatrixUpdate = false;
+            this._m_ProjectViewMatrixUpdate = false;
         }
         gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+
+        // view
+        if(updateCamera){
+            if(frameContext.getContext(ShaderSource.S_CAMERA_POSITION_SRC)){
+                gl.bindBuffer(gl.UNIFORM_BUFFER, this.VIEW);
+                gl.bufferSubData(gl.UNIFORM_BUFFER, 0, this._m_Eye.getBufferData());
+                gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+            }
+        }
 
         if(this._m_ViewMatrixUpdate || this._m_ProjectMatrixUpdate){
             this._doUpdate();

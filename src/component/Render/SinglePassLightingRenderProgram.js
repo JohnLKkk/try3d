@@ -12,7 +12,8 @@ import Matrix44 from "../Math3d/Matrix44.js";
 export default class SinglePassLightingRenderProgram extends DefaultRenderProgram{
     static PROGRAM_TYPE = 'SinglePassLighting';
     static S_CUR_LIGHT_COUNT = '_curLightCount';
-    static S_LIGHT_DATA = '_lightData';
+    static S_V_LIGHT_DATA = '_vLightData';
+    static S_W_LIGHT_DATA = '_wLightData';
     constructor(props) {
         super(props);
         this._m_AccumulationLights = new RenderState();
@@ -36,6 +37,17 @@ export default class SinglePassLightingRenderProgram extends DefaultRenderProgra
         else{
             // 开启累积缓存模式
         }
+        let conVars = frameContext.m_LastSubShader.getContextVars();
+        let lightSpaceLoc = null;
+        let lightSpace = null;
+        if(conVars[SinglePassLightingRenderProgram.S_V_LIGHT_DATA]){
+            lightSpace = 1;
+            lightSpaceLoc = conVars[SinglePassLightingRenderProgram.S_V_LIGHT_DATA].loc;
+        }
+        else{
+            lightSpace = 0;
+            lightSpaceLoc = conVars[SinglePassLightingRenderProgram.S_W_LIGHT_DATA].loc;
+        }
         // 计算实际需要上载的灯光
         let curLightCount = (batchSize + lastIndex) > lights.length ? (lights.length - lastIndex) : batchSize;
         let light = null;
@@ -58,13 +70,22 @@ export default class SinglePassLightingRenderProgram extends DefaultRenderProgra
             switch (light.getType()) {
                 case 'DirectionalLight':
                     // 提交灯光方向
-                    // 在视图空间计算光源,避免在片段着色阶段计算viewDir
-                    tempVec42.setToInXYZW(light.getDirection()._m_X, light.getDirection()._m_Y, light.getDirection()._m_Z, 0);
-                    Matrix44.multiplyMV(tempVec4, tempVec42, scene.getMainCamera().getViewMatrix());
-                    array[lastIndex + 4] = tempVec4._m_X;
-                    array[lastIndex + 5] = tempVec4._m_Y;
-                    array[lastIndex + 6] = tempVec4._m_Z;
-                    array[lastIndex + 7] = -1;
+                    if(lightSpace){
+                        // 在视图空间计算光源,避免在片段着色阶段计算viewDir
+                        tempVec42.setToInXYZW(light.getDirection()._m_X, light.getDirection()._m_Y, light.getDirection()._m_Z, 0);
+                        Matrix44.multiplyMV(tempVec4, tempVec42, scene.getMainCamera().getViewMatrix());
+                        array[lastIndex + 4] = tempVec4._m_X;
+                        array[lastIndex + 5] = tempVec4._m_Y;
+                        array[lastIndex + 6] = tempVec4._m_Z;
+                        array[lastIndex + 7] = -1;
+                    }
+                    else{
+                        // 在世界空间计算光源
+                        array[lastIndex + 4] = light.getDirection()._m_X;
+                        array[lastIndex + 5] = light.getDirection()._m_Y;
+                        array[lastIndex + 6] = light.getDirection()._m_Z;
+                        array[lastIndex + 7] = -1;
+                    }
                     // 第三个数据占位(不要假设默认为0,因为重复使用这个缓存,所以最好主动填充0)
                     array[lastIndex + 8] = 0;
                     array[lastIndex + 9] = 0;
@@ -73,15 +94,30 @@ export default class SinglePassLightingRenderProgram extends DefaultRenderProgra
                     lastIndex += 12;
                     break;
                 case 'PointLight':
+                    if(lightSpace){
+                        // view空间
+                    }
+                    else{
+                        // 世界空间
+                        array[lastIndex + 4] = light.getPosition()._m_X;
+                        array[lastIndex + 5] = light.getPosition()._m_Y;
+                        array[lastIndex + 6] = light.getPosition()._m_Z;
+                        array[lastIndex + 7] = 0;
+                    }
+                    // 第三个数据占位(不要假设默认为0,因为重复使用这个缓存,所以最好主动填充0)
+                    array[lastIndex + 8] = 0;
+                    array[lastIndex + 9] = 0;
+                    array[lastIndex + 10] = 0;
+                    array[lastIndex + 11] = 0;
+                    lastIndex += 12;
                     break;
                 case 'SpotLight':
                     break;
             }
         }
         // 上载数据
-        let conVars = frameContext.m_LastSubShader.getContextVars();
         // gl[conVars[SinglePassLightingRenderProgram.S_LIGHT_DATA].fun]
-        gl.uniform4fv(conVars[SinglePassLightingRenderProgram.S_LIGHT_DATA].loc, lightData.getBufferData(), 0, curLightCount * 12);
+        gl.uniform4fv(lightSpaceLoc, lightData.getBufferData(), 0, curLightCount * 12);
         gl.uniform1i(conVars[SinglePassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, curLightCount);
     }
     draw(gl, scene, frameContext, iDrawable, lights) {
