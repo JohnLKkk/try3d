@@ -20,9 +20,12 @@
     import MaterialDef from "../src/component/Material/MaterialDef.js";
     import FirstPersonController from "../src/component/InputControl/FirstPersonController.js";
     import DirectionalLight from "../src/component/Light/DirectionalLight.js";
+    import PointLight from "../src/component/Light/PointLight.js";
+    import SpotLight from "../src/component/Light/SpotLight.js";
+    import MoreMath from "../src/component/Math3d/MoreMath.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(2, 2, 2), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(15, 15, 15), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     // // 加载一个材质定义
     let materialDef = MaterialDef.load("../src/component/Assets/MaterialDef/BasicLightingDef");
@@ -34,47 +37,47 @@
     let cubeGeometry = new Geometry(scene, {id:'cube'});
     let cubeMesh = new Mesh();
     cubeMesh.setData(Mesh.S_POSITIONS, [
-        -0.5, -0.5, -0.5,
-        0.5, -0.5, -0.5,
-        0.5, 0.5, -0.5,
-        0.5, 0.5, -0.5,
-        -0.5, 0.5, -0.5,
-        -0.5, -0.5, -0.5,
+        -5.0, -5.0, -5.0,
+        5.0, -5.0, -5.0,
+        5.0, 5.0, -5.0,
+        5.0, 5.0, -5.0,
+        -5.0, 5.0, -5.0,
+        -5.0, -5.0, -5.0,
 
-        -0.5, -0.5, 0.5,
-        0.5, -0.5, 0.5,
-        0.5, 0.5, 0.5,
-        0.5, 0.5, 0.5,
-        -0.5, 0.5, 0.5,
-        -0.5, -0.5, 0.5,
+        -5.0, -5.0, 5.0,
+        5.0, -5.0, 5.0,
+        5.0, 5.0, 5.0,
+        5.0, 5.0, 5.0,
+        -5.0, 5.0, 5.0,
+        -5.0, -5.0, 5.0,
 
-        -0.5, 0.5, 0.5,
-        -0.5, 0.5, -0.5,
-        -0.5, -0.5, -0.5,
-        -0.5, -0.5, -0.5,
-        -0.5, -0.5, 0.5,
-        -0.5, 0.5, 0.5,
+        -5.0, 5.0, 5.0,
+        -5.0, 5.0, -5.0,
+        -5.0, -5.0, -5.0,
+        -5.0, -5.0, -5.0,
+        -5.0, -5.0, 5.0,
+        -5.0, 5.0, 5.0,
 
-        0.5, 0.5, 0.5,
-        0.5, 0.5, -0.5,
-        0.5, -0.5, -0.5,
-        0.5, -0.5, -0.5,
-        0.5, -0.5, 0.5,
-        0.5, 0.5, 0.5,
+        5.0, 5.0, 5.0,
+        5.0, 5.0, -5.0,
+        5.0, -5.0, -5.0,
+        5.0, -5.0, -5.0,
+        5.0, -5.0, 5.0,
+        5.0, 5.0, 5.0,
 
-        -0.5, -0.5, -0.5,
-        0.5, -0.5, -0.5,
-        0.5, -0.5, 0.5,
-        0.5, -0.5, 0.5,
-        -0.5, -0.5, 0.5,
-        -0.5, -0.5, -0.5,
+        -5.0, -5.0, -5.0,
+        5.0, -5.0, -5.0,
+        5.0, -5.0, 5.0,
+        5.0, -5.0, 5.0,
+        -5.0, -5.0, 5.0,
+        -5.0, -5.0, -5.0,
 
-        -0.5, 0.5, -0.5,
-        0.5, 0.5, -0.5,
-        0.5, 0.5, 0.5,
-        0.5, 0.5, 0.5,
-        -0.5, 0.5, 0.5,
-        -0.5, 0.5, -0.5
+        -5.0, 5.0, -5.0,
+        5.0, 5.0, -5.0,
+        5.0, 5.0, 5.0,
+        5.0, 5.0, 5.0,
+        -5.0, 5.0, 5.0,
+        -5.0, 5.0, -5.0
     ]);
     cubeMesh.setData(Mesh.S_NORMALS, [
         0.0, 0.0, -1.0,
@@ -147,9 +150,22 @@
     rootNode.addChildren(cubeGeometry);
 
     let dirLight = new DirectionalLight(scene, {id:'dirLight'});
-    dirLight.setDirectionXYZ(-1, -1, -1);
+    dirLight.setDirectionXYZ(-1, -1, 1);
     dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
     rootNode.addChildren(dirLight);
+
+    let pointLight = new PointLight(scene, {id:'pointLight'});
+    pointLight.setRadius(15.0);
+    pointLight.setColorRGBA(0.2, 0.2, 0.0, 1.0);
+    pointLight.setPositionXYZ(-7, 7, -7);
+    rootNode.addChildren(pointLight);
+
+    let spotLight = new SpotLight(scene, {id:'spotLight'});
+    spotLight.setPositionXYZ(8, 0, 0);
+    spotLight.setDirectionXYZ(-1, 0, 0);
+    spotLight.setColorRGBA(1.0, 0.0, 0.0, 1.0);
+    // spotLight.setInnerCorner(MoreMath.toRadians(3));
+    // spotLight.setOuterCorner(MoreMath.toRadians(5));
 
     let renderEngine = new RenderEngine();
     renderEngine.addScene(scene);

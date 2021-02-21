@@ -21,6 +21,8 @@ export default class PointLight extends Light{
         this._m_Position = new Vector3();
         // 灯光半径
         this._m_Radius = -1;
+        // 半径倒数(加速计算)
+        this._m_InvRadius = 1.0 / this._m_Radius;
     }
 
     /**
@@ -56,6 +58,7 @@ export default class PointLight extends Light{
      */
     setRadius(radius){
         this._m_Radius = radius;
+        this._m_InvRadius = 1.0 / radius;
     }
 
     /**
@@ -64,6 +67,14 @@ export default class PointLight extends Light{
      */
     getRadius(){
         return this._m_Radius;
+    }
+
+    /**
+     * 返回半径倒数。<br/>
+     * @return {number|*}
+     */
+    getInRadius(){
+        return this._m_InvRadius;
     }
 
 }

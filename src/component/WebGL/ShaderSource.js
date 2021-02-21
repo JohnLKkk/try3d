@@ -53,7 +53,7 @@ export default class ShaderSource {
     static S_W_LIGHT_DATA_SRC = '_wLightData';
     static S_CUR_LIGHT_COUNT_SRC = '_curLightCount';
     static S_NB_LIGHTS = '_NB_LIGHTS';
-    static S_BATCH_LIGHT_SIZE = 4;
+    static S_BATCH_LIGHT_SIZE = 4 * 3;
 
     static S_CAMERA_POSITION_SRC = "_cameraPosition";
 

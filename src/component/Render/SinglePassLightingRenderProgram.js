@@ -60,13 +60,13 @@ export default class SinglePassLightingRenderProgram extends DefaultRenderProgra
         // 上载灯光信息
         // 数据编码格式内容
         // 第一个元素保存光照颜色,w分量保存光照类型(0DirectionalLight,1PointLight,2SpotLight)
-        for(let i = lastIndex,end = curLightCount + lastIndex;lastIndex < end;i++){
+        for(let i = lastIndex,offset = 0,end = curLightCount + lastIndex;i < end;i++,offset+=12){
             light = lights[i];
             lightColor = light.getColor();
-            array[lastIndex] = lightColor._m_X;
-            array[lastIndex + 1] = lightColor._m_Y;
-            array[lastIndex + 2] = lightColor._m_Z;
-            array[lastIndex + 3] = light.getTypeId();
+            array[offset] = lightColor._m_X;
+            array[offset + 1] = lightColor._m_Y;
+            array[offset + 2] = lightColor._m_Z;
+            array[offset + 3] = light.getTypeId();
             switch (light.getType()) {
                 case 'DirectionalLight':
                     // 提交灯光方向
@@ -74,24 +74,23 @@ export default class SinglePassLightingRenderProgram extends DefaultRenderProgra
                         // 在视图空间计算光源,避免在片段着色阶段计算viewDir
                         tempVec42.setToInXYZW(light.getDirection()._m_X, light.getDirection()._m_Y, light.getDirection()._m_Z, 0);
                         Matrix44.multiplyMV(tempVec4, tempVec42, scene.getMainCamera().getViewMatrix());
-                        array[lastIndex + 4] = tempVec4._m_X;
-                        array[lastIndex + 5] = tempVec4._m_Y;
-                        array[lastIndex + 6] = tempVec4._m_Z;
-                        array[lastIndex + 7] = -1;
+                        array[offset + 4] = tempVec4._m_X;
+                        array[offset + 5] = tempVec4._m_Y;
+                        array[offset + 6] = tempVec4._m_Z;
+                        array[offset + 7] = -1;
                     }
                     else{
                         // 在世界空间计算光源
-                        array[lastIndex + 4] = light.getDirection()._m_X;
-                        array[lastIndex + 5] = light.getDirection()._m_Y;
-                        array[lastIndex + 6] = light.getDirection()._m_Z;
-                        array[lastIndex + 7] = -1;
+                        array[offset + 4] = light.getDirection()._m_X;
+                        array[offset + 5] = light.getDirection()._m_Y;
+                        array[offset + 6] = light.getDirection()._m_Z;
+                        array[offset + 7] = -1;
                     }
                     // 第三个数据占位(不要假设默认为0,因为重复使用这个缓存,所以最好主动填充0)
-                    array[lastIndex + 8] = 0;
-                    array[lastIndex + 9] = 0;
-                    array[lastIndex + 10] = 0;
-                    array[lastIndex + 11] = 0;
-                    lastIndex += 12;
+                    array[offset + 8] = 0;
+                    array[offset + 9] = 0;
+                    array[offset + 10] = 0;
+                    array[offset + 11] = 0;
                     break;
                 case 'PointLight':
                     if(lightSpace){
@@ -99,26 +98,40 @@ export default class SinglePassLightingRenderProgram extends DefaultRenderProgra
                     }
                     else{
                         // 世界空间
-                        array[lastIndex + 4] = light.getPosition()._m_X;
-                        array[lastIndex + 5] = light.getPosition()._m_Y;
-                        array[lastIndex + 6] = light.getPosition()._m_Z;
-                        array[lastIndex + 7] = 0;
+                        array[offset + 4] = light.getPosition()._m_X;
+                        array[offset + 5] = light.getPosition()._m_Y;
+                        array[offset + 6] = light.getPosition()._m_Z;
+                        array[offset + 7] = light.getInRadius();
                     }
                     // 第三个数据占位(不要假设默认为0,因为重复使用这个缓存,所以最好主动填充0)
-                    array[lastIndex + 8] = 0;
-                    array[lastIndex + 9] = 0;
-                    array[lastIndex + 10] = 0;
-                    array[lastIndex + 11] = 0;
-                    lastIndex += 12;
+                    array[offset + 8] = 0;
+                    array[offset + 9] = 0;
+                    array[offset + 10] = 0;
+                    array[offset + 11] = 0;
                     break;
                 case 'SpotLight':
+                    if(lightSpace){
+
+                    }
+                    else{
+                        // 世界空间
+                        array[offset + 4] = light.getPosition()._m_X;
+                        array[offset + 5] = light.getPosition()._m_Y;
+                        array[offset + 6] = light.getPosition()._m_Z;
+                        array[offset + 7] = light.getInvSpotRange();
+                    }
+                    // 提交spotDir其他信息
+                    array[offset + 8] = light.getDirection()._m_X;
+                    array[offset + 9] = light.getDirection()._m_Y;
+                    array[offset + 10] = light.getDirection()._m_Z;
+                    array[offset + 11] = light.getPackedAngleCos();
                     break;
             }
         }
         // 上载数据
         // gl[conVars[SinglePassLightingRenderProgram.S_LIGHT_DATA].fun]
         gl.uniform4fv(lightSpaceLoc, lightData.getBufferData(), 0, curLightCount * 12);
-        gl.uniform1i(conVars[SinglePassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, curLightCount);
+        gl.uniform1i(conVars[SinglePassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, curLightCount * 3);
     }
     draw(gl, scene, frameContext, iDrawable, lights) {
 

@@ -128,7 +128,8 @@ Def BasicLightingDef{
         Fs_Shader{
             // 计算光照方向
             // 对于DirLight,PointLight以及SpotLight,lightType依次为0.0,1.0,2.0
-            // 输出光照方向以及半角向量
+            // 输出光照方向
+            // lightDir.w存储衰减率(对于DirLight,衰减值一直为1,对于Point或Spot,衰减值随着半径而变小,衰减值越小,表示衰减度越大)
             void ComputeLightDir(in vec3 worldPos, in float lightType, in vec4 position, out vec4 lightDir, out vec3 lightVec){
                 // 只有lightType = 0.0时,posLight为0.0,否则posLight为1.0
                 float posLight = step(0.5f, lightType);
@@ -140,8 +141,11 @@ Def BasicLightingDef{
                 float dist = length(lightVec);
 
                 // 对于DirLight,lightDir.w = 1.0f
-                // 对于PointLight,w = 0-1之间的半径比率
-                lightDir.w = clamp(1.0 - position.w * dist * posLight, 0.0f, 1.0f);
+                lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
+
+                //lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
+                //lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
+
                 // 归一化
                 lightDir.xyz = lightVec / vec3(dist);
             }
@@ -159,6 +163,26 @@ Def BasicLightingDef{
                 // 衰减,对于PointLight和SpotLight来说有效,对于DirLight而言,attenuation一直为1
                 brdf.x = diffuseBRDF * attenuation;
                 brdf.y = specularBRDF * attenuation;
+            }
+            // 返回Spot范围衰减
+            float ComputeSpotFalloff(in vec4 spotDirection, in vec3 lightDir){
+                float curAngleCos = dot(lightDir, -spotDirection.xyz);
+                float innerAngleCos = floor(spotDirection.w) * 0.001f;
+                float outerAngleCos = fract(spotDirection.w);
+                float innerMinusOuter = innerAngleCos - outerAngleCos;
+                float falloff = clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f);
+                //if(curAngleCos > innerMinusOuter)
+                //    falloff = 1.0f;
+                //else
+                //    falloff = 0.0f;
+
+                #ifdef SRGB
+                    // Use quadratic falloff (notice the ^4)
+                    return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0, 1.0), 4.0);
+                #else
+                    // Use linear falloff
+                    return falloff;
+                #endif
             }
             void main(){
                 // 计算光照
@@ -188,6 +212,11 @@ Def BasicLightingDef{
 
                     // 计算SpotLight的衰减
                     float spotFallOff = 1.0;
+                    if( lightColor.w > 1.0f )
+                    {
+                        // 计算SpotLight的范围衰减
+                        spotFallOff = ComputeSpotFalloff( Context.WLightData[i + 2], lightDir.xyz );
+                    }
 
                     // 如果存在法线纹理,则进一步计算lightDir
 
@@ -197,6 +226,7 @@ Def BasicLightingDef{
                     // 最终光照值
                     //Context.OutColor.rgb += lightColor.rgb * (vec3(lightBRDF.x) * diffuseColor.rgb * diffuseSumAdjust.rgb + vec3(lightBRDF.y) * specularColor.rgb * specularSumAdjust.rgb);
                     Context.OutColor.rgb += lightColor.rgb * ( diffuseColor.rgb * diffuseSumAdjust.rgb * vec3( lightBRDF.x ) + specularColor.rgb * specularSumAdjust.rgb * vec3( lightBRDF.y ));
+                    //Context.OutColor.rgb = vec3(spotFallOff);
                 }
                 Context.OutColor.a = diffuseSumAdjust.a * diffuseColor.a;
             }
