@@ -248,14 +248,12 @@ Def BasicLightingDef{
     Technology{
         Sub_Pass Forward{
             Pass BlinnPhongLighting1{
-                FaceCull Off;
             }
         }
     }
     Technology BlinnPhongLight2{
             Sub_Pass Forward{
                 Pass BlinnPhongLighting2{
-                    FaceCull Off;
                 }
             }
         }

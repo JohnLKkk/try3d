@@ -9,6 +9,9 @@ import TempVars from "../Util/TempVars.js";
  * @author Kkk
  */
 export default class Geometry extends Node{
+    getType(){
+        return 'Geometry';
+    }
     constructor(owner, cfg) {
         super(owner, cfg);
         this._m_Mesh = null;

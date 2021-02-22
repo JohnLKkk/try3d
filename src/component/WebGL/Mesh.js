@@ -38,6 +38,9 @@ export default class Mesh {
         "uv2":"uv2",
         "uv3":"uv3"
     };
+    // 图元类型
+    static S_PRIMITIVE_TRIANGLES = 'triangles';
+    static S_PRIMITIVE_LINES = 'lines';
 
     constructor() {
         this._m_Datas = {};
@@ -45,6 +48,25 @@ export default class Mesh {
         this._m_VAO = null;
         this._m_GL = null;
         this._m_ElementCount = 0;
+        this._m_Primitive = Mesh.S_PRIMITIVE_TRIANGLES;
+        this._m_DrawPrimitive = null;
+    }
+
+    /**
+     * 设置图元，必须在调用updateBound()之前设置。<br/>
+     * @param {String}[primitive 应该为Mesh枚举值之一]
+     */
+    setPrimitive(primitive){
+        // 检查是否为有效的提供的枚举值
+        this._m_Primitive = primitive;
+    }
+
+    /**
+     * 返回当前图元。<br/>
+     * @return {string|*}
+     */
+    getPrimitive(){
+        return this._m_Primitive;
     }
     _checkDataType(type){
         if(Mesh.S_DATAS[type]){
@@ -104,16 +126,16 @@ export default class Mesh {
                         ArrayBuf.setIndicesBuf(gl, this._m_VAO, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this._m_Datas[key]), gl.STATIC_DRAW);
                         break;
                     case Mesh.S_UV0:
-                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_UV0, 2, gl.FLOAT, this._m_Datas[key].length, 0);
+                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_UV0, 2, gl.FLOAT, 0, 0);
                         break;
                     case Mesh.S_UV1:
-                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_UV1, 2, gl.FLOAT, this._m_Datas[key].length, 0);
+                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_UV1, 2, gl.FLOAT, 0, 0);
                         break;
                     case Mesh.S_UV2:
-                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_UV2, 2, gl.FLOAT, this._m_Datas[key].length, 0);
+                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_UV2, 2, gl.FLOAT, 0, 0);
                         break;
                     case Mesh.S_UV3:
-                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_UV3, 2, gl.FLOAT, this._m_Datas[key].length, 0);
+                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_UV3, 2, gl.FLOAT, 0, 0);
                         break;
                     default:
                         //自定义,由于自定义的属性在没有绑定着色器之前,是无法显式知道属性位置的,所以需要在绑定着色器后,设定属性位置。
@@ -122,12 +144,20 @@ export default class Mesh {
                 }
             }
         }
+        switch (this._m_Primitive) {
+            case Mesh.S_PRIMITIVE_TRIANGLES:
+                this._m_DrawPrimitive = gl.TRIANGLES;
+                break;
+            case Mesh.S_PRIMITIVE_LINES:
+                this._m_DrawPrimitive = gl.LINES;
+                break;
+        }
     }
     draw(gl){
         // 应该获取FrameContext,然后查看是否需要更新gl最新绑定的vao
         // 以尽可能减少状态机切换
         gl.bindVertexArray(this._m_VAO);
-        gl.drawElements(gl.TRIANGLES, this._m_ElementCount, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(this._m_DrawPrimitive, this._m_ElementCount, gl.UNSIGNED_SHORT, 0);
     }
 
 }

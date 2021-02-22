@@ -11,6 +11,8 @@ import ShaderSource from "../WebGL/ShaderSource.js";
  * @date 2020年10月10日10点35分
  */
 export default class Camera extends Component{
+    static S_TEMP_MAT4 = new Matrix44();
+    static S_TEMP_VEC3 = new Vector3();
     constructor(owner, cfg) {
         super(owner, cfg);
         this._m_Eye = new Vector3(0, 0, 10);
@@ -220,6 +222,24 @@ export default class Camera extends Component{
     }
 
     /**
+     * 返回相机高度。<br/>
+     * @return {Number}
+     */
+    getHeight(){
+        let canvas = this._m_Scene.getCanvas();
+        return canvas.getHeight();
+    }
+
+    /**
+     * 返回当前相机宽度。<br/>
+     * @return {Number}
+     */
+    getWidth(){
+        let canvas = this._m_Scene.getCanvas();
+        return canvas.getWidth();
+    }
+
+    /**
      * 滚动相机。
      * @param {Number}[zoom 滚动量,非累计量]
      */
@@ -236,6 +256,40 @@ export default class Camera extends Component{
      */
     getProjectMatrix(){
         return this._m_ProjectMatrix;
+    }
+
+    /**
+     * 从平面空间坐标以及z投射计算并返回世界中的坐标。<br/>
+     * screenPosition.x表示屏幕上面0-width之间的位置值,screenPosition.y表示屏幕上面0-height之间的位置值。<br/>
+     * 其中中心点在屏幕中间，对于z投射，0-1表示分布在近截面与远界面的非线性投射，为1时表示完全投射到屏幕边界，为0时表示投射到屏幕中心点。<br/>
+     * @param {Vector2}[screenPosition 屏幕空间坐标]
+     * @param {Number}[projectionZPos z投射]
+     * @param {Vector3}[result 计算结果]
+     * @return {Vector3}
+     */
+    getWorldCoordinates(screenPosition, projectionZPos, result){
+        if(!result){
+            result = new Vector3();
+        }
+
+        // 由于没有强制更新ProjectViewMatrix,所以需要在这里进行计算(这一部分可以优化)
+        Matrix44.multiplyMM(this._m_ProjectViewMatrix, 0, this._m_ProjectMatrix, 0, this._m_ViewMatrix, 0);
+        Camera.S_TEMP_MAT4.set(this._m_ProjectViewMatrix);
+
+        // 计算世界坐标
+        let w = this.getWidth();
+        let h = this.getHeight();
+        // 视口以左下角原点(但位于屏幕中心)
+        let viewPortLeft = 0;
+        let viewPortBottom = 0;
+        let viewPortRight = 1;
+        let viewPortTop = 1;
+        // 变换回视口
+        Camera.S_TEMP_VEC3.setToInXYZ((screenPosition._m_X / w - viewPortLeft) / (viewPortRight - viewPortLeft) * 2 - 1, (screenPosition._m_Y / h - viewPortBottom) / (viewPortTop - viewPortBottom) * 2 - 1, projectionZPos * 2 - 1);
+        // 变换回世界空间
+        let pw = Matrix44.multiplyMV3(result, Camera.S_TEMP_VEC3, Camera.S_TEMP_MAT4);
+        result.multLength(1.0 / pw);
+        return result;
     }
 
 }

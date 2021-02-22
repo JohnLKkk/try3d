@@ -14,6 +14,9 @@ export default class Vector3 {
         this.bufferData.set([this._m_X, this._m_Y, this._m_Z]);
         return this.bufferData;
     }
+    toArray(){
+        return [this._m_X, this._m_Y, this._m_Z];
+    }
     setTo(vec3){
         this._m_X = vec3._m_X;
         this._m_Y = vec3._m_Y;
