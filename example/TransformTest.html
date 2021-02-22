@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TransformTest</title>
+    <style>
+        h4{
+            color: darkslategrey;
+        }
+        h5,h6{
+            color: gray;
+            margin: 0px;
+            padding: 0px;
+        }
+        input{
+            width: 30%;
+        }
+    </style>
+</head>
+<body>
+<div style="width: 60%;height: 100%;position:fixed">
+    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<div style="width: 30%;height: 100%;position:fixed;border: grey 2px solid;left: 60.5%;padding: 10px;">
+    <h4>rootNode</h4>
+    <h6>translation</h6>
+    <div id="rootNode_translation"><input type="text" value="0"><input type="text" value="0"><input type="text" value="0"></div>
+    <h6>rotation</h6>
+    <div id="rootNode_rotation"><input type="text" value="0"><input type="text" value="0"><input type="text" value="0"></div>
+    <h6>scale</h6>
+    <div id="rootNode_scale"><input type="text" value="1"><input type="text" value="1"><input type="text" value="1"></div>
+
+    <h4>cubeGeometry</h4>
+    <h6>translation</h6>
+    <div id="cubeGeometry_translation"><input type="text" value="0"><input type="text" value="0"><input type="text" value="0"></div>
+    <h6>rotation</h6>
+    <div id="cubeGeometry_rotation"><input type="text" value="0"><input type="text" value="0"><input type="text" value="0"></div>
+    <h6>scale</h6>
+    <div id="cubeGeometry_scale"><input type="text" value="1"><input type="text" value="1"><input type="text" value="1"></div>
+</div>
+<script type="module">
+    import Geometry from "../src/component/Node/Geometry.js";
+    import Scene from "../src/component/Scene/Scene.js";
+    import RenderEngine from "../src/component/RenderEngine.js";
+    import Node from "../src/component/Node/Node.js";
+    import Mesh from "../src/component/WebGL/Mesh.js";
+    import Material from "../src/component/Material/Material.js";
+    import ColorMatDef from "../src/component/Assets/MaterialDef/ColorMatDef.js";
+    import Vector3 from "../src/component/Math3d/Vector3.js";
+    import MaterialDef from "../src/component/Material/MaterialDef.js";
+    import FirstPersonController from "../src/component/InputControl/FirstPersonController.js";
+    import DirectionalLight from "../src/component/Light/DirectionalLight.js";
+    import MoreMath from "../src/component/Math3d/MoreMath.js";
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(15, 15, 15), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    // // 加载一个材质定义
+    let materialDef = MaterialDef.load("../src/component/Assets/MaterialDef/BasicLightingDef");
+    //
+    console.log("materialDef:",materialDef);
+    let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
+    // console.log("materialDef:" , MaterialDef.load("../src/component/Assets/MaterialDef/BasicLightingDef"));
+    // deferredMat.selectTechnology('TestDeferredShading');
+    let cubeGeometry = new Geometry(scene, {id:'cube'});
+    let cubeMesh = new Mesh();
+    cubeMesh.setData(Mesh.S_POSITIONS, [
+        -5.0, -5.0, -5.0,
+        5.0, -5.0, -5.0,
+        5.0, 5.0, -5.0,
+        5.0, 5.0, -5.0,
+        -5.0, 5.0, -5.0,
+        -5.0, -5.0, -5.0,
+
+        -5.0, -5.0, 5.0,
+        5.0, -5.0, 5.0,
+        5.0, 5.0, 5.0,
+        5.0, 5.0, 5.0,
+        -5.0, 5.0, 5.0,
+        -5.0, -5.0, 5.0,
+
+        -5.0, 5.0, 5.0,
+        -5.0, 5.0, -5.0,
+        -5.0, -5.0, -5.0,
+        -5.0, -5.0, -5.0,
+        -5.0, -5.0, 5.0,
+        -5.0, 5.0, 5.0,
+
+        5.0, 5.0, 5.0,
+        5.0, 5.0, -5.0,
+        5.0, -5.0, -5.0,
+        5.0, -5.0, -5.0,
+        5.0, -5.0, 5.0,
+        5.0, 5.0, 5.0,
+
+        -5.0, -5.0, -5.0,
+        5.0, -5.0, -5.0,
+        5.0, -5.0, 5.0,
+        5.0, -5.0, 5.0,
+        -5.0, -5.0, 5.0,
+        -5.0, -5.0, -5.0,
+
+        -5.0, 5.0, -5.0,
+        5.0, 5.0, -5.0,
+        5.0, 5.0, 5.0,
+        5.0, 5.0, 5.0,
+        -5.0, 5.0, 5.0,
+        -5.0, 5.0, -5.0
+    ]);
+    cubeMesh.setData(Mesh.S_NORMALS, [
+        0.0, 0.0, -1.0,
+        0.0, 0.0, -1.0,
+        0.0, 0.0, -1.0,
+        0.0, 0.0, -1.0,
+        0.0, 0.0, -1.0,
+        0.0, 0.0, -1.0,
+
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+
+        -1.0, 0.0, 0.0,
+        -1.0, 0.0, 0.0,
+        -1.0, 0.0, 0.0,
+        -1.0, 0.0, 0.0,
+        -1.0, 0.0, 0.0,
+        -1.0, 0.0, 0.0,
+
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+
+        0.0, -1.0, 0.0,
+        0.0, -1.0, 0.0,
+        0.0, -1.0, 0.0,
+        0.0, -1.0, 0.0,
+        0.0, -1.0, 0.0,
+        0.0, -1.0, 0.0,
+
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0
+    ]);
+    cubeMesh.setData(Mesh.S_INDICES, [
+        0, 1, 2,
+        3, 4, 5,
+
+        6, 7, 8,
+        9, 10, 11,
+
+        12, 13, 14,
+        15, 16, 17,
+
+        18, 19, 20,
+        21, 22, 23,
+
+        24, 25, 26,
+        27, 28, 29,
+
+        30, 31, 32,
+        33, 34, 35
+    ]);
+    cubeGeometry.setMesh(cubeMesh);
+    cubeGeometry.updateBound();
+    basicLightingMat.selectTechnology('BlinnPhongLight2');
+    cubeGeometry.setMaterial(basicLightingMat);
+
+    let rootNode = new Node(scene, {id:'rootNode'});
+    rootNode.addChildren(cubeGeometry);
+
+    let dirLight = new DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(-1, -1, 1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dirLight);
+
+    let renderEngine = new RenderEngine();
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+    let transform = (id, init, callback)=>{
+        let transform = document.getElementById(id);
+        let result = init || [0, 0, 0];
+        for(let i = 0;i < 3;i++){
+            transform.childNodes[i].onchange = ()=>{
+                result[i] = transform.childNodes[i].value;
+                callback(result[0], result[1], result[2]);
+            };
+        }
+    };
+    // 变换操作
+    transform('rootNode_translation', null, (x, y, z)=>{
+        rootNode.setLocalTranslationXYZ(x, y, z);
+    });
+    transform('rootNode_rotation', null, (x, y, z)=>{
+        rootNode.setLocalRotationFromEuler(MoreMath.toRadians(x), MoreMath.toRadians(y), MoreMath.toRadians(z));
+    });
+    transform('rootNode_scale', [1, 1, 1], (x, y, z)=>{
+        rootNode.setLocalScaleXYZ(x, y, z);
+    });
+    transform('cubeGeometry_translation', null, (x, y, z)=>{
+        cubeGeometry.setLocalTranslationXYZ(x, y, z);
+    });
+    transform('cubeGeometry_rotation', null, (x, y, z)=>{
+        cubeGeometry.setLocalRotationFromEuler(MoreMath.toRadians(x), MoreMath.toRadians(y), MoreMath.toRadians(z));
+    });
+    transform('cubeGeometry_scale', [1, 1, 1], (x, y, z)=>{
+        cubeGeometry.setLocalScaleXYZ(x, y, z);
+    });
+</script>
+</body>
+</html>

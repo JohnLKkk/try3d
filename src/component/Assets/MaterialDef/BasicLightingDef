@@ -118,7 +118,7 @@ Def BasicLightingDef{
                 vec4 wPos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
                 wPosition = wPos.xyz;
                 vec3 norm = mat3(transpose(inverse(Context.ModelMatrix))) * Context.InNormal;
-                wNormal = norm.xyz;
+                wNormal = normalize(norm.xyz);
                 ambientSumAdjust = vec3(0.2f);
                 diffuseSumAdjust = vec4(0.5f, 0.5f, 0.5f, 1.0f);
                 specularSumAdjust = vec3(1.0f);

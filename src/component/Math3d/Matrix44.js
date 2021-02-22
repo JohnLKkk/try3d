@@ -3,9 +3,11 @@
  * @author Kkk
  * @date 2020年10月10日11点10分
  */
+import Vector3 from "./Vector3.js";
 
 export default class Matrix44 {
     static _S_TEMP_MAT4 = new Matrix44();
+    static _S_TEMP_VEC3 = new Vector3();
     constructor() {
         this.m = [
             1,0,0,0,
@@ -26,6 +28,59 @@ export default class Matrix44 {
             0,0,1,0,
             0,0,0,1
         ];
+    }
+
+    /**
+     * 应用缩放。<br/>
+     * @param {Number}[x]
+     * @param {Number}[y]
+     * @param {Number}[z]
+     * @return {Matrix44}
+     */
+    scale(x, y, z){
+        this.m[0] *= x;
+        this.m[4] *= y;
+        this.m[8] *= z;
+        this.m[1] *= x;
+        this.m[5] *= y;
+        this.m[9] *= z;
+        this.m[2] *= x;
+        this.m[6] *= y;
+        this.m[10] *= z;
+        this.m[3] *= x;
+        this.m[7] *= y;
+        this.m[11] *= z;
+        return this;
+    }
+
+    /**
+     * 应用平移。<br/>
+     * @param {Number}[x]
+     * @param {Number}[y]
+     * @param {Number}[z]
+     * @return {Matrix44}
+     */
+    translate(x, y, z){
+        const m3 = this.m[3];
+        this.m[0] += m3 * x;
+        this.m[1] += m3 * y;
+        this.m[2] += m3 * z;
+
+        const m7 = this.m[7];
+        this.m[4] += m7 * x;
+        this.m[5] += m7 * y;
+        this.m[6] += m7 * z;
+
+        const m11 = this.m[11];
+        this.m[8] += m11 * x;
+        this.m[9] += m11 * y;
+        this.m[10] += m11 * z;
+
+        const m15 = this.m[15];
+        this.m[12] += m15 * x;
+        this.m[13] += m15 * y;
+        this.m[14] += m15 * z;
+        return this;
     }
     /**
      * 计算视图矩阵。<br/>
@@ -250,6 +305,158 @@ export default class Matrix44 {
         result._m_Y = v._m_X * m.m[1] + v._m_Y * m.m[5] + v._m_Z * m.m[9] + v._m_W * m.m[13];
         result._m_Z = v._m_X * m.m[2] + v._m_Y * m.m[6] + v._m_Z * m.m[10] + v._m_W * m.m[14];
         result._m_W = v._m_X * m.m[3] + v._m_Y * m.m[7] + v._m_Z * m.m[11] + v._m_W * m.m[15];
+    }
+
+    /**
+     * 从指定的平移，旋转和缩放构造变换矩阵。<br/>
+     * @param {Vector3}[translation 平移]
+     * @param {Quaternion}[rotation 旋转]
+     * @param {Vector3}[scale 缩放]
+     * @param {Matrix44}[result 结果矩阵]
+     * @returns {Matrix44}
+     */
+    static composeMat4(translation, rotation, scale, result){
+        Matrix44.fromQuaternion(rotation, result);
+        result.scale(scale._m_X, scale._m_Y, scale._m_Z);
+        result.translate(translation._m_X, translation._m_Y, translation._m_Z);
+        return result;
+    }
+
+    /**
+     * 从矩阵中解析translation,rotation和scale成分。<br/>
+     * @param {Matrix44}[mat44]
+     * @param {Vector3}[translation]
+     * @param {Quaternion}[rotation]
+     * @param {Vector3}[scale]
+     */
+    static decomposeMat4(mat44, translation, rotation, scale){
+        // 提取矩阵三个量的长度
+        Matrix44._S_TEMP_VEC3.setToInXYZ(mat44.m[0], mat44.m[1], mat44.m[2]);
+        let sx = Matrix44._S_TEMP_VEC3.length();
+
+        Matrix44._S_TEMP_VEC3.setToInXYZ(mat44.m[4], mat44.m[5], mat44.m[6]);
+        let sy = Matrix44._S_TEMP_VEC3.length();
+
+        Matrix44._S_TEMP_VEC3.setToInXYZ(mat44.m[8], mat44.m[9], mat44.m[10]);
+        let sz = Matrix44._S_TEMP_VEC3.length();
+
+        // 如果det结果为negative,则需要反转一个比例
+        const det = Matrix44.determinantMat4(mat44);
+
+        if(det < 0){
+            sx = -sx;
+        }
+
+        translation.setToInXYZ(mat44.m[12], mat44.m[13], mat44.m[14]);
+
+        // 缩放以及旋转部分
+        Matrix44._S_TEMP_MAT4.set(mat44);
+
+        // 去掉缩放,得到旋转部分矩阵
+        const invSX = 1.0 / sx;
+        const invSY = 1.0 / sy;
+        const invSZ = 1.0 / sz;
+
+        Matrix44._S_TEMP_MAT4.m[0] *= invSX;
+        Matrix44._S_TEMP_MAT4.m[1] *= invSX;
+        Matrix44._S_TEMP_MAT4.m[2] *= invSX;
+
+        Matrix44._S_TEMP_MAT4.m[4] *= invSY;
+        Matrix44._S_TEMP_MAT4.m[5] *= invSY;
+        Matrix44._S_TEMP_MAT4.m[6] *= invSY;
+
+        Matrix44._S_TEMP_MAT4.m[8] *= invSZ;
+        Matrix44._S_TEMP_MAT4.m[9] *= invSZ;
+        Matrix44._S_TEMP_MAT4.m[10] *= invSZ;
+
+        // 计算到四元数中
+        rotation.fromMat44(Matrix44._S_TEMP_MAT4);
+
+        // 缩放
+        scale.setToInXYZ(sx, sy, sz);
+    }
+
+    /**
+     * 返回指定行列式。<br/>
+     * @param {Matrix44}[mat]
+     * @return {number}
+     */
+    static determinantMat4(mat) {
+        // 缓存矩阵值,纪大提高计算速度!!
+        const a00 = mat.m[0];
+
+        const a01 = mat.m[1];
+        const a02 = mat.m[2];
+        const a03 = mat.m[3];
+        const a10 = mat.m[4];
+        const a11 = mat.m[5];
+        const a12 = mat.m[6];
+        const a13 = mat.m[7];
+        const a20 = mat.m[8];
+        const a21 = mat.m[9];
+        const a22 = mat.m[10];
+        const a23 = mat.m[11];
+        const a30 = mat.m[12];
+        const a31 = mat.m[13];
+        const a32 = mat.m[14];
+        const a33 = mat.m[15];
+        return a30 * a21 * a12 * a03 - a20 * a31 * a12 * a03 - a30 * a11 * a22 * a03 + a10 * a31 * a22 * a03 +
+            a20 * a11 * a32 * a03 - a10 * a21 * a32 * a03 - a30 * a21 * a02 * a13 + a20 * a31 * a02 * a13 +
+            a30 * a01 * a22 * a13 - a00 * a31 * a22 * a13 - a20 * a01 * a32 * a13 + a00 * a21 * a32 * a13 +
+            a30 * a11 * a02 * a23 - a10 * a31 * a02 * a23 - a30 * a01 * a12 * a23 + a00 * a31 * a12 * a23 +
+            a10 * a01 * a32 * a23 - a00 * a11 * a32 * a23 - a20 * a11 * a02 * a33 + a10 * a21 * a02 * a33 +
+            a20 * a01 * a12 * a33 - a00 * a21 * a12 * a33 - a10 * a01 * a22 * a33 + a00 * a11 * a22 * a33;
+    }
+
+    /**
+     * 从四元数初始化变换矩阵。<br/>
+     * @param {Quaternion}[quaternion]
+     * @param {Matrix44}[result]
+     * @return {Matrix44}
+     */
+    static fromQuaternion(quaternion, result){
+        const x = quaternion._m_X;
+        const y = quaternion._m_Y;
+        const z = quaternion._m_Z;
+        const w = quaternion._m_W;
+
+        const x2 = x + x;
+        const y2 = y + y;
+        const z2 = z + z;
+        const xx = x * x2;
+        const xy = x * y2;
+        const xz = x * z2;
+        const yy = y * y2;
+        const yz = y * z2;
+        const zz = z * z2;
+        const wx = w * x2;
+        const wy = w * y2;
+        const wz = w * z2;
+
+        result.m[0] = 1 - (yy + zz);
+        result.m[4] = xy - wz;
+        result.m[8] = xz + wy;
+
+        result.m[1] = xy + wz;
+        result.m[5] = 1 - (xx + zz);
+        result.m[9] = yz - wx;
+
+        result.m[2] = xz - wy;
+        result.m[6] = yz + wx;
+        result.m[10] = 1 - (xx + yy);
+
+        // last column
+        result.m[3] = 0;
+        result.m[7] = 0;
+        result.m[11] = 0;
+
+        // bottom row
+        result.m[12] = 0;
+        result.m[13] = 0;
+        result.m[14] = 0;
+        result.m[15] = 1;
+
+        return result;
     }
     /**
      * 根据视场角度定义投影矩阵，纵横比和Z剪裁平面。
