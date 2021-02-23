@@ -16,20 +16,28 @@ export default class MeshFactor {
         array.push(vec3._m_Y);
         array.push(vec3._m_Z);
     }
-    static createViewFrustumMeshFromCamera(camera){
+
+    /**
+     * 基于指定Camera创建视锥体。<br/>
+     * 注意:返回的视锥体是当前Camera状态下的可视化，即处于当前Camera位置，如果要单独创建位于原点的视锥体，请将viewSpace设置为false。<br/>
+     * @param {Camera}[camera]
+     * @param {Boolean}[viewSpace 默认为true,表示计算结果为viewSpace]
+     * @return {Mesh}
+     */
+    static createViewFrustumMeshFromCamera(camera, viewSpace){
         let w = camera.getWidth();
         let h = camera.getHeight();
 
         let positions = [];
-        MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(0, 0), 0));
-        MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(0, h), 0));
-        MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(w, h), 0));
-        MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(w, 0), 0));
+        MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(0, 0), 0, viewSpace || true));
+        MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(0, h), 0, viewSpace || true));
+        MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(w, h), 0, viewSpace || true));
+        MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(w, 0), 0, viewSpace || true));
 
-        MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(0, 0), 1));
-        MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(0, h), 1));
-        MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(w, h), 1));
-        MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(w, 0), 1));
+        MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(0, 0), 1, viewSpace || true));
+        MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(0, h), 1, viewSpace || true));
+        MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(w, h), 1, viewSpace || true));
+        MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(w, 0), 1, viewSpace || true));
         console.log(positions);
 
         // indices

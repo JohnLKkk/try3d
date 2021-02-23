@@ -49,7 +49,7 @@ Def ColorDef{
                 #ifdef Params.color
                     Context.OutColor = Params.color;
                 #else
-                    Context.OutColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+                    Context.OutColor = vec4(0.8f, 0.8f, 0.8f, 1.0f);
                 #endif
                 vec4 wPosition = wordPosition;
             }

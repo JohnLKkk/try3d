@@ -264,29 +264,38 @@ export default class Camera extends Component{
      * 其中中心点在屏幕中间，对于z投射，0-1表示分布在近截面与远界面的非线性投射，为1时表示完全投射到屏幕边界，为0时表示投射到屏幕中心点。<br/>
      * @param {Vector2}[screenPosition 屏幕空间坐标]
      * @param {Number}[projectionZPos z投射]
+     * @param {Boolean}[viewSpace true表示计算基于viewSpace]
      * @param {Vector3}[result 计算结果]
      * @return {Vector3}
      */
-    getWorldCoordinates(screenPosition, projectionZPos, result){
+    getWorldCoordinates(screenPosition, projectionZPos, viewSpace, result){
         if(!result){
             result = new Vector3();
         }
 
         // 由于没有强制更新ProjectViewMatrix,所以需要在这里进行计算(这一部分可以优化)
-        Matrix44.multiplyMM(this._m_ProjectViewMatrix, 0, this._m_ProjectMatrix, 0, this._m_ViewMatrix, 0);
-        Camera.S_TEMP_MAT4.set(this._m_ProjectViewMatrix);
+        if(viewSpace){
+            Matrix44.multiplyMM(this._m_ProjectViewMatrix, 0, this._m_ProjectMatrix, 0, this._m_ViewMatrix, 0);
+            Camera.S_TEMP_MAT4.set(this._m_ProjectViewMatrix);
+        }
+        else{
+            Camera.S_TEMP_MAT4.set(this._m_ProjectMatrix);
+        }
+        // 逆矩阵
+        Camera.S_TEMP_MAT4.inert();
 
         // 计算世界坐标
         let w = this.getWidth();
         let h = this.getHeight();
         // 视口以左下角原点(但位于屏幕中心)
-        let viewPortLeft = 0;
-        let viewPortBottom = 0;
-        let viewPortRight = 1;
-        let viewPortTop = 1;
-        // 变换回视口
-        Camera.S_TEMP_VEC3.setToInXYZ((screenPosition._m_X / w - viewPortLeft) / (viewPortRight - viewPortLeft) * 2 - 1, (screenPosition._m_Y / h - viewPortBottom) / (viewPortTop - viewPortBottom) * 2 - 1, projectionZPos * 2 - 1);
-        // 变换回世界空间
+        let viewPortLeft = 0.0;
+        let viewPortBottom = 0.0;
+        let viewPortRight = 1.0;
+        let viewPortTop = 1.0;
+        // 变换回NDC空间
+        Camera.S_TEMP_VEC3.setToInXYZ((screenPosition._m_X / w - viewPortLeft) / (viewPortRight - viewPortLeft) * 2 - 1, (screenPosition._m_Y / h - viewPortBottom) / (viewPortTop - viewPortBottom) * 2 - 1, projectionZPos * 2.0 - 1.0);
+        // 变换回世界空间(这里直接执行pv逆变换似乎会导致错误,不知道为啥,难道是我求逆矩阵的逻辑有问题？)
+        // 所以先变换会投影空间
         let pw = Matrix44.multiplyMV3(result, Camera.S_TEMP_VEC3, Camera.S_TEMP_MAT4);
         result.multLength(1.0 / pw);
         return result;

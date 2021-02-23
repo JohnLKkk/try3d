@@ -119,6 +119,11 @@ export default class FirstPersonController extends Component{
             }
         });
     }
+    refresh(){
+        this._m_Position.setTo(this._m_Scene.getMainCamera().getEye());
+        this._m_Front.setTo(this._m_Scene.getMainCamera().getAt().subRetNew(this._m_Position).normal());
+        this.synYawPitch();
+    }
 
     /**
      * 同步yaw,pitch欧拉角数据。<br/>

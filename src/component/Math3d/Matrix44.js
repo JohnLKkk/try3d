@@ -301,10 +301,15 @@ export default class Matrix44 {
      * @param {Matrix44}[m 目标矩阵]
      */
     static multiplyMV(result, v, m) {
-        result._m_X = v._m_X * m.m[0] + v._m_Y * m.m[1] + v._m_Z * m.m[2] + v._m_W * m.m[3];
-        result._m_Y = v._m_X * m.m[4] + v._m_Y * m.m[5] + v._m_Z * m.m[6] + v._m_W * m.m[7];
-        result._m_Z = v._m_X * m.m[8] + v._m_Y * m.m[9] + v._m_Z * m.m[10] + v._m_W * m.m[11];
-        result._m_W = v._m_X * m.m[12] + v._m_Y * m.m[13] + v._m_Z * m.m[14] + v._m_W * m.m[15];
+        // result._m_X = v._m_X * m.m[0] + v._m_Y * m.m[1] + v._m_Z * m.m[2] + v._m_W * m.m[3];
+        // result._m_Y = v._m_X * m.m[4] + v._m_Y * m.m[5] + v._m_Z * m.m[6] + v._m_W * m.m[7];
+        // result._m_Z = v._m_X * m.m[8] + v._m_Y * m.m[9] + v._m_Z * m.m[10] + v._m_W * m.m[11];
+        // result._m_W = v._m_X * m.m[12] + v._m_Y * m.m[13] + v._m_Z * m.m[14] + v._m_W * m.m[15];
+
+        result._m_X = v._m_X * m.m[0] + v._m_Y * m.m[4] + v._m_Z * m.m[8] + v._m_W * m.m[12];
+        result._m_Y = v._m_X * m.m[1] + v._m_Y * m.m[5] + v._m_Z * m.m[9] + v._m_W * m.m[13];
+        result._m_Z = v._m_X * m.m[2] + v._m_Y * m.m[6] + v._m_Z * m.m[10] + v._m_W * m.m[14];
+        result._m_W = v._m_X * m.m[3] + v._m_Y * m.m[7] + v._m_Z * m.m[11] + v._m_W * m.m[15];
     }
 
     /**
@@ -317,10 +322,16 @@ export default class Matrix44 {
      * @return {Number}
      */
     static multiplyMV3(result, v, m){
-        result._m_X = v._m_X * m.m[0] + v._m_Y * m.m[1] + v._m_Z * m.m[2] + m.m[3];
-        result._m_Y = v._m_X * m.m[4] + v._m_Y * m.m[5] + v._m_Z * m.m[6] + m.m[7];
-        result._m_Z = v._m_X * m.m[8] + v._m_Y * m.m[9] + v._m_Z * m.m[10] + m.m[11];
-        return v._m_X * m.m[12] + v._m_Y * m.m[13] + v._m_Z * m.m[14] + m.m[15];;
+        // result._m_X = v._m_X * m.m[0] + v._m_Y * m.m[1] + v._m_Z * m.m[2] + m.m[3];
+        // result._m_Y = v._m_X * m.m[4] + v._m_Y * m.m[5] + v._m_Z * m.m[6] + m.m[7];
+        // result._m_Z = v._m_X * m.m[8] + v._m_Y * m.m[9] + v._m_Z * m.m[10] + m.m[11];
+        // return v._m_X * m.m[12] + v._m_Y * m.m[13] + v._m_Z * m.m[14] + m.m[15];
+
+        // 在cpu计算统一用右乘
+        result._m_X = v._m_X * m.m[0] + v._m_Y * m.m[4] + v._m_Z * m.m[8] + m.m[12];
+        result._m_Y = v._m_X * m.m[1] + v._m_Y * m.m[5] + v._m_Z * m.m[9] + m.m[13];
+        result._m_Z = v._m_X * m.m[2] + v._m_Y * m.m[6] + v._m_Z * m.m[10] + m.m[14];
+        return v._m_X * m.m[3] + v._m_Y * m.m[7] + v._m_Z * m.m[11] + m.m[15];
     }
 
     /**

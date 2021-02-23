@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>BasicShapeTest</title>
+    <title>OctreeCullingTest</title>
 </head>
 <body>
-<div style="width: 100%;height: 100%;position:fixed">
-    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;margin: 0px;padding: 0px;" tabindex="0"></canvas>
 </div>
 <script type="module">
     import Scene from "../src/component/Scene/Scene.js";
@@ -22,6 +22,8 @@
     import Plane from "../src/component/Node/Shape/Plane.js";
     import Geometry from "../src/component/Node/Geometry.js";
     import MeshFactor from "../src/component/Util/MeshFactor.js";
+    import MoreMath from "../src/component/Math3d/MoreMath.js";
+    import Stats from "./stats.min.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(25, 0, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -31,40 +33,30 @@
     console.log("materialDef:",materialDef);
     let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
     basicLightingMat.selectTechnology('BlinnPhongLight2');
-    let box0 = new Box(scene, {id:'box0', xSize:2, ySize:1, zSize:3});
-    box0.setMaterial(basicLightingMat);
-
-    let box1 = new Box(scene, {id:'box1', xSize:1, ySize:1, zSize:1});
-    box1.setMaterial(basicLightingMat);
-    box1.setLocalTranslationXYZ(-10, 0, 0);
-    box1.setLocalRotationFromEuler(0, 35, 0);
-
-    let sphere0 = new Sphere(scene, {id:'sphere0', radius:2, widthSegments:18, heightSegments:24});
-    sphere0.setMaterial(basicLightingMat);
-    sphere0.setLocalTranslationXYZ(10, 0, 0);
-
-    let sphere1 = new Sphere(scene, {id:'sphere1', radius:2, widthSegments:18, heightSegments:24, lod:0.1});
-    sphere1.setMaterial(basicLightingMat);
-    sphere1.setLocalTranslationXYZ(0, 10, 0);
-
-    let plane = new Plane(scene, {id:'plane'});
-    plane.setMaterial(basicLightingMat);
-    plane.setLocalScaleXYZ(50, 1, 50);
-    plane.setLocalTranslationXYZ(0, -5, 0);
 
     let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
+    // 根据当前相机创建测试用的视锥体
     wireFrustum.setMesh(MeshFactor.createViewFrustumMeshFromCamera(mainCamera));
     wireFrustum.setMaterial(new Material(scene, {id:'colorWireFrustum', materialDef:MaterialDef.load("../src/component/Assets/MaterialDef/ColorDef")}));
     wireFrustum.updateBound();
-    // wireFrustum.setLocalTranslation(mainCamera.getEye());
 
     let rootNode = new Node(scene, {id:'rootNode'});
-    rootNode.addChildren(box0);
-    rootNode.addChildren(box1);
-    rootNode.addChildren(sphere0);
-    rootNode.addChildren(sphere1);
-    rootNode.addChildren(plane);
     rootNode.addChildren(wireFrustum);
+
+    // 创建一堆离散空间数据,分布在[-500,500]之间
+    let min = -500, max = 500;
+    let minSize = 5, maxSize = 20;
+    for(let i = 0;i < 1000;i++){
+        let box = new Box(scene, {id:'box' + i, xSize:Math.random() * (maxSize - minSize + 1) + minSize, ySize:Math.random() * (maxSize - minSize + 1) + minSize, zSize:Math.random() * (maxSize - minSize + 1) + minSize});
+        box.setMaterial(basicLightingMat);
+        box.setLocalTranslationXYZ(Math.random() * (max - min + 1) + min, Math.random() * (max - min + 1) + min, Math.random() * (max - min + 1) + min);
+        box.setLocalRotationFromEuler(MoreMath.toRadians(Math.random() * 360), MoreMath.toRadians(Math.random() * 360), MoreMath.toRadians(Math.random() * 360));
+        rootNode.addChildren(box);
+    }
+    // 再次将相机设置为一个最佳观测点(以便观察上面的视锥体)
+    mainCamera.lookAt(new Vector3(-150, 250, 200), new Vector3(-50, 0, -50), new Vector3(0, 1, 0));
+    // 别忘了同步控制器(这个应该封装到控制器中,而不应该外部手动调用)
+    firstPersonController.refresh();
 
     let dirLight = new DirectionalLight(scene, {id:'dirLight'});
     dirLight.setDirectionXYZ(1, -0.5, 1);
@@ -74,6 +66,16 @@
     let renderEngine = new RenderEngine();
     renderEngine.addScene(scene);
     renderEngine.launch();
+
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', ()=>{
+        stats.update();
+    });
 </script>
 </body>
 </html>
