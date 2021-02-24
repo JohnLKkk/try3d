@@ -61,6 +61,7 @@
         geometry2.setMaterial(material2);
 
         let renderEngine = new RenderEngine();
+        scene.addSceneNode(rootNode);
         renderEngine.addScene(scene);
         renderEngine.launch();
     </script>

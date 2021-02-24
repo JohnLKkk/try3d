@@ -4,6 +4,8 @@ import Canvas from "../Device/Canvas.js";
 import Camera from "./Camera.js";
 import Queue from "../Util/Queue.js";
 import Light from "../Light/Light.js";
+import Node from "../Node/Node.js";
+import Picture from "../Node/Picture.js";
 
 /**
  * Scene表示渲染一个3D世界的容器，包含各种组件，但它不能作为其他组件的子组件。<br/>
@@ -25,6 +27,11 @@ export default class Scene extends Component{
         this._m_Canvas = new Canvas(this, {id:"default_canvas", canvas:cfg.cavnas});
         this._m_Render = new Render(this, {id:"default_render"});
         this._m_MainCamera = new Camera(this, {id:"mainCamera"});
+
+        // 场景节点
+        this._m_Nodes = [];
+        // 场景节点名称映射列表
+        this._m_NodeIds = {};
 
         // 灯光列表
         this._m_Lights = [];
@@ -114,8 +121,22 @@ export default class Scene extends Component{
     getCanvas(){
         return this._m_Canvas;
     }
+
     /**
-     * 载入一个组件到scene中
+     * 添加场景节点。<br/>
+     * @param {Node}[node]
+     */
+    addSceneNode(node){
+        // 检测是否为Node(后面要进行场景管理,剔除,需要对类型为Node的组件进行收集)
+        if(node instanceof Node && !(node instanceof Picture)){
+            if(!this._m_NodeIds[node.getId()]){
+                this._m_Nodes.push(node);
+                this._m_NodeIds[node.getId()] = node;
+            }
+        }
+    }
+    /**
+     * 载入一个组件到scene中,场景对象将包含所有组件。<br/>
      * @param {Component}[component]
      */
     addComponentInScene(component){
@@ -127,6 +148,7 @@ export default class Scene extends Component{
                     this._m_ComponentIDs[component.getId()] = component;
                     this._m_Components.push(component);
                 }
+
 
                 // 检测是否为drawable
                 // 其实应该在scene组件中维护drawables列表而不是render组件
@@ -166,6 +188,25 @@ export default class Scene extends Component{
             }
         }
     }
+    _frustumCulling(node, visDrawables){
+        // 检测视锥剔除
+
+        // 判断是否为iDrawable
+        if(node.isDrawable && node.isDrawable()){
+            // 添加到visDrawable中,然后退出
+            visDrawables.push(node);
+        }
+        else{
+            // 执行子节点剔除
+            if(node.getChildren().length > 0){
+                node.getChildren().forEach(node=>{
+                    // 检测是否需要默认剔除
+                    // 执行默认剔除
+                    this._frustumCulling(node, visDrawables);
+                });
+            }
+        }
+    }
     update(exTime){
         // 执行所有更新队列
         this.runTasks();
@@ -175,6 +216,20 @@ export default class Scene extends Component{
     }
     render(exTime){
         // 通知一帧开始
+        this.fire('render', [exTime]);
+
+        // 更新visDrawables
+        let visDrawables = this._m_Render.getVisDrawables();
+        // 最快的清楚方式
+        visDrawables.length = 0;
+        // 然后更新visDrawables
+        this._m_Nodes.forEach(node=>{
+            // 检测是否执行默认视锥剔除
+
+            // 需要执行默认视锥剔除
+            this._frustumCulling(node, visDrawables);
+        });
+
         this._m_Render.render(exTime);
     }
 

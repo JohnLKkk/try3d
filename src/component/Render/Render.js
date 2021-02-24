@@ -43,6 +43,8 @@ export default class Render extends Component{
         // 保存所有需要渲染的元素
         this._m_Drawables = [];
         this._m_DrawableIDs = {};
+        // 缓存当前帧渲染数据
+        this._m_VisDrawables = [];
         // 保存所有FramePicture对象
         this._m_FramePictures = [];
         this._m_FramePictureIDs = [];
@@ -111,6 +113,22 @@ export default class Render extends Component{
         // 加载可用渲染程序
         this._m_RenderPrograms[DefaultRenderProgram.PROGRAM_TYPE] = new DefaultRenderProgram();
         this._m_RenderPrograms[SinglePassLightingRenderProgram.PROGRAM_TYPE] = new SinglePassLightingRenderProgram();
+    }
+
+    /**
+     * 返回当前帧渲染列表。<br/>
+     * @return {IDrawable[]}
+     */
+    getVisDrawables(){
+        return this._m_VisDrawables;
+    }
+
+    /**
+     * 返回名称映射drawable列表。<br/>
+     * @return {{}|*}
+     */
+    getDrawableIDs(){
+        return this._m_DrawableIDs;
     }
 
     /**
@@ -224,7 +242,7 @@ export default class Render extends Component{
         // 从所有可见drawable列表中,进行剔除,得到剔除后的列表
         // 这里暂时还没实现剔除,所以直接就是全部的drawables
         // 剔除的时候,需要先排除GUI元素
-        let visDrawables = this._m_Drawables;
+        let visDrawables = this._m_VisDrawables;
 
         // 按材质分类
         // 1.实时创建分类列表

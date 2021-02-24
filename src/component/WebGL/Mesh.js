@@ -53,12 +53,22 @@ export default class Mesh {
     }
 
     /**
-     * 设置图元，必须在调用updateBound()之前设置。<br/>
+     * 设置图元。<br/>
      * @param {String}[primitive 应该为Mesh枚举值之一]
      */
     setPrimitive(primitive){
         // 检查是否为有效的提供的枚举值
         this._m_Primitive = primitive;
+        if(this._m_GL){
+            switch (this._m_Primitive) {
+                case Mesh.S_PRIMITIVE_TRIANGLES:
+                    this._m_DrawPrimitive = this._m_GL.TRIANGLES;
+                    break;
+                case Mesh.S_PRIMITIVE_LINES:
+                    this._m_DrawPrimitive = this._m_GL.LINES;
+                    break;
+            }
+        }
     }
 
     /**
@@ -77,6 +87,13 @@ export default class Mesh {
             return false;
         }
     }
+
+    /**
+     * 设置Mesh数据。<br/>
+     * @param {Number}[type Mesh的数据类型枚举]
+     * @param {ArrayBuffer}[data 数据]
+     * @param {Object}[options]
+     */
     setData(type, data, options){
         if(this._checkDataType(type)){
             this._m_Datas[type] = data;
@@ -85,6 +102,15 @@ export default class Mesh {
             //根据options来指定参数
             this._m_Datas[type] = data;
         }
+    }
+
+    /**
+     * 返回Mesh数据。<br/>
+     * @param {Number}[type Mesh的数据类型枚举]
+     * @return {ArrayBuffer}
+     */
+    getData(type){
+        return this._m_Datas[type];
     }
     _refreshBufLocal(gl, customAttrs){
         // 更新几何属性列表local属性
@@ -103,6 +129,7 @@ export default class Mesh {
      * @private
      */
     _updateBound(gl){
+        this._m_GL = gl;
         if(this._m_Datas){
             if(!this._m_VAO){
                 this._m_VAO = gl.createVertexArray();
@@ -143,14 +170,14 @@ export default class Mesh {
                         break;
                 }
             }
-        }
-        switch (this._m_Primitive) {
-            case Mesh.S_PRIMITIVE_TRIANGLES:
-                this._m_DrawPrimitive = gl.TRIANGLES;
-                break;
-            case Mesh.S_PRIMITIVE_LINES:
-                this._m_DrawPrimitive = gl.LINES;
-                break;
+            switch (this._m_Primitive) {
+                case Mesh.S_PRIMITIVE_TRIANGLES:
+                    this._m_DrawPrimitive = this._m_GL.TRIANGLES;
+                    break;
+                case Mesh.S_PRIMITIVE_LINES:
+                    this._m_DrawPrimitive = this._m_GL.LINES;
+                    break;
+            }
         }
     }
     draw(gl){

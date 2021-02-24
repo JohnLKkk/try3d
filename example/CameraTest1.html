@@ -38,6 +38,7 @@
     let rootNode = new Node(scene, {id:'rootNode'});
     rootNode.addChildren(geometry);
     let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
     renderEngine.addScene(scene);
     renderEngine.launch();
 </script>

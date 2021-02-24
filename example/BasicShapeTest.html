@@ -31,10 +31,10 @@
     console.log("materialDef:",materialDef);
     let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
     basicLightingMat.selectTechnology('BlinnPhongLight2');
-    let box0 = new Box(scene, {id:'box0', xSize:2, ySize:1, zSize:3});
+    let box0 = new Box(scene, {id:'box0', xHalf:2, yHalf:1, zHalf:3});
     box0.setMaterial(basicLightingMat);
 
-    let box1 = new Box(scene, {id:'box1', xSize:1, ySize:1, zSize:1});
+    let box1 = new Box(scene, {id:'box1', xHalf:1, yHalf:1, zHalf:1});
     box1.setMaterial(basicLightingMat);
     box1.setLocalTranslationXYZ(-10, 0, 0);
     box1.setLocalRotationFromEuler(0, 35, 0);
@@ -72,6 +72,7 @@
     rootNode.addChildren(dirLight);
 
     let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
     renderEngine.addScene(scene);
     renderEngine.launch();
 </script>

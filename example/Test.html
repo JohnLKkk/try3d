@@ -6,21 +6,40 @@
 </head>
 <body>
     <script>
-        function findSrc(str, reg){
-            let res = reg.exec(str);
-            if(res){
-                // 截取这个字符串
-            }
+        let a = [2, 3, 4];
+        console.log("---------------");
+        for(let i = 0;i < a.length;i++){
+            console.log(a[i]);
         }
-        function repSrc(str, pattern, tagPattern, tag){
-            if(str.search(pattern) != -1){
-                return str.replace(tagPattern, tag);
-            }
-            return str;
+        a.length = 0;
+        console.log("---------------");
+        for(let i = 0;i < a.length;i++){
+            console.log(a[i]);
         }
-        var pattern = /Test.Test/, tagPattern = /Test.Test/g,
-            str = 'Test.Test = a * Test.Test;';
-        console.log("b:",repSrc(str, pattern, tagPattern, "gTg"));
+        console.log("---------------");
+        a.push(55);
+        a.push(566);
+        for(let i = 0;i < a.length;i++){
+            console.log(a[i]);
+        }
+        console.log(a);
     </script>
+    <!--<script>-->
+        <!--function findSrc(str, reg){-->
+            <!--let res = reg.exec(str);-->
+            <!--if(res){-->
+                <!--// 截取这个字符串-->
+            <!--}-->
+        <!--}-->
+        <!--function repSrc(str, pattern, tagPattern, tag){-->
+            <!--if(str.search(pattern) != -1){-->
+                <!--return str.replace(tagPattern, tag);-->
+            <!--}-->
+            <!--return str;-->
+        <!--}-->
+        <!--var pattern = /Test.Test/, tagPattern = /Test.Test/g,-->
+            <!--str = 'Test.Test = a * Test.Test;';-->
+        <!--console.log("b:",repSrc(str, pattern, tagPattern, "gTg"));-->
+    <!--</script>-->
 </body>
 </html>

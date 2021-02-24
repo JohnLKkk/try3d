@@ -41,17 +41,24 @@
     wireFrustum.updateBound();
 
     let rootNode = new Node(scene, {id:'rootNode'});
+    scene.addSceneNode(rootNode);
     rootNode.addChildren(wireFrustum);
+    let cubes = new Node(scene, {id:'cubes'});
+    rootNode.addChildren(cubes);
+    let aabbBoundingBoxs = new Node(scene, {id:'aabbBoundingBoxs'});
+    rootNode.addChildren(aabbBoundingBoxs);
 
     // 创建一堆离散空间数据,分布在[-500,500]之间
     let min = -500, max = 500;
     let minSize = 5, maxSize = 20;
     for(let i = 0;i < 1000;i++){
-        let box = new Box(scene, {id:'box' + i, xSize:Math.random() * (maxSize - minSize + 1) + minSize, ySize:Math.random() * (maxSize - minSize + 1) + minSize, zSize:Math.random() * (maxSize - minSize + 1) + minSize});
+        let box = new Box(scene, {id:'box' + i, xHalf:Math.random() * (maxSize - minSize + 1) + minSize, yHalf:Math.random() * (maxSize - minSize + 1) + minSize, zHalf:Math.random() * (maxSize - minSize + 1) + minSize});
         box.setMaterial(basicLightingMat);
         box.setLocalTranslationXYZ(Math.random() * (max - min + 1) + min, Math.random() * (max - min + 1) + min, Math.random() * (max - min + 1) + min);
         box.setLocalRotationFromEuler(MoreMath.toRadians(Math.random() * 360), MoreMath.toRadians(Math.random() * 360), MoreMath.toRadians(Math.random() * 360));
-        rootNode.addChildren(box);
+        cubes.addChildren(box);
+
+        // 绘制AABB包围体
     }
     // 再次将相机设置为一个最佳观测点(以便观察上面的视锥体)
     mainCamera.lookAt(new Vector3(-150, 250, 200), new Vector3(-50, 0, -50), new Vector3(0, 1, 0));
@@ -73,7 +80,21 @@
     stats.domElement.style.left = '0px';
     stats.domElement.style.top = '0px';
     document.body.appendChild(stats.domElement);
-    scene.on('update', ()=>{
+    let dx = 0, dy = 0, dz = 0;
+    let count = 10;
+    let ii = 0;
+    scene.on('update', (exTime)=>{
+        // 执行旋转
+        cubes.getChildren().forEach(node=>{
+            ii++;
+            dx += Math.random() * 0.2 * exTime;
+            dy += Math.random() * 0.2 * exTime;
+            dz += Math.random() * 0.2 * exTime;
+            let x = MoreMath.toRadians(dx);
+            let y = MoreMath.toRadians(dy);
+            let z = MoreMath.toRadians(dz);
+            node.setLocalRotationFromEuler(x, y, z);
+        });
         stats.update();
     });
 </script>

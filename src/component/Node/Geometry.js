@@ -1,7 +1,9 @@
 import Node from "./Node.js";
 import ShaderSource from "../WebGL/ShaderSource.js";
+import Mesh from "../WebGL/Mesh.js";
 import Matrix44 from "../Math3d/Matrix44.js";
 import TempVars from "../Util/TempVars.js";
+import AABBBoundingBox from "../Math3d/Bounding/AABBBoundingBox.js";
 
 /**
  * Geometry继承Node,同时实现IDrawable接口,表示一个空间节点,同时表示一个可渲染的实例对象。<br/>
@@ -16,8 +18,11 @@ export default class Geometry extends Node{
         super(owner, cfg);
         this._m_Mesh = null;
         this._m_Material = null;
+
         // 剔除模式(动态,总不,总是)
         this._m_CullMode = null;
+        // 剔除标记
+        this._m_CullingFlags = 0;
         // 生成材质对象时,根据材质hash值查询是否存在对应的材质对象,有则直接引用。
     }
     setMaterial(material){
@@ -41,6 +46,9 @@ export default class Geometry extends Node{
     updateBound(){
         if(this._m_Mesh){
             this._m_Mesh._updateBound(this._m_Scene.getCanvas().getGLContext());
+            // 更新AABB包围盒
+            this._m_AABBBoudingBox = new AABBBoundingBox();
+            this._m_AABBBoudingBox.fromPositions(this._m_Mesh.getData(Mesh.S_POSITIONS));
         }
     }
 

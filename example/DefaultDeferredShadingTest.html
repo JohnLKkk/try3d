@@ -67,6 +67,7 @@
     rootNode.addChildren(geometry1);
     rootNode.addChildren(geometry2);
     let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
     renderEngine.addScene(scene);
     renderEngine.launch();
 </script>

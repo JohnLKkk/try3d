@@ -13,29 +13,29 @@ export default class Box extends Geometry{
     /**
      * 创建一个Box。<br/>
      * @param {Component}[owner]
-     * @param {Number}[cfg.xSize x方向的半长度]
-     * @param {Number}[cfg.ySize y方向的半长度]
-     * @param {Number}[cfg.zSize z方向的半长度]
+     * @param {Number}[cfg.xHalf x方向的半长度]
+     * @param {Number}[cfg.yHalf y方向的半长度]
+     * @param {Number}[cfg.zHalf z方向的半长度]
      * @param {Vector3}[cfg.center 中心点]
      */
     constructor(owner, cfg) {
         super(owner, cfg);
-        let xSize = cfg.xSize || 1;
-        if (xSize <= 0) {
-            console.error("xSize不能小于等于0!");
-            xSize *= -1;
+        let xHalf = cfg.xHalf || 1;
+        if (xHalf <= 0) {
+            console.error("xHalf不能小于等于0!");
+            xHalf *= -1;
         }
 
-        let ySize = cfg.ySize || 1;
-        if (ySize <= 0) {
-            console.error("ySize不能小于等于0!");
-            ySize *= -1;
+        let yHalf = cfg.yHalf || 1;
+        if (yHalf <= 0) {
+            console.error("yHalf不能小于等于0!");
+            yHalf *= -1;
         }
 
-        let zSize = cfg.zSize || 1;
-        if (zSize <= 0) {
-            console.error("zSize不能小于等于0!");
-            zSize *= -1;
+        let zHalf = cfg.zHalf || 1;
+        if (zHalf <= 0) {
+            console.error("zHalf不能小于等于0!");
+            zHalf *= -1;
         }
 
         const center = cfg.center;
@@ -43,12 +43,12 @@ export default class Box extends Geometry{
         const centerY = center ? center._m_Y : 0;
         const centerZ = center ? center._m_Z : 0;
 
-        const xmin = -xSize + centerX;
-        const ymin = -ySize + centerY;
-        const zmin = -zSize + centerZ;
-        const xmax = xSize + centerX;
-        const ymax = ySize + centerY;
-        const zmax = zSize + centerZ;
+        const xmin = -xHalf + centerX;
+        const ymin = -yHalf + centerY;
+        const zmin = -zHalf + centerZ;
+        const xmax = xHalf + centerX;
+        const ymax = yHalf + centerY;
+        const zmax = zHalf + centerZ;
 
         let mesh = new Mesh();
         mesh.setData(Mesh.S_POSITIONS, [

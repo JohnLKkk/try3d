@@ -2,6 +2,7 @@ import Component from "../Component.js";
 import Matrix44 from "../Math3d/Matrix44.js";
 import Vector3 from "../Math3d/Vector3.js";
 import Quaternion from "../Math3d/Quaternion.js";
+import AABBBoundingBox from "../Math3d/Bounding/AABBBoundingBox.js";
 
 /**
  * 节点组件表示场景的一个关节，用于对场景进行场景图管理。<br/>
@@ -31,6 +32,41 @@ export default class Node extends Component{
         // 本地矩阵没有发生变化时,只需要更新世界矩阵
         this._m_UpdateLocalMatrix = false;
         this._m_UpdateWorldMatrix = false;
+
+        // AABB包围盒(Node的包围盒由所有子节点合并得到)
+        this._m_AABBBoudingBox = null;
+        this._m_UpdateAABBBoundingBox = false;
+    }
+    getAABBBoundingBox(){
+        let aabbBoundingBox = this._m_AABBBoudingBox;
+        if(this._m_UpdateAABBBoundingBox){
+            // 更新包围盒
+            // 如果存在子节点,则合并子节点
+            if(this._m_Children.length > 0){
+                let aabb = null;
+                this._m_Children.forEach(children=>{
+                    aabb = children.getAABBBoundingBox();
+                    if(aabb){
+                        // 说明存在子节点包围盒
+                        if(!aabbBoundingBoxs){
+                            // 说明是初次获取,则创建该Node的包围盒
+                            aabbBoundingBoxs = new AABBBoundingBox();
+                        }
+                        // 合并子节点包围体
+                    }
+                });
+            }
+            this._m_UpdateAABBBoundingBox = false;
+        }
+        return this._m_AABBBoudingBox;
+    }
+
+    /**
+     * 返回子节点列表。<br/>
+     * @return {Node[]}
+     */
+    getChildren(){
+        return this._m_Children;
     }
 
     /**
@@ -118,6 +154,14 @@ export default class Node extends Component{
     }
 
     /**
+     * 更新包围体。<br/>
+     * @private
+     */
+    _updateBounding(){
+        this._m_AABBBoudingBox = true;
+    }
+
+    /**
      * 更新本地矩阵。<br/>
      * @private
      */
@@ -136,6 +180,8 @@ export default class Node extends Component{
         this._m_Children.forEach(children=>{
             children._updateWorldMatrix();
         });
+        // 更新边界
+        this._updateBounding();
     }
 
     /**
