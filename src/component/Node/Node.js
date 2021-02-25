@@ -36,7 +36,8 @@ export default class Node extends Component{
 
         // AABB包围盒(Node的包围盒由所有子节点合并得到)
         this._m_AABBBoudingBox = null;
-        this._m_UpdateAABBBoundingBox = false;
+        // 设置为true,确保第一次调用getAABBBoundingBox()时可以获得有效AABBBoundingBox
+        this._m_UpdateAABBBoundingBox = true;
 
         // 与视锥体的状态
         this._m_FrustumContain = Camera.S_FRUSTUM_INTERSECT_INTERSECTS;
@@ -57,7 +58,7 @@ export default class Node extends Component{
             // 跳过一些特殊对象
 
             // 执行视锥剔除
-            this._m_FrustumContain = camera.frustumContains(this._m_AABBBoudingBox);
+            this._m_FrustumContain = camera.frustumContains(this.getAABBBoundingBox());
         }
 
         return this._m_FrustumContain != Camera.S_FRUSTUM_INTERSECT_OUTSIDE;
@@ -69,7 +70,6 @@ export default class Node extends Component{
      * @return {AABBBoundingBox}
      */
     getAABBBoundingBox(){
-        let aabbBoundingBox = this._m_AABBBoudingBox;
         if(this._m_UpdateAABBBoundingBox){
             // 更新包围盒
             // 如果存在子节点,则合并子节点
@@ -79,9 +79,9 @@ export default class Node extends Component{
                     aabb = children.getAABBBoundingBox();
                     if(aabb){
                         // 说明存在子节点包围盒
-                        if(!aabbBoundingBoxs){
+                        if(!this._m_AABBBoudingBox){
                             // 说明是初次获取,则创建该Node的包围盒
-                            aabbBoundingBoxs = new AABBBoundingBox();
+                            this._m_AABBBoudingBox = new AABBBoundingBox();
                         }
                         // 合并子节点包围体
                     }
@@ -189,7 +189,7 @@ export default class Node extends Component{
      * @private
      */
     _updateBounding(){
-        this._m_AABBBoudingBox = true;
+        this._m_UpdateAABBBoundingBox = true;
     }
 
     /**

@@ -64,6 +64,7 @@ export default class Geometry extends Node{
             this._m_AABBBoudingBox.transform(this._m_LocalScale, this._m_LocalRotation, this._m_LocalTranslation);
             this._m_UpdateAABBBoundingBox = false;
         }
+        return this._m_AABBBoudingBox;
     }
 
     /**
