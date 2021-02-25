@@ -230,6 +230,15 @@ export default class Matrix44 {
     }
 
     /**
+     * 将矩阵所有值设置为正。<br/>
+     */
+    absLocal(){
+        for(let i = 0;i < 16;i++){
+            this.m[i] = Math.abs(this.m[i]);
+        }
+    }
+
+    /**
      * 根据视场角度定义投影矩阵，纵横比和Z剪裁平面。
      * @param {Array}[m保存透视矩阵的浮点数组]
      * @param {Number}[offset将偏移量偏移到写入透视矩阵数据的浮点数组m中]
@@ -313,7 +322,7 @@ export default class Matrix44 {
     }
 
     /**
-     * 将一个vec3于mat44相乘,这里假设了第4个分量w存在并为1。<br/>
+     * 将一个vec3与mat44相乘,这里假设了第4个分量w存在并为1。<br/>
      * result = m * v的旋转部分,同时每个分量添加m的平移部分。<br/>
      * 这里假设了w等于1，所以各分量加上了m的平移部分，并返回计算w分量值。<br/>
      * @param {Vector3}[result]
@@ -332,6 +341,19 @@ export default class Matrix44 {
         result._m_Y = v._m_X * m.m[1] + v._m_Y * m.m[5] + v._m_Z * m.m[9] + m.m[13];
         result._m_Z = v._m_X * m.m[2] + v._m_Y * m.m[6] + v._m_Z * m.m[10] + m.m[14];
         return v._m_X * m.m[3] + v._m_Y * m.m[7] + v._m_Z * m.m[11] + m.m[15];
+    }
+
+    /**
+     * 将一个vec3与mat44的3x3部分相乘。<br/>
+     * result = m3x3 * v。<br/>
+     * @param {Vector3}[result]
+     * @param {Vector3}[v]
+     * @param {Matrix44}[m]
+     */
+    static multiplyMV3In3x3(result, v, m){
+        result._m_X = v._m_X * m.m[0] + v._m_Y * m.m[4] + v._m_Z * m.m[8];
+        result._m_Y = v._m_X * m.m[1] + v._m_Y * m.m[5] + v._m_Z * m.m[9];
+        result._m_Z = v._m_X * m.m[2] + v._m_Y * m.m[6] + v._m_Z * m.m[10];
     }
 
     /**

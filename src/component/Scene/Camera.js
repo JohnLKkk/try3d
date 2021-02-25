@@ -3,6 +3,8 @@ import Vector3 from "../Math3d/Vector3.js";
 import Matrix44 from "../Math3d/Matrix44.js";
 import TempVars from "../Util/TempVars.js";
 import ShaderSource from "../WebGL/ShaderSource.js";
+import Plane from "../Math3d/Plane.js";
+import MoreMath from "../Math3d/MoreMath.js";
 
 /**
  * Camera定义了3D空间中的观察者,渲染3D世界时,3D世界中必须有一个Camera,否则无法渲染。<br/>
@@ -13,6 +15,25 @@ import ShaderSource from "../WebGL/ShaderSource.js";
 export default class Camera extends Component{
     static S_TEMP_MAT4 = new Matrix44();
     static S_TEMP_VEC3 = new Vector3();
+    static S_TEMP_VEC3_2 = new Vector3();
+    static S_TEMP_VEC3_3 = new Vector3();
+    static S_TEMP_VEC3_4 = new Vector3();
+
+    // 视锥包含标记
+    // 相交
+    static S_FRUSTUM_INTERSECT_INTERSECTS = 0;
+    // 包含
+    static S_FRUSTUM_INTERSECT_INSIDE = 1;
+    // 不包含
+    static S_FRUSTUM_INTERSECT_OUTSIDE = 2;
+
+    // 视锥体索引
+    static S_LEFT_PLANE = 0;
+    static S_RIGHT_PLANE = 1;
+    static S_BOTTOM_PLANE = 2;
+    static S_TOP_PLANE = 3;
+    static S_FAR_PLANE = 4;
+    static S_NEAR_PLANE = 5;
     constructor(owner, cfg) {
         super(owner, cfg);
         this._m_Eye = new Vector3(0, 0, 10);
@@ -26,7 +47,37 @@ export default class Camera extends Component{
         this._m_ProjectViewMatrixUpdate = false;
 
 
-        // 初始化
+        // Frustum6个平面
+        this._m_FrustumPlane = [];
+        for(let i = 0;i < 6;i++){
+            this._m_FrustumPlane.push(new Plane());
+        }
+
+        // Frustum6截面距离
+        // 相机到Near截面的距离
+        this._m_FrustumNear = 0;
+        // 相机到Far截面的距离
+        this._m_FrustumFar = 0;
+        // 相机到Left截面的距离
+        this._m_FrustumLeft = 0;
+        // 相机到Right截面的距离
+        this._m_FrustumRight = 0;
+        // 相机到Top截面的距离
+        this._m_FrustumTop = 0;
+        // 相机到Bottom截面的距离
+        this._m_FrustumBottom = 0;
+
+        // 缓存变量
+        this._m_CoeffLeft = new Array(2).fill(0);
+        this._m_CoeffRight = new Array(2).fill(0);
+        this._m_CoeffBottom = new Array(2).fill(0);
+        this._m_CoeffTop = new Array(2).fill(0);
+
+        // 计算标记
+        this._m_FrustumMask = 0;
+
+
+        // 初始化(默认是一个透视相机)
         let canvas = this._m_Scene.getCanvas();
         let gl = canvas.getGLContext();
         this._m_ViewMatrix.lookAt(this._m_Eye, this._m_At, this._m_Up);
@@ -49,6 +100,20 @@ export default class Camera extends Component{
      * @private
      */
     _init(){
+        // 默认是一个透视相机,所以这里基于透视算法建立投影平面
+        // 这里直接基于fovY(45),near=0.1和far1000预建
+        let defaultAspect = this._m_Scene.getCanvas().getWidth() * 1.0 / this._m_Scene.getCanvas().getHeight();
+        let h = Math.tan(MoreMath.toRadians(45.0) * 0.5) * 0.1;
+        let w = h * defaultAspect;
+        this._m_FrustumLeft = -w;
+        this._m_FrustumRight = w;
+        this._m_FrustumBottom = -h;
+        this._m_FrustumTop = h;
+        this._m_FrustumNear = 0.1;
+        this._m_FrustumFar = 1000;
+
+
+        // 预建缓存
         let gl = this._m_Scene.getCanvas().getGLContext();
         let MAT = gl.createBuffer();
         this.MAT = MAT;
@@ -67,6 +132,22 @@ export default class Camera extends Component{
         gl.bindBufferRange(gl.UNIFORM_BUFFER, ShaderSource.BLOCKS['VIEW'].blockIndex, VIEW, 0, 3 * 4);
 
         this._doUpdate();
+    }
+
+    /**
+     * 返回视锥体掩码。<br/>
+     * @return {Number}
+     */
+    getFrustumMask(){
+        return this._m_FrustumMask;
+    }
+
+    /**
+     * 设置视锥体掩码，以便加速剔除。<br/>
+     * @param {Number}[frustumMask]
+     */
+    setFrustumMask(frustumMask){
+        this._m_FrustumMask = frustumMask;
     }
 
     /**
@@ -133,6 +214,85 @@ export default class Camera extends Component{
     }
 
     /**
+     * 更新视锥体。<br/>
+     * @private
+     */
+    _updateFrustum(){
+        // 计算更新变量
+        // 这里根据相机类型更新计算变量(透视和平行相机计算方式不同)
+        let nearSquared = this._m_FrustumNear * this._m_FrustumNear;
+        let leftSquared = this._m_FrustumLeft * this._m_FrustumLeft;
+        let rightSquared = this._m_FrustumRight * this._m_FrustumRight;
+        let bottomSquared = this._m_FrustumBottom * this._m_FrustumBottom;
+        let topSquared = this._m_FrustumTop * this._m_FrustumTop;
+
+        let inverseLength = 1.0 / Math.sqrt(nearSquared + leftSquared);
+        this._m_CoeffLeft[0] = -this._m_FrustumNear * inverseLength;
+        this._m_CoeffLeft[1] = -this._m_FrustumLeft * inverseLength;
+
+        inverseLength = 1.0 / Math.sqrt(nearSquared + rightSquared);
+        this._m_CoeffRight[0] = this._m_FrustumNear * inverseLength;
+        this._m_CoeffRight[1] = this._m_FrustumRight * inverseLength;
+
+        inverseLength = 1.0 / Math.sqrt(nearSquared + bottomSquared);
+        this._m_CoeffBottom[0] = this._m_FrustumNear * inverseLength;
+        this._m_CoeffBottom[1] = -this._m_FrustumBottom * inverseLength;
+
+        inverseLength = 1.0 / Math.sqrt(nearSquared + topSquared);
+        this._m_CoeffTop[0] = -this._m_FrustumNear * inverseLength;
+        this._m_CoeffTop[1] = this._m_FrustumTop * inverseLength;
+
+        // 更新视锥体6平面
+        Camera.S_TEMP_VEC3.setToInXYZ(this._m_ViewMatrix.m[0], this._m_ViewMatrix.m[1], this._m_ViewMatrix.m[2]);
+        Camera.S_TEMP_VEC3_2.setToInXYZ(this._m_ViewMatrix.m[4], this._m_ViewMatrix.m[5], this._m_ViewMatrix.m[6]);
+        Camera.S_TEMP_VEC3_3.setToInXYZ(this._m_ViewMatrix.m[8], this._m_ViewMatrix.m[9], this._m_ViewMatrix.m[10]);
+
+        let dirDotEye = Camera.S_TEMP_VEC3_2.dot(this._m_Eye);
+
+        // left plane
+        let leftPlaneNormal = this._m_FrustumPlane[Camera.S_LEFT_PLANE].getNormal();
+        leftPlaneNormal._m_X = Camera.S_TEMP_VEC3._m_X * this._m_CoeffLeft[0];
+        leftPlaneNormal._m_Y = Camera.S_TEMP_VEC3._m_Y * this._m_CoeffLeft[0];
+        leftPlaneNormal._m_Z = Camera.S_TEMP_VEC3._m_Z * this._m_CoeffLeft[0];
+        leftPlaneNormal.addInXYZ(Camera.S_TEMP_VEC3_3._m_X * this._m_CoeffLeft[1], Camera.S_TEMP_VEC3_3._m_Y * this._m_CoeffLeft[1], Camera.S_TEMP_VEC3_3._m_Z * this._m_CoeffLeft[1]);
+        this._m_FrustumPlane[Camera.S_LEFT_PLANE].setD(this._m_Eye.dot(leftPlaneNormal));
+
+        // right plane
+        let rightPlaneNormal = this._m_FrustumPlane[Camera.S_RIGHT_PLANE].getNormal();
+        rightPlaneNormal._m_X = Camera.S_TEMP_VEC3._m_X * this._m_CoeffRight[0];
+        rightPlaneNormal._m_Y = Camera.S_TEMP_VEC3._m_Y * this._m_CoeffRight[0];
+        rightPlaneNormal._m_Z = Camera.S_TEMP_VEC3._m_Z * this._m_CoeffRight[0];
+        rightPlaneNormal.addInXYZ(Camera.S_TEMP_VEC3_3._m_X * this._m_CoeffRight[1], Camera.S_TEMP_VEC3_3._m_Y * this._m_CoeffRight[1], Camera.S_TEMP_VEC3_3._m_Z * this._m_CoeffRight[1]);
+        this._m_FrustumPlane[Camera.S_RIGHT_PLANE].setD(this._m_Eye.dot(rightPlaneNormal));
+
+        // bottom plane
+        let bottomPlaneNormal = this._m_FrustumPlane[Camera.S_BOTTOM_PLANE].getNormal();
+        bottomPlaneNormal._m_X = Camera.S_TEMP_VEC3_2._m_X * this._m_CoeffBottom[0];
+        bottomPlaneNormal._m_Y = Camera.S_TEMP_VEC3_2._m_Y * this._m_CoeffBottom[0];
+        bottomPlaneNormal._m_Z = Camera.S_TEMP_VEC3_2._m_Z * this._m_CoeffBottom[0];
+        bottomPlaneNormal.addInXYZ(Camera.S_TEMP_VEC3_3._m_X * this._m_CoeffBottom[1], Camera.S_TEMP_VEC3_3._m_Y * this._m_CoeffBottom[1], Camera.S_TEMP_VEC3_3._m_Z * this._m_CoeffBottom[1]);
+        this._m_FrustumPlane[Camera.S_BOTTOM_PLANE].setD(this._m_Eye.dot(bottomPlaneNormal));
+
+        // top plane
+        let topPlaneNormal = this._m_FrustumPlane[Camera.S_TOP_PLANE].getNormal();
+        topPlaneNormal._m_X = Camera.S_TEMP_VEC3_2._m_X * this._m_CoeffTop[0];
+        topPlaneNormal._m_Y = Camera.S_TEMP_VEC3_2._m_Y * this._m_CoeffTop[0];
+        topPlaneNormal._m_Z = Camera.S_TEMP_VEC3_2._m_Z * this._m_CoeffTop[0];
+        topPlaneNormal.addInXYZ(Camera.S_TEMP_VEC3_3._m_X * this._m_CoeffTop[1], Camera.S_TEMP_VEC3_3._m_Y * this._m_CoeffTop[1], Camera.S_TEMP_VEC3_3._m_Z * this._m_CoeffTop[1]);
+        this._m_FrustumPlane[Camera.S_TOP_PLANE].setD(this._m_Eye.dot(topPlaneNormal));
+
+        // 如果是平行投影的话,需要修正left,right,top,bottom的边界
+
+        // far plane
+        this._m_FrustumPlane[Camera.S_FAR_PLANE].setNormaXYZ(-Camera.S_TEMP_VEC3_3._m_X, -Camera.S_TEMP_VEC3_3._m_Y, -Camera.S_TEMP_VEC3_3._m_Z);
+        this._m_FrustumPlane[Camera.S_FAR_PLANE].setD(-(dirDotEye + this._m_FrustumFar));
+
+        // near plane
+        this._m_FrustumPlane[Camera.S_NEAR_PLANE].setNormaXYZ(Camera.S_TEMP_VEC3_3._m_X, Camera.S_TEMP_VEC3_3._m_Y, Camera.S_TEMP_VEC3_3._m_Z);
+        this._m_FrustumPlane[Camera.S_NEAR_PLANE].setD(dirDotEye + this._m_FrustumNear);
+    }
+
+    /**
      * 更新相机。<br/>
      * @private
      */
@@ -181,6 +341,9 @@ export default class Camera extends Component{
         if(this._m_ViewMatrixUpdate || this._m_ProjectMatrixUpdate){
             this._doUpdate();
         }
+
+        // 更新视锥体(这里应该使用一个标记变量检测是否应该更新,但是现在暂时在每次_update()里调用更新Frustum)
+        this._updateFrustum();
     }
 
     /**
@@ -256,6 +419,62 @@ export default class Camera extends Component{
      */
     getProjectMatrix(){
         return this._m_ProjectMatrix;
+    }
+
+    /**
+     * 判断一个包围体与视锥体的包含关系。<br/>
+     * @param {BoundingVolume}[boundingVolume]
+     * @return {Number}[返回Camera.S_FRUSTUM_INTERSECT_INSIDE(包含),Camera.S_FRUSTUM_INTERSECT_OUTSIDE(不包含)以及Camera.S_FRUSTUM_INTERSECT_INSIDE(相交)]
+     */
+    frustumContains(boundingVolume){
+        // 检测当前包围体是否处于视锥体中
+        // 不同包围体使用不同的算法进行
+        if(boundingVolume){
+            // 判断与视锥体6平面关系
+            let mask = 0;
+            let planeId = 0;
+            let side = 0;
+            let contains = Camera.S_FRUSTUM_INTERSECT_INSIDE;
+
+            for(let i = 6;i >= 0;i--){
+                if(i == boundingVolume.getPriorityPlane()){
+                    continue;
+                }
+
+                // 获取优先检测面
+                planeId = (i == 6) ? boundingVolume.getPriorityPlane() : i;
+
+                mask = 1 << planeId;
+
+                // 判断是否经过检测
+                if((this._m_FrustumMask & mask) == 0){
+                    // 检测该截面
+                    side = boundingVolume.whichSide(this._m_FrustumPlane[planeId]);
+
+                    if(side == Plane.S_SIDE_NEGATIVE){
+                        // 只要处于任意一个截面的外部,则表明该节点应该被剔除
+                        // 下次优先检测剔除截面
+                        boundingVolume.setPriorityPlane(planeId);
+                        return Camera.S_FRUSTUM_INTERSECT_OUTSIDE;
+                    }
+                    else if(side == Plane.S_SIDE_POSITIVE){
+                        // 说明有至少位于某个截面正面
+                        // 子节点跳过这个截面,因为已经检测过该截面
+                        this._m_FrustumMask |= mask;
+                    }
+                    else{
+                        // 当前与截面相交
+                        contains = Camera.S_FRUSTUM_INTERSECT_INTERSECTS;
+                    }
+                }
+            }
+
+            return contains;
+        }
+        else{
+            // 如果没有包围体,当作包含处理(当理论上,该叶子节点是一个不需要渲染的node)
+            return Camera.S_FRUSTUM_INTERSECT_INSIDE;
+        }
     }
 
     /**

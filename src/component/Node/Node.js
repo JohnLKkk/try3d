@@ -3,6 +3,7 @@ import Matrix44 from "../Math3d/Matrix44.js";
 import Vector3 from "../Math3d/Vector3.js";
 import Quaternion from "../Math3d/Quaternion.js";
 import AABBBoundingBox from "../Math3d/Bounding/AABBBoundingBox.js";
+import Camera from "../Scene/Camera.js";
 
 /**
  * 节点组件表示场景的一个关节，用于对场景进行场景图管理。<br/>
@@ -36,7 +37,37 @@ export default class Node extends Component{
         // AABB包围盒(Node的包围盒由所有子节点合并得到)
         this._m_AABBBoudingBox = null;
         this._m_UpdateAABBBoundingBox = false;
+
+        // 与视锥体的状态
+        this._m_FrustumContain = Camera.S_FRUSTUM_INTERSECT_INTERSECTS;
     }
+
+    /**
+     * 检测是否处于视锥体中。<br/>
+     * @param camera
+     * @return {boolean}
+     */
+    inFrustum(camera){
+        // 跳过不需要剔除的节点
+
+        // 检测父节点是否被剔除(因为可能由外部调用该方法而非引擎调用)
+        this._m_FrustumContain = this._m_Parent == null ? Camera.S_FRUSTUM_INTERSECT_INTERSECTS : this._m_Parent._m_FrustumContain;
+
+        if(this._m_FrustumContain == Camera.S_FRUSTUM_INTERSECT_INTERSECTS){
+            // 跳过一些特殊对象
+
+            // 执行视锥剔除
+            this._m_FrustumContain = camera.frustumContains(this._m_AABBBoudingBox);
+        }
+
+        return this._m_FrustumContain != Camera.S_FRUSTUM_INTERSECT_OUTSIDE;
+    }
+
+    /**
+     * 返回AABBBoundingBox。<br/>
+     * 如果当前是Node节点，并且没有子节点或者子节点没有包围体，则返回null。<br/>
+     * @return {AABBBoundingBox}
+     */
     getAABBBoundingBox(){
         let aabbBoundingBox = this._m_AABBBoudingBox;
         if(this._m_UpdateAABBBoundingBox){

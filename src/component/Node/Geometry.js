@@ -46,9 +46,23 @@ export default class Geometry extends Node{
     updateBound(){
         if(this._m_Mesh){
             this._m_Mesh._updateBound(this._m_Scene.getCanvas().getGLContext());
-            // 更新AABB包围盒
-            this._m_AABBBoudingBox = new AABBBoundingBox();
-            this._m_AABBBoudingBox.fromPositions(this._m_Mesh.getData(Mesh.S_POSITIONS));
+            // 在至少包含Mesh之后再创建AABBBoudingBox,因为可能Geometry还没有设置Mesh
+            if(!this._m_AABBBoudingBox){
+                this._m_AABBBoudingBox = new AABBBoundingBox();
+                // 这里假设每个Geometry只设置一次Mesh(后面应该改善这里的逻辑,每次修改Mesh后都应该重新调用fromPositions重建AABB)
+                this._m_AABBBoudingBox.fromPositions(this._m_Mesh.getData(Mesh.S_POSITIONS));
+            }
+        }
+    }
+    getAABBBoundingBox(){
+        // Geometry不应该包含子节点(因为Geometry应该只是叶子节点)
+        // 所以Geometry应该直接返回最新状态的AABBBoundingBox
+        // 当Mesh数据没有发生变更时,AABB只与变换更新有关
+        // 当Mesh数据发生变更时,将在fromPositions重建AABB
+        if(this._m_UpdateAABBBoundingBox){
+            // 更新AABBBoundingBox
+            this._m_AABBBoudingBox.transform(this._m_LocalScale, this._m_LocalRotation, this._m_LocalTranslation);
+            this._m_UpdateAABBBoundingBox = false;
         }
     }
 

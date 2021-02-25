@@ -188,8 +188,18 @@ export default class Scene extends Component{
             }
         }
     }
+
+    /**
+     * 检测当前node是否处于Frustum中，如果是，递归其子节点继续判断，如果当前node已经是叶子节点(叶子节点理论上是Geometry或其子类，但也可以是一个node，如果是一个node叶子节点，表明空节点树)，则将其添加到visDrawables。<br/>
+     * @param {Node}[node]
+     * @param {Array}[visDrawables]
+     * @private
+     */
     _frustumCulling(node, visDrawables){
         // 检测视锥剔除
+        if(!node.inFrustum(this._m_MainCamera)){
+            return;
+        }
 
         // 判断是否为iDrawable
         if(node.isDrawable && node.isDrawable()){
@@ -199,8 +209,12 @@ export default class Scene extends Component{
         else{
             // 执行子节点剔除
             if(node.getChildren().length > 0){
+                let resetFrustumMask = this._m_MainCamera.getFrustumMask();
                 node.getChildren().forEach(node=>{
                     // 检测是否需要默认剔除
+
+                    // 对于每个同级节点设置同样剔除掩码
+                    this._m_MainCamera.setFrustumMask(resetFrustumMask);
                     // 执行默认剔除
                     this._frustumCulling(node, visDrawables);
                 });
@@ -227,6 +241,7 @@ export default class Scene extends Component{
             // 检测是否执行默认视锥剔除
 
             // 需要执行默认视锥剔除
+            this._m_MainCamera.setFrustumMask(0);
             this._frustumCulling(node, visDrawables);
         });
 

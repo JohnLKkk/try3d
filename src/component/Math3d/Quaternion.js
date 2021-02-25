@@ -129,4 +129,30 @@ export default class Quaternion {
         }
     }
 
+    /**
+     * 将一个四元数与Vector3相乘，将结果存放到result中。<br/>
+     * @param {Vector3}[vec3]
+     * @param {Vector3}[result 当result为null时,结果存放到vec3,对于result来说,可以与vec3相同,这是安全的]
+     * @return {Vector3}
+     */
+    multVec3(vec3, result){
+        // 如果result不存在就直接修改vec3
+        result = result || vec3;
+        let vx = vec3._m_X, vy = vec3._m_Y, vz = vec3._m_Z;
+        let x = this._m_X;
+        let y = this._m_Y;
+        let z = this._m_Z;
+        let w = this._m_W;
+        result._m_X = w * w * vx + 2 * y * w * vz - 2 * z * w * vy + x * x
+            * vx + 2 * y * x * vy + 2 * z * x * vz - z * z * vx - y
+            * y * vx;
+        result._m_Y = 2 * x * y * vx + y * y * vy + 2 * z * y * vz + 2 * w
+            * z * vx - z * z * vy + w * w * vy - 2 * x * w * vz - x
+            * x * vy;
+        result._m_Z = 2 * x * z * vx + 2 * y * z * vy + z * z * vz - 2 * w
+            * y * vx - y * y * vz + 2 * w * x * vy - x * x * vz + w
+            * w * vz;
+        return result;
+    }
+
 }
