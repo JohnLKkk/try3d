@@ -27,6 +27,8 @@ export default class Scene extends Component{
         this._m_Canvas = new Canvas(this, {id:"default_canvas", canvas:cfg.cavnas});
         this._m_Render = new Render(this, {id:"default_render"});
         this._m_MainCamera = new Camera(this, {id:"mainCamera"});
+        this._m_FrustumCullingCamera = this._m_MainCamera;
+        this._m_MainCamera.setIsRenderingCamera(true);
 
         // 场景节点
         this._m_Nodes = [];
@@ -104,6 +106,31 @@ export default class Scene extends Component{
      */
     getMainCamera(){
         return this._m_MainCamera;
+    }
+
+    /**
+     * 设置主摄像机。<br/>
+     * @param {Camera}[mainCamera]
+     */
+    setMainCamera(mainCamera){
+        this._m_MainCamera = mainCamera;
+        this._m_MainCamera.setIsRenderingCamera(true);
+    }
+
+    /**
+     * 设置剔除相机。<br/>
+     * @param {Camera}[frustumCullingCamera]
+     */
+    setFrustumCullingCamera(frustumCullingCamera){
+        this._m_FrustumCullingCamera = frustumCullingCamera;
+    }
+
+    /**
+     * 返回视锥体剔除相机。<br/>
+     * @return {Camera}
+     */
+    getFrustumCullingCamera(){
+        return this._m_FrustumCullingCamera;
     }
 
     /**
@@ -197,7 +224,7 @@ export default class Scene extends Component{
      */
     _frustumCulling(node, visDrawables){
         // 检测视锥剔除
-        if(!node.inFrustum(this._m_MainCamera)){
+        if(!node.inFrustum(this._m_FrustumCullingCamera)){
             return;
         }
 
@@ -209,12 +236,12 @@ export default class Scene extends Component{
         else{
             // 执行子节点剔除
             if(node.getChildren().length > 0){
-                let resetFrustumMask = this._m_MainCamera.getFrustumMask();
+                let resetFrustumMask = this._m_FrustumCullingCamera.getFrustumMask();
                 node.getChildren().forEach(node=>{
                     // 检测是否需要默认剔除
 
                     // 对于每个同级节点设置同样剔除掩码
-                    this._m_MainCamera.setFrustumMask(resetFrustumMask);
+                    this._m_FrustumCullingCamera.setFrustumMask(resetFrustumMask);
                     // 执行默认剔除
                     this._frustumCulling(node, visDrawables);
                 });
@@ -241,12 +268,12 @@ export default class Scene extends Component{
             // 检测是否执行默认视锥剔除
 
             // 需要执行默认视锥剔除
-            this._m_MainCamera.setFrustumMask(0);
+            this._m_FrustumCullingCamera.setFrustumMask(0);
             this._frustumCulling(node, visDrawables);
         });
 
         this._m_Render.render(exTime);
-        console.log("剔除:" + (this._m_Render._m_Drawables.length - visDrawables.length) + ";渲染:" + visDrawables.length);
+        // console.log("剔除:" + (this._m_Render._m_Drawables.length - visDrawables.length) + ";渲染:" + visDrawables.length);
     }
 
 }

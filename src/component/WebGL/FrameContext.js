@@ -24,6 +24,26 @@ export default class FrameContext {
         this.m_FrameBuffers = {};
         // 内存中所有的shader
         this.m_Shaders = {};
+        // 内存中所有的Blocks
+        this._m_ContextBlocks = {};
+    }
+
+    /**
+     * 返回当前上下文block。<br/>
+     * @param {String}[id]
+     * @return {*}
+     */
+    getContextBlock(id){
+        return this._m_ContextBlocks[id];
+    }
+
+    /**
+     * 添加一个上下文block。<br/>
+     * @param {String}[id]
+     * @param {Object}[block]
+     */
+    addContextBlock(id, block){
+        this._m_ContextBlocks[id] = block;
     }
 
     /**

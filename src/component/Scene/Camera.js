@@ -47,6 +47,9 @@ export default class Camera extends Component{
         this._m_ProjectMatrixUpdate = false;
         this._m_ProjectViewMatrixUpdate = false;
 
+        // 如果当前相机是一个主相机,则被激活用于主渲染
+        this._m_IsRenderingCamera = false;
+
 
         // Frustum6个平面
         this._m_FrustumPlane = [];
@@ -89,7 +92,9 @@ export default class Camera extends Component{
         this._init();
 
         canvas.on('resize', ()=>{
-            gl.viewport(0, 0, canvas.getWidth(), canvas.getHeight());
+            if(this._m_IsRenderingCamera){
+                gl.viewport(0, 0, canvas.getWidth(), canvas.getHeight());
+            }
             this._m_ProjectMatrix.perspectiveM(45.0, canvas.getWidth() * 1.0 / canvas.getHeight(), 0.1, 1000);
             this._m_ProjectMatrixUpdate = true;
             this._doUpdate();
@@ -116,24 +121,44 @@ export default class Camera extends Component{
 
 
         // 预建缓存
+        let frameContext = this._m_Scene.getRender().getFrameContext();
         let gl = this._m_Scene.getCanvas().getGLContext();
-        let MAT = gl.createBuffer();
-        this.MAT = MAT;
-        gl.bindBuffer(gl.UNIFORM_BUFFER, MAT);
-        gl.bufferData(gl.UNIFORM_BUFFER, 3 * 16 * 4, gl.STATIC_DRAW);
-        gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+        if(!frameContext.getContextBlock('MAT')){
+            let MAT = gl.createBuffer();
+            this.MAT = MAT;
+            gl.bindBuffer(gl.UNIFORM_BUFFER, MAT);
+            gl.bufferData(gl.UNIFORM_BUFFER, 3 * 16 * 4, gl.STATIC_DRAW);
+            gl.bindBuffer(gl.UNIFORM_BUFFER, null);
 
-        gl.bindBufferRange(gl.UNIFORM_BUFFER, ShaderSource.BLOCKS['MAT'].blockIndex, MAT, 0, 3 * 16 * 4);
+            gl.bindBufferRange(gl.UNIFORM_BUFFER, ShaderSource.BLOCKS['MAT'].blockIndex, MAT, 0, 3 * 16 * 4);
+            frameContext.addContextBlock('MAT', this.MAT);
+        }
+        else{
+            this.MAT = frameContext.getContextBlock('MAT');
+        }
+        if(!frameContext.getContextBlock('VIEW')){
+            let VIEW = gl.createBuffer();
+            this.VIEW = VIEW;
+            gl.bindBuffer(gl.UNIFORM_BUFFER, VIEW);
+            gl.bufferData(gl.UNIFORM_BUFFER, 3 * 4, gl.STATIC_DRAW);
+            gl.bindBuffer(gl.UNIFORM_BUFFER, null);
 
-        let VIEW = gl.createBuffer();
-        this.VIEW = VIEW;
-        gl.bindBuffer(gl.UNIFORM_BUFFER, VIEW);
-        gl.bufferData(gl.UNIFORM_BUFFER, 3 * 4, gl.STATIC_DRAW);
-        gl.bindBuffer(gl.UNIFORM_BUFFER, null);
-
-        gl.bindBufferRange(gl.UNIFORM_BUFFER, ShaderSource.BLOCKS['VIEW'].blockIndex, VIEW, 0, 3 * 4);
+            gl.bindBufferRange(gl.UNIFORM_BUFFER, ShaderSource.BLOCKS['VIEW'].blockIndex, VIEW, 0, 3 * 4);
+            frameContext.addContextBlock('VIEW', this.VIEW);
+        }
+        else{
+            this.VIEW = frameContext.getContextBlock('VIEW');
+        }
 
         this._doUpdate();
+    }
+
+    /**
+     * 设置为渲染相机。<br/>
+     * @param {Boolean}[isMainCamera]
+     */
+    setIsRenderingCamera(isMainCamera){
+        this._m_IsRenderingCamera = isMainCamera;
     }
 
     /**
@@ -317,16 +342,20 @@ export default class Camera extends Component{
         if(this._m_ViewMatrixUpdate){
             this._m_ProjectViewMatrixUpdate = true;
             if(frameContext.getContext(ShaderSource.S_VIEW_MATRIX_SRC) || frameContext.getContext(ShaderSource.S_VP_SRC) || frameContext.getContext(ShaderSource.S_MVP_SRC)){
-                gl.bufferSubData(gl.UNIFORM_BUFFER, 0, this._m_ViewMatrix.getBufferData());
-                frameContext.setCalcContext(ShaderSource.S_VIEW_MATRIX_SRC, this._m_ViewMatrix);
+                if(this._m_IsRenderingCamera){
+                    gl.bufferSubData(gl.UNIFORM_BUFFER, 0, this._m_ViewMatrix.getBufferData());
+                    frameContext.setCalcContext(ShaderSource.S_VIEW_MATRIX_SRC, this._m_ViewMatrix);
+                }
                 this._m_ViewMatrixUpdate = false;
             }
         }
         if(this._m_ProjectMatrixUpdate){
             this._m_ProjectViewMatrixUpdate = true;
             if(frameContext.getContext(ShaderSource.S_PROJECT_MATRIX_SRC) || frameContext.getContext(ShaderSource.S_VP_SRC) || frameContext.getContext(ShaderSource.S_MVP_SRC)){
-                gl.bufferSubData(gl.UNIFORM_BUFFER, 16 * 4, this._m_ProjectMatrix.getBufferData());
-                frameContext.setCalcContext(ShaderSource.S_PROJECT_MATRIX_SRC, this._m_ProjectMatrix);
+                if(this._m_IsRenderingCamera){
+                    gl.bufferSubData(gl.UNIFORM_BUFFER, 16 * 4, this._m_ProjectMatrix.getBufferData());
+                    frameContext.setCalcContext(ShaderSource.S_PROJECT_MATRIX_SRC, this._m_ProjectMatrix);
+                }
                 this._m_ProjectMatrixUpdate = false;
             }
         }
@@ -334,8 +363,10 @@ export default class Camera extends Component{
         // 检测其他需要的context
         if(this._m_ProjectViewMatrixUpdate && frameContext.getContext(ShaderSource.S_VP_SRC)){
             Matrix44.multiplyMM(this._m_ProjectViewMatrix, 0, this._m_ProjectMatrix, 0, this._m_ViewMatrix, 0);
-            gl.bufferSubData(gl.UNIFORM_BUFFER, 32 * 4, this._m_ProjectViewMatrix.getBufferData());
-            frameContext.setCalcContext(ShaderSource.S_VP_SRC, this._m_ProjectViewMatrix);
+            if(this._m_IsRenderingCamera){
+                gl.bufferSubData(gl.UNIFORM_BUFFER, 32 * 4, this._m_ProjectViewMatrix.getBufferData());
+                frameContext.setCalcContext(ShaderSource.S_VP_SRC, this._m_ProjectViewMatrix);
+            }
             this._m_ProjectViewMatrixUpdate = false;
         }
         gl.bindBuffer(gl.UNIFORM_BUFFER, null);
@@ -343,9 +374,11 @@ export default class Camera extends Component{
         // view
         if(updateCamera){
             if(frameContext.getContext(ShaderSource.S_CAMERA_POSITION_SRC)){
-                gl.bindBuffer(gl.UNIFORM_BUFFER, this.VIEW);
-                gl.bufferSubData(gl.UNIFORM_BUFFER, 0, this._m_Eye.getBufferData());
-                gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+                if(this._m_IsRenderingCamera){
+                    gl.bindBuffer(gl.UNIFORM_BUFFER, this.VIEW);
+                    gl.bufferSubData(gl.UNIFORM_BUFFER, 0, this._m_Eye.getBufferData());
+                    gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+                }
             }
         }
 

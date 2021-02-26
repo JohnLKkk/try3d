@@ -24,9 +24,10 @@
     import MeshFactor from "../src/component/Util/MeshFactor.js";
     import MoreMath from "../src/component/Math3d/MoreMath.js";
     import Stats from "./stats.min.js";
+    import Camera from "../src/component/Scene/Camera.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
-    let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(25, 0, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let testCamera = new Camera(scene, {id:'testCamera'});
+    testCamera.lookAt(new Vector3(25, 0, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     // // 加载一个材质定义
     let materialDef = MaterialDef.load("../src/component/Assets/MaterialDef/BasicLightingDef");
@@ -36,7 +37,7 @@
 
     let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
     // 根据当前相机创建测试用的视锥体
-    wireFrustum.setMesh(MeshFactor.createViewFrustumMeshFromCamera(mainCamera));
+    wireFrustum.setMesh(MeshFactor.createViewFrustumMeshFromCamera(testCamera));
     wireFrustum.setMaterial(new Material(scene, {id:'colorWireFrustum', materialDef:MaterialDef.load("../src/component/Assets/MaterialDef/ColorDef")}));
     wireFrustum.updateBound();
 
@@ -63,6 +64,7 @@
     let aabb = cubes.getAABBBoundingBox();
     console.log("aabb:",aabb);
     // 再次将相机设置为一个最佳观测点(以便观察上面的视锥体)
+    let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(-150, 250, 200), new Vector3(-50, 0, -50), new Vector3(0, 1, 0));
     // 别忘了同步控制器(这个应该封装到控制器中,而不应该外部手动调用)
     firstPersonController.refresh();
@@ -83,12 +85,11 @@
     stats.domElement.style.top = '0px';
     document.body.appendChild(stats.domElement);
     let dx = 0, dy = 0, dz = 0;
-    let count = 10;
-    let ii = 0;
+    // 设置testCamera为剔除相机
+    scene.setFrustumCullingCamera(testCamera);
     scene.on('update', (exTime)=>{
         // 执行旋转
         cubes.getChildren().forEach(node=>{
-            ii++;
             dx += Math.random() * 0.2 * exTime;
             dy += Math.random() * 0.2 * exTime;
             dz += Math.random() * 0.2 * exTime;
