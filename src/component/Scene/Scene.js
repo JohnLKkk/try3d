@@ -246,6 +246,7 @@ export default class Scene extends Component{
         });
 
         this._m_Render.render(exTime);
+        console.log("剔除:" + (this._m_Render._m_Drawables.length - visDrawables.length) + ";渲染:" + visDrawables.length);
     }
 
 }

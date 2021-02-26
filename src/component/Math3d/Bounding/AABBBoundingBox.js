@@ -22,6 +22,14 @@ export default class AABBBoundingBox extends BoundingVolume{
     }
 
     /**
+     * 返回包围体类型。<br/>
+     * @return {Number}
+     */
+    getType(){
+        return BoundingVolume.S_TYPE_AABB;
+    }
+
+    /**
      * 从顶点位置数组初始化AABB包围盒。<br/>
      * 其中包围盒中心点为几何中心。<br/>
      * @param {Number[]}[positions]
@@ -97,6 +105,108 @@ export default class AABBBoundingBox extends BoundingVolume{
     }
 
     /**
+     * 用指定的中心点以及半轴量拓展该AABBBoundingBox。<br/>
+     * @param {Vector3}[center]
+     * @param {Number}[xHalf]
+     * @param {Number}[yHalf]
+     * @param {Number}[zHalf]
+     * @return {AABBBoundingBox}
+     * @private
+     */
+    _mergeFromCenterAndHalf(center, xHalf, yHalf, zHalf){
+        if(this._m_XHalf == Number.POSITIVE_INFINITY || xHalf == Number.POSITIVE_INFINITY){
+            this._m_Center._m_X = 0;
+            this._m_XHalf = Number.POSITIVE_INFINITY;
+        }
+        else{
+            let low = this._m_Center._m_X - this._m_XHalf;
+            if(low > center._m_X - xHalf){
+                low = center._m_X - xHalf;
+            }
+
+            let high = this._m_Center._m_X + this._m_XHalf;
+            if(high < center._m_X + xHalf){
+                high = center._m_X + xHalf;
+            }
+
+            this._m_Center._m_X = (low + high) / 2.0;
+            this._m_XHalf = high - this._m_Center._m_X;
+        }
+
+        if(this._m_YHalf == Number.POSITIVE_INFINITY || xHalf == Number.POSITIVE_INFINITY){
+            this._m_Center._m_Y = 0;
+            this._m_YHalf = Number.POSITIVE_INFINITY;
+        }
+        else{
+            let low = this._m_Center._m_Y - this._m_YHalf;
+            if(low > center._m_Y - yHalf){
+                low = center._m_Y - yHalf;
+            }
+
+            let high = this._m_Center._m_Y + this._m_YHalf;
+            if(high < center._m_Y + yHalf){
+                high = center._m_Y + yHalf;
+            }
+
+            this._m_Center._m_Y = (low + high) / 2.0;
+            this._m_YHalf = high - this._m_Center._m_Y;
+        }
+
+        if(this._m_ZHalf == Number.POSITIVE_INFINITY || xHalf == Number.POSITIVE_INFINITY){
+            this._m_Center._m_Z = 0;
+            this._m_ZHalf = Number.POSITIVE_INFINITY;
+        }
+        else{
+            let low = this._m_Center._m_Z - this._m_ZHalf;
+            if(low > center._m_Z - zHalf){
+                low = center._m_Z - zHalf;
+            }
+
+            let high = this._m_Center._m_Z + this._m_ZHalf;
+            if(high < center._m_Z + zHalf){
+                high = center._m_Z + zHalf;
+            }
+
+            this._m_Center._m_Z = (low + high) / 2.0;
+            this._m_ZHalf = high - this._m_Center._m_Z;
+        }
+        return this;
+    }
+
+    /**
+     * 合并一个BoundingVolume。<br/>
+     * @param {BoundingVolume}[boundingVolume]
+     * @return {BoundingVolume}
+     */
+    merge(boundingVolume){
+        if(boundingVolume){
+            switch (boundingVolume.getType()) {
+                case BoundingVolume.S_TYPE_AABB:
+                    return this._mergeFromCenterAndHalf(boundingVolume._m_Center, boundingVolume._m_XHalf, boundingVolume._m_YHalf, boundingVolume._m_ZHalf);
+                    break;
+                case BoundingVolume.S_TYPE_SPHERE:
+                    break;
+            }
+        }
+        else{
+            return this;
+        }
+    }
+
+    /**
+     * 使用指定boundingVolume初始化该AABBBoundingBox。<br/>
+     * @param {BoundingVolume}[boundingVolume]
+     */
+    setTo(boundingVolume){
+        if(boundingVolume.getType() == BoundingVolume.S_TYPE_AABB){
+            this._m_Center.setTo(boundingVolume._m_Center);
+            this._m_XHalf = boundingVolume._m_XHalf;
+            this._m_YHalf = boundingVolume._m_YHalf;
+            this._m_ZHalf = boundingVolume._m_ZHalf;
+        }
+    }
+
+    /**
      * 变换该AABBBoundingBox。<br/>
      * @param {Vector3}[scale 缩放]
      * @param {Quaternion}[rotation 旋转]
@@ -107,7 +217,7 @@ export default class AABBBoundingBox extends BoundingVolume{
         result = result || AABBBoundingBox.S_TEMP_AABB;
         // 修改中心点
         // 缩放
-        this._m_Center.multLength(scale, result._m_Center);
+        this._m_Center.mult(scale, result._m_Center);
         // 旋转
         rotation.multVec3(result._m_Center);
         // 平移

@@ -60,6 +60,8 @@
 
         // 绘制AABB包围体
     }
+    let aabb = cubes.getAABBBoundingBox();
+    console.log("aabb:",aabb);
     // 再次将相机设置为一个最佳观测点(以便观察上面的视锥体)
     mainCamera.lookAt(new Vector3(-150, 250, 200), new Vector3(-50, 0, -50), new Vector3(0, 1, 0));
     // 别忘了同步控制器(这个应该封装到控制器中,而不应该外部手动调用)

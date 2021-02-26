@@ -17,6 +17,7 @@ export default class Geometry extends Node{
     constructor(owner, cfg) {
         super(owner, cfg);
         this._m_Mesh = null;
+        this._m_ModelAABBBoundingBox = null;
         this._m_Material = null;
 
         // 剔除模式(动态,总不,总是)
@@ -47,10 +48,14 @@ export default class Geometry extends Node{
         if(this._m_Mesh){
             this._m_Mesh._updateBound(this._m_Scene.getCanvas().getGLContext());
             // 在至少包含Mesh之后再创建AABBBoudingBox,因为可能Geometry还没有设置Mesh
-            if(!this._m_AABBBoudingBox){
-                this._m_AABBBoudingBox = new AABBBoundingBox();
+            if(!this._m_ModelAABBBoundingBox){
+                this._m_ModelAABBBoundingBox = new AABBBoundingBox();
                 // 这里假设每个Geometry只设置一次Mesh(后面应该改善这里的逻辑,每次修改Mesh后都应该重新调用fromPositions重建AABB)
-                this._m_AABBBoudingBox.fromPositions(this._m_Mesh.getData(Mesh.S_POSITIONS));
+                this._m_ModelAABBBoundingBox.fromPositions(this._m_Mesh.getData(Mesh.S_POSITIONS));
+                if(!this._m_AABBBoudingBox){
+                    this._m_AABBBoudingBox = new AABBBoundingBox();
+                }
+                this._m_AABBBoudingBox.setTo(this._m_ModelAABBBoundingBox);
             }
         }
     }
@@ -61,7 +66,7 @@ export default class Geometry extends Node{
         // 当Mesh数据发生变更时,将在fromPositions重建AABB
         if(this._m_UpdateAABBBoundingBox){
             // 更新AABBBoundingBox
-            this._m_AABBBoudingBox.transform(this._m_LocalScale, this._m_LocalRotation, this._m_LocalTranslation);
+            this._m_ModelAABBBoundingBox.transform(this._m_LocalScale, this._m_LocalRotation, this._m_LocalTranslation, this._m_AABBBoudingBox);
             this._m_UpdateAABBBoundingBox = false;
         }
         return this._m_AABBBoudingBox;

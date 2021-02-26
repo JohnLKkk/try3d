@@ -46,6 +46,7 @@ export default class Plane {
      */
     setNormal(normal){
         this._m_Normal.setTo(normal);
+        this._m_Normal.normal();
     }
 
     /**
@@ -56,6 +57,7 @@ export default class Plane {
      */
     setNormaXYZ(x, y, z){
         this._m_Normal.setToInXYZ(x, y, z);
+        this._m_Normal.normal();
     }
 
     /**

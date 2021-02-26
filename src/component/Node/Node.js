@@ -75,6 +75,7 @@ export default class Node extends Component{
             // 如果存在子节点,则合并子节点
             if(this._m_Children.length > 0){
                 let aabb = null;
+                // 清空包围体(避免保留上次结果)
                 this._m_Children.forEach(children=>{
                     aabb = children.getAABBBoundingBox();
                     if(aabb){
@@ -84,6 +85,7 @@ export default class Node extends Component{
                             this._m_AABBBoudingBox = new AABBBoundingBox();
                         }
                         // 合并子节点包围体
+                        this._m_AABBBoudingBox.merge(aabb);
                     }
                 });
             }
@@ -190,6 +192,9 @@ export default class Node extends Component{
      */
     _updateBounding(){
         this._m_UpdateAABBBoundingBox = true;
+        if(this._m_Parent != null){
+            this._m_Parent._updateBounding();
+        }
     }
 
     /**
@@ -199,6 +204,8 @@ export default class Node extends Component{
     _updateLocalMatrix(){
         this._m_UpdateLocalMatrix = true;
         this._updateWorldMatrix();
+        // 更新边界
+        this._updateBounding();
     }
 
     /**
@@ -211,8 +218,6 @@ export default class Node extends Component{
         this._m_Children.forEach(children=>{
             children._updateWorldMatrix();
         });
-        // 更新边界
-        this._updateBounding();
     }
 
     /**

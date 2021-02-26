@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TestAABBBoundingBoxFrustumCulling</title>
+</head>
+<body>
+<div style="width: 640px;height: 400px;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;margin: 0px;padding: 0px;" tabindex="0"></canvas>
+</div>
+<script type="module">
+    import Scene from "../../src/component/Scene/Scene.js";
+    import RenderEngine from "../../src/component/RenderEngine.js";
+    import Node from "../../src/component/Node/Node.js";
+    import Material from "../../src/component/Material/Material.js";
+    import Vector3 from "../../src/component/Math3d/Vector3.js";
+    import MaterialDef from "../../src/component/Material/MaterialDef.js";
+    import FirstPersonController from "../../src/component/InputControl/FirstPersonController.js";
+    import DirectionalLight from "../../src/component/Light/DirectionalLight.js";
+    import Box from "../../src/component/Node/Shape/Box.js";
+    import Geometry from "../../src/component/Node/Geometry.js";
+    import MeshFactor from "../../src/component/Util/MeshFactor.js";
+    import Stats from "./../stats.min.js";
+    import MoreMath from "../../src/component/Math3d/MoreMath.js";
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(10, 10, 10), new Vector3(-5, 0, -5), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    // // 加载一个材质定义
+    let materialDef = MaterialDef.load("../../src/component/Assets/MaterialDef/BasicLightingDef");
+    console.log("materialDef:",materialDef);
+    let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
+    basicLightingMat.selectTechnology('BlinnPhongLight2');
+
+    let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
+    // 根据当前相机创建测试用的视锥体
+    wireFrustum.setMesh(MeshFactor.createViewFrustumMeshFromCamera(mainCamera));
+    wireFrustum.setMaterial(new Material(scene, {id:'colorWireFrustum', materialDef:MaterialDef.load("../../src/component/Assets/MaterialDef/ColorDef")}));
+    wireFrustum.updateBound();
+    let frustumAABB = wireFrustum.getAABBBoundingBox();
+    console.log("frustumAABB:",frustumAABB);
+
+    let rootNode = new Node(scene, {id:'rootNode'});
+    rootNode.addChildren(wireFrustum);
+    scene.addSceneNode(rootNode);
+
+    // 别忘了同步控制器(这个应该封装到控制器中,而不应该外部手动调用)
+    firstPersonController.refresh();
+
+    let dirLight = new DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(1, -0.5, 1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dirLight);
+
+    let renderEngine = new RenderEngine();
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+    // 创建一个AABBBoundingBox用于测试
+    let box = new Box(scene, {id:'box', xHalf:2, yHalf:2, zHalf:2});
+    box.setMaterial(basicLightingMat);
+    box.setLocalTranslationXYZ(5, 0, 2);
+    box.setLocalRotationFromEuler(0, MoreMath.toRadians(50), 0);
+
+    let cubes = new Node(scene, {id:'cubes'});
+    rootNode.addChildren(cubes);
+    cubes.addChildren(box);
+
+    box = new Box(scene, {id:'box2', xHalf:3, yHalf:1.2, zHalf:2});
+    box.setMaterial(basicLightingMat);
+    box.setLocalTranslationXYZ(-5, 0, 2);
+    box.setLocalRotationFromEuler(0, MoreMath.toRadians(30), 0);
+    cubes.addChildren(box);
+
+    let aabb = cubes.getAABBBoundingBox();
+    console.log("aabb:",aabb);
+
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    let dx = 0, dy = 0, dz = 0;
+    scene.on('update', (exTime)=>{
+        cubes.getChildren().forEach(box=>{
+            dx += Math.random() * 0.2 * exTime;
+            dy += Math.random() * 0.2 * exTime;
+            dz += Math.random() * 0.2 * exTime;
+            box.setLocalRotationFromEuler(dx, dy, dz);
+            let aabb = cubes.getAABBBoundingBox();
+        });
+        // 执行旋转
+        stats.update();
+    });
+</script>
+</body>
+</html>

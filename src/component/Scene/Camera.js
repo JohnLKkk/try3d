@@ -39,6 +39,7 @@ export default class Camera extends Component{
         this._m_Eye = new Vector3(0, 0, 10);
         this._m_At = new Vector3(0, 0, -10);
         this._m_Up = new Vector3(0, 1, 0);
+        this._m_Dir = new Vector3();
         this._m_ViewMatrix = new Matrix44();
         this._m_ProjectMatrix = new Matrix44();
         this._m_ProjectViewMatrix = new Matrix44();
@@ -105,6 +106,7 @@ export default class Camera extends Component{
         let defaultAspect = this._m_Scene.getCanvas().getWidth() * 1.0 / this._m_Scene.getCanvas().getHeight();
         let h = Math.tan(MoreMath.toRadians(45.0) * 0.5) * 0.1;
         let w = h * defaultAspect;
+        console.log("w:" + w + ";h:" + h + ";as:" + defaultAspect);
         this._m_FrustumLeft = -w;
         this._m_FrustumRight = w;
         this._m_FrustumBottom = -h;
@@ -208,6 +210,8 @@ export default class Camera extends Component{
         this._m_Eye.setTo(eye);
         this._m_At.setTo(at);
         this._m_Up.setTo(up);
+        this._m_At.sub(this._m_Eye, this._m_Dir);
+        this._m_Dir.normal();
         this._m_ViewMatrix.lookAt(this._m_Eye, this._m_At, this._m_Up);
         this._m_ViewMatrixUpdate = true;
         this._doUpdate();
@@ -243,11 +247,11 @@ export default class Camera extends Component{
         this._m_CoeffTop[1] = this._m_FrustumTop * inverseLength;
 
         // 更新视锥体6平面
-        Camera.S_TEMP_VEC3.setToInXYZ(this._m_ViewMatrix.m[0], this._m_ViewMatrix.m[1], this._m_ViewMatrix.m[2]);
-        Camera.S_TEMP_VEC3_2.setToInXYZ(this._m_ViewMatrix.m[4], this._m_ViewMatrix.m[5], this._m_ViewMatrix.m[6]);
-        Camera.S_TEMP_VEC3_3.setToInXYZ(this._m_ViewMatrix.m[8], this._m_ViewMatrix.m[9], this._m_ViewMatrix.m[10]);
+        Camera.S_TEMP_VEC3.setToInXYZ(-this._m_ViewMatrix.m[0], -this._m_ViewMatrix.m[4], -this._m_ViewMatrix.m[8]);
+        Camera.S_TEMP_VEC3_2.setToInXYZ(this._m_ViewMatrix.m[1], this._m_ViewMatrix.m[5], this._m_ViewMatrix.m[9]);
+        Camera.S_TEMP_VEC3_3.setTo(this._m_Dir);
 
-        let dirDotEye = Camera.S_TEMP_VEC3_2.dot(this._m_Eye);
+        let dirDotEye = Camera.S_TEMP_VEC3_3.dot(this._m_Eye);
 
         // left plane
         let leftPlaneNormal = this._m_FrustumPlane[Camera.S_LEFT_PLANE].getNormal();
@@ -290,6 +294,13 @@ export default class Camera extends Component{
         // near plane
         this._m_FrustumPlane[Camera.S_NEAR_PLANE].setNormaXYZ(Camera.S_TEMP_VEC3_3._m_X, Camera.S_TEMP_VEC3_3._m_Y, Camera.S_TEMP_VEC3_3._m_Z);
         this._m_FrustumPlane[Camera.S_NEAR_PLANE].setD(dirDotEye + this._m_FrustumNear);
+
+        // console.log("6平面:",this._m_FrustumPlane);
+        // console.log("left:" + Camera.S_TEMP_VEC3.toString());
+        // console.log("up:" + Camera.S_TEMP_VEC3_2.toString());
+        // console.log("dir:" + Camera.S_TEMP_VEC3_3.toString());
+        // console.log("pos:" + this._m_Eye.toString());
+        // console.log("viewMatrix:" + this._m_ViewMatrix.toString());
     }
 
     /**
@@ -361,6 +372,8 @@ export default class Camera extends Component{
             // 别忘了ndc是右手
             TempVars.S_TEMP_VEC3.setToInXYZ(-g.m[8], -g.m[9], -g.m[10]);
             TempVars.S_TEMP_VEC3.add(this._m_Eye, this._m_At);
+            this._m_At.sub(this._m_Eye, this._m_Dir);
+            this._m_Dir.normal();
         }
         this._m_ViewMatrixUpdate = true;
         this._doUpdate();
