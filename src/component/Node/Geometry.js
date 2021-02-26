@@ -26,21 +26,41 @@ export default class Geometry extends Node{
         this._m_CullingFlags = 0;
         // 生成材质对象时,根据材质hash值查询是否存在对应的材质对象,有则直接引用。
     }
+
+    /**
+     * 设置当前Geometry使用的材质。<br/>
+     * @param {Material}[material]
+     */
     setMaterial(material){
         this._m_Material = material;
         if(this._m_Mesh){
             this._refreshBufLocal();
         }
     }
+
+    /**
+     * 返回当前Geometry使用的材质。<br/>
+     * @return {Material}
+     */
     getMaterial(){
         return this._m_Material;
     }
+
+    /**
+     * 设置Geometry的Mesh。<br/>
+     * @param {Mesh}[mesh]
+     */
     setMesh(mesh){
         this._m_Mesh = mesh;
         if(this._m_Material){
             this._refreshBufLocal();
         }
     }
+
+    /**
+     * 返回Geometry的Mesh。<br/>
+     * @return {Mesh}
+     */
     getMesh(){
         return this._m_Mesh;
     }
