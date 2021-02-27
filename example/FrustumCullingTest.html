@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OctreeCullingTest</title>
+    <title>FrustumCullingTest</title>
 </head>
 <body>
 <div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
@@ -25,7 +25,6 @@
     import MoreMath from "../src/component/Math3d/MoreMath.js";
     import Stats from "./stats.min.js";
     import Camera from "../src/component/Scene/Camera.js";
-    import OctCullingControl from "../src/component/Optimization/OctCullingControl.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let testCamera = new Camera(scene, {id:'testCamera'});
     testCamera.lookAt(new Vector3(25, 0, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -59,10 +58,11 @@
         box.setLocalTranslationXYZ(Math.random() * (max - min + 1) + min, Math.random() * (max - min + 1) + min, Math.random() * (max - min + 1) + min);
         box.setLocalRotationFromEuler(MoreMath.toRadians(Math.random() * 360), MoreMath.toRadians(Math.random() * 360), MoreMath.toRadians(Math.random() * 360));
         cubes.addChildren(box);
-    }
-    // 使用OctCullingControl来管理静态场景
-    let octCullingControl = new OctCullingControl(cubes, {id:'octCulling'});
 
+        // 绘制AABB包围体
+    }
+    let aabb = cubes.getAABBBoundingBox();
+    console.log("aabb:",aabb);
     // 再次将相机设置为一个最佳观测点(以便观察上面的视锥体)
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(-150, 250, 200), new Vector3(-50, 0, -50), new Vector3(0, 1, 0));
@@ -88,6 +88,16 @@
     // 设置testCamera为剔除相机
     scene.setFrustumCullingCamera(testCamera);
     scene.on('update', (exTime)=>{
+        // 执行旋转
+        // cubes.getChildren().forEach(node=>{
+        //     dx += Math.random() * 0.2 * exTime;
+        //     dy += Math.random() * 0.2 * exTime;
+        //     dz += Math.random() * 0.2 * exTime;
+        //     let x = MoreMath.toRadians(dx);
+        //     let y = MoreMath.toRadians(dy);
+        //     let z = MoreMath.toRadians(dz);
+        //     node.setLocalRotationFromEuler(x, y, z);
+        // });
         stats.update();
     });
 </script>

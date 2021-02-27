@@ -11,6 +11,8 @@ import Matrix44 from "../Matrix44.js";
 export default class AABBBoundingBox extends BoundingVolume{
     static S_TEMP_VEC3 = new Vector3();
     static S_TEMP_VEC32 = new Vector3();
+    static S_TEMP_VEC33 = new Vector3();
+    static S_TEMP_VEC34 = new Vector3();
     static S_TEMP_MAT4 = new Matrix44();
     static S_TEMP_AABB = new AABBBoundingBox();
     constructor(props) {
@@ -234,5 +236,53 @@ export default class AABBBoundingBox extends BoundingVolume{
         result._m_XHalf = Math.abs(AABBBoundingBox.S_TEMP_VEC32._m_X);
         result._m_YHalf = Math.abs(AABBBoundingBox.S_TEMP_VEC32._m_Y);
         result._m_ZHalf = Math.abs(AABBBoundingBox.S_TEMP_VEC32._m_Z);
+    }
+
+    /**
+     * 返回最小点。<br/>
+     * @param {Vector3}[min 存放结果,可为空]
+     * @return {min}
+     */
+    getMin(min){
+        min = min || new Vector3();
+        min.setTo(this._m_Center);
+        min.subInXYZ(this._m_XHalf, this._m_YHalf, this._m_ZHalf);
+        return min;
+    }
+
+    /**
+     * 返回最大点。<br/>
+     * @param {Vector3}[max]
+     * @return {Vector3}
+     */
+    getMax(max){
+        max = max || new Vector3();
+        max.setTo(this._m_Center);
+        max.addInXYZ(this._m_XHalf, this._m_YHalf, this._m_ZHalf);
+        return max;
+    }
+
+    /**
+     * 返回中心点。<br/>
+     * @param {Vector3}[center]
+     * @return {Vector3}
+     */
+    getCenter(center){
+        center = center || new Vector3();
+        center.setTo(this._m_Center);
+        return center;
+    }
+    contains(boundingVolume) {
+        switch (boundingVolume.getType()) {
+            case BoundingVolume.S_TYPE_AABB:
+                let min = this.getMin(AABBBoundingBox.S_TEMP_VEC3);
+                let max = this.getMax(AABBBoundingBox.S_TEMP_VEC32);
+                let tagMin = boundingVolume.getMin(AABBBoundingBox.S_TEMP_VEC33);
+                let tagMax = boundingVolume.getMax(AABBBoundingBox.S_TEMP_VEC34);
+                return (tagMax._m_X <= max._m_X && tagMin._m_X >= min._m_X) && (tagMax._m_Y <= max._m_Y && tagMin._m_Y >= min._m_Y) && (tagMax._m_Z <= max._m_Z && tagMin._m_Z >= min._m_Z);
+            case BoundingVolume.S_TYPE_SPHERE:
+                return false;
+        }
+        return false;
     }
 }

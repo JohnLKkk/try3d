@@ -64,4 +64,14 @@ export default class BoundingVolume {
     getPriorityPlane(){
         return this._m_PriorityPlane;
     }
+
+    /**
+     * 返回于指定包围体是否包含。<br/>
+     * 如果完全包含，则返回true，否则返回false。<br/>
+     * @param {BoundingVolume}[boundingVolume]
+     * @return {Boolean}
+     */
+    contains(boundingVolume){
+        return false;
+    }
 }

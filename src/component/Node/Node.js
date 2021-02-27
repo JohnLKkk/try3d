@@ -10,6 +10,7 @@ import Camera from "../Scene/Camera.js";
  * @author Kkk
  */
 export default class Node extends Component{
+    static S_DEFAULT_FRUSTUM_CULLING = 1 << 1;
     getType() {
         return 'Node';
     }
@@ -41,6 +42,35 @@ export default class Node extends Component{
 
         // 与视锥体的状态
         this._m_FrustumContain = Camera.S_FRUSTUM_INTERSECT_INTERSECTS;
+        // 剔除模式(动态,总不,总是)
+        this._m_CullMode = null;
+        // 剔除标记
+        this._m_CullingFlags = 1;
+        this._m_CullingFlags |= Node.S_DEFAULT_FRUSTUM_CULLING;
+    }
+
+    /**
+     * 返回剔除标记。<br/>
+     * @return {Number}
+     */
+    getCullingFlags(){
+        return this._m_CullingFlags;
+    }
+
+    /**
+     * 清楚指定剔除标记。<br/>
+     * @param {Number}[flags 指定的剔除标记位]
+     */
+    clearCullingFlags(flags){
+        this._m_CullingFlags ^= flags;
+    }
+
+    /**
+     * 添加指定剔除标记位。<br/>
+     * @param {Number}[flags]
+     */
+    addCullingFlags(flags){
+        this._m_CullingFlags |= flags;
     }
 
     /**

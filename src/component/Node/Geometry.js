@@ -20,10 +20,7 @@ export default class Geometry extends Node{
         this._m_ModelAABBBoundingBox = null;
         this._m_Material = null;
 
-        // 剔除模式(动态,总不,总是)
-        this._m_CullMode = null;
-        // 剔除标记
-        this._m_CullingFlags = 0;
+
         // 生成材质对象时,根据材质hash值查询是否存在对应的材质对象,有则直接引用。
     }
 

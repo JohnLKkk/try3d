@@ -239,11 +239,12 @@ export default class Scene extends Component{
                 let resetFrustumMask = this._m_FrustumCullingCamera.getFrustumMask();
                 node.getChildren().forEach(node=>{
                     // 检测是否需要默认剔除
-
-                    // 对于每个同级节点设置同样剔除掩码
-                    this._m_FrustumCullingCamera.setFrustumMask(resetFrustumMask);
-                    // 执行默认剔除
-                    this._frustumCulling(node, visDrawables);
+                    if(node.getCullingFlags() & Node.S_DEFAULT_FRUSTUM_CULLING){
+                        // 对于每个同级节点设置同样剔除掩码
+                        this._m_FrustumCullingCamera.setFrustumMask(resetFrustumMask);
+                        // 执行默认剔除
+                        this._frustumCulling(node, visDrawables);
+                    }
                 });
             }
         }
@@ -256,20 +257,21 @@ export default class Scene extends Component{
         // 然后执行其他操作
     }
     render(exTime){
-        // 通知一帧开始
-        this.fire('render', [exTime]);
-
         // 更新visDrawables
         let visDrawables = this._m_Render.getVisDrawables();
         // 最快的清楚方式
         visDrawables.length = 0;
+        // 通知一帧开始
+        this.fire('render', [exTime]);
+
         // 然后更新visDrawables
         this._m_Nodes.forEach(node=>{
             // 检测是否执行默认视锥剔除
-
-            // 需要执行默认视锥剔除
-            this._m_FrustumCullingCamera.setFrustumMask(0);
-            this._frustumCulling(node, visDrawables);
+            if(node.getCullingFlags() & Node.S_DEFAULT_FRUSTUM_CULLING){
+                // 需要执行默认视锥剔除
+                this._m_FrustumCullingCamera.setFrustumMask(0);
+                this._frustumCulling(node, visDrawables);
+            }
         });
 
         this._m_Render.render(exTime);
