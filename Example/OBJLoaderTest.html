@@ -26,9 +26,9 @@
 
     let rootNode = new Node(scene, {id:'rootNode'});
     let objLoader = new OBJLoader();
-    objLoader.load(scene, './Assets/Models/OBJ/testScene.obj', modelNode=>{
+    objLoader.load(scene, './Assets/Models/OBJ/obj.obj', modelNode=>{
         // 关闭视锥剔除测试
-        // modelNode.setLocalRotationFromEuler(MoreMath.toRadians(-90), 0, 0);
+        modelNode.setLocalRotationFromEuler(MoreMath.toRadians(-90), 0, 0);
         // modelNode.setLocalScaleXYZ(0.1, 0.1, 0.1);
         console.log("实体:" + modelNode.getChildren().length);
         console.log("modelNode:",modelNode);

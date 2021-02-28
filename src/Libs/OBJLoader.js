@@ -614,63 +614,121 @@ export default class OBJLoader {
     createMeshes(modelNode, state){
 
         console.log("state.objects.length:" + state.objects.length);
+        // merge mtl
+        let mtlobjs = {};
+        let mo = 0;
         for (let j = 0, k = state.objects.length; j < k; j++) {
 
             let object = state.objects[j];
             let meshData = object.geometry;
             let isLine = (meshData.type === 'Line');
-
+            let materialId = object.material.id;
+            let material;
             if (meshData.positions.length === 0) {
                 // 跳过无位置几何属性的部分
                 continue;
             }
+            if(!mtlobjs[materialId]){
+                mo++;
 
-            let indices = new Array(meshData.positions.length / 3); // Triangle soup
-            for (let idx = 0; idx < indices.length; idx++) {
-                indices[idx] = idx;
-            }
-
-            // 创建Mesh
-            let mesh = new Mesh();
-            mesh.setData(Mesh.S_POSITIONS, meshData.positions);
-            if(meshData.normals.length > 0){
-                mesh.setData(Mesh.S_NORMALS, meshData.normals);
-            }
-            if(meshData.uv.length > 0){
-                mesh.setData(Mesh.S_UV0, meshData.uv);
-            }
-            mesh.setData(Mesh.S_INDICES, indices);
-
-            // 创建Geometry
-            let geometry = new Geometry(modelNode, {id:object.id});
-            geometry.setMesh(mesh);
-
-            let materialId = object.material.id;
-            let material;
-            // 获取引用的材质实例
-            if (materialId && materialId !== "") {
-                material = this._m_Mats[materialId];
-                if (!material) {
-                    console.error("Material not found: " + materialId);
+                let indices = new Array(meshData.positions.length / 3); // Triangle soup
+                for (let idx = 0; idx < indices.length; idx++) {
+                    indices[idx] = idx;
                 }
-            } else {
-                // 提供一个默认材质
-                if(this._m_DefaultMatDef){
-                    if(!this._m_Mats['Default']){
-                        let basicLightingMat = new Material(this._m_Scene, {id:'Default', materialDef:this._m_DefaultMatDef});
-                        basicLightingMat.selectTechnology('BlinnPhongLight2');
-                        this._m_Mats['Default'] = basicLightingMat;
+
+                // 创建Mesh
+                let mesh = new Mesh();
+                mesh.setData(Mesh.S_POSITIONS, meshData.positions);
+                if(meshData.normals.length > 0){
+                    mesh.setData(Mesh.S_NORMALS, meshData.normals);
+                }
+                if(meshData.uv.length > 0){
+                    mesh.setData(Mesh.S_UV0, meshData.uv);
+                }
+                mesh.setData(Mesh.S_INDICES, indices);
+
+
+
+
+                // 获取引用的材质实例
+                if (materialId && materialId !== "") {
+                    material = this._m_Mats[materialId];
+                    if (!material) {
+                        console.error("Material not found: " + materialId);
                     }
-                    material = this._m_Mats['Default'];
+                } else {
+                    // 提供一个默认材质
+                    if(this._m_DefaultMatDef){
+                        if(!this._m_Mats['Default']){
+                            let basicLightingMat = new Material(this._m_Scene, {id:'Default', materialDef:this._m_DefaultMatDef});
+                            basicLightingMat.selectTechnology('BlinnPhongLight2');
+                            this._m_Mats['Default'] = basicLightingMat;
+                        }
+                        material = this._m_Mats['Default'];
+                    }
+
                 }
-
+                mtlobjs[materialId] = {mesh, material};
             }
-            geometry.setMaterial(material);
-            geometry.updateBound();
+            else{
+                let mesh = mtlobjs[materialId].mesh;
+                let meshPosition = mesh.getData(Mesh.S_POSITIONS);
+                let indices = new Array(meshData.positions.length / 3); // Triangle soup
+                for (let idx = 0, offset = meshPosition.length / 3; idx < indices.length; idx++) {
+                    indices[idx] = idx + offset;
+                }
+                if(meshPosition){
+                    meshData.positions.forEach(p=>{
+                        meshPosition.push(p);
+                    });
+                }
+                mesh.setData(Mesh.S_POSITIONS, meshPosition);
+                if(meshData.normals.length > 0){
+                    let meshNormal = mesh.getData(Mesh.S_NORMALS);
+                    if(meshNormal){
+                        meshData.normals.forEach(n=>{
+                            meshNormal.push(n);
+                        });
+                    }
+                    mesh.setData(Mesh.S_NORMALS, meshNormal);
+                }
+                if(meshData.uv.length > 0){
+                    let meshUV = mesh.getData(Mesh.S_UV0);
+                    if(meshUV){
+                        meshData.uv.forEach(uv=>{
+                            meshUV.push(uv);
+                        });
+                    }
+                    mesh.setData(Mesh.S_UV0, meshUV);
+                }
+                let meshIndice = mesh.getData(Mesh.S_INDICES);
+                if(meshIndice){
+                    indices.forEach(i=>{
+                        meshIndice.push(i);
+                    });
+                }
+                mesh.setData(Mesh.S_INDICES, meshIndice);
+            }
 
 
-            modelNode.addChildren(geometry);
+
         }
+        if(mo){
+            console.log("实体数量:" + mo);
+            for(let mt in mtlobjs){
+                let material = mtlobjs[mt].material;
+                let mesh = mtlobjs[mt].mesh;
+                // 创建Geometry
+                let geometry = new Geometry(modelNode, {id:'Geo_' + mt});
+                geometry.setMesh(mesh);
+                geometry.setMaterial(material);
+                geometry.updateBound();
+
+
+                modelNode.addChildren(geometry);
+            }
+        }
+
     }
     loadFile(url, ok, err) {
         let request = new XMLHttpRequest();
