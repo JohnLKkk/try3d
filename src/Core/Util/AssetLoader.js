@@ -45,4 +45,15 @@ export default class AssetLoader {
         return AssetLoader._get(filePath, null, 'GET', {sync:false});
     }
 
+    /**
+     * 加载模型。<br/>
+     * 支持的模型格式:OBJ,GLTF。<br/>
+     * @param {String}[filePath]
+     * @param {Function}[callback]
+     */
+    static loadModel(filePath, callback){
+        // 判断文件类型
+        // 以obj进行加载
+    }
+
 }

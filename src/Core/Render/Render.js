@@ -106,7 +106,7 @@ export default class Render extends Component{
         // ffb.addTexture(gl, 'outColor', gl.RGB, 0, gl.RGB, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT0, false);
         ffb.addBuffer(gl, 'depth', gl.DEPTH24_STENCIL8, gl.DEPTH_STENCIL_ATTACHMENT);
         ffb.finish(gl, this._m_Scene, true);
-        let forwardMat = new Material(this._m_Scene, {id:'for_m', frameContext:this.getFrameContext(), materialDef:MaterialDef.load("../src/component/Assets/MaterialDef/DefaultOutColorDef")});
+        let forwardMat = new Material(this._m_Scene, {id:'for_m', frameContext:this.getFrameContext(), materialDef:MaterialDef.load("../src/Core/Assets/MaterialDef/DefaultOutColorDef")});
         ffb.getFramePicture().setMaterial(forwardMat);
         this._m_FrameContext._m_DefaultFrameBuffer = ffb.getFrameBuffer();
 

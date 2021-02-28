@@ -9,25 +9,25 @@
     <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;margin: 0px;padding: 0px;" tabindex="0"></canvas>
 </div>
 <script type="module">
-    import Scene from "../../src/component/Scene/Scene.js";
-    import RenderEngine from "../../src/component/RenderEngine.js";
-    import Node from "../../src/component/Node/Node.js";
-    import Material from "../../src/component/Material/Material.js";
-    import Vector3 from "../../src/component/Math3d/Vector3.js";
-    import MaterialDef from "../../src/component/Material/MaterialDef.js";
-    import FirstPersonController from "../../src/component/InputControl/FirstPersonController.js";
-    import DirectionalLight from "../../src/component/Light/DirectionalLight.js";
-    import Box from "../../src/component/Node/Shape/Box.js";
-    import Geometry from "../../src/component/Node/Geometry.js";
-    import MeshFactor from "../../src/component/Util/MeshFactor.js";
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import Box from "../../src/Core/Node/Shape/Box.js";
+    import Geometry from "../../src/Core/Node/Geometry.js";
+    import MeshFactor from "../../src/Core/Util/MeshFactor.js";
     import Stats from "./../stats.min.js";
-    import MoreMath from "../../src/component/Math3d/MoreMath.js";
+    import MoreMath from "../../src/Core/Math3d/MoreMath.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(10, 10, 10), new Vector3(-5, 0, -5), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     // // 加载一个材质定义
-    let materialDef = MaterialDef.load("../../src/component/Assets/MaterialDef/BasicLightingDef");
+    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
     console.log("materialDef:",materialDef);
     let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
     basicLightingMat.selectTechnology('BlinnPhongLight2');
@@ -35,7 +35,7 @@
     let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
     // 根据当前相机创建测试用的视锥体
     wireFrustum.setMesh(MeshFactor.createViewFrustumMeshFromCamera(mainCamera));
-    wireFrustum.setMaterial(new Material(scene, {id:'colorWireFrustum', materialDef:MaterialDef.load("../../src/component/Assets/MaterialDef/ColorDef")}));
+    wireFrustum.setMaterial(new Material(scene, {id:'colorWireFrustum', materialDef:MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef")}));
     wireFrustum.updateBound();
     let frustumAABB = wireFrustum.getAABBBoundingBox();
     console.log("frustumAABB:",frustumAABB);

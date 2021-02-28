@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OBJLoaderTest</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
+    <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script type="module">
+    import Scene from "../src/Core/Scene/Scene.js";
+    import RenderEngine from "../src/Core/RenderEngine.js";
+    import Node from "../src/Core/Node/Node.js";
+    import Vector3 from "../src/Core/Math3d/Vector3.js";
+    import FirstPersonController from "../src/Core/InputControl/FirstPersonController.js";
+    import DirectionalLight from "../src/Core/Light/DirectionalLight.js";
+    import OBJLoader from "../src/Libs/OBJLoader.js";
+    import MoreMath from "../src/Core/Math3d/MoreMath.js";
+    import Stats from "./stats.min.js";
+    import OctCullingControl from "../src/Core/Optimization/OctCullingControl.js";
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(5, 5, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+
+    let rootNode = new Node(scene, {id:'rootNode'});
+    let objLoader = new OBJLoader();
+    objLoader.load(scene, './Assets/Models/OBJ/testScene.obj', modelNode=>{
+        // 关闭视锥剔除测试
+        // modelNode.setLocalRotationFromEuler(MoreMath.toRadians(-90), 0, 0);
+        // modelNode.setLocalScaleXYZ(0.1, 0.1, 0.1);
+        console.log("实体:" + modelNode.getChildren().length);
+        console.log("modelNode:",modelNode);
+        // 使用OctCullingControl来管理静态场景
+        // let octCullingControl = new OctCullingControl(modelNode, {id:'octCulling'});
+        rootNode.addChildren(modelNode);
+    });
+    // rootNode.addChildren(cubeGeometry);
+
+    let dirLight = new DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(-1, -1, 1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dirLight);
+
+    let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        // 执行旋转
+        // cubes.getChildren().forEach(node=>{
+        //     dx += Math.random() * 0.2 * exTime;
+        //     dy += Math.random() * 0.2 * exTime;
+        //     dz += Math.random() * 0.2 * exTime;
+        //     let x = MoreMath.toRadians(dx);
+        //     let y = MoreMath.toRadians(dy);
+        //     let z = MoreMath.toRadians(dz);
+        //     node.setLocalRotationFromEuler(x, y, z);
+        // });
+        stats.update();
+    });
+</script>
+</body>
+</html>
