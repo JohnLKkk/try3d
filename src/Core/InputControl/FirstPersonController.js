@@ -119,6 +119,18 @@ export default class FirstPersonController extends Component{
             }
         });
     }
+
+    /**
+     * 设置移动速率去。<br/>
+     * @param {Number}[movementSpeed]
+     */
+    setMovementSpeed(movementSpeed){
+        this._m_MovementSpeed = movementSpeed;
+    }
+
+    /**
+     * 手动同步控制器与view的状态。<br/>
+     */
     refresh(){
         this._m_Position.setTo(this._m_Scene.getMainCamera().getEye());
         this._m_Front.setTo(this._m_Scene.getMainCamera().getAt().subRetNew(this._m_Position).normal());

@@ -24,6 +24,30 @@ export default class AABBBoundingBox extends BoundingVolume{
     }
 
     /**
+     * 返回x半径。<br/>
+     * @return {Number}
+     */
+    getXHalf(){
+        return this._m_XHalf;
+    }
+
+    /**
+     * 返回y半径。<br/>
+     * @return {Number}
+     */
+    getYHalf(){
+        return this._m_YHalf;
+    }
+
+    /**
+     * 返回z半径。<br/>
+     * @return {Number}
+     */
+    getZHalf(){
+        return this._m_ZHalf;
+    }
+
+    /**
      * 返回包围体类型。<br/>
      * @return {Number}
      */

@@ -23,6 +23,7 @@
     import Geometry from "../src/Core/Node/Geometry.js";
     import MeshFactor from "../src/Core/Util/MeshFactor.js";
     import MoreMath from "../src/Core/Math3d/MoreMath.js";
+    import Mesh from "../src/Core/WebGL/Mesh.js";
     import Stats from "./stats.min.js";
     import Camera from "../src/Core/Scene/Camera.js";
     import OctCullingControl from "../src/Core/Optimization/OctCullingControl.js";
@@ -30,16 +31,19 @@
     let testCamera = new Camera(scene, {id:'testCamera'});
     testCamera.lookAt(new Vector3(25, 0, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    firstPersonController.setMovementSpeed(500);
     // // 加载一个材质定义
     let materialDef = MaterialDef.load("../src/Core/Assets/MaterialDef/BasicLightingDef");
     console.log("materialDef:",materialDef);
     let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
     basicLightingMat.selectTechnology('BlinnPhongLight2');
 
+    let colorDef = MaterialDef.load("../src/Core/Assets/MaterialDef/ColorDef");
+    let colorMat = new Material(scene, {id:'colorWireFrustum', materialDef:colorDef});
     let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
     // 根据当前相机创建测试用的视锥体
     wireFrustum.setMesh(MeshFactor.createViewFrustumMeshFromCamera(testCamera));
-    wireFrustum.setMaterial(new Material(scene, {id:'colorWireFrustum', materialDef:MaterialDef.load("../src/Core/Assets/MaterialDef/ColorDef")}));
+    wireFrustum.setMaterial(colorMat);
     wireFrustum.updateBound();
 
     let rootNode = new Node(scene, {id:'rootNode'});
@@ -47,21 +51,23 @@
     rootNode.addChildren(wireFrustum);
     let cubes = new Node(scene, {id:'cubes'});
     rootNode.addChildren(cubes);
-    let aabbBoundingBoxs = new Node(scene, {id:'aabbBoundingBoxs'});
-    rootNode.addChildren(aabbBoundingBoxs);
 
     // 创建一堆离散空间数据,分布在[-500,500]之间
-    let min = -500, max = 500;
-    let minSize = 5, maxSize = 20;
-    for(let i = 0;i < 10000;i++){
+    let min = -200, max = 200;
+    let minSize = 2, maxSize = 2;
+    for(let i = 0;i < 20000;i++){
         let box = new Box(scene, {id:'box' + i, xHalf:Math.random() * (maxSize - minSize + 1) + minSize, yHalf:Math.random() * (maxSize - minSize + 1) + minSize, zHalf:Math.random() * (maxSize - minSize + 1) + minSize});
+        // let box = new Box(scene, {id:'box' + i, xHalf:maxSize, yHalf:maxSize, zHalf:maxSize});
         box.setMaterial(basicLightingMat);
         box.setLocalTranslationXYZ(Math.random() * (max - min + 1) + min, Math.random() * (max - min + 1) + min, Math.random() * (max - min + 1) + min);
+        // box.setLocalTranslationXYZ(5, 5, 5);
         box.setLocalRotationFromEuler(MoreMath.toRadians(Math.random() * 360), MoreMath.toRadians(Math.random() * 360), MoreMath.toRadians(Math.random() * 360));
         cubes.addChildren(box);
     }
     // 使用OctCullingControl来管理静态场景
     let octCullingControl = new OctCullingControl(cubes, {id:'octCulling'});
+    // 将octree绘制出来
+    // octCullingControl.debug(rootNode, colorMat);
 
     // 再次将相机设置为一个最佳观测点(以便观察上面的视锥体)
     let mainCamera = scene.getComponent('mainCamera');
@@ -86,8 +92,18 @@
     document.body.appendChild(stats.domElement);
     let dx = 0, dy = 0, dz = 0;
     // 设置testCamera为剔除相机
-    scene.setFrustumCullingCamera(testCamera);
+    // scene.setFrustumCullingCamera(testCamera);
     scene.on('update', (exTime)=>{
+        // 执行旋转
+        // cubes.getChildren().forEach(node=>{
+        //     dx += Math.random() * 0.2 * exTime;
+        //     dy += Math.random() * 0.2 * exTime;
+        //     dz += Math.random() * 0.2 * exTime;
+        //     let x = MoreMath.toRadians(dx);
+        //     let y = MoreMath.toRadians(dy);
+        //     let z = MoreMath.toRadians(dz);
+        //     node.setLocalRotationFromEuler(x, y, z);
+        // });
         stats.update();
     });
 </script>

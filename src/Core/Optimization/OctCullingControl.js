@@ -4,6 +4,7 @@ import OctNode from "./OctNode.js";
 import Geometry from "../Node/Geometry.js";
 import AABBBoundingBox from "../Math3d/Bounding/AABBBoundingBox.js";
 import Vector3 from "../Math3d/Vector3.js";
+import MeshFactor from "../Util/MeshFactor.js";
 
 /**
  * OctCullingControl。<br/>
@@ -44,6 +45,45 @@ export default class OctCullingControl extends Component{
     }
 
     /**
+     * 调试OctCullingControl。<br/>
+     * 将Octree叶子节点绘制到渲染器中以便查看计算正确性。<br/>
+     * @param {Node}[sceneNode]
+     * @param {Material}[debugMat]
+     * @param {OctNode}[leaf]
+     * @private
+     */
+    _debug(sceneNode, debugMat, leaf){
+        if(leaf.isValid()){
+            let leafGeo = new Geometry(sceneNode, {id:MeshFactor.nextId() + "_oct"});
+            leafGeo.setMesh(MeshFactor.createAABBBoundingBoxMeshFromAABBBoundingBox(leaf.getAABBBoundingBox()));
+            leafGeo.setMaterial(debugMat);
+            leafGeo.updateBound();
+            // leafGeo.clearCullingFlags(Node.S_DEFAULT_FRUSTUM_CULLING);
+            sceneNode.addChildren(leafGeo);
+            // 子列表
+            if(leaf.getLeafs()){
+                leaf.getLeafs().forEach(leaf=>{
+                    this._debug(sceneNode, debugMat, leaf);
+                });
+            }
+        }
+    }
+
+    /**
+     * 调试OctCullingControl。<br/>
+     * 通过将Octree绘制到引擎中以便调试。<br/>
+     * @param {Node}[sceneNode]
+     * @param {Material}[debugMat]
+     */
+    debug(sceneNode, debugMat){
+        if(this._m_OctNode){
+            // 绘制八叉树到sceneNode中
+            this._debug(sceneNode, debugMat, this._m_OctNode);
+            // console.log("oct:", this._m_OctNode);
+        }
+    }
+
+    /**
      * 创建八叉树。<br/>
      * @param {Node}[node]
      * @param {Number}[depth]
@@ -53,7 +93,15 @@ export default class OctCullingControl extends Component{
         let aabb = node.getAABBBoundingBox();
         if(aabb){
             // 如果存在有效边界体,则进行构建,这意味着无效根节点不会为其创建八叉树
-            this._m_OctNode = new OctNode(null, aabb);
+            // 标准八叉树
+            let standardAABB = new AABBBoundingBox();
+            let xHalf = aabb.getXHalf();
+            let yHalf = aabb.getYHalf();
+            let zHalf = aabb.getZHalf();
+            let d = Math.max(Math.max(xHalf, yHalf), zHalf);
+            let c = aabb.getCenter();
+            standardAABB.fromMinMax(new Vector3(-d + c._m_X, -d + c._m_Y, -d + c._m_Z), new Vector3(d + c._m_X, d + c._m_Y, d + c._m_Z));
+            this._m_OctNode = new OctNode(null, standardAABB);
             // 用于标记根节点为有效(这里其实应该判断子节点是否有一个包含有效数据)
             this._m_OctNode.setValid(true);
             console.log("开始预建!");
@@ -240,6 +288,19 @@ export default class OctCullingControl extends Component{
         // 只检测有效叶子
         if(leaf.isValid()){
             if(leaf.inFrustum(frustumCamera)){
+                if(leaf.getRefs()){
+                    // 加入渲染列表
+                    let restoreFrustumMask = frustumCamera.getFrustumMask();
+                    leaf.getRefs().forEach(ref=>{
+                        // 对这些ref进行精确FrustumCulling
+                        // 似乎有bug
+                        if(ref.inFrustum(frustumCamera)){
+                            visDrawables.push(ref);
+                        }
+                        // visDrawables.push(ref);
+                        frustumCamera.setFrustumMask(restoreFrustumMask);
+                    });
+                }
                 // 判断是否为叶子节点
                 if(leaf.getLeafs()){
                     // 递归检测其叶子列表
@@ -247,17 +308,6 @@ export default class OctCullingControl extends Component{
                     leaf.getLeafs().forEach(leaf=>{
                         frustumCamera.setFrustumMask(restoreFrustumMask);
                         this.cullingLeafs(leaf, frustumCamera, visDrawables);
-                    });
-                }
-                else{
-                    // 加入渲染列表
-                    let restoreFrustumMask = frustumCamera.getFrustumMask();
-                    leaf.getRefs().forEach(ref=>{
-                        // 对这些ref进行精确FrustumCulling
-                        if(ref.inFrustum(frustumCamera)){
-                            visDrawables.push(ref);
-                        }
-                        frustumCamera.setFrustumMask(restoreFrustumMask);
                     });
                 }
             }
