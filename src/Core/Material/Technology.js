@@ -43,4 +43,12 @@ export default class Technology {
         return this._m_SubPasss[renderPath];
     }
 
+    /**
+     * 返回渲染阶段列表数据。<br/>
+     * @return {SubPass[]}
+     */
+    getSubPassList(){
+        return this._m_SubPasss;
+    }
+
 }

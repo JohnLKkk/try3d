@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MaterialParamsTest</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" tabindex="0" width="400" height="300" style="border: none;margin: 0px;padding: 0px;"></canvas>
+</div>
+<script type="module">
+    import Scene from "../src/Core/Scene/Scene.js";
+    import RenderEngine from "../src/Core/RenderEngine.js";
+    import Node from "../src/Core/Node/Node.js";
+    import Material from "../src/Core/Material/Material.js";
+    import Vector3 from "../src/Core/Math3d/Vector3.js";
+    import MaterialDef from "../src/Core/Material/MaterialDef.js";
+    import Box from "../src/Core/Node/Shape/Box.js";
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    // 加载一个材质定义
+    let materialDef = MaterialDef.load("../src/Core/Assets/MaterialDef/ColorDef");
+    let mat = new Material(scene, {id:"colorMat", materialDef});
+    // mat.setParam('color', [1.0, 1.0, 1.0, 1.0]);
+    console.log("materialDef:",mat);
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(10, 10, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let box = new Box(scene, {id:'box'});
+    box.setMaterial(mat);
+    let rootNode = new Node(scene, {id:'rootNode'});
+    rootNode.addChildren(box);
+    let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+</script>
+</body>
+</html>

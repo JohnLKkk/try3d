@@ -340,7 +340,7 @@ export default class MaterialDef{
         }
         // 添加材质参数
         if(useParam){
-            subShaderDef.addUseParams(useParams);
+            subShaderDef.addUseParams(ShaderSource.VERTEX_SHADER, useParams);
             let inParams = "\n";
             for(let k in useParams){
                 param = useParams[k];
@@ -611,7 +611,7 @@ export default class MaterialDef{
         // 检测是否引用了GlobalTextures,以便找出需要关联的输出frameBuffer
         // 添加材质参数
         if(useParam){
-            subShaderDef.addUseParams(useParams);
+            subShaderDef.addUseParams(ShaderSource.FRAGMENT_SHADER, useParams);
             let inParams = "\n";
             for(let k in useParams){
                 param = useParams[k];

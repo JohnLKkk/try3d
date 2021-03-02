@@ -18,9 +18,14 @@ export default class Material extends Component{
         // this._m_MaterialSource = new SubShaderSource(cfg.materialSourceDef);
         // // 根据materialShaderSource,创建着色器程序,然后根据材质定义,获取着色器变量
         // this._m_ShaderProgram = new ShaderProgram(this._m_Scene.getCanvas().getGLContext(), this._m_MaterialSource.getShaderSource());
-        // 变量参数
-        this._m_SystemParams = {};
+        // 材质参数
         this._m_Params = {};
+        // 参数值列表
+        this._m_ParamValues = {};
+        // 可定义材质参数
+        this._m_CanDefineParams = {};
+        // 已定义材质参数
+        this._m_AleadyDefinedParams = {};
         // 发生变化的材质参数值
         this._m_ChangeParams = [];
         this._init();
@@ -42,9 +47,12 @@ export default class Material extends Component{
             // 获取技术块
             let materialDef = cfg.materialDef;
             // 开始解析
-            for(let p in materialDef.getParams()){
+            let mp = materialDef.getParams();
+            for(let p in mp){
                 // 默认所有参数值为null
-                this._m_Params[materialDef.getParams[p]] = null;
+                this._m_ParamValues[mp[p].getName()] = null;
+                this._m_Params[mp[p].getName()] = true;
+                this._m_CanDefineParams[mp[p].getName()] = true;
             }
             let subShaderDefs = materialDef.getSubShaderDefs();
             let subShaders = {};
@@ -127,6 +135,8 @@ export default class Material extends Component{
      */
     _selectSubShader(subShader){
         this._m_CurrentSubShader = subShader;
+        // 检测是否需要重新编译subShader
+        //                         sb.subShader.rebuild(this._m_Scene.getRender().getFrameContext());
         let frameContext = this._m_Scene.getRender().getFrameContext();
         let gl = this._m_Scene.getCanvas().getGLContext();
         // 1.先检测是否需要切换subShader(根据shader种类)(这里检测可能与理论不一样，打印出id来调试...)
@@ -158,6 +168,30 @@ export default class Material extends Component{
         // let ubi = gl.getUniformBlockIndex(this._m_ShaderProgram.getProgram(), "VP");
         // gl.uniformBlockBinding(this._m_ShaderProgram.getProgram(), ubi, 0x001);
         // gl.useProgram(null);
+    }
+
+    /**
+     * 设置参数。<br/>
+     * @param {String}[paramName 参数名]
+     * @param {Object}[value 参数值]
+     */
+    setParam(paramName, value){
+        // 检测是否有效参数
+        if(this._m_Params[paramName]){
+            // 检测是否已经定义
+            if(!this._m_AleadyDefinedParams[paramName]){
+                // 定义该参数
+                // 重新构建当前技术所有SubShader块
+                let subPass = null;
+                for(let p in this._m_CurrentTechnology.getSubPassList()){
+                    subPass = this._m_CurrentTechnology.getSubPasss(p);
+                    subPass.getSubShaders().forEach(sb=>{
+                        sb.subShader.addDefine(paramName);
+                    });
+                }
+                this._m_AleadyDefinedParams[paramName] = true;
+            }
+        }
     }
 
 }

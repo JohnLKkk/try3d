@@ -1,17 +1,31 @@
 import ShaderSource from "./ShaderSource.js";
 import Shader from "./Shader.js";
+import Tools from "../Util/Tools.js";
 /**
  * ShaderProgram定义了着色器程序对象,解析shaderSource并生成指定的着色器程序对象,以便后续使用。<br/>
  * 其中shaderSource包含了vs,gs,fs等的源码，这些源码可以从外部解析读取得到，也可以通过js脚本定义得到。<br/>
  * @author Kkk
  */
 export default class ShaderProgram {
-    constructor(gl, name, shaderSource) {
+    constructor(gl, name, shaderSource, defines) {
+        let source = null;
         if(shaderSource.get(ShaderSource.VERTEX_SHADER)){
-            this._m_vs = new Shader(gl, gl.VERTEX_SHADER, shaderSource.get(ShaderSource.VERTEX_SHADER));
+            source = shaderSource.get(ShaderSource.VERTEX_SHADER);
+            let vsDefines = defines ? defines[ShaderSource.VERTEX_SHADER] : null;
+            if(vsDefines){
+                // 追加宏定义
+                source = Tools.insertLine(source, vsDefines, 1);
+            }
+            this._m_vs = new Shader(gl, gl.VERTEX_SHADER, source);
         }
         if(shaderSource.get(ShaderSource.FRAGMENT_SHADER)){
-            this._m_fs = new Shader(gl, gl.FRAGMENT_SHADER, shaderSource.get(ShaderSource.FRAGMENT_SHADER));
+            source = shaderSource.get(ShaderSource.FRAGMENT_SHADER);
+            let fsDefines = defines ? defines[ShaderSource.FRAGMENT_SHADER] : null;
+            if(fsDefines){
+                // 追加宏定义
+                source = Tools.insertLine(source, fsDefines, 1);
+            }
+            this._m_fs = new Shader(gl, gl.FRAGMENT_SHADER, source);
         }
         this._m_Program = null;
         if(this._m_vs && this._m_fs){

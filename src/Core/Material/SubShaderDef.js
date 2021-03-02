@@ -12,6 +12,8 @@ export default class SubShaderDef {
         this._m_Name = name;
         // 用于判断是否属于同一类别shaderDef
         this._m_DefId = null;
+        // 签名(每个subShader都是唯一签名的)
+        this._m_Signature = null;
         this._m_ShaderSource = new ShaderSource();
         // 设置该SubShaderDef来自哪个MaterialDef
         this._m_FromMaterialDef = null;
@@ -22,6 +24,8 @@ export default class SubShaderDef {
         this._m_UseContexts = [];
         // 使用的材质参数变量
         this._m_UseParams = [];
+        // 着色器使用的参数变量
+        this._m_ShaderParams = {};
         // 使用的块定义
         this._m_UseBlocks = [];
         // 该subShader使用的fb,null表示使用默认
@@ -30,6 +34,8 @@ export default class SubShaderDef {
         this._m_RefFBs = null;
         // 设置指定的渲染程序类型(默认为null)
         this._m_RenderProgramType = null;
+
+
     }
 
     /**
@@ -63,6 +69,24 @@ export default class SubShaderDef {
     getFBId(){
         return this._m_FBId;
     }
+
+    /**
+     * 计算定义id。<br/>
+     * @param {String}[key 可选的密钥]
+     */
+    computeSignatureDefId(key){
+        if(key){
+            this._m_DefId = Tools.uniqueId(this._m_Signature + key);
+        }
+        else{
+            this._m_DefId = Tools.uniqueId(this._m_Signature);
+        }
+    }
+
+    /**
+     * 返回定义Id。<br/>
+     * @return {String}
+     */
     getDefId(){
         return this._m_DefId;
     }
@@ -74,10 +98,25 @@ export default class SubShaderDef {
     getUseContexts(){
         return this._m_UseContexts;
     }
-    addUseParams(useParams){
+    addUseParams(shaderType, useParams){
         useParams.forEach(param=>{
             this._m_UseParams.push(param);
+            if(shaderType == ShaderSource.VERTEX_SHADER){
+                if(!this._m_ShaderParams[ShaderSource.VERTEX_SHADER]){
+                    this._m_ShaderParams[ShaderSource.VERTEX_SHADER] = {};
+                }
+                this._m_ShaderParams[ShaderSource.VERTEX_SHADER][param.getName()] = true;
+            }
+            else if(shaderType == ShaderSource.FRAGMENT_SHADER){
+                if(!this._m_ShaderParams[ShaderSource.FRAGMENT_SHADER]){
+                    this._m_ShaderParams[ShaderSource.FRAGMENT_SHADER] = {};
+                }
+                this._m_ShaderParams[ShaderSource.FRAGMENT_SHADER][param.getName()] = true;
+            }
         });
+    }
+    getShaderParams(){
+        return this._m_ShaderParams;
     }
     getUseParams(){
         return this._m_UseParams;
@@ -99,7 +138,8 @@ export default class SubShaderDef {
         this._m_FromMaterialDef = materialDef;
 
         // 计算shaderId
-        this._m_DefId = Tools.uniqueId(materialDef.getName() + this.getName());
+        this._m_Signature = materialDef.getName() + this.getName();
+        this.computeSignatureDefId();
     }
 
     /**

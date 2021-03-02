@@ -9,14 +9,24 @@ import ShaderProgram from "../WebGL/ShaderProgram.js";
  */
 export default class SubShader {
     constructor(gl, frameContext, subShaderDef) {
+        this._m_Def = subShaderDef;
         // 根据shader本身创建编码id
         // 以便所有同种类型的shader只被切换使用一次
         this._m_DefId = subShaderDef.getDefId();
         this._m_Name = subShaderDef.getName();
         // 当前该SubShader使用的所有参数(包含params和contextVars以及renderDatas)
         this._m_MatParams = {};
-        // 当前该SubShader使用的变量参数
+        // 渲染材质参数
+        // 可定义参数
+        this._m_CanDefineParams = {};
+        // 已定义参数
+        this._m_AleadyDefinedParams = {};
+        // 参数列表
         this._m_Params = {};
+        // 参数值列表
+        this._m_ParamValues = {};
+        // 宏定义列表
+        this._m_Defines = {};
         // 上下文变量
         // name:varName,loc:glLoc,fun:glFunc
         // 这里有一个优化是根据不同类型上下文变量提前分为不同的列表保存
@@ -56,7 +66,8 @@ export default class SubShader {
                             fun = 'uniform4f';
                             break;
                     }
-                    this._m_Params[param.getName()] = {type:param.getType(), loc, fun};
+                    this._m_CanDefineParams[param.getName()] = "#defined " + param.getDefType();
+                    this._m_Params[param.getName()] = true;
                     this._m_MatParams[param.getName()] = {type:param.getType(), loc, fun};
                 }
             });
@@ -173,6 +184,59 @@ export default class SubShader {
     }
     getRefRenderDataFBs(){
         return this._m_RefRenderDataFBs;
+    }
+
+    /**
+     * 添加参数定义。<br/>
+     * @param {String}[param 参数名]
+     */
+    addDefine(param){
+        if(!this._m_AleadyDefinedParams[param]){
+            if(this._m_CanDefineParams[param]){
+                if(!this._m_Defines){
+                    this._m_Defines = {};
+                }
+                // 定义参数
+                let shaderParams = this._m_Def.getShaderParams();
+                if(shaderParams[ShaderSource.VERTEX_SHADER][param]){
+                    // 加入顶点着色器
+                    if(!this._m_Defines[ShaderSource.VERTEX_SHADER]){
+                        this._m_Defines[ShaderSource.VERTEX_SHADER] = "";
+                    }
+                    this._m_Defines[ShaderSource.VERTEX_SHADER] += this._m_CanDefineParams[param] + "\n";
+                }
+                else if(shaderParams[ShaderSource.FRAGMENT_SHADER][param]){
+                    // 加入片段着色器
+                    if(!this._m_Defines[ShaderSource.FRAGMENT_SHADER]){
+                        this._m_Defines[ShaderSource.FRAGMENT_SHADER] = "";
+                    }
+                    this._m_Defines[ShaderSource.FRAGMENT_SHADER] += this._m_CanDefineParams[param] + "\n";
+                }
+            }
+        }
+    }
+
+    /**
+     * 重新构建SubShader。<br/>
+     * @param {FrameContext}[frameContext]
+     */
+    rebuild(frameContext){
+        if(this._m_Defines){
+            let key = '';
+            if(this._m_Defines[ShaderSource.VERTEX_SHADER]){
+                key += this._m_Defines[ShaderSource.VERTEX_SHADER];
+            }
+            if(this._m_Defines[ShaderSource.FRAGMENT_SHADER]){
+                key += this._m_Defines[ShaderSource.FRAGMENT_SHADER];
+            }
+            // 重新计算DefId
+            this._m_DefId = this._m_Def.computeSignatureDefId(key);
+            // 重新编译shader
+            this._m_ShaderProgram = new ShaderProgram(gl, this._m_Def.getName(), this._m_Def.getShaderSource(), this._m_Defines);
+            frameContext.m_Shaders[this._m_DefId] = this._m_ShaderProgram;
+            // 清空
+            this._m_Defines = null;
+        }
     }
 
 }

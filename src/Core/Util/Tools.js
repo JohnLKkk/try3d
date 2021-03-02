@@ -42,6 +42,25 @@ o.uniqueId = function( s, bres )
  */
 export default class Tools {
     /**
+     * 插入一行到指定源中的指定位置。<br/>
+     * @param {String}[source 源]
+     * @param {String}[line 行]
+     * @param {Number}[index 从0开始,指定插入到源的第几行]
+     * @return {String}
+     */
+    static insertLine(source, line, index){
+        source = Tools.trim(source);
+        let sourceArr = source.split("\n");
+        let result = '';
+        for(let i = 0;i < source.length;i++){
+            if(i == index){
+                result += line + '\n';
+            }
+            result += source[i];
+        }
+        return result;
+    }
+    /**
      * 返回string对应的唯一id。<br/>
      * @param {String}[s]
      * @return {Number}
