@@ -108,7 +108,9 @@ export default class SubShader {
         }
         // let ubi = gl.getUniformBlockIndex(this._m_ShaderProgram.getProgram(), "VP");
         // gl.uniformBlockBinding(this._m_ShaderProgram.getProgram(), ubi, 0x001);
-        gl.useProgram(null);
+        if(frameContext.m_LastSubShader){
+            frameContext.m_LastSubShader.use(gl);
+        }
     }
 
     /**

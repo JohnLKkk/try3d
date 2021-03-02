@@ -21,27 +21,39 @@
     import OctCullingControl from "../src/Core/Optimization/OctCullingControl.js";
     import MaterialDef from "../src/Core/Material/MaterialDef.js";
     import Material from "../src/Core/Material/Material.js";
+    import Camera from "../src/Core/Scene/Camera.js";
+    import MeshFactor from "../src/Core/Util/MeshFactor.js";
+    import Geometry from "../src/Core/Node/Geometry.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(5, 5, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
-    // let colorDef = MaterialDef.load("../src/Core/Assets/MaterialDef/ColorDef");
-    // let colorMat = new Material(scene, {id:'colorMat', materialDef:colorDef});
+
+    let testCamera = new Camera(scene, {id:'testCamera'});
+    testCamera.lookAt(new Vector3(0.07953452484227447,3.4589245565459605,1.1170058588214968), new Vector3(-0.6825071896076365,3.231178826615555,0.5108505091489007), new Vector3(0, 1, 0));
+    let colorDef = MaterialDef.load("../src/Core/Assets/MaterialDef/ColorDef");
+    let colorMat = new Material(scene, {id:'colorWireFrustum', materialDef:colorDef});
+    let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
+    // 根据当前相机创建测试用的视锥体
+    wireFrustum.setMesh(MeshFactor.createViewFrustumMeshFromCamera(testCamera));
+    wireFrustum.setMaterial(colorMat);
+    wireFrustum.updateBound();
 
     let rootNode = new Node(scene, {id:'rootNode'});
+    rootNode.addChildren(wireFrustum);
     let objLoader = new OBJLoader();
-    objLoader.load(scene, './Assets/Models/OBJ/obj.obj', modelNode=>{
+    scene.setFrustumCullingCamera(testCamera);
+    objLoader.load(scene, './Assets/Models/OBJ/testScene.obj', modelNode=>{
         // 关闭视锥剔除测试
-        modelNode.setLocalRotationFromEuler(MoreMath.toRadians(-90), 0, 0);
+        // modelNode.setLocalRotationFromEuler(MoreMath.toRadians(-90), 0, 0);
         // modelNode.setLocalScaleXYZ(0.1, 0.1, 0.1);
         console.log("实体:" + modelNode.getChildren().length);
         console.log("modelNode:",modelNode);
         // 使用OctCullingControl来管理静态场景
-        // octCullingControl.debug(rootNode, colorMat);
         rootNode.addChildren(modelNode);
         let octCullingControl = new OctCullingControl(modelNode, {id:'octCulling'});
+        octCullingControl.debug(rootNode, colorMat);
     });
-    // rootNode.addChildren(cubeGeometry);
 
     let dirLight = new DirectionalLight(scene, {id:'dirLight'});
     dirLight.setDirectionXYZ(-1, -1, 1);
@@ -59,16 +71,10 @@
     stats.domElement.style.top = '0px';
     document.body.appendChild(stats.domElement);
     scene.on('update', (exTime)=>{
-        // 执行旋转
-        // cubes.getChildren().forEach(node=>{
-        //     dx += Math.random() * 0.2 * exTime;
-        //     dy += Math.random() * 0.2 * exTime;
-        //     dz += Math.random() * 0.2 * exTime;
-        //     let x = MoreMath.toRadians(dx);
-        //     let y = MoreMath.toRadians(dy);
-        //     let z = MoreMath.toRadians(dz);
-        //     node.setLocalRotationFromEuler(x, y, z);
-        // });
+        // eye:[0.07953452484227447,3.4589245565459605,1.1170058588214968]
+        // at:[-0.6825071896076365,3.231178826615555,0.5108505091489007]
+        // console.log("eye:" + mainCamera.getEye().toString());
+        // console.log("at:" + mainCamera.getAt().toString());
         stats.update();
     });
 </script>

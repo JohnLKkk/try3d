@@ -88,6 +88,7 @@ export default class Camera extends Component{
         this._m_ProjectMatrix.perspectiveM(45.0, canvas.getWidth() * 1.0 / canvas.getHeight(), 0.1, 1000);
         this._m_ViewMatrixUpdate = true;
         this._m_ProjectMatrixUpdate = true;
+        this._m_UpdateCameraPosition = true;
         gl.viewport(0, 0, canvas.getWidth(), canvas.getHeight());
         this._init();
 
@@ -159,6 +160,10 @@ export default class Camera extends Component{
      */
     setIsRenderingCamera(isMainCamera){
         this._m_IsRenderingCamera = isMainCamera;
+        this._m_UpdateCameraPosition = true;
+        this._m_ViewMatrixUpdate = true;
+        this._m_ProjectMatrixUpdate = true;
+        this._m_ProjectViewMatrixUpdate = true;
     }
 
     /**
@@ -337,9 +342,9 @@ export default class Camera extends Component{
         gl.bindBuffer(gl.UNIFORM_BUFFER, this.MAT);
 
         let frameContext = this._m_Scene.getRender().getFrameContext();
-        let updateCamera = this._m_ViewMatrixUpdate;
 
         if(this._m_ViewMatrixUpdate){
+            this._m_UpdateCameraPosition = true;
             this._m_ProjectViewMatrixUpdate = true;
             if(frameContext.getContext(ShaderSource.S_VIEW_MATRIX_SRC) || frameContext.getContext(ShaderSource.S_VP_SRC) || frameContext.getContext(ShaderSource.S_MVP_SRC)){
                 if(this._m_IsRenderingCamera){
@@ -372,17 +377,18 @@ export default class Camera extends Component{
         gl.bindBuffer(gl.UNIFORM_BUFFER, null);
 
         // view
-        if(updateCamera){
+        if(this._m_UpdateCameraPosition){
             if(frameContext.getContext(ShaderSource.S_CAMERA_POSITION_SRC)){
                 if(this._m_IsRenderingCamera){
                     gl.bindBuffer(gl.UNIFORM_BUFFER, this.VIEW);
                     gl.bufferSubData(gl.UNIFORM_BUFFER, 0, this._m_Eye.getBufferData());
                     gl.bindBuffer(gl.UNIFORM_BUFFER, null);
                 }
+                this._m_UpdateCameraPosition = false;
             }
         }
 
-        if(this._m_ViewMatrixUpdate || this._m_ProjectMatrixUpdate){
+        if(this._m_ViewMatrixUpdate || this._m_ProjectMatrixUpdate || this._m_ProjectViewMatrixUpdate){
             this._doUpdate();
         }
 
