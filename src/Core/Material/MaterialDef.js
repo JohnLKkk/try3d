@@ -309,18 +309,31 @@ export default class MaterialDef{
                 }
             });
             // 检测材质参数列表
+            let p = null;
             for(let k in params){
                 param = params[k];
+                // Tools.find()匹配有bug
+                // 为了确保完全匹配最长的那个,暂时先这么处理
                 if(Tools.find(line, param.getPattern())){
-                    if(!conParams[param.getName()]){
-                        // 记录使用的材质参数
-                        useParams.push(param);
-                        conParams[param.getName()] = true;
+                    if(p){
+                        if(p.getName().length < param.getName().length){
+                            p = param;
+                        }
                     }
-                    // 设置材质参数
-                    line = Tools.repSrc(line, param.getPattern(), param.getTagPattern(), param.getName());
-                    useParam = true;
+                    else{
+                        p = param;
+                    }
                 }
+            }
+            if(p){
+                if(!conParams[p.getName()]){
+                    // 记录使用的材质参数
+                    useParams.push(p);
+                    conParams[p.getName()] = true;
+                }
+                // 设置材质参数
+                line = Tools.repSrc(line, p.getPattern(), p.getTagPattern(), p.getName());
+                useParam = true;
             }
             // 检测上下文列表
             let context = null;
@@ -579,20 +592,31 @@ export default class MaterialDef{
                 }
             });
             // 检测材质参数列表
+            let p = null;
             for(let k in params){
                 param = params[k];
                 // Tools.find()匹配有bug
-                // Params.color和Params.colorMap会被同一个匹配
+                // 为了确保完全匹配最长的那个,暂时先这么处理
                 if(Tools.find(line, param.getPattern())){
-                    if(!conParams[param.getName()]){
-                        // 记录使用的材质参数
-                        useParams.push(param);
-                        conParams[param.getName()] = true;
+                    if(p){
+                        if(p.getName().length < param.getName().length){
+                            p = param;
+                        }
                     }
-                    // 设置材质参数
-                    line = Tools.repSrc(line, param.getPattern(), param.getTagPattern(), param.getName());
-                    useParam = true;
+                    else{
+                        p = param;
+                    }
                 }
+            }
+            if(p){
+                if(!conParams[p.getName()]){
+                    // 记录使用的材质参数
+                    useParams.push(p);
+                    conParams[p.getName()] = true;
+                }
+                // 设置材质参数
+                line = Tools.repSrc(line, p.getPattern(), p.getTagPattern(), p.getName());
+                useParam = true;
             }
             // 检测上下文列表
             let context = null;

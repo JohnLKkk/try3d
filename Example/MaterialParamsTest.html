@@ -43,13 +43,25 @@
 
     let mat3 = new Material(scene, {id:"colorMapMat", materialDef});
     let colorMap = new Texture2DVars(scene);
+    // 纹理图像未加载完成前设置一个默认颜色纹理
     colorMap.setPreloadColor(scene, new Vector4(0.5, 0.3, 0.3, 1.0));
     colorMap.setImageSrc(scene, './Assets/Textures/terrain.png');
-    mat3.setParam('cMap', colorMap);
+    mat3.setParam('colorMap', colorMap);
     let box3 = new Box(scene, {id:'box3'});
     box3.setLocalTranslationXYZ(0, 5, 0);
     box3.setMaterial(mat3);
     rootNode.addChildren(box3);
+
+    let mat4 = new Material(scene, {id:"colorMapMat2", materialDef});
+    let colorMap2 = new Texture2DVars(scene);
+    // 纹理图像未加载完成前设置一个默认颜色纹理
+    colorMap2.setPreloadColor(scene, new Vector4(0.5, 0.3, 0.3, 1.0));
+    colorMap2.setImageSrc(scene, './Assets/Textures/ground 3.png');
+    mat4.setParam('colorMap', colorMap2);
+    let box4 = new Box(scene, {id:'box4'});
+    box4.setLocalTranslationXYZ(0, -5, 0);
+    box4.setMaterial(mat4);
+    rootNode.addChildren(box4);
 
     let renderEngine = new RenderEngine();
     scene.addSceneNode(rootNode);

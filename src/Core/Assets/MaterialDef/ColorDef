@@ -2,7 +2,7 @@
 Def ColorDef{
     Params{
         vec4 color;
-        sampler2D cMap;
+        sampler2D colorMap;
     }
     SubTechnology ScalePass{
         Vars{
@@ -28,8 +28,8 @@ Def ColorDef{
                     Context.OutColor = Params.color;
                 #else
                     // 使用纹理
-                    #ifdef Params.cMap
-                        Context.OutColor = texture(Params.cMap, Context.InUv0);
+                    #ifdef Params.colorMap
+                        Context.OutColor = texture(Params.colorMap, Context.InUv0);
                     #else
                         Context.OutColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);
                     #endif
@@ -58,8 +58,8 @@ Def ColorDef{
                     Context.OutColor = Params.color;
                 #else
                     // 使用纹理
-                    #ifdef Params.cMap
-                        Context.OutColor = texture(Params.cMap, uv0);
+                    #ifdef Params.colorMap
+                        Context.OutColor = texture(Params.colorMap, uv0);
                     #else
                         Context.OutColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);
                     #endif

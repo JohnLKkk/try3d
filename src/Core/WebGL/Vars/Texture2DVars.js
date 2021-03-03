@@ -1,5 +1,6 @@
 import Vars from "./Vars.js";
 import UniformBufferI from "../UniformBufferI.js";
+import Tools from "../../Util/Tools.js";
 
 /**
  * Texture2DVars。<br/>
@@ -17,6 +18,13 @@ export default class Texture2DVars extends Vars{
         // 设置默认纹理滤波
         this.setFilter(scene, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         this.setFilter(scene, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        this.genMipmap(scene);
+    }
+    genMipmap(scene){
+        const gl = scene.getCanvas().getGLContext();
+        gl.bindTexture(gl.TEXTURE_2D, this._m_Texture);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.bindTexture(gl.TEXTURE_2D, null);
     }
 
     /**
@@ -65,7 +73,7 @@ export default class Texture2DVars extends Vars{
         // 加载完毕设置纹理图素
         let image = new Image();
         image.onload = ()=>{
-            // image = ensureImageSizePowerOfTwo(image);
+            image = Tools.ensureImageSizePowerOfTwo(image, scene.getCanvas());
             //self._image = image; // For faster WebGL context restore - memory inefficient?
             this.setImage(scene, image);
         };
@@ -81,7 +89,7 @@ export default class Texture2DVars extends Vars{
     setImage(scene, image, props) {
         const gl = scene.getCanvas().getGLContext();
         gl.bindTexture(gl.TEXTURE_2D, this._m_Texture);
-        // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, props.flipY);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
         gl.bindTexture(gl.TEXTURE_2D, null);
     }

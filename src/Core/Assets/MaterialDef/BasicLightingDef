@@ -1,9 +1,9 @@
 // 基础光照材质定义
 Def BasicLightingDef{
     Params{
-        //texture2D diffuseMap;
-        //texture2D normalMap;
-        //texture2D specularMap;
+        texture2D diffuseMap;
+        texture2D normalMap;
+        texture2D specularMap;
         float Shininess;
     }
     SubTechnology BlinnPhongLighting1{
