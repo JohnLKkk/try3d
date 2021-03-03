@@ -16,22 +16,42 @@
     import Vector3 from "../src/Core/Math3d/Vector3.js";
     import MaterialDef from "../src/Core/Material/MaterialDef.js";
     import Box from "../src/Core/Node/Shape/Box.js";
+    import Vec4Vars from "../src/Core/WebGL/Vars/Vec4Vars.js";
+    import FirstPersonController from "../src/Core/InputControl/FirstPersonController.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     // 加载一个材质定义
     let materialDef = MaterialDef.load("../src/Core/Assets/MaterialDef/ColorDef");
-    let mat = new Material(scene, {id:"colorMat", materialDef});
-    // mat.setParam('color', [1.0, 1.0, 1.0, 1.0]);
-    console.log("materialDef:",mat);
+
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(10, 10, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-    let box = new Box(scene, {id:'box'});
-    box.setMaterial(mat);
+    mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     let rootNode = new Node(scene, {id:'rootNode'});
+
+    let mat = new Material(scene, {id:"colorMat", materialDef});
+    let box = new Box(scene, {id:'box'});
+    box.setLocalTranslationXYZ(-5, 0, 0);
+    box.setMaterial(mat);
     rootNode.addChildren(box);
+
+    let mat2 = new Material(scene, {id:"colorMat2", materialDef});
+    let box2 = new Box(scene, {id:'box2'});
+    box2.setLocalTranslationXYZ(5, 0, 0);
+    box2.setMaterial(mat2);
+    rootNode.addChildren(box2);
+
     let renderEngine = new RenderEngine();
     scene.addSceneNode(rootNode);
     renderEngine.addScene(scene);
     renderEngine.launch();
+
+    let i = 0;
+    scene.on('update', exTime=>{
+        if(i == 2){
+            mat.setParam('color', new Vec4Vars().valueFromXYZW(1.0, 0.0, 0.0, 1.0));
+            mat2.setParam('color', new Vec4Vars().valueFromXYZW(0.0, 1.0, 0.0, 1.0));
+        }
+        i++;
+    });
 </script>
 </body>
 </html>

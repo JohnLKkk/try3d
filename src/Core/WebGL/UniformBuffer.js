@@ -1,5 +1,5 @@
 /**
- * 对Uniform数据的封制。<br/>
+ * 对Uniform数据的封装。<br/>
  * @author Kkk
  * @date 2021年2月18日15点49分
  */

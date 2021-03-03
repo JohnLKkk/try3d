@@ -6,23 +6,12 @@
 </head>
 <body>
     <script>
-        let a = [2, 3, 4];
-        console.log("---------------");
-        for(let i = 0;i < a.length;i++){
-            console.log(a[i]);
-        }
-        a.length = 0;
-        console.log("---------------");
-        for(let i = 0;i < a.length;i++){
-            console.log(a[i]);
-        }
-        console.log("---------------");
-        a.push(55);
-        a.push(566);
-        for(let i = 0;i < a.length;i++){
-            console.log(a[i]);
-        }
-        console.log(a);
+        let arr = ['color','get','test'];
+        var newArr = arr.sort(function(a,b){return a.localeCompare(b)});
+        console.log("newArr:" + newArr);
+        arr = ['test','color','get'];
+        var newArr = arr.sort(function(a,b){return a.localeCompare(b)});
+        console.log("newArr:" + newArr);
     </script>
     <!--<script>-->
         <!--function findSrc(str, reg){-->

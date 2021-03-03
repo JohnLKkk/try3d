@@ -7,25 +7,85 @@ import Tools from "../Util/Tools.js";
  * @author Kkk
  */
 export default class ShaderProgram {
-    constructor(gl, name, shaderSource, defines) {
-        let source = null;
-        if(shaderSource.get(ShaderSource.VERTEX_SHADER)){
-            source = shaderSource.get(ShaderSource.VERTEX_SHADER);
-            let vsDefines = defines ? defines[ShaderSource.VERTEX_SHADER] : null;
-            if(vsDefines){
-                // 追加宏定义
-                source = Tools.insertLine(source, vsDefines, 1);
-            }
-            this._m_vs = new Shader(gl, gl.VERTEX_SHADER, source);
+    constructor(gl, defId, shaderSource, defines, delayCompile) {
+        this._m_DefId = defId;
+        this._m_vs_s = shaderSource.get(ShaderSource.VERTEX_SHADER);
+        this._m_fs_s = shaderSource.get(ShaderSource.FRAGMENT_SHADER);
+        this._m_vsDefines = defines ? defines[ShaderSource.VERTEX_SHADER] : null;
+        this._m_fsDefines = defines ? defines[ShaderSource.FRAGMENT_SHADER] : null;
+        this._m_Hold = 0;
+        if(delayCompile){
+            // this._compile();
+            this._m_needCompile = true;
         }
-        if(shaderSource.get(ShaderSource.FRAGMENT_SHADER)){
-            source = shaderSource.get(ShaderSource.FRAGMENT_SHADER);
-            let fsDefines = defines ? defines[ShaderSource.FRAGMENT_SHADER] : null;
-            if(fsDefines){
+        else{
+            this._compile(gl);
+        }
+    }
+
+    /**
+     * 是否应该销毁。<br/>
+     * @return {Boolean}
+     */
+    canDestroy(){
+        return this._m_Hold <= 0;
+    }
+
+    /**
+     * 销毁。<br/>
+     * @param {WebGL}[gl]
+     * @param {FrameContext}[frameContext]
+     */
+    destroy(gl, frameContext){
+        if(this._m_Program){
+            // 删除
+            gl.deleteProgram(this._m_Program);
+            frameContext.m_Shaders[this._m_DefId] = null;
+            this._m_Program = null;
+        }
+    }
+
+    /**
+     * 增加一个句柄。<br/>
+     */
+    addHold(){
+        this._m_Hold++;
+    }
+
+    /**
+     * 删除一个句柄。<br/>
+     */
+    deleteHold(){
+        this._m_Hold--;
+    }
+
+    /**
+     * 是否需要编译。<br/>
+     * @return {Boolean}
+     */
+    needCompile(){
+        return this._m_needCompile;
+    }
+
+    /**
+     * 编译源码。<br/>
+     * @private
+     */
+    _compile(gl){
+        this._m_needCompile = false;
+        if(this._m_vs_s){
+            if(this._m_vsDefines){
                 // 追加宏定义
-                source = Tools.insertLine(source, fsDefines, 1);
+                this._m_vs_s = Tools.insertLine(this._m_vs_s, this._m_vsDefines, 1);
             }
-            this._m_fs = new Shader(gl, gl.FRAGMENT_SHADER, source);
+            this._m_vs = new Shader(gl, gl.VERTEX_SHADER, this._m_vs_s);
+        }
+        if(this._m_fs_s){
+            if(this._m_fsDefines){
+                // 追加宏定义
+                this._m_fs_s = Tools.insertLine(this._m_fs_s, this._m_fsDefines, 1);
+            }
+            this._m_fs = new Shader(gl, gl.FRAGMENT_SHADER, this._m_fs_s);
         }
         this._m_Program = null;
         if(this._m_vs && this._m_fs){
@@ -38,16 +98,16 @@ export default class ShaderProgram {
                 if(!linkStatus){
                     let pil = gl.getProgramInfoLog(this._m_Program);
                     console.error("[[" + name + "]]链接ShaderProgram异常:" + pil);
-                    console.log("vs:\n" + shaderSource.get(ShaderSource.VERTEX_SHADER));
-                    console.log("fs:\n" + shaderSource.get(ShaderSource.FRAGMENT_SHADER));
+                    console.log("vs:\n" + this._m_vs_s);
+                    console.log("fs:\n" + this._m_fs_s);
                 }
                 this._m_vs.deleteShader();
                 this._m_fs.deleteShader();
             }
             else{
                 console.error("[[" + name + "]]无法创建着色器程序,vs或fs编译失败!!");
-                console.log("vs:\n" + shaderSource.get(ShaderSource.VERTEX_SHADER));
-                console.log("fs:\n" + shaderSource.get(ShaderSource.FRAGMENT_SHADER));
+                console.log("vs:\n" + this._m_vs_s);
+                console.log("fs:\n" + this._m_fs_s);
             }
         }
     }

@@ -27,6 +27,7 @@
     import Stats from "./stats.min.js";
     import Camera from "../src/Core/Scene/Camera.js";
     import OctCullingControl from "../src/Core/Optimization/OctCullingControl.js";
+    import Vec4Vars from "../src/Core/WebGL/Vars/Vec4Vars.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let testCamera = new Camera(scene, {id:'testCamera'});
     testCamera.lookAt(new Vector3(25, 0, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -39,11 +40,12 @@
     basicLightingMat.selectTechnology('BlinnPhongLight2');
 
     let colorDef = MaterialDef.load("../src/Core/Assets/MaterialDef/ColorDef");
-    let colorMat = new Material(scene, {id:'colorWireFrustum', materialDef:colorDef});
+    let wireColorMat = new Material(scene, {id:'colorWireFrustum', materialDef:colorDef});
+    wireColorMat.setParam('color', new Vec4Vars().valueFromXYZW(1.0, 0, 0, 1.0));
     let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
     // 根据当前相机创建测试用的视锥体
     wireFrustum.setMesh(MeshFactor.createViewFrustumMeshFromCamera(testCamera));
-    wireFrustum.setMaterial(colorMat);
+    wireFrustum.setMaterial(wireColorMat);
     wireFrustum.updateBound();
 
     let rootNode = new Node(scene, {id:'rootNode'});
@@ -53,8 +55,9 @@
     rootNode.addChildren(cubes);
 
     // 创建一堆离散空间数据,分布在[-500,500]之间
-    let min = -200, max = 200;
+    let min = -500, max = 500;
     let minSize = 2, maxSize = 2;
+    let colorMat = new Material(scene, {id:'colorMat', materialDef:colorDef});
     for(let i = 0;i < 20000;i++){
         let box = new Box(scene, {id:'box' + i, xHalf:Math.random() * (maxSize - minSize + 1) + minSize, yHalf:Math.random() * (maxSize - minSize + 1) + minSize, zHalf:Math.random() * (maxSize - minSize + 1) + minSize});
         // let box = new Box(scene, {id:'box' + i, xHalf:maxSize, yHalf:maxSize, zHalf:maxSize});
@@ -67,7 +70,7 @@
     // 使用OctCullingControl来管理静态场景
     let octCullingControl = new OctCullingControl(cubes, {id:'octCulling'});
     // 将octree绘制出来
-    // octCullingControl.debug(rootNode, colorMat);
+    octCullingControl.debug(rootNode, colorMat);
 
     // 再次将相机设置为一个最佳观测点(以便观察上面的视锥体)
     let mainCamera = scene.getComponent('mainCamera');
@@ -92,7 +95,7 @@
     document.body.appendChild(stats.domElement);
     let dx = 0, dy = 0, dz = 0;
     // 设置testCamera为剔除相机
-    // scene.setFrustumCullingCamera(testCamera);
+    scene.setFrustumCullingCamera(testCamera);
     scene.on('update', (exTime)=>{
         // 执行旋转
         // cubes.getChildren().forEach(node=>{

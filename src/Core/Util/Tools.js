@@ -52,11 +52,11 @@ export default class Tools {
         source = Tools.trim(source);
         let sourceArr = source.split("\n");
         let result = '';
-        for(let i = 0;i < source.length;i++){
+        for(let i = 0;i < sourceArr.length;i++){
             if(i == index){
                 result += line + '\n';
             }
-            result += source[i];
+            result += sourceArr[i] + '\n';
         }
         return result;
     }

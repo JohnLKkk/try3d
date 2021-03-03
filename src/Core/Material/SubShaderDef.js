@@ -76,6 +76,15 @@ export default class SubShaderDef {
      */
     computeSignatureDefId(key){
         if(key){
+            // 排序key
+            let arr = key.split(',');
+            let newArr = arr.sort(function(a,b){return a.localeCompare(b)});
+            key = '';
+            newArr.forEach(k=>{
+                key += k + ',';
+            });
+            key = key.substr(0, key.length - 1);
+            console.log("key:" + key);
             this._m_DefId = Tools.uniqueId(this._m_Signature + key);
         }
         else{

@@ -26,7 +26,11 @@ export default class SubShader {
         // 参数值列表
         this._m_ParamValues = {};
         // 宏定义列表
-        this._m_Defines = {};
+        this._m_Defines = null;
+        // 密钥定义
+        this._m_KeyDefs = null;
+        // 需要重新加载Shader缓存
+        this._m_NeedLoadShaderCaches = false;
         // 上下文变量
         // name:varName,loc:glLoc,fun:glFunc
         // 这里有一个优化是根据不同类型上下文变量提前分为不同的列表保存
@@ -43,18 +47,82 @@ export default class SubShader {
         // 渲染程序类型
         this._m_RenderProgramType = subShaderDef.getRenderProgramType();
 
-        // 创建shader
-        if(!frameContext.m_Shaders[this._m_DefId]){
-            this._m_ShaderProgram = new ShaderProgram(gl, subShaderDef.getName(), subShaderDef.getShaderSource());
-            frameContext.m_Shaders[this._m_DefId] = this._m_ShaderProgram;
+        // 解析参数定义
+        this._loadParams();
+        // 创建默认着色程序
+        this._newShaderProgram(gl, frameContext);
+    }
+
+    /**
+     * 加载所有可用参数定义。<br/>
+     */
+    _loadParams(){
+        let useParams = this._m_Def.getUseParams();
+        if(useParams && useParams.length > 0){
+            useParams.forEach(param=>{
+                this._m_CanDefineParams[param.getName()] = "#define " + param.getDefType() + " " + param.getDefType();
+                this._m_Params[param.getName()] = true;
+            });
         }
-        else{
-            this._m_ShaderProgram = frameContext.m_Shaders[this._m_DefId];
+    }
+
+    /**
+     * 上载参数。<br/>
+     * @param {WebGL}[gl]
+     * @param {String}[paramName]
+     * @param {Vars}[value]
+     */
+    uploadParam(gl, paramName, value){
+        if(this._m_MatParams[paramName]){
+            if(this._m_ParamValues[paramName]){
+                // 检查是否需要上载
+                if(this._m_ParamValues[paramName].compare(value)){
+                    return;
+                }
+            }
+            value._upload(gl, this._m_MatParams[paramName].loc, null);
+            this._m_ParamValues[paramName] = value;
         }
+    }
+
+    /**
+     * 判断是否需要编译。<br/>
+     * @return {*}
+     */
+    needCompile(){
+        return this._m_NeedLoadShaderCaches || this._m_Defines != null || this._m_ShaderProgram.needCompile();
+    }
+
+    /**
+     * 编译SubShader。<br/>
+     * @param {WebGL}[g]
+     * @param {FrameContext}[frameContext]
+     * @private
+     */
+    _compile(gl, frameContext){
+        if(this._m_Defines){
+            this._newShaderProgram(gl, frameContext);
+        }
+        // 并非一定需要编译,因为可能该ShaderProgram来自引擎其他地方
+        if(this._m_ShaderProgram.needCompile()){
+            this._m_ShaderProgram._compile(gl);
+        }
+        this._loadShaderCaches(gl, frameContext);
+    }
+
+    /**
+     * 加载Shader缓存数据块。<br/>
+     * @param {WebGL}[gl]
+     * @param {FrameContext}[frameContext]
+     * @private
+     */
+    _loadShaderCaches(gl, frameContext){
+        this._m_NeedLoadShaderCaches = false;
+        // 计算缓存变量
         this.use(gl);
         // 获取program变量信息
-        let useParams = subShaderDef.getUseParams();
-        let useContexts = subShaderDef.getUseContexts();
+        let useParams = this._m_Def.getUseParams();
+        let useContexts = this._m_Def.getUseContexts();
         if(useParams && useParams.length > 0){
             // 解析材质参数
             useParams.forEach(param=>{
@@ -66,8 +134,6 @@ export default class SubShader {
                             fun = 'uniform4f';
                             break;
                     }
-                    this._m_CanDefineParams[param.getName()] = "#defined " + param.getDefType();
-                    this._m_Params[param.getName()] = true;
                     this._m_MatParams[param.getName()] = {type:param.getType(), loc, fun};
                 }
             });
@@ -111,7 +177,7 @@ export default class SubShader {
             });
         }
         // BLOCKS
-        let useBlocks = subShaderDef.getUseBlocks();
+        let useBlocks = this._m_Def.getUseBlocks();
         if(useBlocks && useBlocks.length > 0){
             useBlocks.forEach(block=>{
                 gl.uniformBlockBinding(this._m_ShaderProgram.getProgram(), gl.getUniformBlockIndex(this._m_ShaderProgram.getProgram(), block), ShaderSource.BLOCKS[block].blockIndex);
@@ -198,45 +264,75 @@ export default class SubShader {
                 }
                 // 定义参数
                 let shaderParams = this._m_Def.getShaderParams();
-                if(shaderParams[ShaderSource.VERTEX_SHADER][param]){
+                if(shaderParams[ShaderSource.VERTEX_SHADER] && shaderParams[ShaderSource.VERTEX_SHADER][param]){
                     // 加入顶点着色器
                     if(!this._m_Defines[ShaderSource.VERTEX_SHADER]){
                         this._m_Defines[ShaderSource.VERTEX_SHADER] = "";
                     }
                     this._m_Defines[ShaderSource.VERTEX_SHADER] += this._m_CanDefineParams[param] + "\n";
+
+                    if(!this._m_KeyDefs){
+                        this._m_KeyDefs = "";
+                    }
+                    this._m_KeyDefs += param + ",";
                 }
-                else if(shaderParams[ShaderSource.FRAGMENT_SHADER][param]){
+                else if(shaderParams[ShaderSource.FRAGMENT_SHADER] && shaderParams[ShaderSource.FRAGMENT_SHADER][param]){
                     // 加入片段着色器
                     if(!this._m_Defines[ShaderSource.FRAGMENT_SHADER]){
                         this._m_Defines[ShaderSource.FRAGMENT_SHADER] = "";
                     }
                     this._m_Defines[ShaderSource.FRAGMENT_SHADER] += this._m_CanDefineParams[param] + "\n";
+
+                    if(!this._m_KeyDefs){
+                        this._m_KeyDefs = "";
+                    }
+                    this._m_KeyDefs += param + ",";
                 }
             }
         }
     }
 
     /**
-     * 重新构建SubShader。<br/>
+     * 重建shaderProgram。<br/>
      * @param {FrameContext}[frameContext]
      */
-    rebuild(frameContext){
+    _newShaderProgram(gl, frameContext){
         if(this._m_Defines){
-            let key = '';
-            if(this._m_Defines[ShaderSource.VERTEX_SHADER]){
-                key += this._m_Defines[ShaderSource.VERTEX_SHADER];
+            let key = this._m_KeyDefs;
+            if(key && key.length > 0){
+                key = key.substr(0, key.length - 1);
+                // 重新计算DefId
+                this._m_DefId = this._m_Def.computeSignatureDefId(key);
             }
-            if(this._m_Defines[ShaderSource.FRAGMENT_SHADER]){
-                key += this._m_Defines[ShaderSource.FRAGMENT_SHADER];
+        }
+        if(!frameContext.m_Shaders[this._m_DefId]){
+            if(this._m_ShaderProgram){
+                this._m_ShaderProgram.deleteHold();
+                if(this._m_ShaderProgram.canDestroy()){
+                    // 删除
+                    this._m_ShaderProgram.destroy(gl, frameContext);
+                }
             }
-            // 重新计算DefId
-            this._m_DefId = this._m_Def.computeSignatureDefId(key);
-            // 重新编译shader
-            this._m_ShaderProgram = new ShaderProgram(gl, this._m_Def.getName(), this._m_Def.getShaderSource(), this._m_Defines);
+            this._m_ShaderProgram = new ShaderProgram(gl, this._m_DefId, this._m_Def.getShaderSource(), this._m_Defines, true);
             frameContext.m_Shaders[this._m_DefId] = this._m_ShaderProgram;
+            this._m_ShaderProgram.addHold();
             // 清空
             this._m_Defines = null;
         }
+        else{
+            if(this._m_ShaderProgram){
+                this._m_ShaderProgram.deleteHold();
+                if(this._m_ShaderProgram.canDestroy()){
+                    // 删除
+                    this._m_ShaderProgram.destroy(gl, frameContext);
+                }
+            }
+            this._m_ShaderProgram = frameContext.m_Shaders[this._m_DefId];
+            this._m_ShaderProgram.addHold();
+            // 清空
+            this._m_Defines = null;
+        }
+        this._m_NeedLoadShaderCaches = true;
     }
 
 }
