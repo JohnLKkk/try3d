@@ -18,6 +18,8 @@
     import Box from "../src/Core/Node/Shape/Box.js";
     import Vec4Vars from "../src/Core/WebGL/Vars/Vec4Vars.js";
     import FirstPersonController from "../src/Core/InputControl/FirstPersonController.js";
+    import Texture2DVars from "../src/Core/WebGL/Vars/Texture2DVars.js";
+    import Vector4 from "../src/Core/Math3d/Vector4.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     // 加载一个材质定义
     let materialDef = MaterialDef.load("../src/Core/Assets/MaterialDef/ColorDef");
@@ -39,6 +41,16 @@
     box2.setMaterial(mat2);
     rootNode.addChildren(box2);
 
+    let mat3 = new Material(scene, {id:"colorMapMat", materialDef});
+    let colorMap = new Texture2DVars(scene);
+    colorMap.setPreloadColor(scene, new Vector4(0.5, 0.3, 0.3, 1.0));
+    colorMap.setImageSrc(scene, './Assets/Textures/terrain.png');
+    mat3.setParam('cMap', colorMap);
+    let box3 = new Box(scene, {id:'box3'});
+    box3.setLocalTranslationXYZ(0, 5, 0);
+    box3.setMaterial(mat3);
+    rootNode.addChildren(box3);
+
     let renderEngine = new RenderEngine();
     scene.addSceneNode(rootNode);
     renderEngine.addScene(scene);
@@ -49,6 +61,7 @@
         if(i == 2){
             mat.setParam('color', new Vec4Vars().valueFromXYZW(1.0, 0.0, 0.0, 1.0));
             mat2.setParam('color', new Vec4Vars().valueFromXYZW(0.0, 1.0, 0.0, 1.0));
+            // console.log("mat3:",mat3);
         }
         i++;
     });

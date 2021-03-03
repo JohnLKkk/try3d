@@ -106,6 +106,7 @@ export default class SubShader {
         // 并非一定需要编译,因为可能该ShaderProgram来自引擎其他地方
         if(this._m_ShaderProgram.needCompile()){
             this._m_ShaderProgram._compile(gl);
+            // console.log("编译!");
         }
         this._loadShaderCaches(gl, frameContext);
     }
@@ -125,6 +126,7 @@ export default class SubShader {
         let useContexts = this._m_Def.getUseContexts();
         if(useParams && useParams.length > 0){
             // 解析材质参数
+            let texId = 0;
             useParams.forEach(param=>{
                 let loc = gl.getUniformLocation(this._m_ShaderProgram.getProgram(), param.getName());
                 if(loc){
@@ -132,6 +134,12 @@ export default class SubShader {
                     switch (param.getType()) {
                         case "vec4":
                             fun = 'uniform4f';
+                            break;
+                        case "sampler2D":
+                            gl.uniform1i(loc, texId);
+                            // 使用texId作为loc
+                            fun = null;
+                            loc = texId++;
                             break;
                     }
                     this._m_MatParams[param.getName()] = {type:param.getType(), loc, fun};

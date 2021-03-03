@@ -84,12 +84,13 @@ export default class SubShaderDef {
                 key += k + ',';
             });
             key = key.substr(0, key.length - 1);
-            console.log("key:" + key);
             this._m_DefId = Tools.uniqueId(this._m_Signature + key);
+            // console.log("key:" + key + ";defId:" + this._m_DefId);
         }
         else{
             this._m_DefId = Tools.uniqueId(this._m_Signature);
         }
+        return this._m_DefId;
     }
 
     /**

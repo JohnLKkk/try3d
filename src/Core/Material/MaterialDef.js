@@ -581,6 +581,8 @@ export default class MaterialDef{
             // 检测材质参数列表
             for(let k in params){
                 param = params[k];
+                // Tools.find()匹配有bug
+                // Params.color和Params.colorMap会被同一个匹配
                 if(Tools.find(line, param.getPattern())){
                     if(!conParams[param.getName()]){
                         // 记录使用的材质参数

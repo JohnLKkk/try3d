@@ -41,6 +41,35 @@ o.uniqueId = function( s, bres )
  * @date 2021年2月5日16点48分
  */
 export default class Tools {
+    static isPowerOfTwo(x) {
+        return (x & (x - 1)) === 0;
+    }
+
+    static nextHighestPowerOfTwo(x) {
+        --x;
+        for (let i = 1; i < 32; i <<= 1) {
+            x = x | x >> i;
+        }
+        return x + 1;
+    }
+    /**
+     * 确保图像为2的幂次方。<br/>
+     * 在旧的gles规范中，仅支持2的幂次方纹理图像。<br/>
+     * @param {ImageData}[image]
+     * @return {ImageData}
+     */
+    static ensureImageSizePowerOfTwo(image, canvas) {
+        if (!Tools.isPowerOfTwo(image.width) || !Tools.isPowerOfTwo(image.height)) {
+            canvas.width = Tools.nextHighestPowerOfTwo(image.width);
+            canvas.height = Tools.nextHighestPowerOfTwo(image.height);
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(image,
+                0, 0, image.width, image.height,
+                0, 0, canvas.width, canvas.height);
+            image = canvas;
+        }
+        return image;
+    }
     /**
      * 插入一行到指定源中的指定位置。<br/>
      * @param {String}[source 源]
