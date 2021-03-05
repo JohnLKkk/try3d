@@ -73,6 +73,15 @@ export default class Tools {
     }
 
     /**
+     * 检查o是否为有效对象。<br/>
+     * @param {Object}[o]
+     * @return {Boolean}
+     */
+    static checkIsNull(o){
+        return o != null && o != undefined;
+    }
+
+    /**
      * 返回系统默认分配的唯一ID。<br/>
      * 以负数+'R3D'编码一个ID返回。<br/>
      * @return {Number}

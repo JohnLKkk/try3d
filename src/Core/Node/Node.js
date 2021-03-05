@@ -181,6 +181,18 @@ export default class Node extends Component{
     }
 
     /**
+     * 使用四元数值设置旋转部分。<br/>
+     * @param {Number}[x]
+     * @param {Number}[y]
+     * @param {Number}[z]
+     * @param {Number}[w]
+     */
+    setLocalRotationFromXYZW(x, y, z, w){
+        this._m_LocalRotation.setToInXYZW(x, y, z, w);
+        this._updateLocalMatrix();
+    }
+
+    /**
      * 返回旋转。<br/>
      * @returns {Quaternion}
      */

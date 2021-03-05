@@ -16,6 +16,7 @@ export default class OBJLoader {
     /**
      * 加载一个OBJ模型。<br/>
      * @param {Scene}[scene]
+     * @param {String}[modelId 可选的ID,表示加载OBJ模型后返回的根节点的ID,如果为null则系统自动分配]
      * @param {String}[src]
      * @param {Function}[callback]
      */

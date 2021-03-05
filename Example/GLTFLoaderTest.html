@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GLTFLoaderTest</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
+    <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script type="module">
+    import Scene from "../src/Core/Scene/Scene.js";
+    import RenderEngine from "../src/Core/RenderEngine.js";
+    import Node from "../src/Core/Node/Node.js";
+    import Vector3 from "../src/Core/Math3d/Vector3.js";
+    import FirstPersonController from "../src/Core/InputControl/FirstPersonController.js";
+    import DirectionalLight from "../src/Core/Light/DirectionalLight.js";
+    import Stats from "./stats.min.js";
+    import OctCullingControl from "../src/Core/Optimization/OctCullingControl.js";
+    import MaterialDef from "../src/Core/Material/MaterialDef.js";
+    import Material from "../src/Core/Material/Material.js";
+    import Camera from "../src/Core/Scene/Camera.js";
+    import MeshFactor from "../src/Core/Util/MeshFactor.js";
+    import Geometry from "../src/Core/Node/Geometry.js";
+    import GLTFLoader from "../src/Supp/GLTFLoader.js";
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+
+    let testCamera = new Camera(scene, {id:'testCamera'});
+    testCamera.lookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let colorDef = MaterialDef.load("../src/Core/Assets/MaterialDef/ColorDef");
+    let colorMat = new Material(scene, {id:'colorWireFrustum', materialDef:colorDef});
+    let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
+    // 根据当前相机创建测试用的视锥体
+    wireFrustum.setMesh(MeshFactor.createViewFrustumMeshFromCamera(testCamera));
+    wireFrustum.setMaterial(colorMat);
+    wireFrustum.updateBound();
+
+    let rootNode = new Node(scene, {id:'rootNode'});
+    rootNode.addChildren(wireFrustum);
+    let gltfLoader = new GLTFLoader();
+    // scene.setFrustumCullingCamera(testCamera);
+    gltfLoader.load(scene, './Assets/Models/GLTF/Cube/Cube.gltf', modelNode=>{
+        // // 使用OctCullingControl来管理静态场景
+        rootNode.addChildren(modelNode);
+        // let octCullingControl = new OctCullingControl(modelNode, {id:'octCulling'});
+        // octCullingControl.debug(rootNode, colorMat);
+        // console.log("modelNode:",modelNode);
+    });
+
+    let dirLight = new DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(-1, -1, 1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dirLight);
+
+    let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+    });
+</script>
+</body>
+</html>
