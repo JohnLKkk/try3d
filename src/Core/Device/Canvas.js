@@ -3,6 +3,7 @@
  * @author Kkk
  */
 import Component from "../Component.js";
+import Log from "../Util/Log.js";
 
 export default class Canvas extends Component{
     constructor(owner, cfg) {
@@ -12,7 +13,7 @@ export default class Canvas extends Component{
         if(this._m_Canvas){
             this._m_GL = this._m_Canvas.getContext(cfg.version, {antialias: true, depth:true});
             if(!this._m_GL){
-                console.error("浏览器不支持webgl2.0标准!");
+                Log.error("浏览器不支持webgl2.0标准!");
             }
             else{
                 this._init();
@@ -39,7 +40,7 @@ export default class Canvas extends Component{
                 canvas.width = document.documentElement.clientWidth;
                 canvas.height = document.documentElement.clientHeight;
             }
-            console.log("改变大小:" + canvas.width + "," + canvas.height);
+            Log.debug("改变大小:" + canvas.width + "," + canvas.height);
             self.fire('resize');
         };
         // WindowManager.getInstance().addListener(WindowManager.S_ON_WINDOW_SIZE_CHANGE, );

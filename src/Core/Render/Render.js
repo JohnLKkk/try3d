@@ -11,6 +11,7 @@ import Material from "../Material/Material.js";
 import MaterialDef from "../Material/MaterialDef.js";
 import DefaultRenderProgram from "./DefaultRenderProgram.js";
 import SinglePassLightingRenderProgram from "./SinglePassLightingRenderProgram.js";
+import Log from "../Util/Log.js";
 
 export default class Render extends Component{
     // 渲染路径
@@ -73,9 +74,9 @@ export default class Render extends Component{
     startUp(){
         // 创建默认DeferredShadingFrameBuffer
         let gl = this._m_Scene.getCanvas().getGLContext();
-        var DepthEXT = gl.getExtension( "WEBKIT_WEBGL_depth_texture" ) ||
+        let depthEXT = gl.getExtension( "WEBKIT_WEBGL_depth_texture" ) ||
             gl.getExtension( "MOZ_WEBGL_depth_texture" );
-        console.log("depthEXT:",DepthEXT);
+        Log.debug("depthEXT:",depthEXT);
         // console.log("支持的拓展:" , gl.getSupportedExtensions());
         let w = this._m_Scene.getCanvas().getWidth();
         let h = this._m_Scene.getCanvas().getHeight();

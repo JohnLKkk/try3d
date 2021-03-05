@@ -61,7 +61,7 @@ Def ColorDef{
                     #ifdef Params.colorMap
                         Context.OutColor = texture(Params.colorMap, uv0);
                     #else
-                        Context.OutColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);
+                        Context.OutColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
                     #endif
                 #endif
             }

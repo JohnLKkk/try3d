@@ -94,7 +94,6 @@ export default class MeshFactor {
         MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(0, h), 1, viewSpace || true));
         MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(w, h), 1, viewSpace || true));
         MeshFactor.pushVec3ToArray(positions, camera.getWorldCoordinates(new Vector2(w, 0), 1, viewSpace || true));
-        console.log(positions);
 
         // indices
         let indices = [

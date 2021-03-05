@@ -3,12 +3,27 @@ import MaterialDef from "../Core/Material/MaterialDef.js";
 import Material from "../Core/Material/Material.js";
 import Mesh from "../Core/WebGL/Mesh.js";
 import Geometry from "../Core/Node/Geometry.js";
+import Tools from "../Core/Util/Tools.js";
+import Log from "../Core/Util/Log.js";
+
+/**
+ * OBJLoader。<br/>
+ * 提供OBJ模型加载支持,未来将提供将OBJ模型材质强制转为PBR材质的选项。<br/>
+ * @author Kkk
+ * @date 2021年2月28日13点34分
+ */
 export default class OBJLoader {
-    load(scene, src, callback){
+    /**
+     * 加载一个OBJ模型。<br/>
+     * @param {Scene}[scene]
+     * @param {String}[src]
+     * @param {Function}[callback]
+     */
+    load(scene, modelId, src, callback){
         this._m_Scene = scene;
         this._m_DefaultMatDef = null;
         this._m_Mats = {};
-        let modelNode = new Node(scene, {id:'testObj'});
+        let modelNode = new Node(scene, {id:modelId || Tools.nextId()});
         // 加载obj模型
         this._load(modelNode, src, callback);
     }
@@ -37,7 +52,7 @@ export default class OBJLoader {
             ok(state);
         },
         (error)=>{
-            console.error(error);
+            Log.error(error);
         });
     };
     parseOBJ(modelNode, text, url){
@@ -152,7 +167,7 @@ export default class OBJLoader {
 
                 } else {
 
-                    console.error('Unexpected vertex/normal/uv line: \'' + line + '\'');
+                    Log.error('Unexpected vertex/normal/uv line: \'' + line + '\'');
                     return;
                 }
 
@@ -201,7 +216,7 @@ export default class OBJLoader {
 
                     this.addFace(state, result[1], result[2], result[3], result[4]);
                 } else {
-                    console.error('Unexpected face line: \'' + line + '\'');
+                    Log.error('Unexpected face line: \'' + line + '\'');
                     return;
                 }
 
@@ -263,7 +278,7 @@ export default class OBJLoader {
                     continue;
                 }
 
-                console.error('Unexpected line: \'' + line + '\'');
+                Log.error('Unexpected line: \'' + line + '\'');
                 return;
             }
         }
@@ -326,6 +341,11 @@ export default class OBJLoader {
         dst.push(src[c + 2]);
     }
 
+    /**
+     * 添加一个VertexLine数据。<br/>
+     * @param {Object}[state]
+     * @param a
+     */
     addVertexLine(state, a) {
         let src = state.positions;
         let dst = state.object.geometry.positions;
@@ -334,6 +354,13 @@ export default class OBJLoader {
         dst.push(src[a + 2]);
     }
 
+    /**
+     * 添加Normal。<br/>
+     * @param {Object}[state]
+     * @param a
+     * @param b
+     * @param c
+     */
     addNormal(state, a, b, c) {
         let src = state.normals;
         let dst = state.object.geometry.normals;
@@ -348,6 +375,13 @@ export default class OBJLoader {
         dst.push(src[c + 2]);
     }
 
+    /**
+     * 添加一个UV。<br/>
+     * @param {Object}[state]
+     * @param a
+     * @param b
+     * @param c
+     */
     addUV(state, a, b, c) {
         let src = state.uv;
         let dst = state.object.geometry.uv;
@@ -359,6 +393,11 @@ export default class OBJLoader {
         dst.push(src[c + 1]);
     }
 
+    /**
+     * 添加一个UVLine。<br/>
+     * @param {Object}[state]
+     * @param a
+     */
     addUVLine(state, a) {
         let src = state.uv;
         let dst = state.object.geometry.uv;
@@ -366,6 +405,22 @@ export default class OBJLoader {
         dst.push(src[a + 1]);
     }
 
+    /**
+     * 添加一个Face。<br/>
+     * @param {Object}[state]
+     * @param a
+     * @param b
+     * @param c
+     * @param d
+     * @param ua
+     * @param ub
+     * @param uc
+     * @param ud
+     * @param na
+     * @param nb
+     * @param nc
+     * @param nd
+     */
     addFace(state, a, b, c, d, ua, ub, uc, ud, na, nb, nc, nd) {
         let vLen = state.positions.length;
         let ia = this.parseVertexIndex(a, vLen);
@@ -421,6 +476,12 @@ export default class OBJLoader {
         }
     }
 
+    /**
+     * 添加一个Line几何数据。<br/>
+     * @param {Object}[state]
+     * @param {Number[]}[positions]
+     * @param {Number[]}[uv]
+     */
     addLineGeometry(state, positions, uv) {
 
         state.object.geometry.type = 'Line';
@@ -436,10 +497,13 @@ export default class OBJLoader {
             this.addUVLine(state, this.parseUVIndex(uv[uvi], uvLen));
         }
     }
-    //--------------------------------------------------------------------------------------------
-    // 加载以解析状态列出的MTL文件
-    //--------------------------------------------------------------------------------------------
 
+    /**
+     * 加载以解析状态列出的MTL文件。<br/>
+     * @param {Node}[modelNode]
+     * @param {Object}[state]
+     * @param {Function}[ok]
+     */
     loadMTLs(modelNode, state, ok) {
         let basePath = state.basePath;
         let srcList = Object.keys(state.materialLibraries);
@@ -453,17 +517,20 @@ export default class OBJLoader {
         }
     }
 
-    //--------------------------------------------------------------------------------------------
-    // 加载一个MTL文件
-    //--------------------------------------------------------------------------------------------
-
+    /**
+     * 加载一个MTL文件。<br/>
+     * @param {Node}[modelNode]
+     * @param {String}[basePath 表示obj模型的路径,用于加载mtl文件]
+     * @param {String}[src obj模型路径]
+     * @param {Function}[ok 回调]
+     */
     loadMTL(modelNode, basePath, src, ok) {
         this.loadFile(src, (text)=>{
                 this.parseMTL(modelNode, text, basePath);
                 ok();
             },
             (error)=>{
-                console.error(error);
+                Log.error(error);
                 ok();
             });
     };
@@ -613,7 +680,7 @@ export default class OBJLoader {
     }
     createMeshes(modelNode, state){
 
-        console.log("state.objects.length:" + state.objects.length);
+        Log.debug("state.objects.length:" + state.objects.length);
         // merge mtl
         let mtlobjs = {};
         let mo = 0;
@@ -654,7 +721,7 @@ export default class OBJLoader {
                 if (materialId && materialId !== "") {
                     material = this._m_Mats[materialId];
                     if (!material) {
-                        console.error("Material not found: " + materialId);
+                        Log.error("Material not found: " + materialId);
                     }
                 } else {
                     // 提供一个默认材质
@@ -714,7 +781,7 @@ export default class OBJLoader {
 
         }
         if(mo){
-            console.log("实体数量:" + mo);
+            Log.debug("实体数量:" + mo);
             for(let mt in mtlobjs){
                 let material = mtlobjs[mt].material;
                 let mesh = mtlobjs[mt].mesh;
@@ -740,9 +807,9 @@ export default class OBJLoader {
                     ok(response);
                 }
             } else if (request.status === 0) {
-                // Some browsers return HTTP Status 0 when using non-http protocol
-                // e.g. 'file://' or 'data://'. Handle as success.
-                console.warn('loadFile: HTTP Status 0 received.');
+                // 某些浏览器在使用非HTTP协议时会返回HTTP状态0
+                // 例如 “文件：//”或“数据：//”。 处理成功。
+                Log.warn('loadFile: HTTP Status 0 received.');
                 if (ok) {
                     ok(response);
                 }

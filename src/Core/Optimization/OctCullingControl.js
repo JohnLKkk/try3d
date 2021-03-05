@@ -5,6 +5,7 @@ import Geometry from "../Node/Geometry.js";
 import AABBBoundingBox from "../Math3d/Bounding/AABBBoundingBox.js";
 import Vector3 from "../Math3d/Vector3.js";
 import MeshFactor from "../Util/MeshFactor.js";
+import Log from "../Util/Log.js";
 
 /**
  * OctCullingControl。<br/>
@@ -104,9 +105,9 @@ export default class OctCullingControl extends Component{
             this._m_OctNode = new OctNode(null, standardAABB);
             // 用于标记根节点为有效(这里其实应该判断子节点是否有一个包含有效数据)
             this._m_OctNode.setValid(true);
-            console.log("开始预建!");
+            Log.debug("开始预建!");
             this._preBuilt(this._m_OctNode, depth);
-            console.log("预建完成!");
+            Log.debug("预建完成!");
 
             // 分配八叉树
             this.distrNode(node, this._m_OctNode);

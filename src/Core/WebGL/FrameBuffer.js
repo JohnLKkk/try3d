@@ -2,6 +2,7 @@ import {Buffer} from "./Buffer.js";
 import Texture from "./Texture.js";
 import Picture from "../Node/Picture.js";
 import FramePicture from "../Node/FramePicture.js";
+import Log from "../Util/Log.js";
 
 export default class FrameBuffer {
     constructor(gl, name, w, h) {
@@ -127,23 +128,23 @@ export default class FrameBuffer {
         if(this._m_DrawBuffers.length > 0)
             gl.drawBuffers(this._m_DrawBuffers);
         if(!gl.isFramebuffer(this._m_Framebuffer)){
-            console.log("[[" + this._m_Name + "]]无效frameBuffer!");
+            Log.error("[[" + this._m_Name + "]]无效frameBuffer!");
         }
         switch (gl.checkFramebufferStatus(gl.FRAMEBUFFER)) {
             case gl.FRAMEBUFFER_COMPLETE:
-                console.log("[[" + this._m_Name + "]]帧缓冲区已准备好显示。");
+                Log.log("[[" + this._m_Name + "]]帧缓冲区已准备好显示。");
                 break;
             case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-                console.log("[[" + this._m_Name + "]]附件类型不匹配或不是所有的帧缓冲附件点都已完成。");
+                Log.error("[[" + this._m_Name + "]]附件类型不匹配或不是所有的帧缓冲附件点都已完成。");
                 break;
             case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-                console.log("[[" + this._m_Name + "]]没有附件。");
+                Log.error("[[" + this._m_Name + "]]没有附件。");
                 break;
             case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
-                console.log("[[" + this._m_Name + "]]附件的高度和宽度不同。");
+                Log.error("[[" + this._m_Name + "]]附件的高度和宽度不同。");
                 break;
             case gl.FRAMEBUFFER_UNSUPPORTED:
-                console.log("[[" + this._m_Name + "]]不支持附件的格式，或者深度和模板附件的渲染缓冲区不同。");
+                Log.error("[[" + this._m_Name + "]]不支持附件的格式，或者深度和模板附件的渲染缓冲区不同。");
                 break;
         }
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);

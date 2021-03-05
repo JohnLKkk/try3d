@@ -856,7 +856,7 @@ export default class MaterialDef{
             line = line.split(' ');
             renderState["" + line[0] + ""] = "" + line[1];
         }
-        console.log("renderState:",renderState);
+        // console.log("renderState:",renderState);
         blockObj.addPass(blockObj.getFromMaterialDef().getSubShaderDef(blockDef.getName()), renderState);
     }
     static parseBlockDef(blockObj, blockDef){

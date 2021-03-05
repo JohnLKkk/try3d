@@ -5,6 +5,7 @@ import TempVars from "../Util/TempVars.js";
 import ShaderSource from "../WebGL/ShaderSource.js";
 import Plane from "../Math3d/Plane.js";
 import MoreMath from "../Math3d/MoreMath.js";
+import Log from "../Util/Log.js";
 
 /**
  * Camera定义了3D空间中的观察者,渲染3D世界时,3D世界中必须有一个Camera,否则无法渲染。<br/>
@@ -112,7 +113,7 @@ export default class Camera extends Component{
         let defaultAspect = this._m_Scene.getCanvas().getWidth() * 1.0 / this._m_Scene.getCanvas().getHeight();
         let h = Math.tan(MoreMath.toRadians(45.0) * 0.5) * 0.1;
         let w = h * defaultAspect;
-        console.log("w:" + w + ";h:" + h + ";as:" + defaultAspect);
+        Log.debug("w:" + w + ";h:" + h + ";as:" + defaultAspect);
         this._m_FrustumLeft = -w;
         this._m_FrustumRight = w;
         this._m_FrustumBottom = -h;

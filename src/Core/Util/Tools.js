@@ -41,6 +41,7 @@ o.uniqueId = function( s, bres )
  * @date 2021年2月5日16点48分
  */
 export default class Tools {
+    static _s_Id = 0;
     static isPowerOfTwo(x) {
         return (x & (x - 1)) === 0;
     }
@@ -69,6 +70,15 @@ export default class Tools {
             image = canvas;
         }
         return image;
+    }
+
+    /**
+     * 返回系统默认分配的唯一ID。<br/>
+     * 以负数+'R3D'编码一个ID返回。<br/>
+     * @return {Number}
+     */
+    static nextId(){
+        return Tools.uniqueId(--Tools._s_Id + 'R3D');
     }
     /**
      * 插入一行到指定源中的指定位置。<br/>
