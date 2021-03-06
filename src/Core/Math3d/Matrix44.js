@@ -230,6 +230,16 @@ export default class Matrix44 {
     }
 
     /**
+     * 将当前矩阵设置为指定矩阵数组。<br/>
+     * @param {Number[]}[array]
+     */
+    setArray(array){
+        for(let i = 0;i < 16;i++){
+            this.m[i] = array[i];
+        }
+    }
+
+    /**
      * 将矩阵所有值设置为正。<br/>
      */
     absLocal(){

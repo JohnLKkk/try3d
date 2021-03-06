@@ -83,7 +83,8 @@ export default class Geometry extends Node{
         // 当Mesh数据发生变更时,将在fromPositions重建AABB
         if(this._m_UpdateAABBBoundingBox){
             // 更新AABBBoundingBox
-            this._m_ModelAABBBoundingBox.transform(this._m_LocalScale, this._m_LocalRotation, this._m_LocalTranslation, this._m_AABBBoudingBox);
+            Matrix44.decomposeMat4(this.getWorldMatrix(), Node.S_TEMP_VEC3, Node.S_TEMP_Q, Node.S_TEMP_VEC3_2);
+            this._m_ModelAABBBoundingBox.transform(Node.S_TEMP_VEC3_2, Node.S_TEMP_Q, Node.S_TEMP_VEC3, this._m_AABBBoudingBox);
             this._m_UpdateAABBBoundingBox = false;
         }
         return this._m_AABBBoudingBox;

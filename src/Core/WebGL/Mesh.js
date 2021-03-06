@@ -16,6 +16,7 @@ export default class Mesh {
     static S_NORMALS = "normals";
     // 索引属性
     static S_INDICES = "indices";
+    static S_INDICES_32 = "indices";
     // 切线属性
     static S_TANGENTS = "tangents";
     // 最多支持4道uv(正常来说2道已经足够了)
@@ -151,6 +152,10 @@ export default class Mesh {
                     case Mesh.S_INDICES:
                         this._m_ElementCount = this._m_Datas[key].length;
                         ArrayBuf.setIndicesBuf(gl, this._m_VAO, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this._m_Datas[key]), gl.STATIC_DRAW);
+                        break;
+                    case Mesh.S_INDICES_32:
+                        this._m_ElementCount = this._m_Datas[key].length;
+                        ArrayBuf.setIndicesBuf(gl, this._m_VAO, gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this._m_Datas[key]), gl.STATIC_DRAW);
                         break;
                     case Mesh.S_UV0:
                         ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_UV0, 2, gl.FLOAT, 0, 0);

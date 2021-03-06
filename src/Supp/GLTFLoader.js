@@ -14,6 +14,7 @@ import Material from "../Core/Material/Material.js";
  * @date 2021年3月5日13点43分
  */
 export default class GLTFLoader {
+    static INDICES = {5123:Uint16Array, 5124:Uint16Array, 5125:Uint32Array};
     load(scene, src, callback){
         this._m_Scene = scene;
         this._m_DefaultMatDef = null;
@@ -89,13 +90,33 @@ export default class GLTFLoader {
         }
         return null;
     }
+    _getName(name){
+        if(name == null || name == undefined || name == ''){
+            return Tools.nextId();
+        }
+        return name;
+    }
     _addNode(gltf, parent, nodeI){
         let _node = gltf.nodes[nodeI];
-        // 忽略其他节点
+        let node = null;
+        if(Tools.checkIsNull(_node.children)){
+            // 创建Node
+            node = new Node(parent, {id:this._getName(_node.name)});
+            parent.addChildren(node);
+            // 解析子节点
+            _node.children.forEach(nodeI=>{
+                this._addNode(gltf, node, nodeI);
+            });
+        }
+        // 解析保护mesh结构的节点
         if(Tools.checkIsNull(_node.mesh)){
             // 创建Node
-            let node = new Node(parent, {id:_node.name});
-
+            node = new Node(parent, {id:this._getName(_node.name)});
+            parent.addChildren(node);
+            // 添加node对应的GeometryNode
+            this._parseMesh(gltf, node, _node.mesh);
+        }
+        if(node){
             // 变换
             if(Tools.checkIsNull(_node.scale)){
                 node.setLocalScaleXYZ(_node.scale[0], _node.scale[1], _node.scale[2]);
@@ -106,10 +127,9 @@ export default class GLTFLoader {
             if(Tools.checkIsNull(_node.translation)){
                 node.setLocalTranslationXYZ(_node.translation[0], _node.translation[1], _node.translation[2]);
             }
-            parent.addChildren(node);
-
-            // 添加node对应的GeometryNode
-            this._parseMesh(gltf, node, _node.mesh);
+            if(Tools.checkIsNull(_node.matrix)){
+                node.setLocalMatrixFromArray(_node.matrix);
+            }
         }
     }
     _parseMesh(gltf, parrent, meshI){
@@ -120,7 +140,7 @@ export default class GLTFLoader {
         let mesh = null;
         for(let i = 0;i < _primitives.length;i++){
             _primitive = _primitives[i];
-            geometryNode = new Geometry(parrent, {id:_mesh.name + i + "_geo"});
+            geometryNode = new Geometry(parrent, {id:this._getName(_mesh.name) + i + "_geo"});
             parrent.addChildren(geometryNode);
             // 解析mesh
             mesh = new Mesh();
@@ -149,6 +169,8 @@ export default class GLTFLoader {
             }
             // 然后是材质(这里先跳过PBR材质)
             if(Tools.checkIsNull(_primitive.material)){
+                // 后续完善时,这里单独到一个函数中进行,因为解析PBR材质参数最好独立到一个解析函数中
+
                 if(!this._m_DefaultMatDef){
                     this._m_DefaultMatDef = MaterialDef.load("../src/Core/Assets/MaterialDef/BasicLightingDef");
                 }
@@ -210,7 +232,7 @@ export default class GLTFLoader {
         let _buffer = _buffers[_bufferView.buffer].data;
         // 后续应该统一缓存,而不是每次newFloat32Array
         // 然后通过accessors.byteOffset和count来截取
-        let indices = new Uint16Array(_buffer, _bufferView.byteOffset + (_indicessAccessors.byteOffset || 0), _indicessAccessors.count);
+        let indices = new GLTFLoader.INDICES[_indicessAccessors.componentType](_buffer, _bufferView.byteOffset + (_indicessAccessors.byteOffset || 0), _indicessAccessors.count);
         return indices;
     }
 }

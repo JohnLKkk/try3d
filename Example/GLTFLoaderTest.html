@@ -42,11 +42,12 @@
     rootNode.addChildren(wireFrustum);
     let gltfLoader = new GLTFLoader();
     // scene.setFrustumCullingCamera(testCamera);
-    gltfLoader.load(scene, './Assets/Models/GLTF/Cube/Cube.gltf', modelNode=>{
+    gltfLoader.load(scene, './Assets/Models/GLTF/Sponza/Sponza.gltf', modelNode=>{
         // // 使用OctCullingControl来管理静态场景
         rootNode.addChildren(modelNode);
-        // let octCullingControl = new OctCullingControl(modelNode, {id:'octCulling'});
-        // octCullingControl.debug(rootNode, colorMat);
+        console.log("modelNode:",modelNode);
+        let octCullingControl = new OctCullingControl(modelNode, {id:'octCulling'});
+        octCullingControl.debug(rootNode, colorMat);
         // console.log("modelNode:",modelNode);
     });
 

@@ -11,12 +11,16 @@ import Camera from "../Scene/Camera.js";
  */
 export default class Node extends Component{
     static S_DEFAULT_FRUSTUM_CULLING = 1 << 1;
+    static S_TEMP_VEC3 = new Vector3();
+    static S_TEMP_Q = new Quaternion();
+    static S_TEMP_VEC3_2 = new Vector3();
     getType() {
         return 'Node';
     }
 
     constructor(owner, cfg) {
         super(owner, cfg);
+        // 变换信息
         this._m_LocalMatrix = new Matrix44();
         this._m_WorldMatrix = new Matrix44();
         this._m_Parent = null;
@@ -290,6 +294,20 @@ export default class Node extends Component{
     }
 
     /**
+     * 设置本地矩阵。<br/>
+     * @param {Number[]}[mat44Array]
+     */
+    setLocalMatrixFromArray(mat44Array){
+        // 覆盖矩阵
+        this._m_LocalMatrix.setArray(mat44Array);
+        this._updateLocalMatrix();
+        // updateLocalMatrix设置UpdateLocalMatrix为true,但是我们手动复制了matrix到localMatrix中,所以可以在updateLocalMatrix()调用后手动设置UpdateLocalMatrix为false减少计算量
+        this._m_UpdateLocalMatrix = false;
+        // 从矩阵提取translation,rotation,scale
+        Matrix44.decomposeMat4(this._m_LocalMatrix, this._m_LocalTranslation, this._m_LocalRotation, this._m_LocalScale);
+    }
+
+    /**
      * 返回世界矩阵。<br/>
      * @returns {Matrix44}
      */
@@ -338,6 +356,9 @@ export default class Node extends Component{
                 this._m_ChildrenIDs[children.getId()] = children;
                 this._m_Children.push(children);
                 children._m_Parent = this;
+
+                // 更新子节点
+                children._updateWorldMatrix();
             }
         }
         else{
