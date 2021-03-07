@@ -122,10 +122,10 @@ export default class Quaternion {
 
             s = 2.0 * Math.sqrt(1.0 + m33 - m11 - m22);
 
-            dest[3] = (m21 - m12) / s;
-            dest[0] = (m13 + m31) / s;
-            dest[1] = (m23 + m32) / s;
-            dest[2] = 0.25 * s;
+            this._m_W = (m21 - m12) / s;
+            this._m_X = (m13 + m31) / s;
+            this._m_Y = (m23 + m32) / s;
+            this._m_Z = 0.25 * s;
         }
     }
 
