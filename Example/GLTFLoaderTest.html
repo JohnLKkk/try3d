@@ -42,7 +42,7 @@
     rootNode.addChildren(wireFrustum);
     let gltfLoader = new GLTFLoader();
     // scene.setFrustumCullingCamera(testCamera);
-    gltfLoader.load(scene, './Assets/Models/GLTF/AnimatedMorphCube/AnimatedMorphCube.gltf', modelNode=>{
+    gltfLoader.load(scene, './Assets/Models/GLTF/SimpleSkin/SimpleSkin.gltf', modelNode=>{
         // // 使用OctCullingControl来管理静态场景
         rootNode.addChildren(modelNode);
         console.log("modelNode:",modelNode);

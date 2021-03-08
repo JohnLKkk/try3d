@@ -137,6 +137,14 @@ export default class Node extends Component{
     }
 
     /**
+     * 返回父节点。<br/>
+     * @return {Node/Null}
+     */
+    getParent(){
+        return this._m_Parent;
+    }
+
+    /**
      * 设置局部缩放。<br/>
      * @param {Vector3}[scale]
      */

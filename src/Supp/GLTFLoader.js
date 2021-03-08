@@ -187,6 +187,24 @@ export default class GLTFLoader {
                 }
                 geometryNode.setMaterial(material);
             }
+            else{
+                // 添加一个默认材质
+                if(!this._m_DefaultMatDef){
+                    this._m_DefaultMatDef = MaterialDef.load("../src/Core/Assets/MaterialDef/BasicLightingDef");
+                }
+                let matId = 'default_gltf_mat';
+                let material = null;
+                if(this._m_Mats[matId]){
+                    material = this._m_Mats[matId];
+                }
+                else{
+                    // 创建新材质,后续移到独立方法创建适配的pbr材质或转换phong材质
+                    material = new Material(this._m_Scene, {id:matId, materialDef:this._m_DefaultMatDef});
+                    material.selectTechnology('BlinnPhongLight2');
+                    this._m_Mats[matId] = material;
+                }
+                geometryNode.setMaterial(material);
+            }
             geometryNode.setMesh(mesh);
             geometryNode.updateBound();
         }
