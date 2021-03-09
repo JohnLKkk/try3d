@@ -6,6 +6,16 @@ import Geometry from "../Core/Node/Geometry.js";
 import Mesh from "../Core/WebGL/Mesh.js";
 import MaterialDef from "../Core/Material/MaterialDef.js";
 import Material from "../Core/Material/Material.js";
+import Bone from "../Core/Animation/Bone.js";
+import SkinGeometry from "../Core/Animation/Skin/SkinGeometry.js";
+import AnimationAction from "../Core/Animation/AnimationAction.js";
+import TrackMixer from "../Core/Animation/Mixer/TrackMixer.js";
+import ActionClip from "../Core/Animation/ActionClip.js";
+import TrackBinding from "../Core/Animation/Mixer/TrackBinding.js";
+import AnimKeyframeEnum from "../Core/Animation/Keyframe/AnimKeyframeEnum.js";
+import Skeleton from "../Core/Animation/Skin/Skeleton.js";
+import Joint from "../Core/Animation/Skin/Joint.js";
+import AnimationProcessor from "../Core/Animation/AnimationProcessor.js";
 
 /**
  * GLTFLoader。<br/>
@@ -14,10 +24,15 @@ import Material from "../Core/Material/Material.js";
  * @date 2021年3月5日13点43分
  */
 export default class GLTFLoader {
-    static INDICES = {5123:Uint16Array, 5124:Uint16Array, 5125:Uint32Array};
+    static DATA = {5123:Uint16Array, 5124:Uint16Array, 5125:Uint32Array, 5126:Float32Array};
+    static DATA_COMPONENT = {'SCALAR':1, 'VEC3':3, 'VEC4':4, 'MAT4':16};
     load(scene, src, callback){
         this._m_Scene = scene;
         this._m_DefaultMatDef = null;
+        this._m_Joints = {};
+        this._m_Bones = [];
+        this._m_Nodes = {};
+        this._m_Aps = [];
         this._m_Mats = {};
         this._m_BasePath = AssetLoader.getBasePath(src);
         this._loadGLTF(src, callback);
@@ -69,11 +84,83 @@ export default class GLTFLoader {
                                 callback(scene);
                             }
                         }
+
+                        // 解析动画剪辑
+                        if(Tools.checkIsNull(gltf.animations)){
+                            this._parseAnimations(gltf);
+                        }
                     });
                 }
             }
             Log.log('gltf:',gltf);
         });
+    }
+    _parseAnimations(gltf){
+        let trackMixer = null;
+        let animationAction = null;
+        let actionClip = null;
+        let jis = null;
+        let t = false;
+        gltf.animations.forEach(anim=>{
+            animationAction = new AnimationAction(this._getName(anim.name));
+            trackMixer = new TrackMixer();
+            anim.channels.forEach(channel=>{
+                let node = channel.target.node;
+                actionClip = new ActionClip(channel.target.path);
+                // 创建轨迹
+                TrackBinding.createTrack(actionClip, this._m_Nodes[node]);
+                // 采样轨迹
+                let sampler = anim.samplers[channel.sampler];
+                this._parseSampler(gltf, sampler.input, sampler.output, sampler.interpolation, AnimKeyframeEnum.S_KEY_FRAME[channel.target.path], actionClip);
+                trackMixer.addClip(actionClip);
+
+                t = false;
+                for(let i = 0;i < this._m_Aps.length;i++){
+                    jis = this._m_Aps[i].skeleton.getJoints();
+                    for(let j = 0;j < jis.length;j++){
+                        if(jis[j].i == node){
+                            t = true;
+                            jis[j].link(this._m_Nodes[node]);
+                            this._m_Aps[i].animationProcessor.addAnimationAction(animationAction);
+                            break;
+                        }
+                    }
+                    if(t){
+                        break;
+                    }
+                }
+                if(!t){
+                    // 非skin动画
+                }
+            });
+            animationAction.setTrackMixer(trackMixer);
+        });
+    }
+    _getAccessorData(gltf, i){
+        let _accessors = gltf.accessors[i];
+        let _buffers = gltf.buffers;
+        let _bufferView = gltf.bufferViews[_accessors.bufferView];
+        let dataCount = GLTFLoader.DATA_COMPONENT[_accessors.type];
+        return new GLTFLoader.DATA[_accessors.componentType](_buffers[_bufferView.buffer].data, _bufferView.byteOffset + (_accessors.byteOffset || 0), _accessors.count * dataCount);
+    }
+    _parseSampler(gltf, i, o, ip, keyframe, actionClip){
+        let _i = this._getAccessorData(gltf, i);
+        let _o = this._getAccessorData(gltf, o);
+        let clipCount = gltf.accessors[i].count;
+        let dataCount = GLTFLoader.DATA_COMPONENT[gltf.accessors[o].type];
+        let _keyframe = null;
+        let offset = 0;
+        for(let i = 0;i < clipCount;i++){
+            offset = i * dataCount;
+            if(dataCount > 3){
+                _keyframe = new keyframe(_i[i], _o[offset], _o[offset + 1], _o[offset + 2], _o[offset + 3]);
+            }
+            else{
+                _keyframe = new keyframe(_i[i], _o[offset], _o[offset + 1], _o[offset + 2]);
+            }
+            _keyframe.setInterpolationMode(ip);
+            actionClip.addKeyframe(_keyframe);
+        }
     }
     _addScene(gltf){
         if(Tools.checkIsNull(gltf.scene)){
@@ -96,25 +183,58 @@ export default class GLTFLoader {
         }
         return name;
     }
+    _parseSkins(gltf, i){
+        let skin = gltf.skins[i];
+        let skeleton = new Skeleton(this._getName(skin.name));
+        let skeletonJoint = null;
+        let jointSpaceData = this._getAccessorData(gltf, skin.inverseBindMatrices);
+        let ji = 0;
+        let array = [];
+        skin.joints.forEach(joint=>{
+            this._m_Joints[joint] = true;
+            array.length = 0;
+            for(let i = 0, offset = ji * 16;i < 16;i++){
+                array.push(jointSpaceData[i + offset]);
+            }
+            ji++;
+            skeletonJoint = new Joint();
+            skeletonJoint.setJointSpace(array);
+            skeletonJoint.i = joint;
+            skeleton.addJoint(skeletonJoint);
+        });
+        return skeleton;
+    }
     _addNode(gltf, parent, nodeI){
         let _node = gltf.nodes[nodeI];
         let node = null;
-        if(Tools.checkIsNull(_node.children)){
-            // 创建Node
+        // 创建Node
+        if(this._m_Joints[nodeI]){
+            node = new Bone(parent, {id:this._getName(_node.name)});
+            this._m_Bones.push(node);
+            Log.log('添加Bone!');
+        }
+        else{
             node = new Node(parent, {id:this._getName(_node.name)});
-            parent.addChildren(node);
+        }
+        this._m_Nodes[nodeI] = node;
+        parent.addChildren(node);
+        if(Tools.checkIsNull(_node.children)){
             // 解析子节点
             _node.children.forEach(nodeI=>{
                 this._addNode(gltf, node, nodeI);
             });
         }
-        // 解析保护mesh结构的节点
+        // 解析mesh结构
         if(Tools.checkIsNull(_node.mesh)){
-            // 创建Node
-            node = new Node(parent, {id:this._getName(_node.name)});
-            parent.addChildren(node);
-            // 添加node对应的GeometryNode
-            this._parseMesh(gltf, node, _node.mesh);
+            let geometryNode = this._parseMesh(gltf, node, _node.mesh, Tools.checkIsNull(_node.skin));
+            if(Tools.checkIsNull(_node.skin)){
+                // 添加骨架
+                let skeleton = this._parseSkins(gltf, _node.skin);
+                geometryNode.setSkeleton(skeleton);
+                // 添加AnimationProcessor
+                let animationProcessor = new AnimationProcessor(geometryNode, {id:geometryNode.getId() + "_animationProcessor"});
+                this._m_Aps.push({skeleton, animationProcessor});
+            }
         }
         if(node){
             // 变换
@@ -132,7 +252,7 @@ export default class GLTFLoader {
             }
         }
     }
-    _parseMesh(gltf, parrent, meshI){
+    _parseMesh(gltf, parrent, meshI, isSkin){
         let _mesh = gltf.meshes[meshI];
         let _primitives = _mesh.primitives;
         let _primitive = null;
@@ -140,7 +260,12 @@ export default class GLTFLoader {
         let mesh = null;
         for(let i = 0;i < _primitives.length;i++){
             _primitive = _primitives[i];
-            geometryNode = new Geometry(parrent, {id:this._getName(_mesh.name) + i + "_geo"});
+            if(isSkin){
+                geometryNode = new SkinGeometry(parrent, {id:this._getName(_mesh.name) + i + "_skin_geo"});
+            }
+            else{
+                geometryNode = new Geometry(parrent, {id:this._getName(_mesh.name) + i + "_geo"});
+            }
             parrent.addChildren(geometryNode);
             // 解析mesh
             mesh = new Mesh();
@@ -148,24 +273,35 @@ export default class GLTFLoader {
             if(Tools.checkIsNull(_primitive.attributes.POSITION)){
                 // position属性
                 let positions = this._parsePositions(gltf, _primitive.attributes.POSITION);
-                mesh.setData(Mesh.S_POSITIONS, positions);
+                mesh.setData(Mesh.S_POSITIONS, positions.data);
             }
             if(Tools.checkIsNull(_primitive.attributes.NORMAL)){
                 // normal属性
                 let normals = this._parseNormals(gltf, _primitive.attributes.NORMAL);
-                mesh.setData(Mesh.S_NORMALS, normals);
+                mesh.setData(Mesh.S_NORMALS, normals.data);
             }
             if(Tools.checkIsNull(_primitive.attributes.TEXCOORD_0)){
                 // 第一道texCoord属性(暂时跳过lightMap)
                 let texcoords = this._parseTexcoords(gltf, _primitive.attributes.TEXCOORD_0);
-                mesh.setData(Mesh.S_UV0, texcoords);
+                mesh.setData(Mesh.S_UV0, texcoords.data);
+            }
+            // skin部分
+            if(isSkin){
+                if(Tools.checkIsNull(_primitive.attributes.JOINTS_0)){
+                    let joints_0 = this._parseJoints(gltf, _primitive.attributes.JOINTS_0);
+                    mesh.setData(joints_0.bufType == 5125 ? Mesh.S_JOINTS_0_32 : Mesh.S_JOINTS_0, joints_0.data);
+                }
+                if(Tools.checkIsNull(_primitive.attributes.WEIGHTS_0)){
+                    let weights_0 = this._parseWeights(gltf, _primitive.attributes.WEIGHTS_0);
+                    mesh.setData(Mesh.S_WEIGHTS_0, weights_0.data);
+                }
             }
 
             // 其次是索引
             if(Tools.checkIsNull(_primitive.indices)){
                 // indices数据
                 let indices = this._parseIndices(gltf, _primitive.indices);
-                mesh.setData(Mesh.S_INDICES, indices);
+                mesh.setData(indices.bufType == 5125 ? Mesh.S_INDICES_32 : Mesh.S_INDICES, indices.data);
             }
             // 然后是材质(这里先跳过PBR材质)
             if(Tools.checkIsNull(_primitive.material)){
@@ -207,6 +343,7 @@ export default class GLTFLoader {
             }
             geometryNode.setMesh(mesh);
             geometryNode.updateBound();
+            return geometryNode;
         }
     }
     _parsePositions(gltf, i){
@@ -217,8 +354,8 @@ export default class GLTFLoader {
         let _buffer = _buffers[_bufferView.buffer].data;
         // 后续应该统一缓存,而不是每次newFloat32Array
         // 然后通过accessors.byteOffset和count来截取
-        let positions = new Float32Array(_buffer, _bufferView.byteOffset + (_positionsAccessors.byteOffset || 0), _positionsAccessors.count * 3);
-        return positions;
+        let positions = new GLTFLoader.DATA[_positionsAccessors.componentType](_buffer, _bufferView.byteOffset + (_positionsAccessors.byteOffset || 0), _positionsAccessors.count * 3);
+        return {data:positions, bufType:_positionsAccessors.componentType};
     }
     _parseNormals(gltf, i){
         let _normalsAccessors = gltf.accessors[i];
@@ -228,8 +365,8 @@ export default class GLTFLoader {
         let _buffer = _buffers[_bufferView.buffer].data;
         // 后续应该统一缓存,而不是每次newFloat32Array
         // 然后通过accessors.byteOffset和count来截取
-        let normals = new Float32Array(_buffer, _bufferView.byteOffset + (_normalsAccessors.byteOffset || 0), _normalsAccessors.count * 3);
-        return normals;
+        let normals = new GLTFLoader.DATA[_normalsAccessors.componentType](_buffer, _bufferView.byteOffset + (_normalsAccessors.byteOffset || 0), _normalsAccessors.count * 3);
+        return {data:normals, bufType:_normalsAccessors.componentType};
     }
     _parseTexcoords(gltf, i){
         let _texcoordsAccessors = gltf.accessors[i];
@@ -239,8 +376,8 @@ export default class GLTFLoader {
         let _buffer = _buffers[_bufferView.buffer].data;
         // 后续应该统一缓存,而不是每次newFloat32Array
         // 然后通过accessors.byteOffset和count来截取
-        let texcoords = new Float32Array(_buffer, _bufferView.byteOffset + (_texcoordsAccessors.byteOffset || 0), _texcoordsAccessors.count * 2);
-        return texcoords;
+        let texcoords = new GLTFLoader.DATA[_texcoordsAccessors.componentType](_buffer, _bufferView.byteOffset + (_texcoordsAccessors.byteOffset || 0), _texcoordsAccessors.count * 2);
+        return {data:texcoords, bufType:_texcoordsAccessors.componentType};
     }
     _parseIndices(gltf, i){
         let _indicessAccessors = gltf.accessors[i];
@@ -250,7 +387,29 @@ export default class GLTFLoader {
         let _buffer = _buffers[_bufferView.buffer].data;
         // 后续应该统一缓存,而不是每次newFloat32Array
         // 然后通过accessors.byteOffset和count来截取
-        let indices = new GLTFLoader.INDICES[_indicessAccessors.componentType](_buffer, _bufferView.byteOffset + (_indicessAccessors.byteOffset || 0), _indicessAccessors.count);
-        return indices;
+        let indices = new GLTFLoader.DATA[_indicessAccessors.componentType](_buffer, _bufferView.byteOffset + (_indicessAccessors.byteOffset || 0), _indicessAccessors.count);
+        return {data:indices, bufType:_indicessAccessors.componentType};
+    }
+    _parseJoints(gltf, i){
+        let _jointsAccessors = gltf.accessors[i];
+        // 解析
+        let _buffers = gltf.buffers;
+        let _bufferView = gltf.bufferViews[_jointsAccessors.bufferView];
+        let _buffer = _buffers[_bufferView.buffer].data;
+        // 后续应该统一缓存,而不是每次newFloat32Array
+        // 然后通过accessors.byteOffset和count来截取
+        let joints = new GLTFLoader.DATA[_jointsAccessors.componentType](_buffer, _bufferView.byteOffset + (_jointsAccessors.byteOffset || 0), _jointsAccessors.count * 4);
+        return {data:joints, bufType:_jointsAccessors.componentType};
+    }
+    _parseWeights(gltf, i){
+        let _weightsAccessors = gltf.accessors[i];
+        // 解析
+        let _buffers = gltf.buffers;
+        let _bufferView = gltf.bufferViews[_weightsAccessors.bufferView];
+        let _buffer = _buffers[_bufferView.buffer].data;
+        // 后续应该统一缓存,而不是每次newFloat32Array
+        // 然后通过accessors.byteOffset和count来截取
+        let weights = new GLTFLoader.DATA[_weightsAccessors.componentType](_buffer, _bufferView.byteOffset + (_weightsAccessors.byteOffset || 0), _weightsAccessors.count * 4);
+        return {data:weights, bufType:_weightsAccessors.componentType};
     }
 }

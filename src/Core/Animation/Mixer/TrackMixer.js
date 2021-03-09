@@ -10,8 +10,41 @@ export default class TrackMixer {
         // 轨迹数组
         this._m_Clips = [];
     }
-    update(exTime){
+
+    /**
+     * 添加剪辑。<br/>
+     * @param {ActionClip}[clip]
+     */
+    addClip(clip){
+        this._m_Clips.push(clip);
+    }
+
+    /**
+     * 返回指定动作剪辑。<br/>
+     * @param {Number}[index]
+     * @return {ActionClip}
+     */
+    getClip(index){
+        return this._m_Clips[index];
+    }
+
+    /**
+     * 返回所有动作剪辑。<br/>
+     * @return {ActionClip[]}
+     */
+    getClips(){
+        return this._m_Clips;
+    }
+
+    /**
+     * 更新剪辑。<br/>
+     * @param {Number}[time 当前时间]
+     */
+    update(time){
         // 对clip进行关键帧插值
+        this._m_Clips.forEach(clip=>{
+
+        });
     }
 
 }

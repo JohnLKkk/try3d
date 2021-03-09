@@ -1,4 +1,5 @@
 import AnimKeyframe from "./AnimKeyframe.js";
+import Quaternion from "../../Math3d/Quaternion.js";
 
 /**
  * QuaternionKeyframe。<br/>
@@ -7,5 +8,9 @@ import AnimKeyframe from "./AnimKeyframe.js";
  * @date 2021年3月8日16点05分
  */
 export default class QuaternionKeyframe extends AnimKeyframe{
+    constructor(time, x, y, z, w) {
+        super(time);
+        this._m_Value = new Quaternion(x, y, z, w);
+    }
 
 }

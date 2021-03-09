@@ -28,6 +28,11 @@ export default class Mesh {
     static S_UV2 = "uv2";
     // uv3
     static S_UV3 = "uv3";
+    // skin joint
+    static S_JOINTS_0 = "joints_0";
+    static S_JOINTS_0_32 = "joints_0";
+    // skin weight
+    static S_WEIGHTS_0 = "weights_0";
     static S_DATAS = {
         "positions":"positions",
         "colors":"colors",
@@ -37,7 +42,9 @@ export default class Mesh {
         "uv0":"uv0",
         "uv1":"uv1",
         "uv2":"uv2",
-        "uv3":"uv3"
+        "uv3":"uv3",
+        "joints_0":"joints_0",
+        "weights_0":"weights_0"
     };
     // 图元类型
     static S_PRIMITIVE_TRIANGLES = 'triangles';
@@ -168,6 +175,15 @@ export default class Mesh {
                         break;
                     case Mesh.S_UV3:
                         ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_UV3, 2, gl.FLOAT, 0, 0);
+                        break;
+                    case Mesh.S_JOINTS_0:
+                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Uint16Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_JOINT_0, 4, gl.UNSIGNED_INT, 0, 0);
+                        break;
+                    case Mesh.S_JOINTS_0_32:
+                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Uint32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_JOINT_0, 4, gl.UNSIGNED_INT, 0, 0);
+                        break;
+                    case Mesh.S_WEIGHTS_0:
+                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_WEIGHT_0, 4, gl.FLOAT, 0, 0);
                         break;
                     default:
                         //自定义,由于自定义的属性在没有绑定着色器之前,是无法显式知道属性位置的,所以需要在绑定着色器后,设定属性位置。

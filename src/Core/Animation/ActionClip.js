@@ -10,6 +10,44 @@ export default class ActionClip {
         this._m_PathName = pathName;
         // 关键帧数组
         this._m_Keyframes = [];
+        // 剪辑轨迹通道
+        this._m_ActionTrack = null;
+    }
+
+    /**
+     * 返回剪辑长度。<br/>
+     * @return {Number}
+     */
+    getLength(){
+        let length = -Number.MAX_VALUE;
+        this._m_Keyframes.forEach(keyframe=>{
+            length = Math.max(length, keyframe.getTime());
+        });
+        return length == -Number.MAX_VALUE ? 0 : length;
+    }
+
+    /**
+     * 添加关键帧。<br/>
+     * @param {AnimKeyframe}[keyframe]
+     */
+    addKeyframe(keyframe){
+        this._m_Keyframes.push(keyframe);
+    }
+
+    /**
+     * 返回轨迹路径。<br/>
+     * @return {String}
+     */
+    getPathName(){
+        return this._m_PathName;
+    }
+
+    /**
+     * 设置动作轨迹。<br/>
+     * @param {TrackBinding}[track]
+     */
+    setActionTrack(track){
+        this._m_ActionTrack = track;
     }
 
 }
