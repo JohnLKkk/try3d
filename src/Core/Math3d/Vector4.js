@@ -1,4 +1,6 @@
 export default class Vector4 {
+    // 内部缓存
+    static _S_TEMP_VEC4 = new Vector4();
     constructor(x,y,z,w) {
         this._m_X = x || 0;
         this._m_Y = y || 0;
@@ -168,5 +170,33 @@ export default class Vector4 {
     }
     toString(){
         return '[' + this._m_X + ',' + this._m_Y + ',' + this._m_Z + ',' + this._m_W + ']';
+    }
+
+    /**
+     * 以线性插值方式插值到v2。<br/>
+     * @param {Vector4}[v2]
+     * @param {Number}[t 0-1]
+     * @param {Vector4}[result]
+     * @return {Vector4}
+     */
+    inter(v2, t, result){
+        return Vector4.inter(this, v2, t, result);
+    }
+    /**
+     * 以线性插值方式从v1到v2。<br/>
+     * @param {Vector4}[v1]
+     * @param {Vector4}[v2]
+     * @param {Number}[t 0-1]
+     * @param {Vector4}[result]
+     * @return {Vector4}
+     */
+    static inter(v1, v2, t, result){
+        let s = 1.0 - t;
+        result = result ? result : Vector4._S_TEMP_VEC4;
+        result._m_X = v1._m_X * s + v2._m_X * t;
+        result._m_Y = v1._m_Y * s + v2._m_Y * t;
+        result._m_Z = v1._m_Z * s + v2._m_Z * t;
+        result._m_W = 1.0;
+        return result;
     }
 }

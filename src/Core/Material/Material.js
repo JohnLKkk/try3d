@@ -3,6 +3,7 @@ import SubShaderSource from "./SubShaderSource.js";
 import ShaderProgram from "../WebGL/ShaderProgram.js";
 import SubShader from "./SubShader.js";
 import Technology from "./Technology.js";
+import ShaderSource from "../WebGL/ShaderSource.js";
 
 /**
  * 材质定义，材质定义定义了相关物体渲染时的着色材质属性，通过MaterialShaderSource完成对材质的实现。<br/>
@@ -197,20 +198,51 @@ export default class Material extends Component{
         // 检测是否有效参数
         if(this._m_Params[paramName]){
             // 检测是否已经定义
+            let update = false;
             if(!this._m_AleadyDefinedParams[paramName]){
+                update = true;
+                this._m_AleadyDefinedParams[paramName] = true;
+            }
+            if(update){
                 // 定义该参数
                 // 重新构建当前技术所有SubShader块
                 let subPass = null;
-                for(let p in this._m_CurrentTechnology.getSubPassList()){
-                    subPass = this._m_CurrentTechnology.getSubPasss(p);
-                    subPass.getSubShaders().forEach(sb=>{
-                        sb.subShader.addDefine(paramName);
-                    });
+                for(let paramName in this._m_AleadyDefinedParams){
+                    for(let p in this._m_CurrentTechnology.getSubPassList()){
+                        subPass = this._m_CurrentTechnology.getSubPasss(p);
+                        subPass.getSubShaders().forEach(sb=>{
+                            sb.subShader.addDefine(paramName);
+                        });
+                    }
                 }
-                this._m_AleadyDefinedParams[paramName] = true;
             }
             // 将其加入参数列表
             this._m_ChangeParams.push({paramName, value});
+        }
+    }
+
+    /**
+     * 添加一个定义。<br/>
+     * @param {String}[name]
+     */
+    addDefine(name){
+        let update = false;
+        if(!this._m_AleadyDefinedParams[name]){
+            update = true;
+            this._m_AleadyDefinedParams[name] = true;
+        }
+        if(update){
+            // 定义该参数
+            // 重新构建当前技术所有SubShader块
+            let subPass = null;
+            for(let paramName in this._m_AleadyDefinedParams){
+                for(let p in this._m_CurrentTechnology.getSubPassList()){
+                    subPass = this._m_CurrentTechnology.getSubPasss(p);
+                    subPass.getSubShaders().forEach(sb=>{
+                        sb.subShader.addDefine(paramName, ShaderSource.Context_Data[name] != null);
+                    });
+                }
+            }
         }
     }
 

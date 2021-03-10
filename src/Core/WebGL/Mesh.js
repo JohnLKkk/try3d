@@ -177,7 +177,7 @@ export default class Mesh {
                         ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_UV3, 2, gl.FLOAT, 0, 0);
                         break;
                     case Mesh.S_JOINTS_0:
-                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Uint16Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_JOINT_0, 4, gl.UNSIGNED_INT, 0, 0);
+                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Uint16Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_JOINT_0, 4, gl.UNSIGNED_SHORT, 0, 0);
                         break;
                     case Mesh.S_JOINTS_0_32:
                         ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Uint32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_JOINT_0, 4, gl.UNSIGNED_INT, 0, 0);

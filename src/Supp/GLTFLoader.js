@@ -16,6 +16,7 @@ import AnimKeyframeEnum from "../Core/Animation/Keyframe/AnimKeyframeEnum.js";
 import Skeleton from "../Core/Animation/Skin/Skeleton.js";
 import Joint from "../Core/Animation/Skin/Joint.js";
 import AnimationProcessor from "../Core/Animation/AnimationProcessor.js";
+import ShaderSource from "../Core/WebGL/ShaderSource.js";
 
 /**
  * GLTFLoader。<br/>
@@ -118,7 +119,7 @@ export default class GLTFLoader {
                 for(let i = 0;i < this._m_Aps.length;i++){
                     jis = this._m_Aps[i].skeleton.getJoints();
                     for(let j = 0;j < jis.length;j++){
-                        if(jis[j].i == node){
+                        if(jis[j].getId() == node){
                             t = true;
                             jis[j].link(this._m_Nodes[node]);
                             this._m_Aps[i].animationProcessor.addAnimationAction(animationAction);
@@ -197,9 +198,8 @@ export default class GLTFLoader {
                 array.push(jointSpaceData[i + offset]);
             }
             ji++;
-            skeletonJoint = new Joint();
+            skeletonJoint = new Joint(joint);
             skeletonJoint.setJointSpace(array);
-            skeletonJoint.i = joint;
             skeleton.addJoint(skeletonJoint);
         });
         return skeleton;
@@ -343,6 +343,11 @@ export default class GLTFLoader {
             }
             geometryNode.setMesh(mesh);
             geometryNode.updateBound();
+            // 如果是skinGeometry,则添加skin数据
+            if(isSkin){
+                geometryNode.getMaterial().addDefine(ShaderSource.S_SKINS_SRC);
+                Log.log("重新编译:" , geometryNode.getMaterial());
+            }
             return geometryNode;
         }
     }

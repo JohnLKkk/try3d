@@ -26,6 +26,8 @@ export default class SubShaderDef {
         this._m_UseParams = [];
         // 着色器使用的参数变量
         this._m_ShaderParams = {};
+        // 着色器使用的上下文宏定义
+        this._m_ShaderContextDefines = {};
         // 使用的块定义
         this._m_UseBlocks = [];
         // 该subShader使用的fb,null表示使用默认
@@ -125,8 +127,17 @@ export default class SubShaderDef {
             }
         });
     }
+    addContextDefine(shaderType, define){
+        if(!this._m_ShaderContextDefines[shaderType]){
+            this._m_ShaderContextDefines[shaderType] = {};
+        }
+        this._m_ShaderContextDefines[shaderType][define] = true;
+    }
     getShaderParams(){
         return this._m_ShaderParams;
+    }
+    getShaderContextDefines(){
+        return this._m_ShaderContextDefines;
     }
     getUseParams(){
         return this._m_UseParams;

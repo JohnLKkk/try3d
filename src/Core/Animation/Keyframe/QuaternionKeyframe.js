@@ -12,5 +12,14 @@ export default class QuaternionKeyframe extends AnimKeyframe{
         super(time);
         this._m_Value = new Quaternion(x, y, z, w);
     }
+    setInterpolationMode(interpolationMode){
+        super.setInterpolationMode(interpolationMode);
+
+        // 根据具体插值模式修改插值计算函数
+        // Log.log('interpolationMode:' + interpolationMode);
+        if(interpolationMode == AnimKeyframe.S_LINEAR){
+            this.interpolation = Quaternion.slerp;
+        }
+    }
 
 }

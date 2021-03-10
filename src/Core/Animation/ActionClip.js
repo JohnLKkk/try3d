@@ -50,4 +50,34 @@ export default class ActionClip {
         this._m_ActionTrack = track;
     }
 
+    /**
+     * 更新动作。<br/>
+     * @param {Number}[time 当前时间]
+     */
+    update(time){
+        let keyFrameId = 0;
+        let keyFrame = null;
+        let keyFrames = this._m_Keyframes.length;
+        while (keyFrameId < keyFrames && this._m_Keyframes[keyFrameId].getTime() < time){
+            keyFrameId++;
+        }
+
+        if(keyFrameId == 0){
+            keyFrame = this._m_Keyframes[keyFrameId];
+            this._m_ActionTrack.setValue(keyFrame.getValue());
+        }
+        else if(keyFrameId == keyFrames){
+            keyFrameId -= 1;
+            keyFrame = this._m_Keyframes[keyFrameId];
+            this._m_ActionTrack.setValue(keyFrame.getValue());
+        }
+        else{
+            let left = this._m_Keyframes[keyFrameId - 1];
+            let right = this._m_Keyframes[keyFrameId];
+
+            keyFrame = left.interpolation(left.getValue(), right.getValue(), time);
+            this._m_ActionTrack.setValue(keyFrame);
+        }
+    }
+
 }

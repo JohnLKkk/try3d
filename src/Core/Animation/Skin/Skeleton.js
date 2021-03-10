@@ -4,11 +4,39 @@
  * @author Kkk
  * @date 2021年3月9日10点38分
  */
+import ShaderSource from "../../WebGL/ShaderSource.js";
+
 export default class Skeleton {
     constructor(name) {
         this._m_Name = name;
         this._m_Joints = [];
         this._m_ActiveJoints = [];
+        this._m_IsReady = false;
+    }
+
+    /**
+     * 初始化骨架。<br/>
+     * @param {WebGL}[gl]
+     * @param {FrameContext}[frameContext]
+     */
+    init(gl, frameContext){
+        if(this._m_IsReady){
+            return;
+        }
+        this._m_IsReady = true;
+        // 初始化骨骼数据
+        this._m_Joints.forEach(joint=>{
+            joint.setRef(frameContext.m_LastSubShader.getRef(gl, ShaderSource.S_JOINTS_SRC + "[" + joint.getId() + "]"));
+            joint.init(gl);
+        });
+    }
+
+    /**
+     * 是否就绪。<br/>
+     * @return {Boolean}
+     */
+    isReady(){
+        return this._m_IsReady;
     }
 
     /**
@@ -35,6 +63,7 @@ export default class Skeleton {
         this._m_Joints.length = 0;
         joints.forEach(joint=>{
             this._m_Joints.push(joint);
+            joint.setOwnerSkeleton(this);
         });
     }
 
@@ -53,6 +82,7 @@ export default class Skeleton {
      */
     addJointAtIndex(index, joint){
         this._m_Joints[index] = joint;
+        joint.setOwnerSkeleton(this);
     }
 
     /**
@@ -61,6 +91,7 @@ export default class Skeleton {
      */
     addJoint(joint){
         this._m_Joints.push(joint);
+        joint.setOwnerSkeleton(this);
     }
 
     /**
@@ -71,8 +102,9 @@ export default class Skeleton {
         if(this._m_ActiveJoints.length > 0){
             this._m_ActiveJoints.forEach(activeJoint=>{
                 activeJoint.update(gl);
+                activeJoint.disable();
             });
-            this._m_ActiveJoints = 0;
+            this._m_ActiveJoints.length = 0;
         }
     }
 

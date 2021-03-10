@@ -12,16 +12,28 @@ export default class TrackBinding {
         // 对绑定对象的property进行轨迹操作
         switch (property) {
             case 'rotation':
-                this.setValue = node.setLocalRotationFromXYZW;
-                this.getValue = node.getLocalRotation();
+                this.setValue = (value)=>{
+                    node.setLocalRotation(value);
+                };
+                this.getValue = ()=>{
+                    return node.getLocalRotation();
+                };
                 break;
             case 'translation':
-                this.setValue = node.setLocalTranslationXYZ;
-                this.getValue = node.getLocalTranslation();
+                this.setValue = (value)=>{
+                    node.setLocalTranslation(value);
+                };
+                this.getValue = ()=>{
+                    return node.getLocalTranslation();
+                };
                 break;
             case 'scale':
-                this.setValue = node.setLocalScaleXYZ;
-                this.getValue = node.getLocalScale();
+                this.setValue = (value)=>{
+                    node.setLocalScale(value);
+                };
+                this.getValue = ()=>{
+                    return node.getLocalScale();
+                };
                 break;
         }
     }

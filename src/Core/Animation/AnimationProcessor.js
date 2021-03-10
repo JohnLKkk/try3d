@@ -16,6 +16,9 @@ export default class AnimationProcessor extends Component{
         // 这里监听场景的update而不是组件的update()事件
         this._m_Scene.on('update', exTime=>{
             // Log.log('更新AnimationProcessor!');
+            if(this._m_AnimationActions.length > 0){
+                this._m_AnimationActions[0].update(exTime);
+            }
         });
     }
 

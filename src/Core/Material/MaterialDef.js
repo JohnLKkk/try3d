@@ -342,8 +342,13 @@ export default class MaterialDef{
                 if(Tools.find(line, context.pattern)){
                     // 记录该vsShader使用的context
                     if(!conContexts[context.src]){
-                        conContexts[context.src] = true;
-                        useContexts.push(context);
+                        if(context.isFlagVariable){
+                            subShaderDef.addContextDefine(ShaderSource.VERTEX_SHADER, context.src);
+                        }
+                        else{
+                            conContexts[context.src] = true;
+                            useContexts.push(context);
+                        }
                     }
                     // 替换指定上下文
                     line = Tools.repSrc(line, context.pattern, context.tagPattern, context.tag);
@@ -625,8 +630,13 @@ export default class MaterialDef{
                 if(Tools.find(line, context.pattern)){
                     // 记录该fsShader使用的context
                     if(!conContexts[context.src]){
-                        conContexts[context.src] = true;
-                        useContexts.push(context);
+                        if(context.isFlagVariable){
+                            subShaderDef.addContextDefine(ShaderSource.VERTEX_SHADER, context.src);
+                        }
+                        else{
+                            conContexts[context.src] = true;
+                            useContexts.push(context);
+                        }
                     }
                     // 替换指定上下文
                     line = Tools.repSrc(line, context.pattern, context.tagPattern, context.tag);

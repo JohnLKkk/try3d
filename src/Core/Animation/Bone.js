@@ -31,4 +31,16 @@ export default class Bone extends Node{
         return this._m_Bind;
     }
 
+    /**
+     * 更新LocalMatrix。<br/>
+     * @private
+     */
+    _updateLocalMatrix(){
+        super._updateLocalMatrix();
+
+        if(this._m_Bind){
+            this._m_Bind.actived();
+        }
+    }
+
 }

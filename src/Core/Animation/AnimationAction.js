@@ -57,6 +57,9 @@ export default class AnimationAction {
         }
         Log.log('[[' + this.getName() + ']]动画时长:' + this._m_TimeLength + "s");
     }
+    play(){
+
+    }
 
     /**
      * 更新动画。<br/>

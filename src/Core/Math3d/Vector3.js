@@ -4,6 +4,8 @@
  * @date 2020年10月10日10点53分
  */
 export default class Vector3 {
+    // 内部缓存
+    static _S_TEMP_VEC3 = new Vector3();
     constructor(x,y,z) {
         this._m_X = x || 0;
         this._m_Y = y || 0;
@@ -246,6 +248,34 @@ export default class Vector3 {
     }
     toString(){
         return '[' + this._m_X + ',' + this._m_Y + ',' + this._m_Z + ']';
+    }
+
+    /**
+     * 以线性插值方式插值到v2。<br/>
+     * @param {Vector3}[v2]
+     * @param {Number}[t 0-1]
+     * @param {Vector3}[result]
+     * @return {Vector3}
+     */
+    inter(v2, t, result){
+        return Vector3.inter(this, v2, t, result);
+    }
+
+    /**
+     * 以线性插值方式从v1到v2。<br/>
+     * @param {Vector3}[v1]
+     * @param {Vector3}[v2]
+     * @param {Number}[t 0-1]
+     * @param {Vector3}[result]
+     * @return {Vector3}
+     */
+    static inter(v1, v2, t, result){
+        let s = 1.0 - t;
+        result = result ? result : Vector3._S_TEMP_VEC3;
+        result._m_X = v1._m_X * s + v2._m_X * t;
+        result._m_Y = v1._m_Y * s + v2._m_Y * t;
+        result._m_Z = v1._m_Z * s + v2._m_Z * t;
+        return result;
     }
 
 }

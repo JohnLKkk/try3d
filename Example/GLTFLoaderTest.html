@@ -23,6 +23,7 @@
     import MeshFactor from "../src/Core/Util/MeshFactor.js";
     import Geometry from "../src/Core/Node/Geometry.js";
     import GLTFLoader from "../src/Supp/GLTFLoader.js";
+    import MoreMath from "../src/Core/Math3d/MoreMath.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -46,8 +47,9 @@
         // // 使用OctCullingControl来管理静态场景
         rootNode.addChildren(modelNode);
         console.log("modelNode:",modelNode);
-        let octCullingControl = new OctCullingControl(modelNode, {id:'octCulling'});
-        octCullingControl.debug(rootNode, colorMat);
+        modelNode.setLocalRotationFromEuler(-MoreMath.toRadians(90), 0, 0);
+        // let octCullingControl = new OctCullingControl(modelNode, {id:'octCulling'});
+        // octCullingControl.debug(rootNode, colorMat);
         // console.log("modelNode:",modelNode);
     });
 

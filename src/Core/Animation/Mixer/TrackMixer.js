@@ -41,9 +41,9 @@ export default class TrackMixer {
      * @param {Number}[time 当前时间]
      */
     update(time){
-        // 对clip进行关键帧插值
+        // 混合剪辑
         this._m_Clips.forEach(clip=>{
-
+            clip.update(time);
         });
     }
 

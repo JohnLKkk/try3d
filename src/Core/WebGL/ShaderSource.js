@@ -42,6 +42,7 @@ export default class ShaderSource {
     static S_UV3_SRC = "_uv3";
     static S_JOINT_0_SRC = "_joint_0";
     static S_WEIGHT_0_SRC = "_weight_0";
+    static S_JOINTS_SRC = "_joints";
     static S_OUT_COLOR = "_outColor";
     static S_OUT_POSITION = "gl_Position";
     static S_MODEL_MATRIX_SRC = "_model_matrix";
@@ -60,6 +61,10 @@ export default class ShaderSource {
     static S_BATCH_LIGHT_SIZE = 4 * 3;
 
     static S_CAMERA_POSITION_SRC = "_cameraPosition";
+
+    // Skin
+    static S_MAX_BONE = 256;
+    static S_SKINS_SRC = '_C_SKINS';
 
     static S_G_POSITION_SRC = "_gPosition";
     static S_G_NORMAL_SRC = "_gNormal";
@@ -103,6 +108,8 @@ export default class ShaderSource {
         "Context.InPosition":{src:ShaderSource.S_POSITION_SRC, loc:ShaderSource.S_POSITION, pattern:/Context.InPosition/, tagPattern:/Context.InPosition/g, tag:"_position", type:"vec3"},
         "Context.InNormal":{src:ShaderSource.S_NORMAL_SRC, loc:ShaderSource.S_NORMAL, pattern:/Context.InNormal/, tagPattern:/Context.InNormal/g, tag:"_normal", type:"vec3"},
         "Context.InUv0":{src:ShaderSource.S_UV0_SRC, loc:ShaderSource.S_UV0, pattern:/Context.InUv0/, tagPattern:/Context.InUv0/g, tag:ShaderSource.S_UV0_SRC, type:"vec2"},
+        "Context.InJoint0":{src:ShaderSource.S_JOINT_0_SRC, loc:ShaderSource.S_JOINT_0, pattern:/Context.InJoint0/, tagPattern:/Context.InJoint0/g, tag:ShaderSource.S_JOINT_0_SRC, type:"vec4"},
+        "Context.InWeight0":{src:ShaderSource.S_WEIGHT_0_SRC, loc:ShaderSource.S_WEIGHT_0, pattern:/Context.InWeight0/, tagPattern:/Context.InWeight0/g, tag:ShaderSource.S_WEIGHT_0_SRC, type:"vec4"},
         "Context.OutPosition":{src:ShaderSource.S_OUT_POSITION, pattern:/Context.OutPosition/, tagPattern:/Context.OutPosition/g, tag:"gl_Position"},
         "Context.ProjectViewModelMatrix":{src:ShaderSource.S_MVP_SRC, pattern:/Context.ProjectViewModelMatrix/, tagPattern:/Context.ProjectViewModelMatrix/g, tag:"_model_view_project_matrix", type:"mat4", utype:"uniform mat4"},
         "Context.ViewMatrix":{src:ShaderSource.S_VIEW_MATRIX_SRC, pattern:/Context.ViewMatrix/, tagPattern:/Context.ViewMatrix/g, tag:ShaderSource.S_VIEW_MATRIX_SRC, def:'MAT'},
@@ -110,6 +117,7 @@ export default class ShaderSource {
         "Context.ModelMatrix":{src:ShaderSource.S_MODEL_MATRIX_SRC, pattern:/Context.ModelMatrix/, tagPattern:/Context.ModelMatrix/g, tag:ShaderSource.S_MODEL_MATRIX_SRC, type:"mat4", utype:"uniform mat4"},
         "Context.ProjectViewMatrix":{src:ShaderSource.S_VP_SRC, pattern:/Context.ProjectViewMatrix/, tagPattern:/Context.ProjectViewMatrix/g, tag:ShaderSource.S_VP_SRC, def:'MAT'},
         "Context.OutColor":{src:ShaderSource.S_OUT_COLOR, pattern:/Context.OutColor/, tagPattern:/Context.OutColor/g, tag:"_outColor", type:"out vec4"},
+        "Context.Joints":{src:ShaderSource.S_JOINTS_SRC, pattern:/Context.Joints/, tagPattern:/Context.Joints/g, tag:ShaderSource.S_JOINTS_SRC, type:"vec4", utype:"uniform mat4", modifier:'[' + ShaderSource.S_MAX_BONE + ']'},
         "Context.VLightData":{src:ShaderSource.S_V_LIGHT_DATA_SRC, pattern:/Context.VLightData/, tagPattern:/Context.VLightData/g, tag:ShaderSource.S_V_LIGHT_DATA_SRC, type:"vec4", utype:"uniform vec4", modifier:'[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']'},
         "Context.WLightData":{src:ShaderSource.S_W_LIGHT_DATA_SRC, pattern:/Context.WLightData/, tagPattern:/Context.WLightData/g, tag:ShaderSource.S_W_LIGHT_DATA_SRC, type:"vec4", utype:"uniform vec4", modifier:'[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']'},
         "Context.CurLightCount":{src:ShaderSource.S_CUR_LIGHT_COUNT_SRC, pattern:/Context.CurLightCount/, tagPattern:/Context.CurLightCount/g, tag:ShaderSource.S_CUR_LIGHT_COUNT_SRC, type:"int", utype:'uniform int'},
@@ -126,6 +134,12 @@ export default class ShaderSource {
         "Context.OutGNormal":{src:ShaderSource.S_G_NORMAL_SRC, loc:ShaderSource.S_G_NORMAL, pattern:/Context.OutGNormal/, tagPattern:/Context.OutGNormal/g, tag:ShaderSource.S_G_NORMAL_SRC, type:"vec3"},
         "Context.OutGAlbedoSpec":{src:ShaderSource.S_G_ALBEDOSPEC_SRC, loc:ShaderSource.S_G_ALBEDOSPEC, pattern:/Context.OutGAlbedoSpec/, tagPattern:/Context.OutGAlbedoSpec/g, tag:ShaderSource.S_G_ALBEDOSPEC_SRC, type:"vec4"},
         "Context.OutGDepth":{src:ShaderSource.S_G_DEPTH_SRC, loc:ShaderSource.S_G_DEPTH, pattern:/Context.OutGDepth/, tagPattern:/Context.OutGDepth/g, tag:ShaderSource.S_G_DEPTH_SRC, type:"vec4"},
+
+        // 全局变量
+        "Context.Skins":{src:ShaderSource.S_SKINS_SRC, loc:ShaderSource.S_G_DEPTH, pattern:/Context.Skins/, tagPattern:/Context.Skins/g, tag:ShaderSource.S_SKINS_SRC, isFlagVariable:true},
+
+        // 上下文定义
+        '_C_SKINS':"#define " + ShaderSource.S_SKINS_SRC + " " + ShaderSource.S_SKINS_SRC,
     };
 
     constructor() {

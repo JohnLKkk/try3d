@@ -263,39 +263,52 @@ export default class SubShader {
     /**
      * 添加参数定义。<br/>
      * @param {String}[param 参数名]
+     * @param {Boolean}[isContextDefine 表明是否为上下文定义]
      */
-    addDefine(param){
+    addDefine(param, isContextDefine){
         if(!this._m_AleadyDefinedParams[param]){
-            if(this._m_CanDefineParams[param]){
+            if(this._m_CanDefineParams[param] || isContextDefine){
                 if(!this._m_Defines){
                     this._m_Defines = {};
                 }
                 // 定义参数
                 let shaderParams = this._m_Def.getShaderParams();
-                if(shaderParams[ShaderSource.VERTEX_SHADER] && shaderParams[ShaderSource.VERTEX_SHADER][param]){
+                let shaderContextDefines = this._m_Def.getShaderContextDefines();
+                if((shaderParams[ShaderSource.VERTEX_SHADER] && shaderParams[ShaderSource.VERTEX_SHADER][param]) || (shaderContextDefines[ShaderSource.VERTEX_SHADER] && shaderContextDefines[ShaderSource.VERTEX_SHADER][param])){
                     // 加入顶点着色器
                     if(!this._m_Defines[ShaderSource.VERTEX_SHADER]){
                         this._m_Defines[ShaderSource.VERTEX_SHADER] = "";
                     }
-                    this._m_Defines[ShaderSource.VERTEX_SHADER] += this._m_CanDefineParams[param] + "\n";
+                    if(isContextDefine){
+                        this._m_Defines[ShaderSource.VERTEX_SHADER] += ShaderSource.Context_Data[param] + "\n";
+                    }
+                    else{
+                        this._m_Defines[ShaderSource.VERTEX_SHADER] += this._m_CanDefineParams[param] + "\n";
+                    }
 
                     if(!this._m_KeyDefs){
                         this._m_KeyDefs = "";
                     }
                     this._m_KeyDefs += param + ",";
                 }
-                else if(shaderParams[ShaderSource.FRAGMENT_SHADER] && shaderParams[ShaderSource.FRAGMENT_SHADER][param]){
+                else if((shaderParams[ShaderSource.FRAGMENT_SHADER] && shaderParams[ShaderSource.FRAGMENT_SHADER][param]) || (shaderContextDefines[ShaderSource.FRAGMENT_SHADER] && shaderContextDefines[ShaderSource.FRAGMENT_SHADER][param])){
                     // 加入片段着色器
                     if(!this._m_Defines[ShaderSource.FRAGMENT_SHADER]){
                         this._m_Defines[ShaderSource.FRAGMENT_SHADER] = "";
                     }
-                    this._m_Defines[ShaderSource.FRAGMENT_SHADER] += this._m_CanDefineParams[param] + "\n";
+                    if(isContextDefine){
+                        this._m_Defines[ShaderSource.VERTEX_SHADER] += ShaderSource.Context_Data[param] + "\n";
+                    }
+                    else{
+                        this._m_Defines[ShaderSource.FRAGMENT_SHADER] += this._m_CanDefineParams[param] + "\n";
+                    }
 
                     if(!this._m_KeyDefs){
                         this._m_KeyDefs = "";
                     }
                     this._m_KeyDefs += param + ",";
                 }
+                this._m_AleadyDefinedParams[param] = true;
             }
         }
     }
@@ -341,6 +354,16 @@ export default class SubShader {
             this._m_Defines = null;
         }
         this._m_NeedLoadShaderCaches = true;
+    }
+
+    /**
+     * 返回指定参数的Ref。<br/>
+     * @param {WebGL}[gl]
+     * @param {String}[name]
+     * @return {WebGLUniformLocation}
+     */
+    getRef(gl, name){
+        return gl.getUniformLocation(this._m_ShaderProgram.getProgram(), name);
     }
 
 }

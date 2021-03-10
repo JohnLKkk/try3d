@@ -5,6 +5,9 @@
  * @date 2021年2月22日13点51分
  */
 export default class Quaternion {
+    // 内部缓存
+    static _S_TEMP_QUATERNION = new Quaternion();
+    static _S_TEMP_QUATERNION_2 = new Quaternion();
     constructor(x, y, z, w) {
         this._m_X = x || 0;
         this._m_Y = y || 0;
@@ -152,6 +155,87 @@ export default class Quaternion {
         result._m_Z = 2 * x * z * vx + 2 * y * z * vy + z * z * vz - 2 * w
             * y * vx - y * y * vz + 2 * w * x * vy - x * x * vz + w
             * w * vz;
+        return result;
+    }
+
+    /**
+     * 以球面插值方式插值到q2。<br/>
+     * @param {Quaternion}[q2]
+     * @param {Number}[t]
+     * @param {Quaternion}[result]
+     * @return {Quaternion}
+     */
+    slerp(q2, t, result){
+        return Quaternion.slerp(this, q2, t, result);
+    }
+
+    /**
+     * 以球面插值方式从q1到q2。<br/>
+     * @param {Quaternion}[q1]
+     * @param {Quaternion}[q2]
+     * @param {Number}[t]
+     * @param {Quaternion}[result]
+     * @return {Quaternion}
+     */
+    static slerp(q1, q2, t, result){
+        let dot = q1._m_W * q2._m_W + q1._m_X * q2._m_X + q1._m_Y * q2._m_Y + q1._m_Z * q2._m_Z;
+        let q0 = null;
+        if(dot < 0.0){
+            q0 = Quaternion._S_TEMP_QUATERNION;
+            q0._m_W = -q1._m_W;
+            q0._m_X = -q1._m_X;
+            q0._m_Y = -q1._m_Y;
+            q0._m_Z = -q1._m_Z;
+            dot = -dot;
+        }
+        else{
+            q0 = q1;
+        }
+        let k0, k1;
+        if ( dot > 0.9995 ) {
+            k0 = 1.0 - t;
+            k1 = t;
+        }
+        else {
+            let a = Math.acos(dot);
+            let sina = Math.sin(a);
+            k0 = (Math.sin((1.0 - t) * a)  / sina);
+            k1 = (Math.sin(t * a) / sina);
+        }
+        //q0.mW * k0 + q2.mW *k1, q0.mX * k0 + q2.mX * k1, q0.mY * k0 + q2.mY * k1, q0.mZ * k0 + q2.mZ * k1
+        result = result ? result : Quaternion._S_TEMP_QUATERNION_2;
+        result._m_W = q0._m_W * k0 + q2._m_W * k1;
+        result._m_X = q0._m_X * k0 + q2._m_X * k1;
+        result._m_Y = q0._m_Y * k0 + q2._m_Y * k1;
+        result._m_Z = q0._m_Z * k0 + q2._m_Z * k1;
+        return result;
+    }
+
+    /**
+     * 以线性插值方式插值到q2。<br/>
+     * @param {Quaternion}[q2]
+     * @param {Number}[t 0-1]
+     * @param {Quaternion}[result]
+     * @return {Quaternion}
+     */
+    inter(q2, t, result){
+        return Quaternion.inter(this, q2, t, result);
+    }
+    /**
+     * 以线性插值方式从q1到q2。<br/>
+     * @param {Quaternion}[q1]
+     * @param {Quaternion}[q2]
+     * @param {Number}[t 0-1]
+     * @param {Quaternion}[result]
+     * @return {Quaternion}
+     */
+    static inter(q1, q2, t, result){
+        let s = 1.0 - t;
+        result = result ? result : Quaternion._S_TEMP_QUATERNION;
+        result._m_X = q1._m_X * s + q2._m_X * t;
+        result._m_Y = q1._m_Y * s + q2._m_Y * t;
+        result._m_Z = q1._m_Z * s + q2._m_Z * t;
+        result._m_W = q1._m_W * s + q2._m_W * t;
         return result;
     }
 

@@ -17,6 +17,8 @@ export default class AnimKeyframe {
         this._m_Value = null;
         // 插值方式
         this._m_InterpolationMode = AnimKeyframe.S_INTERPOLATION_MODE[AnimKeyframe.S_LINEAR];
+        // 插值函数
+        this.interpolation = null;
     }
 
     /**
@@ -43,9 +45,4 @@ export default class AnimKeyframe {
         this._m_InterpolationMode = AnimKeyframe.S_INTERPOLATION_MODE[interpolationMode];
     }
 
-    /**
-     * 插值。<br/>
-     * @param {Number}[time 当前时间点]
-     */
-    interpolation(time){}
 }

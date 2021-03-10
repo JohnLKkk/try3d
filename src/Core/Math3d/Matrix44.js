@@ -240,6 +240,18 @@ export default class Matrix44 {
     }
 
     /**
+     * 将当前矩阵设置为指定矩阵数组的转置。<br/>
+     * @param {Number[]}[array]
+     */
+    setArrayTranspose(array){
+        for(let i = 0, t = 0;i < 4;i++){
+            for(let j = 0;j < 4;j++){
+                this.m[t++] = array[j * 4 + i];
+            }
+        }
+    }
+
+    /**
      * 将矩阵所有值设置为正。<br/>
      */
     absLocal(){

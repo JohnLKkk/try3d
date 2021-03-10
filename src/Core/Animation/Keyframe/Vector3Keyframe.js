@@ -18,6 +18,9 @@ export default class Vector3Keyframe extends AnimKeyframe{
 
         // 根据具体插值模式修改插值计算函数
         // Log.log('interpolationMode:' + interpolationMode);
+        if(interpolationMode == AnimKeyframe.S_LINEAR){
+            this.interpolation = Vector3.inter;
+        }
     }
 
 }
