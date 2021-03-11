@@ -14,7 +14,7 @@ export default class Quaternion {
         this._m_X = x || 0;
         this._m_Y = y || 0;
         this._m_Z = z || 0;
-        this._m_W = w || 1;
+        this._m_W = w || 0;
     }
 
     /**
@@ -243,6 +243,101 @@ export default class Quaternion {
         result._m_Z = q0._m_Z * k0 + q2._m_Z * k1;
         return result;
     }
+    static slerp2(q1, q2, t, result){
+        result = result ? result : Quaternion._S_TEMP_QUATERNION_2;
+        if ( t === 0 ) {
+            result.setTo(q1);
+            return result;
+        };
+        if ( t === 1 ) {
+            result.setTo(q2);
+            return result;
+        };
+
+        const x = q1._m_X, y = q1._m_Y, z = q1._m_Z, w = q1._m_W;
+
+        // http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/
+
+        let cosHalfTheta = w * q2._m_W + x * q2._m_X + y * q2._m_Y + z * q2._m_Z;
+
+        let q0 = null;
+        if ( cosHalfTheta < 0 ) {
+            q0 = Quaternion._S_TEMP_QUATERNION;
+            q0._m_W = - q2._m_W;
+            q0._m_X = - q2._m_X;
+            q0._m_Y = - q2._m_Y;
+            q0._m_Z = - q2._m_Z;
+
+            cosHalfTheta = - cosHalfTheta;
+
+        } else {
+
+            q0 = q2;
+
+        }
+
+        if ( cosHalfTheta >= 1.0 ) {
+
+            result._m_W = w;
+            result._m_X = x;
+            result._m_Y = y;
+            result._m_Z = z;
+
+            return result;
+
+        }
+
+        const sqrSinHalfTheta = 1.0 - cosHalfTheta * cosHalfTheta;
+
+        if ( sqrSinHalfTheta <= Number.EPSILON ) {
+
+            const s = 1.0 - t;
+            result._m_W = s * w + t * q0._m_W;
+            result._m_X = s * x + t * q0._m_X;
+            result._m_Y = s * y + t * q0._m_Y;
+            result._m_Z = s * z + t * q0._m_Z;
+
+            result.normal();
+
+            return result;
+
+        }
+
+        const sinHalfTheta = Math.sqrt( sqrSinHalfTheta );
+        const halfTheta = Math.atan2( sinHalfTheta, cosHalfTheta );
+        const ratioA = Math.sin( ( 1.0 - t ) * halfTheta ) / sinHalfTheta,
+            ratioB = Math.sin( t * halfTheta ) / sinHalfTheta;
+
+        result._m_W = ( w * ratioA + q0._m_W * ratioB );
+        result._m_X = ( x * ratioA + q0._m_X * ratioB );
+        result._m_Y = ( y * ratioA + q0._m_Y * ratioB );
+        result._m_Z = ( z * ratioA + q0._m_Z * ratioB );
+
+        return result;
+    }
+    /**
+     * 归一化向量。<br/>
+     * @returns {Vector3}
+     */
+    normal(){
+        let l = this.length();
+        if(l){
+            l = 1.0 / l;
+            this._m_X *= l;
+            this._m_Y *= l;
+            this._m_Z *= l;
+            this._m_W *= l;
+        }
+        else{
+            console.error("Vector3.normal异常,长度为0。");
+        }
+        return this;
+    }
+    length(){
+        let d = this._m_X * this._m_X + this._m_Y * this._m_Y + this._m_Z * this._m_Z + this._m_W * this._m_W;
+        d = Math.sqrt(d);
+        return d;
+    }
 
     /**
      * 以线性插值方式插值到q2。<br/>
@@ -270,6 +365,9 @@ export default class Quaternion {
         result._m_Z = q1._m_Z * s + q2._m_Z * t;
         result._m_W = q1._m_W * s + q2._m_W * t;
         return result;
+    }
+    toString(){
+        return "[" + this._m_X + "," + this._m_Y + "," + this._m_Z + "," + this._m_W + "]";
     }
 
 }

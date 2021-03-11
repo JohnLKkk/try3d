@@ -141,7 +141,14 @@ export default class GLTFLoader {
                     }
                     if(!t){
                         // 非skin动画
-                        Log.log('非skin动画!');
+                        Log.log('非skin动画!path:' + channel.target.path);
+                        let animationProcessor = null;
+                        if(!this._m_AnimationProcessors[node]){
+                            let animationProcessor = new AnimationProcessor(this._m_GLTFRootNode, {id:Tools.nextId() + "_" + node + "_animationProcessor"});
+                            this._m_AnimationProcessors[node] = animationProcessor;
+                        }
+                        animationProcessor = this._m_AnimationProcessors[node];
+                        animationProcessor.addAnimationAction(animationAction);
                     }
                 }
             });
@@ -267,6 +274,7 @@ export default class GLTFLoader {
                     // 这里将所有animationProcessor附加到根节点中,而不再附加到最近层级,虽然没有了层级描述性,但方便了使用和管理
                     let animationProcessor = new AnimationProcessor(this._m_GLTFRootNode, {id:Tools.nextId() + "_animationProcessor"});
                     this._m_Aps.push({skeleton, animationProcessor});
+                    this._m_AnimationProcessors[_node.skin] = animationProcessor;
                 }
             }
         }

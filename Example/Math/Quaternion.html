@@ -10,12 +10,17 @@
         import MoreMath from "../../src/Core/Math3d/MoreMath.js";
 
         // 基于指定数据创建四元数
-        let q = new Quaternion(-0.7071068286895752, 0, 0, 0.7071068286895752);
+        // let q = new Quaternion(-0.7071068286895752, 0, 0, 0.7071068286895752);
+        let q = new Quaternion(0.0, 0.0, 1, 0.0001);
         // 从四元数获取欧拉角
         let angles = new Array(3);
         q.toAngles(angles);
         // 使用角度值(而非弧度值)打印欧拉角
         console.log("[" + MoreMath.toAngle(angles[0]) + "," + MoreMath.toAngle(angles[1]) + "," + MoreMath.toAngle(angles[2]) + "]");
+
+        let q2 = new Quaternion();
+        q2.fromEuler(0, 0, MoreMath.toRadians(180));
+        console.log("q2:" + q2.toString());
     </script>
 </body>
 </html>
