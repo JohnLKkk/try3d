@@ -13,13 +13,42 @@ export default class AnimationProcessor extends Component{
         this._m_AnimationActions = [];
         this._m_AnimationActionMaps = {};
 
+        // 激活的动画
+        this._m_ActiveAnimationActions = [];
+
         // 这里监听场景的update而不是组件的update()事件
+        let count = -1;
         this._m_Scene.on('update', exTime=>{
             // Log.log('更新AnimationProcessor!');
-            if(this._m_AnimationActions.length > 0){
-                this._m_AnimationActions[0].update(exTime);
+            count = this._m_ActiveAnimationActions.length;
+            if(count > 0){
+                for(let i = 0;i < count;i++){
+                    // 播放所有动画
+                    this._m_ActiveAnimationActions[i].update(exTime);
+                }
             }
         });
+    }
+
+    /**
+     * 激活一个动画,由内部调用。<br/>
+     * @param {AnimationAction}[activeAnimation]
+     * @private
+     */
+    _activeAnimationAction(activeAnimation){
+        this._m_ActiveAnimationActions.push(activeAnimation);
+    }
+
+    /**
+     * 禁用一个动画,由内部调用。<br/>
+     * @param {AnimationAction}[disableAnimation]
+     * @private
+     */
+    _disableAnimationAction(disableAnimation){
+        let i = this._m_ActiveAnimationActions.indexOf(disableAnimation);
+        if(i > -1){
+            this._m_ActiveAnimationActions.splice(i, 1);
+        }
     }
 
     /**
@@ -30,6 +59,7 @@ export default class AnimationProcessor extends Component{
         if(!this._m_AnimationActionMaps[animationAction.getName()]){
             this._m_AnimationActionMaps[animationAction.getName()] = animationAction;
             this._m_AnimationActions.push(animationAction);
+            animationAction._setProcessor(this);
         }
     }
 
@@ -40,6 +70,26 @@ export default class AnimationProcessor extends Component{
      */
     getAnimationAction(name){
         return this._m_AnimationActionMaps[name];
+    }
+
+    /**
+     * 返回指定索引的动画。<br/>
+     * @param {Number}[i]
+     * @return {AnimationAction}
+     */
+    getAnimationActionAtIndex(i){
+        if(i >= this._m_AnimationActions.length){
+            return null;
+        }
+        return this._m_AnimationActions[i];
+    }
+
+    /**
+     * 返回所有动画。<br/>
+     * @return {AnimationAction[]}
+     */
+    getAnimationActions(){
+        return this._m_AnimationActions;
     }
 
 }

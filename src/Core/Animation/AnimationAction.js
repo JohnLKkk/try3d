@@ -10,6 +10,9 @@ export default class AnimationAction {
     static S_LOOP = 0x001;
     static S_DONT_LOOP = 0x002;
     static S_BACK_AND_FORTH = 0x003;
+    static S_PLAY = 1;
+    static S_PAUSE = 1 << 1;
+    static S_STOP = 1 << 2;
     constructor(name) {
         // 动画名称
         this._m_Name = name;
@@ -20,8 +23,24 @@ export default class AnimationAction {
         // 播放模式
         this._m_Mode = AnimationAction.S_LOOP;
         this._m_TimeMode = 1;
+        // 处理器
+        this._m_Processor = null;
         // 轨迹合成器
         this._m_TrackMixer = null;
+        // 动画状态
+        this._m_State = AnimationAction.S_STOP;
+    }
+    setAnimationMode(mode){
+
+    }
+
+    /**
+     * 设置处理器，内部调用。<br/>
+     * @param {AnimationProcessor}[processor]
+     * @private
+     */
+    _setProcessor(processor){
+        this._m_Processor = processor;
     }
 
     /**
@@ -57,8 +76,45 @@ export default class AnimationAction {
         }
         Log.log('[[' + this.getName() + ']]动画时长:' + this._m_TimeLength + "s");
     }
-    play(){
 
+    /**
+     * 播放当前动画。<br/>
+     */
+    play(){
+        if(this._m_State == AnimationAction.S_PLAY){
+            return;
+        }
+        // 激活动画
+        this._m_Processor._activeAnimationAction(this);
+        this._m_State = AnimationAction.S_PLAY;
+    }
+
+    /**
+     * 暂停当前动画。<br/>
+     */
+    pause(){
+        if(this._m_State == AnimationAction.S_PAUSE){
+            return;
+        }
+        // 只有播放过的动画才需要禁用
+        if(this._m_State == AnimationAction.S_PLAY)
+            this._m_Processor._disableAnimationAction(this);
+        this._m_State = AnimationAction.S_PAUSE;
+    }
+
+    /**
+     * 停止当前动画。<br/>
+     */
+    stop(){
+        if(this._m_State == AnimationAction.S_STOP){
+            return;
+        }
+        // 只有播放过的动画才需要禁用
+        if(this._m_State == AnimationAction.S_PLAY)
+            this._m_Processor._disableAnimationAction(this);
+        this._m_State = AnimationAction.S_STOP;
+        // 重置时间
+        this._m_Time = 0;
     }
 
     /**

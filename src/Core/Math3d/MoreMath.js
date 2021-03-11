@@ -9,6 +9,7 @@ const ppD = 1.0 / Math.PI;
  * @date 2021年2月2日15点25分
  */
 export default class MoreMath {
+    static S_HALF_PI = 0.5 * Math.PI;
     constructor() {
     }
 

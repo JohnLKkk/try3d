@@ -22,6 +22,9 @@ export default class SkinGeometry extends Geometry{
 
         // 更新骨架
         if(this._m_Skeleton){
+            if(!this._m_Skeleton.isFinished()){
+                return;
+            }
             if(!this._m_Skeleton.isReady()){
                 this._m_Skeleton.init(gl, frameContext);
             }

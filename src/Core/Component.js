@@ -104,11 +104,52 @@ export default class Component {
             console.error("component必须是一个组件!!");
         }
     }
+
+    /**
+     * 返回指定Id的组件。<br/>
+     * @param {String}[id]
+     * @return {Component}
+     */
     getComponent(id){
         if(this._m_OwnerAttachComponentIDs[id]){
             return this._m_OwnerAttachComponentIDs[id];
         }
         return null;
+    }
+
+    /**
+     * 返回指定索引的组件。<br/>
+     * @param {Number}[index]
+     * @return {Component}
+     */
+    getComponentAtIndex(index){
+        if(index >= this._m_OwnerAttachComponents.length){
+            return null;
+        }
+        return this._m_OwnerAttachComponents[index];
+    }
+
+    /**
+     * 返回指定类型的组件。<br/>
+     * @param {String}[type]
+     * @return {Component}
+     */
+    getComponentAtType(type){
+        let count = this._m_OwnerAttachComponents.length;
+        for(let i = 0;i < count;i++){
+            if(this._m_OwnerAttachComponents[i].getType() == type){
+                return this._m_OwnerAttachComponents[i];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 返回所有组件。<br/>
+     * @return {Component[]}
+     */
+    getComponents(){
+        return this._m_OwnerAttachComponents;
     }
 
     /**
@@ -119,7 +160,10 @@ export default class Component {
         if(component instanceof Component){
             if(this._m_OwnerAttachComponentIDs[component.getId()]){
                 this._m_OwnerAttachComponentIDs[component.getId()] = null;
-                this._m_OwnerAttachComponents.remove(component);
+                let i = this._m_OwnerAttachComponents.indexOf(component);
+                if(i > -1){
+                    this._m_OwnerAttachComponents.splice(i, 1);
+                }
             }
         }
     }

@@ -43,11 +43,24 @@
     rootNode.addChildren(wireFrustum);
     let gltfLoader = new GLTFLoader();
     // scene.setFrustumCullingCamera(testCamera);
+    gltfLoader.load(scene, './Assets/Models/GLTF/Axes/Axes.gltf', modelNode=>{
+        // // 使用OctCullingControl来管理静态场景
+        rootNode.addChildren(modelNode);
+        // console.log("modelNode:",modelNode);
+    });
+    gltfLoader = new GLTFLoader();
     gltfLoader.load(scene, './Assets/Models/GLTF/SimpleSkin/SimpleSkin.gltf', modelNode=>{
         // // 使用OctCullingControl来管理静态场景
         rootNode.addChildren(modelNode);
+        // modelNode.setLocalScaleXYZ(100, 100, 100);
         console.log("modelNode:",modelNode);
-        modelNode.setLocalRotationFromEuler(-MoreMath.toRadians(90), 0, 0);
+        // let armature = modelNode.getChildrenAtName('Mesh_0');
+        // let armature = modelNode.getChildrenAtIndex(0);
+        let animationProcessor = modelNode.getComponentAtType('AnimationProcessor');
+        let anim = animationProcessor.getAnimationActionAtIndex(0);
+        anim.play();
+        // animationProcessor.getAnimationActionAtIndex(0).play();
+        // console.log("animationProcessor:" , armature);
         // let octCullingControl = new OctCullingControl(modelNode, {id:'octCulling'});
         // octCullingControl.debug(rootNode, colorMat);
         // console.log("modelNode:",modelNode);

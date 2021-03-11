@@ -29,11 +29,14 @@ export default class GLTFLoader {
     static DATA_COMPONENT = {'SCALAR':1, 'VEC3':3, 'VEC4':4, 'MAT4':16};
     load(scene, src, callback){
         this._m_Scene = scene;
+        this._m_GLTFRootNode = null;
         this._m_DefaultMatDef = null;
         this._m_Joints = {};
         this._m_Bones = [];
         this._m_Nodes = {};
         this._m_Aps = [];
+        this._m_Skeletons = {};
+        this._m_AnimationProcessors = {};
         this._m_Mats = {};
         this._m_BasePath = AssetLoader.getBasePath(src);
         this._loadGLTF(src, callback);
@@ -78,17 +81,22 @@ export default class GLTFLoader {
                         Log.log("所有二进制加载完成!",buffers);
                         gltf.buffers = buffers;
 
+                        let scene = null;
                         // 开始解析场景
                         if(Tools.checkIsNull(gltf.scene)){
-                            let scene = this._addScene(gltf);
-                            if(callback){
-                                callback(scene);
-                            }
+                            scene = this._addScene(gltf);
                         }
 
                         // 解析动画剪辑
                         if(Tools.checkIsNull(gltf.animations)){
                             this._parseAnimations(gltf);
+                            this._m_Aps.forEach(ap=>{
+                                ap.skeleton.finished();
+                            });
+                        }
+
+                        if(callback){
+                            callback(scene);
                         }
                     });
                 }
@@ -108,30 +116,33 @@ export default class GLTFLoader {
             anim.channels.forEach(channel=>{
                 let node = channel.target.node;
                 actionClip = new ActionClip(channel.target.path);
-                // 创建轨迹
-                TrackBinding.createTrack(actionClip, this._m_Nodes[node]);
-                // 采样轨迹
-                let sampler = anim.samplers[channel.sampler];
-                this._parseSampler(gltf, sampler.input, sampler.output, sampler.interpolation, AnimKeyframeEnum.S_KEY_FRAME[channel.target.path], actionClip);
-                trackMixer.addClip(actionClip);
+                if(this._m_Nodes[node]){
+                    // 创建轨迹
+                    TrackBinding.createTrack(actionClip, this._m_Nodes[node]);
+                    // 采样轨迹
+                    let sampler = anim.samplers[channel.sampler];
+                    this._parseSampler(gltf, sampler.input, sampler.output, sampler.interpolation, AnimKeyframeEnum.S_KEY_FRAME[channel.target.path], actionClip);
+                    trackMixer.addClip(actionClip);
 
-                t = false;
-                for(let i = 0;i < this._m_Aps.length;i++){
-                    jis = this._m_Aps[i].skeleton.getJoints();
-                    for(let j = 0;j < jis.length;j++){
-                        if(jis[j].getId() == node){
-                            t = true;
-                            jis[j].link(this._m_Nodes[node]);
-                            this._m_Aps[i].animationProcessor.addAnimationAction(animationAction);
+                    t = false;
+                    for(let i = 0;i < this._m_Aps.length;i++){
+                        jis = this._m_Aps[i].skeleton.getJoints();
+                        for(let j = 0;j < jis.length;j++){
+                            if(jis[j].getId() == node){
+                                t = true;
+                                jis[j].link(this._m_Nodes[node]);
+                                this._m_Aps[i].animationProcessor.addAnimationAction(animationAction);
+                                break;
+                            }
+                        }
+                        if(t){
                             break;
                         }
                     }
-                    if(t){
-                        break;
+                    if(!t){
+                        // 非skin动画
+                        Log.log('非skin动画!');
                     }
-                }
-                if(!t){
-                    // 非skin动画
                 }
             });
             animationAction.setTrackMixer(trackMixer);
@@ -154,9 +165,15 @@ export default class GLTFLoader {
         for(let i = 0;i < clipCount;i++){
             offset = i * dataCount;
             if(dataCount > 3){
+                if(!keyframe){
+                    Log.warn("未知keyframe!");
+                }
                 _keyframe = new keyframe(_i[i], _o[offset], _o[offset + 1], _o[offset + 2], _o[offset + 3]);
             }
             else{
+                if(!keyframe){
+                    Log.warn("未知keyframe!");
+                }
                 _keyframe = new keyframe(_i[i], _o[offset], _o[offset + 1], _o[offset + 2]);
             }
             _keyframe.setInterpolationMode(ip);
@@ -167,6 +184,7 @@ export default class GLTFLoader {
         if(Tools.checkIsNull(gltf.scene)){
             let _scene = gltf.scenes[gltf.scene];
             let sceneNode = new Node(this._m_Scene, {id:_scene.name});
+            this._m_GLTFRootNode = sceneNode;
             // 检查子节点
             if(Tools.checkIsNull(_scene.nodes)){
                 // 添加子节点
@@ -197,10 +215,10 @@ export default class GLTFLoader {
             for(let i = 0, offset = ji * 16;i < 16;i++){
                 array.push(jointSpaceData[i + offset]);
             }
-            ji++;
-            skeletonJoint = new Joint(joint);
+            skeletonJoint = new Joint(joint, ji);
             skeletonJoint.setJointSpace(array);
             skeleton.addJoint(skeletonJoint);
+            ji++;
         });
         return skeleton;
     }
@@ -226,14 +244,30 @@ export default class GLTFLoader {
         }
         // 解析mesh结构
         if(Tools.checkIsNull(_node.mesh)){
-            let geometryNode = this._parseMesh(gltf, node, _node.mesh, Tools.checkIsNull(_node.skin));
+            this._parseMesh(gltf, node, _node.mesh, Tools.checkIsNull(_node.skin));
             if(Tools.checkIsNull(_node.skin)){
                 // 添加骨架
-                let skeleton = this._parseSkins(gltf, _node.skin);
-                geometryNode.setSkeleton(skeleton);
+                // 如果已经存在skin则直接应用这套骨架
+                let skeleton = null;
+                if(this._m_Skeletons[_node.skin]){
+                    skeleton = this._m_Skeletons[_node.skin];
+                }
+                else{
+                    skeleton = this._parseSkins(gltf, _node.skin);
+                    this._m_Skeletons[_node.skin] = skeleton;
+                }
+                node.getChildren().forEach(skinGeometryNode=>{
+                    skinGeometryNode.setSkeleton(skeleton);
+                });
                 // 添加AnimationProcessor
-                let animationProcessor = new AnimationProcessor(geometryNode, {id:geometryNode.getId() + "_animationProcessor"});
-                this._m_Aps.push({skeleton, animationProcessor});
+                if(this._m_AnimationProcessors[_node.skin]){
+                    // 说明该ap被多个skin引用,应该将其附加到这些skin的父类
+                }
+                else{
+                    // 这里将所有animationProcessor附加到根节点中,而不再附加到最近层级,虽然没有了层级描述性,但方便了使用和管理
+                    let animationProcessor = new AnimationProcessor(this._m_GLTFRootNode, {id:Tools.nextId() + "_animationProcessor"});
+                    this._m_Aps.push({skeleton, animationProcessor});
+                }
             }
         }
         if(node){
@@ -348,7 +382,6 @@ export default class GLTFLoader {
                 geometryNode.getMaterial().addDefine(ShaderSource.S_SKINS_SRC);
                 Log.log("重新编译:" , geometryNode.getMaterial());
             }
-            return geometryNode;
         }
     }
     _parsePositions(gltf, i){

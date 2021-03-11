@@ -4,6 +4,8 @@
  * @author Kkk
  * @date 2021年2月22日13点51分
  */
+import MoreMath from "./MoreMath.js";
+
 export default class Quaternion {
     // 内部缓存
     static _S_TEMP_QUATERNION = new Quaternion();
@@ -38,6 +40,37 @@ export default class Quaternion {
         this._m_Y = y || 0;
         this._m_Z = z || 0;
         this._m_W = w || 0;
+    }
+
+    /**
+     * 获取该四元数表示的欧拉角,由于欧拉角的应用顺序,其结果不一定百分百正确。<br/>
+     * @see <a href="http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm">http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm</a><br/>
+     * @param {Number[]}[angles]
+     * @return {Number[]}[返回欧拉角,注意是弧度]
+     */
+    toAngles(angles){
+        angles = angles || new Array(3);
+        let sqw = this._m_W * this._m_W;
+        let sqx = this._m_X * this._m_X;
+        let sqy = this._m_Y * this._m_Y;
+        let sqz = this._m_Z * this._m_Z;
+        let unit = sqx + sqy + sqz + sqw; // 归一化
+        // 计算修正因子
+        let test = this._m_X * this._m_Y + this._m_Z * this._m_W;
+        if (test > 0.499 * unit) { // 朝北极值
+            angles[1] = 2 * Math.atan2(this._m_X, this._m_W);
+            angles[2] = MoreMath.S_HALF_PI;
+            angles[0] = 0;
+        } else if (test < -0.499 * unit) { // 朝南极值
+            angles[1] = -2 * Math.atan2(this._m_X, this._m_W);
+            angles[2] = -MoreMath.S_HALF_PI;
+            angles[0] = 0;
+        } else {
+            angles[1] = Math.atan2(2 * this._m_Y * this._m_W - 2 * this._m_X * this._m_Z, sqx - sqy - sqz + sqw); // yaw
+            angles[2] = Math.asin(2 * test / unit); // roll
+            angles[0] = Math.atan2(2 * this._m_X * this._m_W - 2 * this._m_Y * this._m_Z, -sqx + sqy - sqz + sqw); // pitch
+        }
+        return angles;
     }
 
     /**

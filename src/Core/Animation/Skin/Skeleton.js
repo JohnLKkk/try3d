@@ -12,6 +12,7 @@ export default class Skeleton {
         this._m_Joints = [];
         this._m_ActiveJoints = [];
         this._m_IsReady = false;
+        this._m_Finished = true;
     }
 
     /**
@@ -26,7 +27,7 @@ export default class Skeleton {
         this._m_IsReady = true;
         // 初始化骨骼数据
         this._m_Joints.forEach(joint=>{
-            joint.setRef(frameContext.m_LastSubShader.getRef(gl, ShaderSource.S_JOINTS_SRC + "[" + joint.getId() + "]"));
+            joint.setRef(frameContext.m_LastSubShader.getRef(gl, ShaderSource.S_JOINTS_SRC + "[" + joint.getNum() + "]"));
             joint.init(gl);
         });
     }
@@ -37,6 +38,21 @@ export default class Skeleton {
      */
     isReady(){
         return this._m_IsReady;
+    }
+
+    /**
+     * 骨架是否完整性，在骨架不完整时将不会渲染与之关联的模型。<br/>
+     * @return {Boolean}
+     */
+    isFinished(){
+        return this._m_Finished;
+    }
+
+    /**
+     * 表示骨架已经完整。<br/>
+     */
+    finished(){
+        this._m_Finished = true;
     }
 
     /**

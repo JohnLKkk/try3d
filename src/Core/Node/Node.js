@@ -4,6 +4,8 @@ import Vector3 from "../Math3d/Vector3.js";
 import Quaternion from "../Math3d/Quaternion.js";
 import AABBBoundingBox from "../Math3d/Bounding/AABBBoundingBox.js";
 import Camera from "../Scene/Camera.js";
+import Tools from "../Util/Tools.js";
+import Log from "../Util/Log.js";
 
 /**
  * 节点组件表示场景的一个关节，用于对场景进行场景图管理。<br/>
@@ -19,7 +21,11 @@ export default class Node extends Component{
     }
 
     constructor(owner, cfg) {
-        super(owner, cfg);
+        // 在不同叶子中,可能存在同名NodeName
+        // 为了区别componentId和NodeName,并使得componentId唯一,这里使用生成算法生成componentId
+        // 后续改为NodeName和componentId分开设置
+        super(owner, {id:Tools.nextId() + cfg.id});
+        this._m_Name = cfg.id;
         // 变换信息
         this._m_LocalMatrix = new Matrix44();
         this._m_WorldMatrix = new Matrix44();
@@ -134,6 +140,41 @@ export default class Node extends Component{
      */
     getChildren(){
         return this._m_Children;
+    }
+
+    /**
+     * 返回指定名称的节点，将搜索整科树。<br/>
+     * @param {String}[name]
+     * @return {Node}
+     */
+    getChildrenAtName(name){
+        let c = this._m_ChildrenIDs[name];
+        if(c){
+            return c;
+        }
+        else{
+            // 遍历子节点
+            let count = this._m_Children.length;
+            for(let i = 0;i < count;i++){
+                c = this._m_Children[i].getChildrenAtName(name);
+                if(c){
+                    return c;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 返回指定索引的子节点。<br/>
+     * @param {Number}[i]
+     * @return {Node}
+     */
+    getChildrenAtIndex(i){
+        if(i >= this._m_Children.length){
+            return null;
+        }
+        return this._m_Children[i];
     }
 
     /**
@@ -353,6 +394,14 @@ export default class Node extends Component{
     }
 
     /**
+     * 返回节点名称。<br/>
+     * @return {String}
+     */
+    getName(){
+        return this._m_Name;
+    }
+
+    /**
      * 添加一个子节点。<br/>
      * @param {Node}[children]
      */
@@ -360,17 +409,33 @@ export default class Node extends Component{
         if(children instanceof Node){
             // 检测children组件是否已经载入scene组件列表
             // 检测children是否已经添加过
-            if(children._m_Parent == null && !this._m_ChildrenIDs[children.getId()]){
-                this._m_ChildrenIDs[children.getId()] = children;
+            if(children._m_Parent == null && !this._m_ChildrenIDs[children.getName()]){
+                this._m_ChildrenIDs[children.getName()] = children;
                 this._m_Children.push(children);
                 children._m_Parent = this;
 
                 // 更新子节点
                 children._updateWorldMatrix();
             }
+            else{
+                let nextName = children.getName() + Tools.nextId();
+                Log.warn("已存在:" + children.getName() + ",重命名为:" + nextName);
+                children._m_Name = nextName;
+                if(children._m_Parent == null){
+                    this._m_ChildrenIDs[children.getName()] = children;
+                    this._m_Children.push(children);
+                    children._m_Parent = this;
+
+                    // 更新子节点
+                    children._updateWorldMatrix();
+                }
+                else{
+                    Log.warn(nextName + "已存在与父节点:" + children._m_Parent.getName());
+                }
+            }
         }
         else{
-            console.error("children不是一个合法的Node!");
+            Log.error("children不是一个合法的Node!");
         }
     }
 
@@ -380,9 +445,12 @@ export default class Node extends Component{
      */
     removeChildren(children){
         if(children instanceof Node){
-            if(this._m_ChildrenIDs[children.getId()]){
-                this._m_ChildrenIDs[children.getId()] = null;
-                this._m_Children.remove(children);
+            if(this._m_ChildrenIDs[children.getName()]){
+                this._m_ChildrenIDs[children.getName()] = null;
+                let i = this._m_Children.indexOf(children);
+                if(i > -1){
+                    this._m_Children.splice(i, 1);
+                }
                 children._m_Parent = null;
             }
         }
