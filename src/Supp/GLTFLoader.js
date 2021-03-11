@@ -176,6 +176,7 @@ export default class GLTFLoader {
                     Log.warn("未知keyframe!");
                 }
                 _keyframe = new keyframe(_i[i], _o[offset], _o[offset + 1], _o[offset + 2], _o[offset + 3]);
+                // Log.log('_keyframe,time:' + _keyframe.getTime() + ',value:' + _keyframe.getValue().toString());
             }
             else{
                 if(!keyframe){

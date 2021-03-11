@@ -4,6 +4,8 @@
  * @author Kkk
  * @date 2021年3月8日17点27分
  */
+import Log from "../Util/Log.js";
+
 export default class ActionClip {
     constructor(pathName) {
         // 轨迹路径名称(定义当前轨迹通道)
@@ -75,7 +77,8 @@ export default class ActionClip {
             let left = this._m_Keyframes[keyFrameId - 1];
             let right = this._m_Keyframes[keyFrameId];
 
-            keyFrame = left.interpolation(left.getValue(), right.getValue(), time);
+            let k = 1.0 / (right.getTime() - left.getTime());
+            keyFrame = left.interpolation(left.getValue(), right.getValue(), (time - left.getTime()) * k);
             this._m_ActionTrack.setValue(keyFrame);
         }
     }

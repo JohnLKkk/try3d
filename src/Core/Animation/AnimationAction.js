@@ -21,7 +21,7 @@ export default class AnimationAction {
         // 动画长度
         this._m_TimeLength = 0;
         // 播放模式
-        this._m_Mode = AnimationAction.S_DONT_LOOP;
+        this._m_Mode = AnimationAction.S_LOOP;
         this._m_TimeMode = 1;
         // 处理器
         this._m_Processor = null;

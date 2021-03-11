@@ -18,7 +18,7 @@ export default class TrackBinding {
         switch (property) {
             case 'rotation':
                 this.setValue = (value)=>{
-                    Log.log(value.toString());
+                    // Log.log(value.toString());
                     node.setLocalRotation(value);
                 };
                 this.getValue = ()=>{
