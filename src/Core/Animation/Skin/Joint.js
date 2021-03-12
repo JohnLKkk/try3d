@@ -124,7 +124,7 @@ export default class Joint {
         // 相对矩阵(bone.getLocalMatrix())
         this._m_RelMat4.set(bone.getLocalMatrix());
         this._m_RelMat4.inert();
-        Log.log(this.getId() + '/' + this.getNum() + ' link ' + bone.getName());
+        // Log.log(this.getId() + '/' + this.getNum() + ' link ' + bone.getName());
         Joint.S_TEMP_MAT4.set(this._m_AbsMat4);
         Matrix44.multiplyMM(this._m_AbsMat4, 0, Joint.S_TEMP_MAT4, 0, this._m_RelMat4, 0);
     }
@@ -135,7 +135,7 @@ export default class Joint {
      */
     setJointSpace(array){
         this._m_InverseMat4.setArray(array);
-        Log.log('joint_' + this.getNum() + ",bindMat:\n" + this._m_InverseMat4.toString());
+        // Log.log('joint_' + this.getNum() + ",bindMat:\n" + this._m_InverseMat4.toString());
         // 假设inverseMat4存储了绝对逆矩阵
         // 所以mAbs = inverse(inverseMat4);
         this._m_InverseMat4.inertRetNew(this._m_AbsMat4);

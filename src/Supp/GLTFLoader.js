@@ -111,6 +111,7 @@ export default class GLTFLoader {
         let jis = null;
         for(let i = 0;i < this._m_Aps.length;i++){
             jis = this._m_Aps[i].skeleton.getJoints();
+            Log.log('jointcount:' + jis.length);
             for(let j = 0;j < jis.length;j++){
                 if(this._m_Nodes[jis[j].getId()]){
                     jis[j].link(this._m_Nodes[jis[j].getId()]);

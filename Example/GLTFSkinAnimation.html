@@ -49,15 +49,15 @@
         // console.log("modelNode:",modelNode);
     });
     gltfLoader = new GLTFLoader();
-    gltfLoader.load(scene, './Assets/Models/GLTF/SimpleSkin/SimpleSkin.gltf', modelNode=>{
+    gltfLoader.load(scene, './Assets/Models/GLTF/Test/EstialKnigh20103.gltf', modelNode=>{
         // // 使用OctCullingControl来管理静态场景
         rootNode.addChildren(modelNode);
         // modelNode.setLocalScaleXYZ(100, 100, 100);
-        // modelNode.setLocalScaleXYZ(0.01, 0.01, 0.01);
+        modelNode.setLocalScaleXYZ(0.01, 0.01, 0.01);
         console.log("modelNode:",modelNode);
         let animationProcessors = modelNode.getComponentAtTypes('AnimationProcessor');
         console.log("animationProcessors:",animationProcessors);
-        // animationProcessors[0].getAnimationActionAtIndex(0).play();
+        animationProcessors[0].getAnimationActionAtIndex(0).play();
         // animationProcessors.forEach(a=>{
         //     a.getAnimationActionAtIndex(0).play();
         // });
