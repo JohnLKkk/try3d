@@ -20,6 +20,7 @@ export default class Joint {
         // 骨骼节点
         this._m_Bone = null;
         this._m_Ref = -1;
+        this._m_Refs = {};
         // 关节Id
         this._m_Id = id;
         // 关节序号
@@ -61,8 +62,29 @@ export default class Joint {
     setRef(ref){
         this._m_Ref = ref;
     }
-    init(gl){
-        this.update(gl);
+
+    /**
+     * 添加一个Ref。<br/>
+     * @param {String}[refId]
+     * @param {WebGLUniformLocation}[ref]
+     */
+    addRef(refId, ref){
+        if(this._m_Refs[refId]){
+            if(this._m_Refs[refId] != ref){
+                Log.warn('ref不等于最新ref:' + ref);
+            }
+            return;
+        }
+        this._m_Refs[refId] = ref;
+    }
+
+    /**
+     * 初始化关节。<br/>
+     * @param {WebGL}[gl]
+     * @param {Number}[refId]
+     */
+    init(gl, refId){
+        this.update(gl, refId);
         // Log.log('joint_' + this.getId() + ";jointMat4:" + this._m_JointMat4.toString());
     }
 
@@ -102,7 +124,7 @@ export default class Joint {
         // 相对矩阵(bone.getLocalMatrix())
         this._m_RelMat4.set(bone.getLocalMatrix());
         this._m_RelMat4.inert();
-        Log.log('link ' + this.getNum());
+        Log.log(this.getId() + '/' + this.getNum() + ' link ' + bone.getName());
         Joint.S_TEMP_MAT4.set(this._m_AbsMat4);
         Matrix44.multiplyMM(this._m_AbsMat4, 0, Joint.S_TEMP_MAT4, 0, this._m_RelMat4, 0);
     }
@@ -130,11 +152,17 @@ export default class Joint {
     /**
      * 更新关节。<br/>
      */
-    update(gl){
+    update(gl, refId){
+        if(!this._m_Bone){
+            Log.log('joint_' + this.getNum() + ";id:" + this.getId() + "未关联Bone!");
+            return;
+        }
         // Log.log("更新关节!");
         // 骨骼变换是Bone的localMatrix
         // 从根骨骼开始
         // jointMat4 = parentJointMat4 * absMat4 * bone.getLocalMatrix() * inverseMat4;
+
+        // //-------------
         Matrix44.multiplyMM(Joint.S_TEMP_MAT4, 0, this._m_Bone.getLocalMatrix(), 0, this._m_InverseMat4, 0);
         if(this._m_Bone.getParent() && this._m_Bone.getParent().getType() == 'Bone'){
             Matrix44.multiplyMM(Joint.S_TEMP_MAT42, 0, this._m_AbsMat4, 0, Joint.S_TEMP_MAT4, 0);
@@ -143,7 +171,17 @@ export default class Joint {
         else{
             Matrix44.multiplyMM(this._m_JointMat4, 0, this._m_AbsMat4, 0, Joint.S_TEMP_MAT4, 0);
         }
-        gl.uniformMatrix4fv(this._m_Ref, false, this._m_JointMat4.getBufferData());
+        // //-------------
+        // Matrix44.multiplyMM(Joint.S_TEMP_MAT4, 0, this._m_Bone.getWorldMatrix(), 0, this._m_InverseMat4, 0);
+        // if(this._m_Bone.getParent() && this._m_Bone.getParent().getType() == 'Bone'){
+        //     Matrix44.multiplyMM(Joint.S_TEMP_MAT42, 0, this._m_AbsMat4, 0, Joint.S_TEMP_MAT4, 0);
+        //     Matrix44.multiplyMM(this._m_JointMat4, 0, this._m_Bone.getParent().getBind().getJointMat4(), 0, Joint.S_TEMP_MAT42, 0);
+        // }
+        // else{
+        //     Matrix44.multiplyMM(this._m_JointMat4, 0, this._m_AbsMat4, 0, Joint.S_TEMP_MAT4, 0);
+        // }
+
+        gl.uniformMatrix4fv(this._m_Refs[refId], false, this._m_JointMat4.getBufferData());
     }
 
 }

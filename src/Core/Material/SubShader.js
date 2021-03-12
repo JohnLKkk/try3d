@@ -1,5 +1,6 @@
 import ShaderSource from "../WebGL/ShaderSource.js";
 import ShaderProgram from "../WebGL/ShaderProgram.js";
+import Tools from "../Util/Tools.js";
 
 /**
  * SubShader,被Technology包含,一个Technology包含多个SubShader,用于实现高级着色中的多pass。<br/>
@@ -14,6 +15,7 @@ export default class SubShader {
         // 以便所有同种类型的shader只被切换使用一次
         this._m_DefId = subShaderDef.getDefId();
         this._m_Name = subShaderDef.getName();
+        this._m_SId = Tools.nextId();
         // 当前该SubShader使用的所有参数(包含params和contextVars以及renderDatas)
         this._m_MatParams = {};
         // 渲染材质参数
@@ -51,6 +53,14 @@ export default class SubShader {
         this._loadParams();
         // 创建默认着色程序
         this._newShaderProgram(gl, frameContext);
+    }
+
+    /**
+     * 返回着色器Id。<br/>
+     * @return {Number|*}
+     */
+    getSId(){
+        return this._m_SId;
     }
 
     /**

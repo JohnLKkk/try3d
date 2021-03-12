@@ -5,6 +5,7 @@
  * @date 2021年3月9日10点38分
  */
 import ShaderSource from "../../WebGL/ShaderSource.js";
+import Log from "../../Util/Log.js";
 
 export default class Skeleton {
     constructor(name) {
@@ -13,6 +14,8 @@ export default class Skeleton {
         this._m_ActiveJoints = [];
         this._m_IsReady = false;
         this._m_Finished = true;
+
+        this._m_OwnerShaders = {};
     }
 
     /**
@@ -38,6 +41,26 @@ export default class Skeleton {
      */
     isReady(){
         return this._m_IsReady;
+    }
+
+    /**
+     * 保持关节关联。<br/>
+     * @param {WebGL}[gl]
+     * @param {FrameContext}[frameContext]
+     * @return {Boolean}
+     */
+    owner(gl, frameContext){
+        if(this._m_OwnerShaders[frameContext.m_LastSubShader.getSId()]){
+            return true;
+        }
+        // 初始化骨骼数据
+        this._m_Joints.forEach(joint=>{
+            joint.addRef(frameContext.m_LastSubShader.getSId(), frameContext.m_LastSubShader.getRef(gl, ShaderSource.S_JOINTS_SRC + "[" + joint.getNum() + "]"));
+            joint.init(gl, frameContext.m_LastSubShader.getSId());
+        });
+        this._m_OwnerShaders[frameContext.m_LastSubShader.getSId()] = true;
+        Log.log('持有!');
+        return true;
     }
 
     /**
@@ -112,12 +135,13 @@ export default class Skeleton {
 
     /**
      * 更新关节数据。<br/>
-     * @param {WebGL}
+     * @param {WebGL}[gl]
+     * @param {FrameContext}[frameContext]
      */
-    updateJoints(gl){
+    updateJoints(gl, frameContext){
         if(this._m_ActiveJoints.length > 0){
             this._m_ActiveJoints.forEach(activeJoint=>{
-                activeJoint.update(gl);
+                activeJoint.update(gl, frameContext.m_LastSubShader.getSId());
                 activeJoint.disable();
             });
             this._m_ActiveJoints.length = 0;

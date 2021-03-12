@@ -2,6 +2,7 @@ import Geometry from "../../Node/Geometry.js";
 import ShaderSource from "../../WebGL/ShaderSource.js";
 import Matrix44 from "../../Math3d/Matrix44.js";
 import TempVars from "../../Util/TempVars.js";
+import Log from "../../Util/Log.js";
 
 /**
  * SkinGeometry。<br/>
@@ -25,10 +26,10 @@ export default class SkinGeometry extends Geometry{
             if(!this._m_Skeleton.isFinished()){
                 return;
             }
-            if(!this._m_Skeleton.isReady()){
-                this._m_Skeleton.init(gl, frameContext);
+            if(!this._m_Skeleton.owner(gl, frameContext)){
+                Log.log('错误持有!');
             }
-            this._m_Skeleton.updateJoints(gl);
+            this._m_Skeleton.updateJoints(gl, frameContext);
         }
 
         let contextVars = frameContext.m_LastSubShader.getContextVars();

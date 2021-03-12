@@ -145,6 +145,25 @@ export default class Component {
     }
 
     /**
+     * 返回指定类型的组件列表。<br/>
+     * @param {String}[type]
+     * @return {Component[]}
+     */
+    getComponentAtTypes(type){
+        let count = this._m_OwnerAttachComponents.length;
+        let result = null;
+        for(let i = 0;i < count;i++){
+            if(this._m_OwnerAttachComponents[i].getType() == type){
+                if(!result){
+                    result = [];
+                }
+                result.push(this._m_OwnerAttachComponents[i]);
+            }
+        }
+        return result;
+    }
+
+    /**
      * 返回所有组件。<br/>
      * @return {Component[]}
      */
