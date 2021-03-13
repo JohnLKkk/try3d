@@ -78,9 +78,8 @@ export default class GLTFLoader {
                     let buffers = [];
                     this._loadBIN(gltf, buffers, i, length, ()=>{
                         // 所有二进制数据全部加载完成
-                        Log.log("所有二进制加载完成!",buffers);
+                        // Log.log("所有二进制加载完成!",buffers);
                         gltf.buffers = buffers;
-                        Log.log('gltf:' ,gltf);
 
                         let scene = null;
                         // 开始解析场景
@@ -257,7 +256,7 @@ export default class GLTFLoader {
         if(this._m_Joints[nodeI]){
             node = new Bone(parent, {id:this._getName(_node.name)});
             this._m_Bones.push(node);
-            Log.log('添加Bone' + nodeI);
+            // Log.log('添加Bone' + nodeI);
         }
         else{
             node = new Node(parent, {id:this._getName(_node.name)});
@@ -325,10 +324,10 @@ export default class GLTFLoader {
         for(let i = 0;i < _primitives.length;i++){
             _primitive = _primitives[i];
             if(isSkin){
-                geometryNode = new SkinGeometry(parrent, {id:this._getName(_mesh.name) + i + "_skin_geo"});
+                geometryNode = new SkinGeometry(parrent, {id:this._getName(_mesh.name) + i});
             }
             else{
-                geometryNode = new Geometry(parrent, {id:this._getName(_mesh.name) + i + "_geo"});
+                geometryNode = new Geometry(parrent, {id:this._getName(_mesh.name) + i});
             }
             parrent.addChildren(geometryNode);
             // 解析mesh
@@ -410,7 +409,7 @@ export default class GLTFLoader {
             // 如果是skinGeometry,则添加skin数据
             if(isSkin){
                 geometryNode.getMaterial().addDefine(ShaderSource.S_SKINS_SRC);
-                Log.log("重新编译:" , geometryNode.getMaterial());
+                // Log.log("重新编译:" , geometryNode.getMaterial());
             }
         }
     }

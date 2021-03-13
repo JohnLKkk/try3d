@@ -215,6 +215,18 @@ export default class Scene extends Component{
             }
         }
     }
+    _gatherVisDrawable(node, visDrawables){
+        if(node.isDrawable && node.isDrawable()){
+            visDrawables.push(node);
+        }
+        else{
+            if(node.getChildren().length > 0){
+                node.getChildren().forEach(c=>{
+                    this._gatherVisDrawable(c, visDrawables);
+                });
+            }
+        }
+    }
 
     /**
      * 检测当前node是否处于Frustum中，如果是，递归其子节点继续判断，如果当前node已经是叶子节点(叶子节点理论上是Geometry或其子类，但也可以是一个node，如果是一个node叶子节点，表明空节点树)，则将其添加到visDrawables。<br/>
@@ -238,12 +250,18 @@ export default class Scene extends Component{
             if(node.getChildren().length > 0){
                 let resetFrustumMask = this._m_FrustumCullingCamera.getFrustumMask();
                 node.getChildren().forEach(node=>{
-                    // 检测是否需要默认剔除
-                    if(node.getCullingFlags() & Node.S_DEFAULT_FRUSTUM_CULLING){
-                        // 对于每个同级节点设置同样剔除掩码
-                        this._m_FrustumCullingCamera.setFrustumMask(resetFrustumMask);
-                        // 执行默认剔除
-                        this._frustumCulling(node, visDrawables);
+                    if(node.getFilterFlag() == Node.S_DYNAMIC){
+                        // 检测是否需要默认剔除
+                        if(node.getCullingFlags() & Node.S_DEFAULT_FRUSTUM_CULLING){
+                            // 对于每个同级节点设置同样剔除掩码
+                            this._m_FrustumCullingCamera.setFrustumMask(resetFrustumMask);
+                            // 执行默认剔除
+                            this._frustumCulling(node, visDrawables);
+                        }
+                    }
+                    else if(node.getFilterFlag() == Node.S_NEVER){
+                        // 直接渲染
+                        this._gatherVisDrawable(node, visDrawables);
                     }
                 });
             }
@@ -266,11 +284,17 @@ export default class Scene extends Component{
 
         // 然后更新visDrawables
         this._m_Nodes.forEach(node=>{
-            // 检测是否执行默认视锥剔除
-            if(node.getCullingFlags() & Node.S_DEFAULT_FRUSTUM_CULLING){
-                // 需要执行默认视锥剔除
-                this._m_FrustumCullingCamera.setFrustumMask(0);
-                this._frustumCulling(node, visDrawables);
+            if(node.getFilterFlag() == Node.S_DYNAMIC){
+                // 检测是否执行默认视锥剔除
+                if(node.getCullingFlags() & Node.S_DEFAULT_FRUSTUM_CULLING){
+                    // 需要执行默认视锥剔除
+                    this._m_FrustumCullingCamera.setFrustumMask(0);
+                    this._frustumCulling(node, visDrawables);
+                }
+            }
+            else if(node.getFilterFlag() == Node.S_NEVER){
+                // 直接渲染
+                this._gatherVisDrawable(node, visDrawables);
             }
         });
 

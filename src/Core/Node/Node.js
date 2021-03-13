@@ -12,7 +12,14 @@ import Log from "../Util/Log.js";
  * @author Kkk
  */
 export default class Node extends Component{
+    // 默认视锥剔除
     static S_DEFAULT_FRUSTUM_CULLING = 1 << 1;
+    // 动态剔除
+    static S_DYNAMIC = 1 << 2;
+    // 总是剔除
+    static S_ALWAYS = 1 << 3;
+    // 永不
+    static S_NEVER = 1 << 4;
     static S_TEMP_VEC3 = new Vector3();
     static S_TEMP_Q = new Quaternion();
     static S_TEMP_VEC3_2 = new Vector3();
@@ -36,7 +43,7 @@ export default class Node extends Component{
         // 缩放
         this._m_LocalScale = new Vector3(1, 1, 1);
         // 旋转
-        this._m_LocalRotation = new Quaternion();
+        this._m_LocalRotation = new Quaternion(0, 0, 0, 1);
         // 平移
         this._m_LocalTranslation = new Vector3();
 
@@ -57,6 +64,24 @@ export default class Node extends Component{
         // 剔除标记
         this._m_CullingFlags = 1;
         this._m_CullingFlags |= Node.S_DEFAULT_FRUSTUM_CULLING;
+        // 过滤标记
+        this._m_FilterFlag = Node.S_DYNAMIC;
+    }
+
+    /**
+     * 设置过滤标记。<br/>
+     * @param {Number}[filterFlag]
+     */
+    setFilterFlag(filterFlag){
+        this._m_FilterFlag = filterFlag;
+    }
+
+    /**
+     * 返回过滤标记，为Node.S_DYNAMIC,Node.S_ALWAYS和Node.S_NEVER之一。<br/>
+     * @return {Number}
+     */
+    getFilterFlag(){
+        return this._m_FilterFlag;
     }
 
     /**
@@ -287,9 +312,6 @@ export default class Node extends Component{
      */
     _updateBounding(){
         this._m_UpdateAABBBoundingBox = true;
-        if(this._m_Parent != null){
-            this._m_Parent._updateBounding();
-        }
     }
 
     /**
@@ -301,6 +323,12 @@ export default class Node extends Component{
         this._updateWorldMatrix();
         // 更新边界
         this._updateBounding();
+        if(this._m_Parent != null){
+            this._m_Parent._updateBounding();
+        }
+        this._m_Children.forEach(children=>{
+            children._updateBounding();
+        });
     }
 
     /**
@@ -386,7 +414,7 @@ export default class Node extends Component{
                 // 获取父变换矩阵,只要一个父节点获取了父节点变换矩阵,那么父节点变换矩阵就已经被计算了(即只会计算一次)
                 // 由于渲染不会按照场景图进行渲染,而是按照排序算法，遮挡算法进行处理，所以更新节点成本很低(每个需要更新的节点只会计算一次)
                 // 合并矩阵
-                Matrix44.multiplyMM(this._m_WorldMatrix, 0, this._m_LocalMatrix, 0, this._m_Parent.getWorldMatrix(), 0);
+                Matrix44.multiplyMM(this._m_WorldMatrix, 0, this._m_Parent.getWorldMatrix(), 0, this._m_LocalMatrix, 0);
             }
             // ...
             this._m_UpdateWorldMatrix = false;

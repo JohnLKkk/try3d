@@ -4,6 +4,7 @@ import Mesh from "../WebGL/Mesh.js";
 import Matrix44 from "../Math3d/Matrix44.js";
 import TempVars from "../Util/TempVars.js";
 import AABBBoundingBox from "../Math3d/Bounding/AABBBoundingBox.js";
+import Log from "../Util/Log.js";
 
 /**
  * Geometry继承Node,同时实现IDrawable接口,表示一个空间节点,同时表示一个可渲染的实例对象。<br/>
@@ -84,6 +85,7 @@ export default class Geometry extends Node{
         if(this._m_UpdateAABBBoundingBox){
             // 更新AABBBoundingBox
             Matrix44.decomposeMat4(this.getWorldMatrix(), Node.S_TEMP_VEC3, Node.S_TEMP_Q, Node.S_TEMP_VEC3_2);
+            // Log.log('Node.S_TEMP_VEC3_2:' + Node.S_TEMP_VEC3_2.toString());
             this._m_ModelAABBBoundingBox.transform(Node.S_TEMP_VEC3_2, Node.S_TEMP_Q, Node.S_TEMP_VEC3, this._m_AABBBoudingBox);
             this._m_UpdateAABBBoundingBox = false;
         }

@@ -15,7 +15,6 @@ export default class SubShader {
         // 以便所有同种类型的shader只被切换使用一次
         this._m_DefId = subShaderDef.getDefId();
         this._m_Name = subShaderDef.getName();
-        this._m_SId = Tools.nextId();
         // 当前该SubShader使用的所有参数(包含params和contextVars以及renderDatas)
         this._m_MatParams = {};
         // 渲染材质参数
@@ -60,7 +59,7 @@ export default class SubShader {
      * @return {Number|*}
      */
     getSId(){
-        return this._m_SId;
+        return this._m_DefId;
     }
 
     /**

@@ -16,21 +16,19 @@
     import FirstPersonController from "../src/Core/InputControl/FirstPersonController.js";
     import DirectionalLight from "../src/Core/Light/DirectionalLight.js";
     import Stats from "./stats.min.js";
-    import OctCullingControl from "../src/Core/Optimization/OctCullingControl.js";
     import MaterialDef from "../src/Core/Material/MaterialDef.js";
     import Material from "../src/Core/Material/Material.js";
     import Camera from "../src/Core/Scene/Camera.js";
     import MeshFactor from "../src/Core/Util/MeshFactor.js";
     import Geometry from "../src/Core/Node/Geometry.js";
     import GLTFLoader from "../src/Supp/GLTFLoader.js";
-    import MoreMath from "../src/Core/Math3d/MoreMath.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(5, 5, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
 
     let testCamera = new Camera(scene, {id:'testCamera'});
-    testCamera.lookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    testCamera.lookAt(new Vector3(5, 5, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let colorDef = MaterialDef.load("../src/Core/Assets/MaterialDef/ColorDef");
     let colorMat = new Material(scene, {id:'colorWireFrustum', materialDef:colorDef});
     let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
@@ -42,28 +40,22 @@
     let rootNode = new Node(scene, {id:'rootNode'});
     rootNode.addChildren(wireFrustum);
     let gltfLoader = new GLTFLoader();
-    // scene.setFrustumCullingCamera(testCamera);
-    gltfLoader.load(scene, './Assets/Models/GLTF/Axes/Axes.gltf', modelNode=>{
-        // // 使用OctCullingControl来管理静态场景
-        rootNode.addChildren(modelNode);
-        // console.log("modelNode:",modelNode);
-    });
-    gltfLoader = new GLTFLoader();
     gltfLoader.load(scene, './Assets/Models/GLTF/Test/EstialKnigh20103.gltf', modelNode=>{
         // // 使用OctCullingControl来管理静态场景
         rootNode.addChildren(modelNode);
-        // modelNode.setLocalScaleXYZ(100, 100, 100);
-        modelNode.setLocalScaleXYZ(0.01, 0.01, 0.01);
-        console.log("modelNode:",modelNode);
+        // modelNode.setLocalScaleXYZ(10, 10, 10);
+        modelNode.setLocalScaleXYZ(0.1, 0.1, 0.1);
+        // modelNode.setLocalTranslationXYZ(50, 0, 0);
+        console.log('modelNode:',modelNode);
         let animationProcessors = modelNode.getComponentAtTypes('AnimationProcessor');
-        console.log("animationProcessors:",animationProcessors);
         animationProcessors[0].getAnimationActionAtIndex(0).play();
-        // animationProcessors.forEach(a=>{
-        //     a.getAnimationActionAtIndex(0).play();
-        // });
-        // let anim = animationProcessor.getAnimationActionAtIndex(0);
-        // anim.play();
+        // 由于动画轨迹进行了缩放动画,而动画影响顶点,所以会出现包围盒不对应动画下的模型标准,所以这里对模型关闭剔除
+        let U3DMesh0 = rootNode.getChildrenAtName('U3DMesh0');
+        let U3DMesh1 = rootNode.getChildrenAtName('U3DMesh1');
+        U3DMesh0.setFilterFlag(Node.S_NEVER);
+        U3DMesh1.setFilterFlag(Node.S_NEVER);
     });
+
 
     let dirLight = new DirectionalLight(scene, {id:'dirLight'});
     dirLight.setDirectionXYZ(-1, -1, 1);
