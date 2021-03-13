@@ -5,17 +5,21 @@
     <title>CameraTest1</title>
 </head>
 <body>
-<canvas id="canvas" width="600px" height="400px" style="background-color: aliceblue"></canvas>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" style="background-color: aliceblue"></canvas>
+</div>
 <script type="module">
-    import Geometry from "../src/Core/Node/Geometry.js";
-    import Scene from "../src/Core/Scene/Scene.js";
-    import RenderEngine from "../src/Core/RenderEngine.js";
-    import Node from "../src/Core/Node/Node.js";
-    import Mesh from "../src/Core/WebGL/Mesh.js";
-    import Material from "../src/Core/Material/Material.js";
-    import Vector3 from "../src/Core/Math3d/Vector3.js";
-    import MaterialDef from "../src/Core/Material/MaterialDef.js";
+    import Geometry from "../../src/Core/Node/Geometry.js";
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Mesh from "../../src/Core/WebGL/Mesh.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
+
+    // 获取主渲染相机,并手动设置其位置，朝向和朝向向量
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(10, 10, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let geometry = new Geometry(scene, {id:'testGeometry'});
@@ -30,7 +34,7 @@
         0, 1, 2,
         1, 2, 3
     ]);
-    let materialDef = MaterialDef.load("../src/Core/Assets/MaterialDef/ColorDef");
+    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
     let material = new Material(scene, {id:"colorMat", materialDef});
     geometry.setMesh(mesh);
     geometry.updateBound();

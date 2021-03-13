@@ -28,11 +28,19 @@ export default class OBJLoader {
         // 加载obj模型
         this._load(modelNode, src, callback);
     }
+
+    /**
+     * 设置Assets路径。<br/>
+     * @param {String}[assetsPath]
+     */
+    setAssetsPath(assetsPath){
+        this._m_AssetsPath = assetsPath;
+    }
     _load(modelNode, src, callback) {
         // 解析OBJ数据块
         this.loadOBJ(modelNode, src, (state)=>{
             if(!this._m_DefaultMatDef){
-                this._m_DefaultMatDef = MaterialDef.load("../src/Core/Assets/MaterialDef/BasicLightingDef");
+                this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "BasicLightingDef");
             }
             // 加载完实例材质后再创建obj实体
             this.loadMTLs(modelNode, state, ()=>{

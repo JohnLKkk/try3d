@@ -9,31 +9,27 @@
     <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
 </div>
 <script type="module">
-    import Geometry from "../src/Core/Node/Geometry.js";
-    import Scene from "../src/Core/Scene/Scene.js";
-    import RenderEngine from "../src/Core/RenderEngine.js";
-    import Node from "../src/Core/Node/Node.js";
-    import Mesh from "../src/Core/WebGL/Mesh.js";
-    import Material from "../src/Core/Material/Material.js";
-    import ColorMatDef from "../src/Core/Assets/MaterialDef/ColorMatDef.js";
-    import Vector3 from "../src/Core/Math3d/Vector3.js";
-    import MaterialDef from "../src/Core/Material/MaterialDef.js";
-    import FirstPersonController from "../src/Core/InputControl/FirstPersonController.js";
-    import DirectionalLight from "../src/Core/Light/DirectionalLight.js";
-    import PointLight from "../src/Core/Light/PointLight.js";
-    import SpotLight from "../src/Core/Light/SpotLight.js";
-    import MoreMath from "../src/Core/Math3d/MoreMath.js";
+    import Geometry from "../../src/Core/Node/Geometry.js";
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Mesh from "../../src/Core/WebGL/Mesh.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import ColorMatDef from "../../src/Core/Assets/MaterialDef/ColorMatDef.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import PointLight from "../../src/Core/Light/PointLight.js";
+    import SpotLight from "../../src/Core/Light/SpotLight.js";
+    import MoreMath from "../../src/Core/Math3d/MoreMath.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(15, 15, 15), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
-    // // 加载一个材质定义
-    let materialDef = MaterialDef.load("../src/Core/Assets/MaterialDef/BasicLightingDef");
-    //
+    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
     console.log("materialDef:",materialDef);
     let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
-    // console.log("materialDef:" , MaterialDef.load("../src/Core/Assets/MaterialDef/BasicLightingDef"));
-    // deferredMat.selectTechnology('TestDeferredShading');
     let cubeGeometry = new Geometry(scene, {id:'cube'});
     let cubeMesh = new Mesh();
     cubeMesh.setData(Mesh.S_POSITIONS, [

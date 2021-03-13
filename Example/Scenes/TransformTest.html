@@ -18,10 +18,10 @@
     </style>
 </head>
 <body>
-<div style="width: 60%;height: 100%;position:fixed">
+<div style="left:0px;top: 0px;width: 70%;height: 100%;position:fixed">
     <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
 </div>
-<div style="width: 30%;height: 100%;position:fixed;border: grey 2px solid;left: 60.5%;padding: 10px;">
+<div style="width: 30%;height: 100%;position:fixed;border: grey 2px solid;left: 70%;padding: 10px;top: 0px;">
     <h4>rootNode</h4>
     <h6>translation</h6>
     <div id="rootNode_translation"><input type="text" value="0"><input type="text" value="0"><input type="text" value="0"></div>
@@ -39,29 +39,24 @@
     <div id="cubeGeometry_scale"><input type="text" value="1"><input type="text" value="1"><input type="text" value="1"></div>
 </div>
 <script type="module">
-    import Geometry from "../src/Core/Node/Geometry.js";
-    import Scene from "../src/Core/Scene/Scene.js";
-    import RenderEngine from "../src/Core/RenderEngine.js";
-    import Node from "../src/Core/Node/Node.js";
-    import Mesh from "../src/Core/WebGL/Mesh.js";
-    import Material from "../src/Core/Material/Material.js";
-    import ColorMatDef from "../src/Core/Assets/MaterialDef/ColorMatDef.js";
-    import Vector3 from "../src/Core/Math3d/Vector3.js";
-    import MaterialDef from "../src/Core/Material/MaterialDef.js";
-    import FirstPersonController from "../src/Core/InputControl/FirstPersonController.js";
-    import DirectionalLight from "../src/Core/Light/DirectionalLight.js";
-    import MoreMath from "../src/Core/Math3d/MoreMath.js";
+    import Geometry from "../../src/Core/Node/Geometry.js";
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Mesh from "../../src/Core/WebGL/Mesh.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import ColorMatDef from "../../src/Core/Assets/MaterialDef/ColorMatDef.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import MoreMath from "../../src/Core/Math3d/MoreMath.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(15, 15, 15), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
-    // // 加载一个材质定义
-    let materialDef = MaterialDef.load("../src/Core/Assets/MaterialDef/BasicLightingDef");
-    //
-    console.log("materialDef:",materialDef);
+    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
     let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
-    // console.log("materialDef:" , MaterialDef.load("../src/Core/Assets/MaterialDef/BasicLightingDef"));
-    // deferredMat.selectTechnology('TestDeferredShading');
     let cubeGeometry = new Geometry(scene, {id:'cube'});
     let cubeMesh = new Mesh();
     cubeMesh.setData(Mesh.S_POSITIONS, [
@@ -183,6 +178,7 @@
     rootNode.addChildren(dirLight);
 
     let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
     renderEngine.addScene(scene);
     renderEngine.launch();
 

@@ -9,35 +9,36 @@
     <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
 </div>
 <script type="module">
-    import Scene from "../src/Core/Scene/Scene.js";
-    import RenderEngine from "../src/Core/RenderEngine.js";
-    import Node from "../src/Core/Node/Node.js";
-    import Material from "../src/Core/Material/Material.js";
-    import Vector3 from "../src/Core/Math3d/Vector3.js";
-    import MaterialDef from "../src/Core/Material/MaterialDef.js";
-    import FirstPersonController from "../src/Core/InputControl/FirstPersonController.js";
-    import DirectionalLight from "../src/Core/Light/DirectionalLight.js";
-    import Box from "../src/Core/Node/Shape/Box.js";
-    import Sphere from "../src/Core/Node/Shape/Sphere.js";
-    import Plane from "../src/Core/Node/Shape/Plane.js";
-    import Geometry from "../src/Core/Node/Geometry.js";
-    import MeshFactor from "../src/Core/Util/MeshFactor.js";
-    import Mesh from "../src/Core/WebGL/Mesh.js";
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import Box from "../../src/Core/Node/Shape/Box.js";
+    import Sphere from "../../src/Core/Node/Shape/Sphere.js";
+    import Plane from "../../src/Core/Node/Shape/Plane.js";
+    import Geometry from "../../src/Core/Node/Geometry.js";
+    import MeshFactor from "../../src/Core/Util/MeshFactor.js";
+    import Mesh from "../../src/Core/WebGL/Mesh.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
-    let pos = new Vector3(1550 + 1550 + 10, 100, 2000 + 2000 + 10);
+    let pos = new Vector3(50000, 60000, 70000);
     let at = new Vector3(1550, 0, 2000);
     pos.multLength(0.01);
     pos.multLength(0.01);
     mainCamera.lookAt(pos, at, new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     firstPersonController.setMovementSpeed(100);
-    // // 加载一个材质定义
-    let materialDef = MaterialDef.load("../src/Core/Assets/MaterialDef/BasicLightingDef");
+    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
     console.log("materialDef:",materialDef);
     let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
     basicLightingMat.selectTechnology('BlinnPhongLight2');
 
+    // 自定义一个渲染几何体
+    // 支持几乎场景的属性列表以及自定义属性列表
     let geometry = new Geometry(scene, {id:"custom"});
     let mesh = new Mesh();
     let indices = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35];

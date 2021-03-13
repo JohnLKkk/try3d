@@ -41,6 +41,14 @@ export default class GLTFLoader {
         this._m_BasePath = AssetLoader.getBasePath(src);
         this._loadGLTF(src, callback);
     }
+
+    /**
+     * 设置Assets路径。<br/>
+     * @param {String}[assetsPath]
+     */
+    setAssetsPath(assetsPath){
+        this._m_AssetsPath = assetsPath;
+    }
     _loadBIN(gltf, buffers, i, length, ok){
         if(length > 0){
             AssetLoader.loadFile(this._m_BasePath + gltf.buffers[i].uri, (data)=>{
@@ -371,7 +379,7 @@ export default class GLTFLoader {
                 // 后续完善时,这里单独到一个函数中进行,因为解析PBR材质参数最好独立到一个解析函数中
 
                 if(!this._m_DefaultMatDef){
-                    this._m_DefaultMatDef = MaterialDef.load("../src/Core/Assets/MaterialDef/BasicLightingDef");
+                    this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "BasicLightingDef");
                 }
                 let matId = gltf.materials[_primitive.material].name;
                 let material = null;
@@ -389,7 +397,7 @@ export default class GLTFLoader {
             else{
                 // 添加一个默认材质
                 if(!this._m_DefaultMatDef){
-                    this._m_DefaultMatDef = MaterialDef.load("../src/Core/Assets/MaterialDef/BasicLightingDef");
+                    this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "BasicLightingDef");
                 }
                 let matId = 'default_gltf_mat';
                 let material = null;

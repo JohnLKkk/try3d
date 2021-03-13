@@ -9,19 +9,19 @@
     <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
 </div>
 <script type="module">
-    import Scene from "../src/Core/Scene/Scene.js";
-    import RenderEngine from "../src/Core/RenderEngine.js";
-    import Node from "../src/Core/Node/Node.js";
-    import Vector3 from "../src/Core/Math3d/Vector3.js";
-    import FirstPersonController from "../src/Core/InputControl/FirstPersonController.js";
-    import DirectionalLight from "../src/Core/Light/DirectionalLight.js";
-    import Stats from "./stats.min.js";
-    import MaterialDef from "../src/Core/Material/MaterialDef.js";
-    import Material from "../src/Core/Material/Material.js";
-    import Camera from "../src/Core/Scene/Camera.js";
-    import MeshFactor from "../src/Core/Util/MeshFactor.js";
-    import Geometry from "../src/Core/Node/Geometry.js";
-    import GLTFLoader from "../src/Supp/GLTFLoader.js";
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import Stats from "../stats.min.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import Camera from "../../src/Core/Scene/Camera.js";
+    import MeshFactor from "../../src/Core/Util/MeshFactor.js";
+    import Geometry from "../../src/Core/Node/Geometry.js";
+    import GLTFLoader from "../../src/Supp/GLTFLoader.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(5, 5, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -29,7 +29,7 @@
 
     let testCamera = new Camera(scene, {id:'testCamera'});
     testCamera.lookAt(new Vector3(5, 5, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-    let colorDef = MaterialDef.load("../src/Core/Assets/MaterialDef/ColorDef");
+    let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
     let colorMat = new Material(scene, {id:'colorWireFrustum', materialDef:colorDef});
     let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
     // 根据当前相机创建测试用的视锥体
@@ -40,12 +40,10 @@
     let rootNode = new Node(scene, {id:'rootNode'});
     rootNode.addChildren(wireFrustum);
     let gltfLoader = new GLTFLoader();
-    gltfLoader.load(scene, './Assets/Models/GLTF/Test/EstialKnigh20103.gltf', modelNode=>{
-        // // 使用OctCullingControl来管理静态场景
+    gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+    gltfLoader.load(scene, './../Assets/Models/GLTF/Test/EstialKnigh20103.gltf', modelNode=>{
         rootNode.addChildren(modelNode);
-        // modelNode.setLocalScaleXYZ(10, 10, 10);
         modelNode.setLocalScaleXYZ(0.1, 0.1, 0.1);
-        // modelNode.setLocalTranslationXYZ(50, 0, 0);
         console.log('modelNode:',modelNode);
         let animationProcessors = modelNode.getComponentAtTypes('AnimationProcessor');
         animationProcessors[0].getAnimationActionAtIndex(0).play();

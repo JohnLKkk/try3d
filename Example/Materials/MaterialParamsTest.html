@@ -9,20 +9,20 @@
     <canvas id="canvas" tabindex="0" width="400" height="300" style="border: none;margin: 0px;padding: 0px;"></canvas>
 </div>
 <script type="module">
-    import Scene from "../src/Core/Scene/Scene.js";
-    import RenderEngine from "../src/Core/RenderEngine.js";
-    import Node from "../src/Core/Node/Node.js";
-    import Material from "../src/Core/Material/Material.js";
-    import Vector3 from "../src/Core/Math3d/Vector3.js";
-    import MaterialDef from "../src/Core/Material/MaterialDef.js";
-    import Box from "../src/Core/Node/Shape/Box.js";
-    import Vec4Vars from "../src/Core/WebGL/Vars/Vec4Vars.js";
-    import FirstPersonController from "../src/Core/InputControl/FirstPersonController.js";
-    import Texture2DVars from "../src/Core/WebGL/Vars/Texture2DVars.js";
-    import Vector4 from "../src/Core/Math3d/Vector4.js";
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+    import Box from "../../src/Core/Node/Shape/Box.js";
+    import Vec4Vars from "../../src/Core/WebGL/Vars/Vec4Vars.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import Texture2DVars from "../../src/Core/WebGL/Vars/Texture2DVars.js";
+    import Vector4 from "../../src/Core/Math3d/Vector4.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     // 加载一个材质定义
-    let materialDef = MaterialDef.load("../src/Core/Assets/MaterialDef/ColorDef");
+    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
 
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -45,7 +45,7 @@
     let colorMap = new Texture2DVars(scene);
     // 纹理图像未加载完成前设置一个默认颜色纹理
     colorMap.setPreloadColor(scene, new Vector4(0.5, 0.3, 0.3, 1.0));
-    colorMap.setImageSrc(scene, './Assets/Textures/terrain.png');
+    colorMap.setImageSrc(scene, './../Assets/Textures/terrain.png');
     mat3.setParam('colorMap', colorMap);
     let box3 = new Box(scene, {id:'box3'});
     box3.setLocalTranslationXYZ(0, 5, 0);
@@ -56,7 +56,7 @@
     let colorMap2 = new Texture2DVars(scene);
     // 纹理图像未加载完成前设置一个默认颜色纹理
     colorMap2.setPreloadColor(scene, new Vector4(0.5, 0.3, 0.3, 1.0));
-    colorMap2.setImageSrc(scene, './Assets/Textures/ground 3.png');
+    colorMap2.setImageSrc(scene, './../Assets/Textures/ground 3.png');
     mat4.setParam('colorMap', colorMap2);
     let box4 = new Box(scene, {id:'box4'});
     box4.setLocalTranslationXYZ(0, -5, 0);

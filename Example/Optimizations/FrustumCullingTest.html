@@ -9,28 +9,28 @@
     <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;margin: 0px;padding: 0px;" tabindex="0"></canvas>
 </div>
 <script type="module">
-    import Scene from "../src/Core/Scene/Scene.js";
-    import RenderEngine from "../src/Core/RenderEngine.js";
-    import Node from "../src/Core/Node/Node.js";
-    import Material from "../src/Core/Material/Material.js";
-    import Vector3 from "../src/Core/Math3d/Vector3.js";
-    import MaterialDef from "../src/Core/Material/MaterialDef.js";
-    import FirstPersonController from "../src/Core/InputControl/FirstPersonController.js";
-    import DirectionalLight from "../src/Core/Light/DirectionalLight.js";
-    import Box from "../src/Core/Node/Shape/Box.js";
-    import Sphere from "../src/Core/Node/Shape/Sphere.js";
-    import Plane from "../src/Core/Node/Shape/Plane.js";
-    import Geometry from "../src/Core/Node/Geometry.js";
-    import MeshFactor from "../src/Core/Util/MeshFactor.js";
-    import MoreMath from "../src/Core/Math3d/MoreMath.js";
-    import Stats from "./stats.min.js";
-    import Camera from "../src/Core/Scene/Camera.js";
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import Box from "../../src/Core/Node/Shape/Box.js";
+    import Sphere from "../../src/Core/Node/Shape/Sphere.js";
+    import Plane from "../../src/Core/Node/Shape/Plane.js";
+    import Geometry from "../../src/Core/Node/Geometry.js";
+    import MeshFactor from "../../src/Core/Util/MeshFactor.js";
+    import MoreMath from "../../src/Core/Math3d/MoreMath.js";
+    import Stats from "./../stats.min.js";
+    import Camera from "../../src/Core/Scene/Camera.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let testCamera = new Camera(scene, {id:'testCamera'});
     testCamera.lookAt(new Vector3(25, 0, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     // // 加载一个材质定义
-    let materialDef = MaterialDef.load("../src/Core/Assets/MaterialDef/BasicLightingDef");
+    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
     console.log("materialDef:",materialDef);
     let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
     basicLightingMat.selectTechnology('BlinnPhongLight2');
@@ -38,7 +38,7 @@
     let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
     // 根据当前相机创建测试用的视锥体
     wireFrustum.setMesh(MeshFactor.createViewFrustumMeshFromCamera(testCamera));
-    wireFrustum.setMaterial(new Material(scene, {id:'colorWireFrustum', materialDef:MaterialDef.load("../src/Core/Assets/MaterialDef/ColorDef")}));
+    wireFrustum.setMaterial(new Material(scene, {id:'colorWireFrustum', materialDef:MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef")}));
     wireFrustum.updateBound();
 
     let rootNode = new Node(scene, {id:'rootNode'});
@@ -89,15 +89,15 @@
     scene.setFrustumCullingCamera(testCamera);
     scene.on('update', (exTime)=>{
         // 执行旋转
-        // cubes.getChildren().forEach(node=>{
-        //     dx += Math.random() * 0.2 * exTime;
-        //     dy += Math.random() * 0.2 * exTime;
-        //     dz += Math.random() * 0.2 * exTime;
-        //     let x = MoreMath.toRadians(dx);
-        //     let y = MoreMath.toRadians(dy);
-        //     let z = MoreMath.toRadians(dz);
-        //     node.setLocalRotationFromEuler(x, y, z);
-        // });
+        cubes.getChildren().forEach(node=>{
+            dx += Math.random() * 0.2 * exTime;
+            dy += Math.random() * 0.2 * exTime;
+            dz += Math.random() * 0.2 * exTime;
+            let x = MoreMath.toRadians(dx);
+            let y = MoreMath.toRadians(dy);
+            let z = MoreMath.toRadians(dz);
+            node.setLocalRotationFromEuler(x, y, z);
+        });
         stats.update();
     });
 </script>

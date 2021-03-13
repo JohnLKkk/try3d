@@ -146,7 +146,7 @@ export default class FirstPersonController extends Component{
         // 这里只计算当worldUp == (0, 1, 0)时的情况
         this._m_Pitch = MoreMath.toAngle(Math.asin(this._m_Front._m_Y));
         let t = Math.cos(MoreMath.toRadians(this._m_Pitch));
-        //this.mFront.z = Math.sin(MoreMath.toRadians(this.mYaw)) * t;
+        //this.mFront.z = Maths.sin(MoreMath.toRadians(this.mYaw)) * t;
         //let g = this.mFront.z / t;
         let g = this._m_Front._m_Z / t;
         if(g >= 1){

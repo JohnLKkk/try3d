@@ -237,7 +237,7 @@ export default class Vector3 {
             this._m_Z *= l;
         }
         else{
-            console.error("Vector3.normal异常,长度为0。");
+            this._m_X = this._m_Y = this._m_Z = 0;
         }
         return this;
     }

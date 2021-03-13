@@ -9,21 +9,21 @@
     <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
 </div>
 <script type="module">
-    import Scene from "../src/Core/Scene/Scene.js";
-    import RenderEngine from "../src/Core/RenderEngine.js";
-    import Node from "../src/Core/Node/Node.js";
-    import Vector3 from "../src/Core/Math3d/Vector3.js";
-    import FirstPersonController from "../src/Core/InputControl/FirstPersonController.js";
-    import DirectionalLight from "../src/Core/Light/DirectionalLight.js";
-    import OBJLoader from "../src/Supp/OBJLoader.js";
-    import MoreMath from "../src/Core/Math3d/MoreMath.js";
-    import Stats from "./stats.min.js";
-    import OctCullingControl from "../src/Core/Optimization/OctCullingControl.js";
-    import MaterialDef from "../src/Core/Material/MaterialDef.js";
-    import Material from "../src/Core/Material/Material.js";
-    import Camera from "../src/Core/Scene/Camera.js";
-    import MeshFactor from "../src/Core/Util/MeshFactor.js";
-    import Geometry from "../src/Core/Node/Geometry.js";
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import OBJLoader from "../../src/Supp/OBJLoader.js";
+    import MoreMath from "../../src/Core/Math3d/MoreMath.js";
+    import Stats from "../stats.min.js";
+    import OctCullingControl from "../../src/Core/Optimization/OctCullingControl.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import Camera from "../../src/Core/Scene/Camera.js";
+    import MeshFactor from "../../src/Core/Util/MeshFactor.js";
+    import Geometry from "../../src/Core/Node/Geometry.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(5, 5, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -31,7 +31,7 @@
 
     let testCamera = new Camera(scene, {id:'testCamera'});
     testCamera.lookAt(new Vector3(0.07953452484227447,3.4589245565459605,1.1170058588214968), new Vector3(-0.6825071896076365,3.231178826615555,0.5108505091489007), new Vector3(0, 1, 0));
-    let colorDef = MaterialDef.load("../src/Core/Assets/MaterialDef/ColorDef");
+    let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
     let colorMat = new Material(scene, {id:'colorWireFrustum', materialDef:colorDef});
     let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
     // 根据当前相机创建测试用的视锥体
@@ -42,8 +42,9 @@
     let rootNode = new Node(scene, {id:'rootNode'});
     rootNode.addChildren(wireFrustum);
     let objLoader = new OBJLoader();
+    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/');
     scene.setFrustumCullingCamera(testCamera);
-    objLoader.load(scene, 'obj1', './Assets/Models/OBJ/testScene.obj', modelNode=>{
+    objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/testScene.obj', modelNode=>{
         // 关闭视锥剔除测试
         // modelNode.setLocalRotationFromEuler(MoreMath.toRadians(-90), 0, 0);
         // modelNode.setLocalScaleXYZ(0.1, 0.1, 0.1);
@@ -71,10 +72,6 @@
     stats.domElement.style.top = '0px';
     document.body.appendChild(stats.domElement);
     scene.on('update', (exTime)=>{
-        // eye:[0.07953452484227447,3.4589245565459605,1.1170058588214968]
-        // at:[-0.6825071896076365,3.231178826615555,0.5108505091489007]
-        // console.log("eye:" + mainCamera.getEye().toString());
-        // console.log("at:" + mainCamera.getAt().toString());
         stats.update();
     });
 </script>

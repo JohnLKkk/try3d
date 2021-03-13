@@ -10,16 +10,11 @@ import MoreMath from "../../Math3d/MoreMath.js";
 import Tools from "../../Util/Tools.js";
 
 export default class Joint {
-    static S_TEMP_MAT4 = new Matrix44();
-    static S_TEMP_MAT42 = new Matrix44();
-    static S_TEMP_MAT43 = new Matrix44();
     constructor(id, num) {
-        this._m_TestId = Tools.nextId();
         // 持有骨架
         this._m_OwnerSkeleton = null;
         // 骨骼节点
         this._m_Bone = null;
-        this._m_Ref = -1;
         this._m_Refs = {};
         // 关节Id
         this._m_Id = id;
@@ -52,14 +47,6 @@ export default class Joint {
     }
 
     /**
-     * 设置Ref。<br/>
-     * @param {WebGLUniformLocation}[ref]
-     */
-    setRef(ref){
-        this._m_Ref = ref;
-    }
-
-    /**
      * 添加一个Ref。<br/>
      * @param {String}[refId]
      * @param {WebGLUniformLocation}[ref]
@@ -80,8 +67,8 @@ export default class Joint {
      * @param {Number}[refId]
      */
     init(gl, refId){
+        // 为后期一致缓存加载,现在仅是更新调度
         this.update(gl, refId);
-        // Log.log('joint_' + this.getId() + ";jointMat4:" + this._m_JointMat4.toString());
     }
 
     /**
@@ -139,13 +126,11 @@ export default class Joint {
      * 更新关节。<br/>
      */
     update(gl, refId){
+        // 保守起见,这里还是检测一下吧(后续可以去掉)
         if(!this._m_Bone){
             Log.log('joint_' + this.getNum() + ";id:" + this.getId() + "未关联Bone!");
             return;
         }
-        // Log.log("更新关节!");
-        // 骨骼变换是Bone的localMatrix
-        // 从根骨骼开始
         Matrix44.multiplyMM(this._m_JointMat4, 0, this._m_Bone.getWorldMatrix(), 0, this._m_RelMat4, 0);
         gl.uniformMatrix4fv(this._m_Refs[refId], false, this._m_JointMat4.getBufferData());
     }

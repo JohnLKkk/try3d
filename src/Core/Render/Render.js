@@ -12,6 +12,7 @@ import MaterialDef from "../Material/MaterialDef.js";
 import DefaultRenderProgram from "./DefaultRenderProgram.js";
 import SinglePassLightingRenderProgram from "./SinglePassLightingRenderProgram.js";
 import Log from "../Util/Log.js";
+import Internal from "./Internal.js";
 
 export default class Render extends Component{
     // 渲染路径
@@ -107,7 +108,7 @@ export default class Render extends Component{
         // ffb.addTexture(gl, 'outColor', gl.RGB, 0, gl.RGB, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT0, false);
         ffb.addBuffer(gl, 'depth', gl.DEPTH24_STENCIL8, gl.DEPTH_STENCIL_ATTACHMENT);
         ffb.finish(gl, this._m_Scene, true);
-        let forwardMat = new Material(this._m_Scene, {id:'for_m', frameContext:this.getFrameContext(), materialDef:MaterialDef.load("../src/Core/Assets/MaterialDef/DefaultOutColorDef")});
+        let forwardMat = new Material(this._m_Scene, {id:'for_m', frameContext:this.getFrameContext(), materialDef:MaterialDef.parse(Internal.S_DEFAULT_OUT_COLOR_DEF_DATA)});
         ffb.getFramePicture().setMaterial(forwardMat);
         this._m_FrameContext._m_DefaultFrameBuffer = ffb.getFrameBuffer();
 
@@ -342,7 +343,11 @@ export default class Render extends Component{
             // DeferredShadingPass
             // 1.先检测是否需要切换subShader(根据shader种类)(这里检测可能与理论不一样，打印出id来调试...)
             if(this._m_FrameContext.m_LastSubShaderId != deferredShadingPass.subShader.getDefId()){
-                // 切换
+                // 此时可能未编译,所以需要检测
+                // 检测是否需要重新编译subShader
+                if(deferredShadingPass.subShader.needCompile()){
+                    deferredShadingPass.subShader._compile(gl, this._m_FrameContext);
+                }
                 deferredShadingPass.subShader.use(gl);
                 this._m_FrameContext.m_LastSubShaderId = deferredShadingPass.subShader.getDefId();
             }

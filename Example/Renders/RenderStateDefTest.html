@@ -9,24 +9,26 @@
     <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
 </div>
 <script type="module">
-    import Geometry from "../src/Core/Node/Geometry.js";
-    import Scene from "../src/Core/Scene/Scene.js";
-    import RenderEngine from "../src/Core/RenderEngine.js";
-    import Node from "../src/Core/Node/Node.js";
-    import Mesh from "../src/Core/WebGL/Mesh.js";
-    import Material from "../src/Core/Material/Material.js";
-    import ColorMatDef from "../src/Core/Assets/MaterialDef/ColorMatDef.js";
-    import Vector3 from "../src/Core/Math3d/Vector3.js";
-    import MaterialDef from "../src/Core/Material/MaterialDef.js";
-    import FirstPersonController from "../src/Core/InputControl/FirstPersonController.js";
+    import Geometry from "../../src/Core/Node/Geometry.js";
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Mesh from "../../src/Core/WebGL/Mesh.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import ColorMatDef from "../../src/Core/Assets/MaterialDef/ColorMatDef.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(10, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     // 加载一个材质定义
-    let materialDef = MaterialDef.load("../src/Core/Assets/MaterialDef/RenderStateDef");
+    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/RenderStateDef");
     let mat = new Material(scene, {id:"colorMat", materialDef});
     console.log("materialDef:",materialDef);
+    // 选择FaceCullTechnology
+    // 该Technology关闭了渲染时的FaceCull操作
     mat.selectTechnology('FaceCullTechnology');
     let geometry = new Geometry(scene, {id:'testGeometry'});
     let mesh = new Mesh();
