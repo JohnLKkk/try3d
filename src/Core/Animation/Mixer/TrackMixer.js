@@ -2,6 +2,8 @@
  * TrackMixer。<br/>
  * 将多个轨迹合成，通常一个Mixer包含多个ActionClip，在一段动画时间中插补关键帧得到对应的值并进行合成，最终更新到指定轨迹上。<br/>
  * @author Kkk
+ * @date 2021年3月13日21点58分
+ * @lastdata 2021年3月13日21点59分
  */
 export default class TrackMixer {
     constructor() {

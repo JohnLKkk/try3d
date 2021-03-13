@@ -2,6 +2,7 @@
  * TrackBinding。<br/>
  * 将指定的动作轨道绑定到指定的对象上,使得该对象执行该轨迹动作。<br/>
  * @author Kkk
+ * @lastdate 2021年3月13日21点58分
  */
 import Log from "../../Util/Log.js";
 

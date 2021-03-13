@@ -5,6 +5,7 @@ import Node from "../Node/Node.js";
  * 表示骨骼的Node。<br/>
  * @author Kkk
  * @date 2021年3月8日15点58分
+ * @date 2021年3月13日22点01分
  */
 export default class Bone extends Node{
     getType(){

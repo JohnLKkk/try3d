@@ -3,6 +3,7 @@
  * 定义了蒙皮动画的骨架部分。<br/>
  * @author Kkk
  * @date 2021年3月9日10点38分
+ * @lastdate 2021年3月13日21点59分
  */
 import ShaderSource from "../../WebGL/ShaderSource.js";
 import Log from "../../Util/Log.js";

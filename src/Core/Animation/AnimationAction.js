@@ -3,6 +3,8 @@
  * 定义了一个动画，复杂的3D动画中通常为一个角色创建多个动画。<br/>
  * 一个完整的动画通常由多个ActionClip定义或描述。<br/>
  * @author Kkk
+ * @date 2021年3月8日3点20分
+ * @lastdate 2021年3月13日22点00分
  */
 import Log from "../Util/Log.js";
 

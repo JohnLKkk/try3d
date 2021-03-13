@@ -1,6 +1,13 @@
 import Component from "../Component.js";
 import Log from "../Util/Log.js";
 
+/**
+ * AnimationProcessor。<br/>
+ * 作为提供轨迹动画，变形动画和Skin动画的控制器。<br/>
+ * @author Kkk
+ * @date 2021年3月8日2点28分
+ * @lastdate 2021年3月13日22点00分
+ */
 export default class AnimationProcessor extends Component{
     getType(){
         return 'AnimationProcessor';

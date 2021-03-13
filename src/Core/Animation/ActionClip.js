@@ -3,6 +3,7 @@
  * 定义关键帧动作剪辑，一个动作剪辑定义了对某个轨迹通道的关键帧。<br/>
  * @author Kkk
  * @date 2021年3月8日17点27分
+ * @lastdata 2021年3月13日22点00分
  */
 import Log from "../Util/Log.js";
 
