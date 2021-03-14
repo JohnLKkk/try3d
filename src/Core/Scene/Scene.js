@@ -15,6 +15,12 @@ export default class Scene extends Component{
     getType(){
         return "Scene";
     }
+
+    /**
+     * 创建一个场景。<br/>
+     * @param {String}[cfg.id]
+     * @param {DOM}[cfg.canvas]
+     */
     constructor(cfg) {
         super(null, cfg);
         // 创建一个默认渲染器组件,一个场景可以附加多个渲染器组件

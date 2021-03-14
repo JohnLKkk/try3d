@@ -12,6 +12,11 @@ export default class Component {
         return null;
     }
 
+    /**
+     * 创建一个组件。<br/>
+     * @param {Component}[owner]
+     * @param {String}[cfg.id]
+     */
     constructor(owner, cfg) {
         cfg = cfg || {};
         // 事件观察者

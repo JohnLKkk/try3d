@@ -33,6 +33,7 @@ export default class Node extends Component{
         // 后续改为NodeName和componentId分开设置
         super(owner, {id:Tools.nextId() + cfg.id});
         this._m_Name = cfg.id;
+        this._m_CurrentLod = 0;
         // 变换信息
         this._m_LocalMatrix = new Matrix44();
         this._m_WorldMatrix = new Matrix44();
@@ -66,6 +67,20 @@ export default class Node extends Component{
         this._m_CullingFlags |= Node.S_DEFAULT_FRUSTUM_CULLING;
         // 过滤标记
         this._m_FilterFlag = Node.S_DYNAMIC;
+    }
+
+    /**
+     * 设置当前分支下所有渲染实例的细节层次。<br/>
+     * @param {Number}[lod]
+     */
+    lod(lod){
+        if(this._m_CurrentLod == lod)return;
+        // 提前判断可以减少forEach空列表带来的开销
+        if(this._m_Children.getChildren().length > 0){
+            this._m_Children.forEach(c=>{
+                c.lod(lod);
+            });
+        }
     }
 
     /**

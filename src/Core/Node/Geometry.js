@@ -20,9 +20,18 @@ export default class Geometry extends Node{
         this._m_Mesh = null;
         this._m_ModelAABBBoundingBox = null;
         this._m_Material = null;
+    }
 
-
-        // 生成材质对象时,根据材质hash值查询是否存在对应的材质对象,有则直接引用。
+    /**
+     * 设置该Geometry的细节层次。<br/>
+     * @param {Number}[lod]
+     */
+    lod(lod) {
+        if(this._m_CurrentLod == lod)return;
+        this._m_CurrentLod = lod;
+        if(this._m_Mesh != null){
+            this._m_Mesh.lod(this._m_CurrentLod);
+        }
     }
 
     /**
@@ -62,6 +71,11 @@ export default class Geometry extends Node{
     getMesh(){
         return this._m_Mesh;
     }
+
+    /**
+     * 更新Geometry数据，应该在创建完Geometry，设置了Mesh后调用一次，以便边界盒和其他信息准备完成。<br/>
+     * 目前用于外部调用，有可能改为引擎内部调用。<br/>
+     */
     updateBound(){
         if(this._m_Mesh){
             this._m_Mesh._updateBound(this._m_Scene.getCanvas().getGLContext());
@@ -75,6 +89,7 @@ export default class Geometry extends Node{
                 }
                 this._m_AABBBoudingBox.setTo(this._m_ModelAABBBoundingBox);
             }
+            this._m_Mesh.lod(this._m_CurrentLod);
         }
     }
     getAABBBoundingBox(){

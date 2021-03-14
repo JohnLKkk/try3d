@@ -5,6 +5,8 @@
  */
 import ArrayBuf from "./ArrayBuf.js";
 import ShaderSource from "./ShaderSource.js";
+import Log from "../Util/Log.js";
+import SizeOf from "./SizeOf.js";
 
 export default class Mesh {
     // 以下属性表明引擎的Mesh数据块仅支持这些属性(不要设计自定义属性,这样会加大复杂度)
@@ -58,6 +60,9 @@ export default class Mesh {
         this._m_ElementCount = 0;
         this._m_Primitive = Mesh.S_PRIMITIVE_TRIANGLES;
         this._m_DrawPrimitive = null;
+        this._m_CurrentLod = 0;
+        this._m_DrawLod = 0;
+        this._m_LodLevels = {};
     }
 
     /**
@@ -104,7 +109,16 @@ export default class Mesh {
      */
     setData(type, data, options){
         if(this._checkDataType(type)){
-            this._m_Datas[type] = data;
+            if(options && options.level != undefined){
+                if(!this._m_Datas[type]){
+                    this._m_Datas[type] = {lod:true,datas:[],count:0};
+                }
+                this._m_Datas[type].count += data.length;
+                this._m_Datas[type].datas.push({data, level:options.level, count:data.length});
+            }
+            else{
+                this._m_Datas[type] = data;
+            }
         }
         else{
             //根据options来指定参数
@@ -157,12 +171,52 @@ export default class Mesh {
                         ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_TANGENT, 3, gl.FLOAT, 0, 0);
                         break;
                     case Mesh.S_INDICES:
-                        this._m_ElementCount = this._m_Datas[key].length;
-                        ArrayBuf.setIndicesBuf(gl, this._m_VAO, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this._m_Datas[key]), gl.STATIC_DRAW);
+                        if(this._m_Datas[key].lod){
+                            let datas = this._m_Datas[key].datas;
+                            let data = new Uint16Array(this._m_Datas[key].count);
+                            let max = 0;
+                            let _max = 0;
+                            for(let i = 0,j = 0;i < datas.length;i++){
+                                this._m_LodLevels[datas[i].level] = {lod:j, count:datas[i].count};
+                                for(let t = 0,os = _max == 0 ? 0 : _max + 1;t < datas[i].data.length;t++){
+                                    data[j++] = os + datas[i].data[t];
+                                    max = Math.max(datas[i].data[t] + os, max);
+                                }
+                                _max = max;
+                                max = 0;
+                            }
+                            this._m_CurrentLod = -1;
+                            this.lod(0);
+                            ArrayBuf.setIndicesBuf(gl, this._m_VAO, gl.ELEMENT_ARRAY_BUFFER, data, gl.STATIC_DRAW);
+                        }
+                        else{
+                            this._m_ElementCount = this._m_Datas[key].length;
+                            ArrayBuf.setIndicesBuf(gl, this._m_VAO, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this._m_Datas[key]), gl.STATIC_DRAW);
+                        }
                         break;
                     case Mesh.S_INDICES_32:
-                        this._m_ElementCount = this._m_Datas[key].length;
-                        ArrayBuf.setIndicesBuf(gl, this._m_VAO, gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this._m_Datas[key]), gl.STATIC_DRAW);
+                        if(this._m_Datas[key].lod){
+                            let datas = this._m_Datas[key].datas;
+                            let data = new Uint32Array(this._m_Datas[key].count);
+                            let max = 0;
+                            let _max = 0;
+                            for(let i = 0,j = 0;i < datas.length;i++){
+                                this._m_LodLevels[datas[i].level] = {lod:j, count:datas[i].count};
+                                for(let t = 0,os = _max == 0 ? 0 : _max + 1;t < datas[i].data.length;t++){
+                                    data[j++] = os + datas[i].data[t];
+                                    max = Math.max(datas[i].data[t] + os, max);
+                                }
+                                _max = max;
+                                max = 0;
+                            }
+                            this._m_CurrentLod = -1;
+                            this.lod(0);
+                            ArrayBuf.setIndicesBuf(gl, this._m_VAO, gl.ELEMENT_ARRAY_BUFFER, data, gl.STATIC_DRAW);
+                        }
+                        else{
+                            this._m_ElementCount = this._m_Datas[key].length;
+                            ArrayBuf.setIndicesBuf(gl, this._m_VAO, gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this._m_Datas[key]), gl.STATIC_DRAW);
+                        }
                         break;
                     case Mesh.S_UV0:
                         ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_UV0, 2, gl.FLOAT, 0, 0);
@@ -201,11 +255,31 @@ export default class Mesh {
             }
         }
     }
+
+    /**
+     * 绘制该Mesh。<br/>
+     * 由内部引擎调用，通常不应该手动调用。<br/>
+     * @param {WebGL}[gl]
+     */
     draw(gl){
-        // 应该获取FrameContext,然后查看是否需要更新gl最新绑定的vao
-        // 以尽可能减少状态机切换
         gl.bindVertexArray(this._m_VAO);
-        gl.drawElements(this._m_DrawPrimitive, this._m_ElementCount, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(this._m_DrawPrimitive, this._m_ElementCount, gl.UNSIGNED_SHORT, this._m_DrawLod);
+    }
+
+    /**
+     * 设置该Mesh渲染使用的细节层次。<br/>
+     * @param {Number}[lod]
+     */
+    lod(lod){
+        if(this._m_CurrentLod == lod)return;
+        if(this._m_LodLevels[lod] != null){
+            this._m_CurrentLod = lod;
+            this._m_ElementCount = this._m_LodLevels[this._m_CurrentLod].count;
+            this._m_DrawLod = this._m_LodLevels[this._m_CurrentLod].lod * SizeOf.sizeof(SizeOf.S_UNSIGNED_SHORT);
+        }
+        else{
+            Log.error('lod level ' + lod + '对于当前Mesh无效!');
+        }
     }
 
 }
