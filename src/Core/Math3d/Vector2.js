@@ -7,7 +7,7 @@ export default class Vector2 {
         this._m_X = vec2._m_X;
         this._m_Y = vec2._m_Y;
     }
-    setToInXY(x, y, z, w){
+    setToInXY(x, y){
         this._m_X = x || 0;
         this._m_Y = y || 0;
     }

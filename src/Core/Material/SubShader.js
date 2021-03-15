@@ -1,6 +1,7 @@
 import ShaderSource from "../WebGL/ShaderSource.js";
 import ShaderProgram from "../WebGL/ShaderProgram.js";
 import Tools from "../Util/Tools.js";
+import Log from "../Util/Log.js";
 
 /**
  * SubShader,被Technology包含,一个Technology包含多个SubShader,用于实现高级着色中的多pass。<br/>
@@ -115,7 +116,7 @@ export default class SubShader {
         // 并非一定需要编译,因为可能该ShaderProgram来自引擎其他地方
         if(this._m_ShaderProgram.needCompile()){
             this._m_ShaderProgram._compile(gl);
-            // console.log("编译!");
+            Log.log("编译!");
         }
         this._loadShaderCaches(gl, frameContext);
     }

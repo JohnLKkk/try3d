@@ -18,7 +18,7 @@ export default class Texture2DVars extends Vars{
         // 设置默认纹理滤波
         this.setFilter(scene, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         this.setFilter(scene, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        this.genMipmap(scene);
+        // this.genMipmap(scene);
     }
     genMipmap(scene){
         const gl = scene.getCanvas().getGLContext();

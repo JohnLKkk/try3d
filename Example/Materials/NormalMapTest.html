@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NormalMapTest</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" tabindex="0" width="400" height="300" style="border: none;margin: 0px;padding: 0px;"></canvas>
+</div>
+<script type="module">
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+    import Box from "../../src/Core/Node/Shape/Box.js";
+    import Vec4Vars from "../../src/Core/WebGL/Vars/Vec4Vars.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import Texture2DVars from "../../src/Core/WebGL/Vars/Texture2DVars.js";
+    import Vector4 from "../../src/Core/Math3d/Vector4.js";
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    // 加载一个材质定义
+    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
+
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    let rootNode = new Node(scene, {id:'rootNode'});
+    let mat4 = new Material(scene, {id:"colorMapMat", materialDef});
+    let colorMap = new Texture2DVars(scene);
+    // 纹理图像未加载完成前设置一个默认颜色纹理
+    colorMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+    colorMap.setImageSrc(scene, './../Assets/Textures/ground 3.png');
+    mat4.setParam('colorMap', colorMap);
+    let box4 = new Box(scene, {id:'box4'});
+    box4.setLocalTranslationXYZ(0, 0, 0);
+    box4.setMaterial(mat4);
+    rootNode.addChildren(box4);
+
+    let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+    scene.on('update', exTime=>{
+    });
+</script>
+</body>
+</html>

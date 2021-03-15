@@ -1,5 +1,6 @@
 import Geometry from "../Geometry.js";
 import Mesh from "../../WebGL/Mesh.js";
+import Tools from "../../Util/Tools.js";
 
 /**
  * Box。<br/>
@@ -181,6 +182,11 @@ export default class Box extends Geometry{
             20, 21, 22,
             20, 22, 23
         ]);
+
+        // 切线数据
+        // let tangents = Tools.generatorTangents(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
+        // mesh.setData(Mesh.S_TANGENTS, tangents);
+
         this.setMesh(mesh);
         this.updateBound();
     }
