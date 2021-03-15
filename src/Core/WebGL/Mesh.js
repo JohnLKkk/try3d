@@ -63,6 +63,7 @@ export default class Mesh {
         this._m_CurrentLod = 0;
         this._m_DrawLod = 0;
         this._m_LodLevels = {};
+        this._m_LodLevelCount = 0;
     }
 
     /**
@@ -178,6 +179,7 @@ export default class Mesh {
                             let _max = 0;
                             for(let i = 0,j = 0;i < datas.length;i++){
                                 this._m_LodLevels[datas[i].level] = {lod:j, count:datas[i].count};
+                                this._m_LodLevelCount++;
                                 for(let t = 0,os = _max == 0 ? 0 : _max + 1;t < datas[i].data.length;t++){
                                     data[j++] = os + datas[i].data[t];
                                     max = Math.max(datas[i].data[t] + os, max);
@@ -202,6 +204,7 @@ export default class Mesh {
                             let _max = 0;
                             for(let i = 0,j = 0;i < datas.length;i++){
                                 this._m_LodLevels[datas[i].level] = {lod:j, count:datas[i].count};
+                                this._m_LodLevelCount++;
                                 for(let t = 0,os = _max == 0 ? 0 : _max + 1;t < datas[i].data.length;t++){
                                     data[j++] = os + datas[i].data[t];
                                     max = Math.max(datas[i].data[t] + os, max);
@@ -280,6 +283,38 @@ export default class Mesh {
         else{
             Log.error('lod level ' + lod + '对于当前Mesh无效!');
         }
+    }
+
+    /**
+     * 返回细节层次级别数量。<br/>
+     * @return {Number}
+     */
+    getLodLevelCount(){
+        return this._m_LodLevelCount;
+    }
+
+    /**
+     * 返回指定细节层次级别对应的图元数量。<br/>
+     * 如果该细节层次级别超过有效级别范围,则返回0。<br/>
+     * @param {Number}[lod]
+     * @return {Number}
+     */
+    getLodPrimitiveCount(lod){
+        if(this._m_LodLevels[lod] != null){
+            let drawCount = this._m_LodLevels[lod].count;
+            switch (this._m_Primitive) {
+                case Mesh.S_PRIMITIVE_TRIANGLES:
+                    return drawCount / 3;
+                    break;
+                case Mesh.S_PRIMITIVE_LINES:
+                    return drawCount / 2;
+                    break;
+            }
+        }
+        else{
+            Log.error('lod level ' + lod + '对于当前Mesh无效!');
+        }
+        return 0;
     }
 
 }

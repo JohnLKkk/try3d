@@ -20,7 +20,6 @@ export default class AABBBoundingBox extends BoundingVolume{
         this._m_XHalf = 0;
         this._m_YHalf = 0;
         this._m_ZHalf = 0;
-        this._m_Center = new Vector3();
     }
 
     /**
@@ -286,16 +285,6 @@ export default class AABBBoundingBox extends BoundingVolume{
         return max;
     }
 
-    /**
-     * 返回中心点。<br/>
-     * @param {Vector3}[center]
-     * @return {Vector3}
-     */
-    getCenter(center){
-        center = center || new Vector3();
-        center.setTo(this._m_Center);
-        return center;
-    }
     contains(boundingVolume) {
         switch (boundingVolume.getType()) {
             case BoundingVolume.S_TYPE_AABB:

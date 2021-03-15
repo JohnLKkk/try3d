@@ -65,6 +65,15 @@ export default class Vector3 {
         let r = new Vector3(0, 0, 0);
         return this.cross(vec3, r);
     }
+    distance(v){
+        return Math.sqrt(this.distanceSq(v));
+    }
+    distanceSq(v){
+        let dx = this._m_X - v._m_X;
+        let dy = this._m_Y - v._m_Y;
+        let dz = this._m_Z - v._m_Z;
+        return dx * dx + dy * dy + dz * dz;
+    }
     divide(vec3, result){
         if(result){
             result._m_X = this._m_X / vec3._m_X;

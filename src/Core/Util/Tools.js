@@ -1,3 +1,5 @@
+import BoundingVolume from "../Math3d/Bounding/BoundingVolume.js";
+
 const o = {};
 o.lz = function(i,c)
 {
@@ -162,5 +164,23 @@ export default class Tools {
             return str.replace(tagPattern, tag);
         }
         return str;
+    }
+
+    /**
+     * 近似计算BoundingVolume在指定视口中的面积。<br/>
+     * @param {BoundingVolume}[bound]
+     * @param {Number}[distance 距离cam的距离]
+     * @param {Number}[viewPortWidth 视口宽度]
+     * @return {Number}[返回该bound在视口中的近似像素面积]
+     */
+    static approxScreenArea(bound, distance, viewPortWidth){
+        if(bound.getType() == BoundingVolume.S_TYPE_AABB){
+            let r = bound.getXHalf() * bound.getXHalf() + bound.getYHalf() * bound.getYHalf() + bound.getZHalf() * bound.getZHalf();
+            return ((r * viewPortWidth * viewPortWidth) / (distance * distance * 4)) * Math.PI;
+        }
+        else if(bound.getType() == BoundingVolume.S_TYPE_SPHERE){
+
+        }
+        return 0;
     }
 }

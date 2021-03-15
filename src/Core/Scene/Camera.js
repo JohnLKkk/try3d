@@ -156,6 +156,54 @@ export default class Camera extends Component{
     }
 
     /**
+     * 返回Left截面。<br/>
+     * @return {Number}
+     */
+    getLeft(){
+        return this._m_FrustumLeft;
+    }
+
+    /**
+     * 返回Right截面。<br/>
+     *@return {Number}
+     */
+    getRight(){
+        return this._m_FrustumRight;
+    }
+
+    /**
+     * 返回Top截面。<br/>
+     * @return {Number}
+     */
+    getTop(){
+        return this._m_FrustumTop;
+    }
+
+    /**
+     * 返回Bottom截面。<br/>
+     * @return {Number}
+     */
+    getBottom(){
+        return this._m_FrustumBottom;
+    }
+
+    /**
+     * 返回Near截面。<br/>
+     * @return {Number}
+     */
+    getNear(){
+        return this._m_FrustumNear;
+    }
+
+    /**
+     * 返回Far截面。<br/>
+     * @return {Number}
+     */
+    getFar(){
+        return this._m_FrustumFar;
+    }
+
+    /**
      * 设置为渲染相机。<br/>
      * @param {Boolean}[isMainCamera]
      */

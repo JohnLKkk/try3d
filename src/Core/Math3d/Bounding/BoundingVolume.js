@@ -4,12 +4,35 @@
  * @author Kkk
  * @date 2021年2月24日15点33分
  */
+import Vector3 from "../Vector3.js";
+
 export default class BoundingVolume {
     static S_TYPE_AABB = 0;
     static S_TYPE_SPHERE = 1;
     constructor(props) {
         // 优先检测面
         this._m_PriorityPlane = 0;
+        // 中心点
+        this._m_Center = new Vector3();
+    }
+
+    /**
+     * 设置中心点。<br/>
+     * @param {Vector3}[center]
+     */
+    setCenter(center){
+        this._m_Center.setTo(center);
+    }
+
+    /**
+     * 返回中心点。<br/>
+     * @param {Vector3}[center]
+     * @return {Vector3}
+     */
+    getCenter(center){
+        center = center || new Vector3();
+        center.setTo(this._m_Center);
+        return center;
     }
 
     /**
@@ -73,5 +96,14 @@ export default class BoundingVolume {
      */
     contains(boundingVolume){
         return false;
+    }
+
+    /**
+     * 返回给定点与中心点距离。<br/>
+     * @param {Vector3}[p]
+     * @return {Number}
+     */
+    distance(p){
+        return this._m_Center.distance(p);
     }
 }

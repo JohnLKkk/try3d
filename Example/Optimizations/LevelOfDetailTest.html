@@ -22,6 +22,7 @@
         import Material from "../../src/Core/Material/Material.js";
         import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
         import Input from "../../src/Core/InputControl/Input.js";
+        import LodControl from "../../src/Core/Optimization/LodControl.js";
 
         let scene = new Scene({cavnas:document.getElementById('render')});
         let mainCamera = scene.getMainCamera();
@@ -57,6 +58,7 @@
         let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
         basicLightingMat.selectTechnology('BlinnPhongLight2');
         geometry.setMaterial(basicLightingMat);
+        let lodControl = new LodControl(geometry, {id:'lodControl', distCommonDifference:0.1});
 
 
         // 添加到根场景
