@@ -76,6 +76,10 @@ export default class Texture2DVars extends Vars{
             image = Tools.ensureImageSizePowerOfTwo(image, scene.getCanvas());
             //self._image = image; // For faster WebGL context restore - memory inefficient?
             this.setImage(scene, image);
+            // 刷新所有材质持有
+            for(let owner in this._m_OwnerFlags){
+                this._m_OwnerFlags[owner].owner.setParam(this._m_OwnerFlags[owner].flag, this);
+            }
         };
         image.src = src;
     }

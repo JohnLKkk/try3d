@@ -147,26 +147,7 @@ export default class Material extends Component{
                     this._m_CurrentSubShader.uploadParam(gl, n, this._m_ParamValues[n]);
                 }
             }
-            // 检查最新数据值
-            if(this._m_ChangeParams.length > 0){
-                this._m_ChangeParams.forEach(param=>{
-                    // 检测是否需要更新该参数
-                    if(this._m_ParamValues[param.paramName]){
-                        // 如果值相同就跳过
-                        if(!this._m_ParamValues[param.paramName].compare(param.value)){
-                            // 提交参数并保存参数
-                            this._m_CurrentSubShader.uploadParam(gl, param.paramName, param.value);
-                            this._m_ParamValues[param.paramName] = param.value;
-                        }
-                    }
-                    else{
-                        // 提交参数并保存参数
-                        this._m_CurrentSubShader.uploadParam(gl, param.paramName, param.value);
-                        this._m_ParamValues[param.paramName] = param.value;
-                    }
-                });
-                this._m_ChangeParams.length = 0;
-            }
+
             // 更新参数到subShader中?
             // modelMatrix,蒙皮骨骼变换这些信息,只能由具体的Geometry去传递,所以应该在Geometry中更新modelMatrix,但由于是提交数据时仅需要local,所以Geometry需要持有mat SubShader,这样才能直到更新到哪个shader句柄中。
             // 而灯光的一些信息,应该由灯光模块系统去执行更新(如果使用ubo block,则可以不需要引用mat就可以独立更新,mat subShader只需要绑定指定的ubo block即可)
@@ -177,6 +158,26 @@ export default class Material extends Component{
             //     }
             // }
 
+        }
+        // 检查最新数据值
+        if(this._m_ChangeParams.length > 0){
+            this._m_ChangeParams.forEach(param=>{
+                // 检测是否需要更新该参数
+                if(this._m_ParamValues[param.paramName]){
+                    // 如果值相同就跳过
+                    if(!this._m_ParamValues[param.paramName].compare(param.value)){
+                        // 提交参数并保存参数
+                        this._m_CurrentSubShader.uploadParam(gl, param.paramName, param.value);
+                        this._m_ParamValues[param.paramName] = param.value;
+                    }
+                }
+                else{
+                    // 提交参数并保存参数
+                    this._m_CurrentSubShader.uploadParam(gl, param.paramName, param.value);
+                    this._m_ParamValues[param.paramName] = param.value;
+                }
+            });
+            this._m_ChangeParams.length = 0;
         }
     }
     _init(){
@@ -217,6 +218,7 @@ export default class Material extends Component{
                 }
             }
             // 将其加入参数列表
+            value.owner(this, paramName);
             this._m_ChangeParams.push({paramName, value});
         }
     }

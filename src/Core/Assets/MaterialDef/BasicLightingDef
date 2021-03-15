@@ -101,7 +101,7 @@ Def BasicLightingDef{
         }
     }
 
-    SubTechnology BlinnPhongLighting2{
+    SubTechnology SingleBlinnPhongLighting{
         Vars{
             vec3 wNormal;
             vec3 wPosition;
@@ -256,17 +256,16 @@ Def BasicLightingDef{
     }
     Technology{
         Sub_Pass Forward{
-            Pass BlinnPhongLighting1{
+            Pass SingleBlinnPhongLighting{
             }
         }
     }
     Technology BlinnPhongLight2{
-            Sub_Pass Forward{
-                Pass BlinnPhongLighting2{
-                    FaceCull Off;
-                }
+        Sub_Pass Forward{
+            Pass SingleBlinnPhongLighting{
             }
         }
+    }
     Technology Color{
         Sub_Pass Forward{
             Pass ColorSubTechnology{
