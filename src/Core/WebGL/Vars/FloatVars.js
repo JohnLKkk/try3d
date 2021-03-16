@@ -25,7 +25,7 @@ export default class FloatVars extends Vars{
         return this._m_Float == floatVars._m_Float;
     }
     _upload(gl, loc, fun){
-        gl.uniform4fv(loc, this._m_Float);
+        gl.uniform1f(loc, this._m_Float);
     }
 
 }

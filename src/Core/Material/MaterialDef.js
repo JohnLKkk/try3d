@@ -299,59 +299,108 @@ export default class MaterialDef{
         for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++){
             line = Tools.trim(data[i]);
             if(line.startsWith("//"))continue;
+            let p = null;
+            let pr = -1;
+            let prsult = null;
             // 检测变量列表
             varTable.forEach(vars=>{
-                if(Tools.find(line, vars.pattern)){
-                    if(!conVars[vars.name]){
-                        conVars[vars.name] = true;
-                        useVars.push(vars);
+                pr = Tools.find2(line, vars.pattern);
+                if(pr != -1){
+                    if(!prsult){
+                        prsult = {};
+                    }
+                    if(prsult[pr] != null){
+                        if(prsult[pr].name.length < vars.name.length){
+                            prsult[pr] = vars;
+                        }
+                    }
+                    else{
+                        prsult[pr] = vars;
                     }
                 }
             });
+            if(prsult){
+                for(let pr in prsult){
+                    p = prsult[pr];
+                    if(!conVars[p.name]){
+                        conVars[p.name] = true;
+                        useVars.push(p);
+                    }
+                }
+            }
             // 检测材质参数列表
-            let p = null;
+            p = null;
+            pr = -1;
+            prsult = null;
             for(let k in params){
                 param = params[k];
                 // Tools.find()匹配有bug
                 // 为了确保完全匹配最长的那个,暂时先这么处理
-                if(Tools.find(line, param.getPattern())){
-                    if(p){
-                        if(p.getName().length < param.getName().length){
-                            p = param;
+                pr = Tools.find2(line, param.getPattern())
+                if(pr != -1){
+                    if(!prsult){
+                        prsult = {};
+                    }
+                    if(prsult[pr] != null){
+                        if(prsult[pr].getName().length < param.getName().length){
+                            prsult[pr] = param;
                         }
                     }
                     else{
-                        p = param;
+                        prsult[pr] = param;
                     }
                 }
             }
-            if(p){
-                if(!conParams[p.getName()]){
-                    // 记录使用的材质参数
-                    useParams.push(p);
-                    conParams[p.getName()] = true;
+            if(prsult){
+                for(let pr in prsult){
+                    p = prsult[pr];
+                    if(!conParams[p.getName()]){
+                        // 记录使用的材质参数
+                        useParams.push(p);
+                        conParams[p.getName()] = true;
+                    }
+                    // 设置材质参数
+                    line = Tools.repSrc(line, p.getPattern(), p.getTagPattern(), p.getName());
+                    useParam = true;
                 }
-                // 设置材质参数
-                line = Tools.repSrc(line, p.getPattern(), p.getTagPattern(), p.getName());
-                useParam = true;
             }
+
             // 检测上下文列表
             let context = null;
+            prsult = null;
             for(let k in ShaderSource.Context_Data){
                 context = ShaderSource.Context_Data[k];
-                if(Tools.find(line, context.pattern)){
-                    // 记录该vsShader使用的context
-                    if(!conContexts[context.src]){
-                        if(context.isFlagVariable){
-                            subShaderDef.addContextDefine(ShaderSource.VERTEX_SHADER, context.src);
-                        }
-                        else{
-                            conContexts[context.src] = true;
-                            useContexts.push(context);
+                if(context.pattern == null)continue;
+                pr = Tools.find2(line, context.pattern);
+                if(pr != -1){
+                    if(!prsult){
+                        prsult = {};
+                    }
+                    if(prsult[pr] != null){
+                        if(prsult[pr].src.length < context.src.length){
+                            prsult[pr] = context;
                         }
                     }
-                    // 替换指定上下文
-                    line = Tools.repSrc(line, context.pattern, context.tagPattern, context.tag);
+                    else{
+                        prsult[pr] = context;
+                    }
+                }
+                if(prsult){
+                    for(let pr in prsult){
+                        context = prsult[pr];
+                        // 记录该vsShader使用的context
+                        if(!conContexts[context.src]){
+                            if(context.isFlagVariable){
+                                subShaderDef.addContextDefine(ShaderSource.VERTEX_SHADER, context.src);
+                            }
+                            else{
+                                conContexts[context.src] = true;
+                                useContexts.push(context);
+                            }
+                        }
+                        // 替换指定上下文
+                        line = Tools.repSrc(line, context.pattern, context.tagPattern, context.tag);
+                    }
                 }
             }
             shader += Tools.trim(line) + '\n';
@@ -587,59 +636,108 @@ export default class MaterialDef{
         for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++){
             line = Tools.trim(data[i]);
             if(line.startsWith("//"))continue;
+            let p = null;
+            let pr = -1;
+            let prsult = null;
             // 检测变量列表
             varTable.forEach(vars=>{
-                if(Tools.find(line, vars.pattern)){
-                    if(!conVars[vars.name]){
-                        conVars[vars.name] = true;
-                        useVars.push(vars);
+                pr = Tools.find2(line, vars.pattern);
+                if(pr != -1){
+                    if(!prsult){
+                        prsult = {};
+                    }
+                    if(prsult[pr] != null){
+                        if(prsult[pr].name.length < vars.name.length){
+                            prsult[pr] = vars;
+                        }
+                    }
+                    else{
+                        prsult[pr] = vars;
                     }
                 }
             });
+            if(prsult){
+                for(let pr in prsult){
+                    p = prsult[pr];
+                    if(!conVars[p.name]){
+                        conVars[p.name] = true;
+                        useVars.push(p);
+                    }
+                }
+            }
             // 检测材质参数列表
-            let p = null;
+            p = null;
+            pr = -1;
+            prsult = null;
             for(let k in params){
                 param = params[k];
                 // Tools.find()匹配有bug
                 // 为了确保完全匹配最长的那个,暂时先这么处理
-                if(Tools.find(line, param.getPattern())){
-                    if(p){
-                        if(p.getName().length < param.getName().length){
-                            p = param;
+                pr = Tools.find2(line, param.getPattern())
+                if(pr != -1){
+                    if(!prsult){
+                        prsult = {};
+                    }
+                    if(prsult[pr] != null){
+                        if(prsult[pr].getName().length < param.getName().length){
+                            prsult[pr] = param;
                         }
                     }
                     else{
-                        p = param;
+                        prsult[pr] = param;
                     }
                 }
             }
-            if(p){
-                if(!conParams[p.getName()]){
-                    // 记录使用的材质参数
-                    useParams.push(p);
-                    conParams[p.getName()] = true;
+            if(prsult){
+                for(let pr in prsult){
+                    p = prsult[pr];
+                    if(!conParams[p.getName()]){
+                        // 记录使用的材质参数
+                        useParams.push(p);
+                        conParams[p.getName()] = true;
+                    }
+                    // 设置材质参数
+                    line = Tools.repSrc(line, p.getPattern(), p.getTagPattern(), p.getName());
+                    useParam = true;
                 }
-                // 设置材质参数
-                line = Tools.repSrc(line, p.getPattern(), p.getTagPattern(), p.getName());
-                useParam = true;
             }
+
             // 检测上下文列表
             let context = null;
+            prsult = null;
             for(let k in ShaderSource.Context_Data){
                 context = ShaderSource.Context_Data[k];
-                if(Tools.find(line, context.pattern)){
-                    // 记录该fsShader使用的context
-                    if(!conContexts[context.src]){
-                        if(context.isFlagVariable){
-                            subShaderDef.addContextDefine(ShaderSource.VERTEX_SHADER, context.src);
-                        }
-                        else{
-                            conContexts[context.src] = true;
-                            useContexts.push(context);
+                if(context.pattern == null)continue;
+                pr = Tools.find2(line, context.pattern);
+                if(pr != -1){
+                    if(!prsult){
+                        prsult = {};
+                    }
+                    if(prsult[pr] != null){
+                        if(prsult[pr].src.length < context.src.length){
+                            prsult[pr] = context;
                         }
                     }
-                    // 替换指定上下文
-                    line = Tools.repSrc(line, context.pattern, context.tagPattern, context.tag);
+                    else{
+                        prsult[pr] = context;
+                    }
+                }
+                if(prsult){
+                    for(let pr in prsult){
+                        context = prsult[pr];
+                        // 记录该vsShader使用的context
+                        if(!conContexts[context.src]){
+                            if(context.isFlagVariable){
+                                subShaderDef.addContextDefine(ShaderSource.VERTEX_SHADER, context.src);
+                            }
+                            else{
+                                conContexts[context.src] = true;
+                                useContexts.push(context);
+                            }
+                        }
+                        // 替换指定上下文
+                        line = Tools.repSrc(line, context.pattern, context.tagPattern, context.tag);
+                    }
                 }
             }
             shader += Tools.trim(line) + '\n';

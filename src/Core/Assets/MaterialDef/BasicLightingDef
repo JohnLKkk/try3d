@@ -1,10 +1,13 @@
 // 基础光照材质定义
 Def BasicLightingDef{
     Params{
-        texture2D diffuseMap;
-        texture2D normalMap;
-        texture2D specularMap;
-        float Shininess;
+        sampler2D diffuseMap;
+        sampler2D normalMap;
+        sampler2D specularMap;
+        vec4 ambientColor;
+        vec4 diffuseColor;
+        vec4 specularColor;
+        float shininess;
     }
     SubTechnology BlinnPhongLighting1{
         Vars{
@@ -24,9 +27,9 @@ Def BasicLightingDef{
                 wvPosition = wvPos.xyz;
                 vec3 norm = mat3(transpose(inverse(Context.ModelMatrix))) * Context.InNormal;
                 wvNormal = (Context.ViewMatrix * vec4(norm, 0.0f)).xyz;
-                ambientSumAdjust = vec3(0.2f);
-                diffuseSumAdjust = vec4(0.5f, 0.5f, 0.5f, 1.0f);
-                specularSumAdjust = vec3(1.0f);
+                ambientSumAdjust = Params.ambientColor.rgb;
+                diffuseSumAdjust = Params.diffuseColor;
+                specularSumAdjust = Params.specularColor.rgb;
                 Context.OutPosition = Context.ProjectMatrix * wvPos;
             }
         }
@@ -105,6 +108,7 @@ Def BasicLightingDef{
         Vars{
             vec3 wNormal;
             vec3 wPosition;
+            vec2 wUv0;
             // 三种成分用于调和光照,可来自材质颜色的定义,也可以来自vertex_light
             vec3 ambientSumAdjust;
             vec4 diffuseSumAdjust;
@@ -128,8 +132,9 @@ Def BasicLightingDef{
                 wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;
                 vec3 norm = mat3(transpose(inverse(Context.ModelMatrix))) * Context.InNormal;
                 wNormal = normalize(norm.xyz);
-                ambientSumAdjust = vec3(0.2f);
-                diffuseSumAdjust = vec4(0.5f, 0.5f, 0.5f, 1.0f);
+                wUv0 = Context.InUv0;
+                ambientSumAdjust = vec3(1.0f);
+                diffuseSumAdjust = vec4(1.0f);
                 specularSumAdjust = vec3(1.0f);
                 Context.OutPosition = Context.ProjectViewMatrix * pos;
             }
@@ -200,11 +205,27 @@ Def BasicLightingDef{
                 vec4 lightDir = vec4(0.0f);
                 vec3 lightVec = vec3(0.0f);
                 vec2 lightBRDF = vec2(0.0f);
-                vec4 diffuseColor = vec4(0.5f, 0.5f, 0.5f, 1.0f);
-                vec4 specularColor = vec4(0.7f, 0.7f, 0.7f, 1.0f);
                 vec3 viewDir = normalize(Context.CameraPosition.xyz - wPosition.xyz);
-                Context.OutColor.rgb = diffuseColor.rgb * ambientSumAdjust;
-                float shininess = 32.0f;
+
+                vec4 _diffuseColor = vec4(1.0f);
+                vec4 _specularColor = vec4(1.0f);
+
+                #ifdef Params.diffuseColor
+                    _diffuseColor = Params.diffuseColor;
+                #endif
+                #ifdef Params.diffuseMap
+                    _diffuseColor = _diffuseColor * texture(Params.diffuseMap, wUv0);
+                #endif
+
+                #ifdef Params.specularColor
+                    _specularColor = Params.specularColor;
+                #endif
+                #ifdef Params.specularMap
+                    _specularColor = _specularColor * texture(Params.specularMap, wUv0);
+                #endif
+
+
+                Context.OutColor.rgb = _diffuseColor.rgb * ambientSumAdjust;
                 for( int i = 0;i < Context.CurLightCount;i+=3 ){
                     // 后期改为Context.GetLightDir(Context.LightData[i]);
                     lightColor = Context.WLightData[i];
@@ -230,14 +251,14 @@ Def BasicLightingDef{
                     // 如果存在法线纹理,则进一步计算lightDir
 
                     // 计算反射率
-                    ComputeLighting(wNormal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, 32.0f, lightBRDF);
+                    ComputeLighting(wNormal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, Params.shininess, lightBRDF);
 
                     // 最终光照值
-                    //Context.OutColor.rgb += lightColor.rgb * (vec3(lightBRDF.x) * diffuseColor.rgb * diffuseSumAdjust.rgb + vec3(lightBRDF.y) * specularColor.rgb * specularSumAdjust.rgb);
-                    Context.OutColor.rgb += lightColor.rgb * ( diffuseColor.rgb * diffuseSumAdjust.rgb * vec3( lightBRDF.x ) + specularColor.rgb * specularSumAdjust.rgb * vec3( lightBRDF.y ));
+                    //Context.OutColor.rgb += lightColor.rgb * (vec3(lightBRDF.x) * _diffuseColor.rgb * diffuseSumAdjust.rgb + vec3(lightBRDF.y) * _specularColor.rgb * specularSumAdjust.rgb);
+                    Context.OutColor.rgb += lightColor.rgb * ( _diffuseColor.rgb * diffuseSumAdjust.rgb * vec3( lightBRDF.x ) + _specularColor.rgb * specularSumAdjust.rgb * vec3( lightBRDF.y ));
                     //Context.OutColor.rgb = vec3(spotFallOff);
                 }
-                Context.OutColor.a = diffuseSumAdjust.a * diffuseColor.a;
+                Context.OutColor.a = diffuseSumAdjust.a * _diffuseColor.a;
             }
         }
     }

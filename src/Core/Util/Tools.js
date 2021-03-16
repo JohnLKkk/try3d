@@ -153,6 +153,9 @@ export default class Tools {
     static find(str, pattern){
         return str.search(pattern) != -1;
     }
+    static find2(str, pattern){
+        return str.search(pattern);
+    }
     /**
      * 将指定字符串中所有符号匹配字符串替换为指定字符串
      * @param {String}[str 源]

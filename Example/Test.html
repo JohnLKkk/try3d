@@ -5,22 +5,37 @@
     <title>Test</title>
 </head>
 <body>
-    <script>
-        let arr = ['color','get','test'];
-        var newArr = arr.sort(function(a,b){return a.localeCompare(b)});
-        console.log("newArr:" + newArr);
-        arr = ['test','color','get'];
-        var newArr = arr.sort(function(a,b){return a.localeCompare(b)});
-        console.log("newArr:" + newArr);
+    <script type="module">
+        // let arr = ['color','get','test'];
+        // var newArr = arr.sort(function(a,b){return a.localeCompare(b)});
+        // console.log("newArr:" + newArr);
+        // arr = ['test','color','get'];
+        // var newArr = arr.sort(function(a,b){return a.localeCompare(b)});
+        // console.log("newArr:" + newArr);
+        //
+        // let s1 = /color/;
+        // let s2 = /colorMap/;
+        // let t0 = 'color';
+        // let t1 = 'colorMap';
+        // console.log("s1匹配t0:" + t0.match(s1));
+        // console.log("s2匹配t0:" + t0.match(s2));
+        // console.log("s1匹配t1:" + (t1.match(s1) == t1));
+        // console.log("s2匹配t1:" + (t1.match(s2) == t1));
 
-        let s1 = /color/;
-        let s2 = /colorMap/;
-        let t0 = 'color';
-        let t1 = 'colorMap';
-        console.log("s1匹配t0:" + t0.match(s1));
-        console.log("s2匹配t0:" + t0.match(s2));
-        console.log("s1匹配t1:" + (t1.match(s1) == t1));
-        console.log("s2匹配t1:" + (t1.match(s2) == t1));
+        import Tools from "../src/Core/Util/Tools.js";
+
+        let src = "test Params.colorMap * Params.diffuseMap;";
+        let p1 = /Params.color/;
+        let p2 = /Params.colorMap/;
+        let p3 = /Params.diffuseMap/;
+
+        let i = Tools.find2(src, p1);
+        console.log("i:" + i);
+        i = Tools.find2(src, p2);
+        console.log("i:" + i);
+        i = Tools.find2(src, p3);
+        console.log("i:" + i);
+
     </script>
     <!--<script>-->
         <!--function findSrc(str, reg){-->

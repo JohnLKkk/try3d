@@ -18,8 +18,12 @@ export default class Texture2DVars extends Vars{
         // 设置默认纹理滤波
         this.setFilter(scene, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         this.setFilter(scene, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        // this.genMipmap(scene);
     }
+
+    /**
+     * 硬件mipmap。<br/>
+     * @param {Scene}[scene]
+     */
     genMipmap(scene){
         const gl = scene.getCanvas().getGLContext();
         gl.bindTexture(gl.TEXTURE_2D, this._m_Texture);
@@ -74,8 +78,15 @@ export default class Texture2DVars extends Vars{
         let image = new Image();
         image.onload = ()=>{
             image = Tools.ensureImageSizePowerOfTwo(image, scene.getCanvas());
+            // 某些图形驱动api规范仅支持2的
             //self._image = image; // For faster WebGL context restore - memory inefficient?
             this.setImage(scene, image);
+            // 为该image生成硬件mipmap
+            this.genMipmap(scene);
+            // 设置默认纹理滤波
+            const gl = scene.getCanvas().getGLContext();
+            this.setFilter(scene, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+            this.setFilter(scene, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
             // 刷新所有材质持有
             for(let owner in this._m_OwnerFlags){
                 this._m_OwnerFlags[owner].owner.setParam(this._m_OwnerFlags[owner].flag, this);

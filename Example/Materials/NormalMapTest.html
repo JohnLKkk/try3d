@@ -21,12 +21,13 @@
     import Texture2DVars from "../../src/Core/WebGL/Vars/Texture2DVars.js";
     import Vector4 from "../../src/Core/Math3d/Vector4.js";
     import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     // 加载一个材质定义
     let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
 
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(-5, 10, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     let rootNode = new Node(scene, {id:'rootNode'});
     let mat4 = new Material(scene, {id:"lightMat", materialDef});
@@ -34,15 +35,20 @@
     mat4.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
     mat4.setParam('specularColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.01, 1.0));
     mat4.setParam('shininess', new FloatVars().valueOf(32.0));
-    // let colorMap = new Texture2DVars(scene);
-    // // 纹理图像未加载完成前设置一个默认颜色纹理
-    // colorMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
-    // colorMap.setImageSrc(scene, './../Assets/Textures/ground 3.png');
-    // mat4.setParam('colorMap', colorMap);
+    // 纹理图像未加载完成前设置一个默认颜色纹理
+    let diffuseMap = new Texture2DVars(scene);
+    diffuseMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+    diffuseMap.setImageSrc(scene, './../Assets/Textures/brickwall.jpg');
+    mat4.setParam('diffuseMap', diffuseMap);
     let box4 = new Box(scene, {id:'box4'});
     box4.setLocalTranslationXYZ(0, 0, 0);
     box4.setMaterial(mat4);
     rootNode.addChildren(box4);
+
+    let dirLight = new DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(-1, -1, 1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dirLight);
 
     let renderEngine = new RenderEngine();
     scene.addSceneNode(rootNode);
