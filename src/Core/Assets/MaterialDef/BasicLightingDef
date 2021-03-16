@@ -4,6 +4,7 @@ Def BasicLightingDef{
         sampler2D diffuseMap;
         sampler2D normalMap;
         sampler2D specularMap;
+        sampler2D normalMap;
         vec4 ambientColor;
         vec4 diffuseColor;
         vec4 specularColor;
@@ -113,6 +114,7 @@ Def BasicLightingDef{
             vec3 ambientSumAdjust;
             vec4 diffuseSumAdjust;
             vec3 specularSumAdjust;
+            mat3 tbnMat;
         }
         Advanced{
             RenderProgram SinglePassLighting;
@@ -129,11 +131,21 @@ Def BasicLightingDef{
                 #else
                     vec4 pos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
                 #endif
+
+
                 wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;
-                vec3 norm = mat3(transpose(inverse(Context.ModelMatrix))) * Context.InNormal;
-                wNormal = normalize(norm.xyz);
+                mat3 nMat = mat3(transpose(inverse(Context.ModelMatrix)));
+                vec3 norm = normalize(nMat * Context.InNormal);
+                vec3 t = normalize(nMat * Context.InTangent);
+                t = normalize(t - dot(t, norm) * norm);
+                vec3 b = cross(norm, t);
+                tbnMat = mat3(t, b, norm);
+                wNormal = norm;
                 wUv0 = Context.InUv0;
-                ambientSumAdjust = vec3(1.0f);
+
+
+                // 如果是顶点光照,则在这里将光源变化到切线空间
+                ambientSumAdjust = Params.ambientColor.rgb;
                 diffuseSumAdjust = vec4(1.0f);
                 specularSumAdjust = vec3(1.0f);
                 Context.OutPosition = Context.ProjectViewMatrix * pos;
@@ -224,6 +236,12 @@ Def BasicLightingDef{
                     _specularColor = _specularColor * texture(Params.specularMap, wUv0);
                 #endif
 
+                vec3 normal = wNormal;
+                #ifdef Params.normalMap
+                    vec3 normalHeight = texture(Params.normalMap, wUv0).xyz;
+                    normal = tbnMat * normalize(normalHeight * 2.0f - 1.0f);
+                #endif
+
 
                 Context.OutColor.rgb = _diffuseColor.rgb * ambientSumAdjust;
                 for( int i = 0;i < Context.CurLightCount;i+=3 ){
@@ -231,13 +249,13 @@ Def BasicLightingDef{
                     lightColor = Context.WLightData[i];
                     lightData1 = Context.WLightData[i + 1];
                     ComputeLightDir(wPosition, lightColor.w, lightData1, lightDir, lightVec);
-                    //lightBRDF.x = max( 0.0f, dot( wNormal, lightDir.xyz ) );
+                    //lightBRDF.x = max( 0.0f, dot( normal, lightDir.xyz ) );
 
                     // BlinnPhongLighting
                     //vec3 h = normalize( viewDir + lightDir.xzy );
-                    //lightBRDF.y = pow( max( 0.0f, dot( wNormal, h ) ), 32.0f );
+                    //lightBRDF.y = pow( max( 0.0f, dot( normal, h ) ), 32.0f );
                     // 标准PhongLighting
-                    //vec3 refDir = reflect( lightData1.xyz, wNormal );
+                    //vec3 refDir = reflect( lightData1.xyz, normal );
                     //lightBRDF.y = pow( max( 0.0f, dot( viewDir, refDir ) ), 32.0f);
 
                     // 计算SpotLight的衰减
@@ -251,7 +269,7 @@ Def BasicLightingDef{
                     // 如果存在法线纹理,则进一步计算lightDir
 
                     // 计算反射率
-                    ComputeLighting(wNormal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, Params.shininess, lightBRDF);
+                    ComputeLighting(normal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, Params.shininess, lightBRDF);
 
                     // 最终光照值
                     //Context.OutColor.rgb += lightColor.rgb * (vec3(lightBRDF.x) * _diffuseColor.rgb * diffuseSumAdjust.rgb + vec3(lightBRDF.y) * _specularColor.rgb * specularSumAdjust.rgb);

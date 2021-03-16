@@ -4,6 +4,7 @@ import ShaderProgram from "../WebGL/ShaderProgram.js";
 import SubShader from "./SubShader.js";
 import Technology from "./Technology.js";
 import ShaderSource from "../WebGL/ShaderSource.js";
+import Log from "../Util/Log.js";
 
 /**
  * 材质定义，材质定义定义了相关物体渲染时的着色材质属性，通过MaterialShaderSource完成对材质的实现。<br/>
@@ -139,6 +140,7 @@ export default class Material extends Component{
         // 2.检测是否需要更新参数到subShader中(同种类型subShaderId,但存在不同具体实力化subShader对象,所以参数不同需要更新)
         if(frameContext.m_LastSubShader != subShader){
             frameContext.m_LastSubShader = subShader;
+            // Log.log('切换!');
             // 先检查材质值
             for(let n in this._m_ParamValues){
                 // 有些参数值为null
@@ -147,17 +149,6 @@ export default class Material extends Component{
                     this._m_CurrentSubShader.uploadParam(gl, n, this._m_ParamValues[n]);
                 }
             }
-
-            // 更新参数到subShader中?
-            // modelMatrix,蒙皮骨骼变换这些信息,只能由具体的Geometry去传递,所以应该在Geometry中更新modelMatrix,但由于是提交数据时仅需要local,所以Geometry需要持有mat SubShader,这样才能直到更新到哪个shader句柄中。
-            // 而灯光的一些信息,应该由灯光模块系统去执行更新(如果使用ubo block,则可以不需要引用mat就可以独立更新,mat subShader只需要绑定指定的ubo block即可)
-
-            // for(let paramName in subShader.getParams()){
-            //     if(subShader.getParamValue(paramName) != this._m_Params[paramName]){
-            //         // 更新新的值到subShader中
-            //     }
-            // }
-
         }
         // 检查最新数据值
         if(this._m_ChangeParams.length > 0){

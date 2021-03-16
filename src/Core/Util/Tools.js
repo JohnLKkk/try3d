@@ -1,6 +1,7 @@
 import BoundingVolume from "../Math3d/Bounding/BoundingVolume.js";
 import Vector3 from "../Math3d/Vector3.js";
 import Vector2 from "../Math3d/Vector2.js";
+import Log from "./Log.js";
 
 const o = {};
 o.lz = function(i,c)
@@ -224,12 +225,12 @@ export default class Tools {
         let uv = new Vector2();
         let du1 = 0, dv1 = 0, du2 = 0, dv2 = 0;
         for(let i = 0;i < indices.length;i+=3){
-            p0.setToInXYZ(positions[indices[i]], positions[indices[i] + 1], positions[indices[i] + 2]);
-            p1.setToInXYZ(positions[indices[i + 1]], positions[indices[i + 1] + 1], positions[indices[i + 1] + 2]);
-            p2.setToInXYZ(positions[indices[i + 2]], positions[indices[i + 2] + 1], positions[indices[i + 2] + 2]);
-            uv0.setToInXY(uvs[indices[i]], uvs[indices[i] + 1]);
-            uv1.setToInXY(uvs[indices[i + 1]], uvs[indices[i + 1] + 1]);
-            uv2.setToInXY(uvs[indices[i + 2]], uvs[indices[i + 2] + 1]);
+            p0.setToInXYZ(positions[indices[i] * 3], positions[indices[i] * 3 + 1], positions[indices[i] * 3 + 2]);
+            p1.setToInXYZ(positions[indices[i + 1] * 3], positions[indices[i + 1] * 3 + 1], positions[indices[i + 1] * 3 + 2]);
+            p2.setToInXYZ(positions[indices[i + 2] * 3], positions[indices[i + 2] * 3 + 1], positions[indices[i + 2] * 3 + 2]);
+            uv0.setToInXY(uvs[indices[i] * 2], uvs[indices[i] * 2 + 1]);
+            uv1.setToInXY(uvs[indices[i + 1] * 2], uvs[indices[i + 1] * 2 + 1]);
+            uv2.setToInXY(uvs[indices[i + 2] * 2], uvs[indices[i + 2] * 2 + 1]);
 
             p1.sub(p0, e1);
             p1.sub(p2, e2);
@@ -248,21 +249,45 @@ export default class Tools {
             Tools._generatorWeightedTangent(indices[i], indices[i + 1], indices[i + 2], tx, ty, tz, tangentMaps);
         }
 
+        Tools._normalizedTangents(tangentMaps);
         // 计算加权顶点切线数据
-        for(let i = 0;i < indices.length;i+=3){
-            tangents[ti++] = tangentMaps[indices[i]][0];
-            tangents[ti++] = tangentMaps[indices[i]][1];
-            tangents[ti++] = tangentMaps[indices[i]][2];
-
-            tangents[ti++] = tangentMaps[indices[i + 1]][0];
-            tangents[ti++] = tangentMaps[indices[i + 1]][1];
-            tangents[ti++] = tangentMaps[indices[i + 1]][2];
-
-            tangents[ti++] = tangentMaps[indices[i + 1]][0];
-            tangents[ti++] = tangentMaps[indices[i + 1]][1];
-            tangents[ti++] = tangentMaps[indices[i + 1]][2];
+        for(let i in tangentMaps){
+            tangents[ti++] = tangentMaps[i][0];
+            tangents[ti++] = tangentMaps[i][1];
+            tangents[ti++] = tangentMaps[i][2];
         }
+        // Log.log('tangents:\n',tangents);
         return tangents;
+    }
+
+    /**
+     * 归一化切线数据。<br/>
+     * @param {Map}[tangentMaps]
+     * @private
+     */
+    static _normalizedTangents(tangentMaps){
+        let temp = [];
+        let l = 0;
+        for(let i in tangentMaps){
+            temp[0] = tangentMaps[i][0];
+            temp[1] = tangentMaps[i][1];
+            temp[2] = tangentMaps[i][2];
+
+            l = temp[0] * temp[0] + temp[1] * temp[1] + temp[2] * temp[2];
+            if(l > 0){
+                l = Math.sqrt(1.0 * l);
+                temp[0] /= l;
+                temp[1] /= l;
+                temp[2] /= l;
+            }
+            else{
+                temp[0] = temp[1] = temp[2] = 0;
+            }
+
+            tangentMaps[i][0] = temp[0];
+            tangentMaps[i][1] = temp[1];
+            tangentMaps[i][2] = temp[2];
+        }
     }
 
     /**

@@ -152,7 +152,11 @@ class SubPassDef{
 
 }
 /**
- * 材质定义。
+ * 材质定义。<br/>
+ * 将材质解析并生成实际材质定义的主体逻辑。<br/>
+ * @author Kkk
+ * @date 2021年1月12日10点26分
+ * @lastdate 2021年3月16日13点57分
  */
 export default class MaterialDef{
     constructor(name) {

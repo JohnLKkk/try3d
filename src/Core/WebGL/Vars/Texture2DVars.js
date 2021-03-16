@@ -7,17 +7,21 @@ import Tools from "../../Util/Tools.js";
  * 表示2D纹理数据。<br/>
  * @author Kkk
  * @date 2021年3月3日16点39分
+ * @lastdate 2021年3月16日13点56分
  */
 export default class Texture2DVars extends Vars{
     static S_TEMP_COLOR = new UniformBufferI(4);
     constructor(scene) {
         super(scene);
+        this._m_Scene = scene;
         const gl = scene.getCanvas().getGLContext();
         // 创建纹理目标
         this._m_Texture = gl.createTexture();
         // 设置默认纹理滤波
         this.setFilter(scene, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         this.setFilter(scene, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        this._m_UpdateImage = false;
+        this._m_Image = null;
     }
 
     /**
@@ -77,16 +81,18 @@ export default class Texture2DVars extends Vars{
         // 加载完毕设置纹理图素
         let image = new Image();
         image.onload = ()=>{
-            image = Tools.ensureImageSizePowerOfTwo(image, scene.getCanvas());
-            // 某些图形驱动api规范仅支持2的
-            //self._image = image; // For faster WebGL context restore - memory inefficient?
-            this.setImage(scene, image);
-            // 为该image生成硬件mipmap
-            this.genMipmap(scene);
-            // 设置默认纹理滤波
-            const gl = scene.getCanvas().getGLContext();
-            this.setFilter(scene, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-            this.setFilter(scene, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            // 某些图形驱动api规范仅支持2的幂次方
+            // image = Tools.ensureImageSizePowerOfTwo(image, scene.getCanvas());
+            this._m_Image = image;
+            this._m_UpdateImage = true;
+            // //self._image = image; // For faster WebGL context restore - memory inefficient?
+            // this.setImage(scene, image);
+            // // 为该image生成硬件mipmap
+            // this.genMipmap(scene);
+            // // 设置默认纹理滤波
+            // const gl = scene.getCanvas().getGLContext();
+            // this.setFilter(scene, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+            // this.setFilter(scene, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
             // 刷新所有材质持有
             for(let owner in this._m_OwnerFlags){
                 this._m_OwnerFlags[owner].owner.setParam(this._m_OwnerFlags[owner].flag, this);
@@ -110,6 +116,21 @@ export default class Texture2DVars extends Vars{
     }
     _upload(gl, loc, fun){
         gl.activeTexture(gl.TEXTURE0 + loc);
+
+        if(this._m_UpdateImage){
+            // 某些图形驱动api规范仅支持2的
+            //self._image = image; // For faster WebGL context restore - memory inefficient?
+            this.setImage(this._m_Scene, this._m_Image);
+            // 为该image生成硬件mipmap
+            this.genMipmap(this._m_Scene);
+            // 设置默认纹理滤波
+            const gl = this._m_Scene.getCanvas().getGLContext();
+            this.setFilter(this._m_Scene, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+            this.setFilter(this._m_Scene, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            this._m_UpdateImage = false;
+            this._m_Image = null;
+        }
+
         gl.bindTexture(gl.TEXTURE_2D, this._m_Texture);
     }
 

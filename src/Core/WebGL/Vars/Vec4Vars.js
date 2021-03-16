@@ -28,7 +28,8 @@ export default class Vec4Vars extends Vars{
      * @return {Boolean}
      */
     compare(vec4Vars){
-        return this._m_X == vec4Vars._m_X && this._m_Y == vec4Vars._m_X && this._m_Z == vec4Vars._m_Z && this._m_W == vec4Vars._m_W;
+        // return this._m_X == vec4Vars._m_X && this._m_Y == vec4Vars._m_X && this._m_Z == vec4Vars._m_Z && this._m_W == vec4Vars._m_W;
+        return false;
     }
     _upload(gl, loc, fun){
         gl.uniform4f(loc, this._m_X, this._m_Y, this._m_Z, this._m_W);

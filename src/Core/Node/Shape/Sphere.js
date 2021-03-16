@@ -1,5 +1,6 @@
 import Geometry from "../Geometry.js";
 import Mesh from "../../WebGL/Mesh.js";
+import Tools from "../../Util/Tools.js";
 
 /**
  * Sphere。<br/>
@@ -132,6 +133,11 @@ export default class Sphere extends Geometry{
         mesh.setData(Mesh.S_NORMALS, normals);
         mesh.setData(Mesh.S_UV0, uvs);
         mesh.setData(Mesh.S_INDICES, indices);
+
+        // 切线数据
+        let tangents = Tools.generatorTangents(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
+        mesh.setData(Mesh.S_TANGENTS, tangents);
+
         this.setMesh(mesh);
         this.updateBound();
     }

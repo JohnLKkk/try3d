@@ -22,31 +22,100 @@
     import Vector4 from "../../src/Core/Math3d/Vector4.js";
     import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
     import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import Geometry from "../../src/Core/Node/Geometry.js";
+    import Mesh from "../../src/Core/WebGL/Mesh.js";
+    import Plane from "../../src/Core/Node/Shape/Plane.js";
+    import Sphere from "../../src/Core/Node/Shape/Sphere.js";
+    import MoreMath from "../../src/Core/Math3d/MoreMath.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     // 加载一个材质定义
     let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
 
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(-5, 10, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     let rootNode = new Node(scene, {id:'rootNode'});
-    let mat4 = new Material(scene, {id:"lightMat", materialDef});
-    mat4.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
-    mat4.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
-    mat4.setParam('specularColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.01, 1.0));
-    mat4.setParam('shininess', new FloatVars().valueOf(32.0));
-    // 纹理图像未加载完成前设置一个默认颜色纹理
-    let diffuseMap = new Texture2DVars(scene);
+
+    let diffuseMap = null;
+    let normalMap = null;
+    // wall
+    let wallMat = new Material(scene, {id:"wallMat", materialDef});
+    wallMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
+    wallMat.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
+    wallMat.setParam('specularColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
+    wallMat.setParam('shininess', new FloatVars().valueOf(32.0));
+    diffuseMap = new Texture2DVars(scene);
     diffuseMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
     diffuseMap.setImageSrc(scene, './../Assets/Textures/brickwall.jpg');
-    mat4.setParam('diffuseMap', diffuseMap);
-    let box4 = new Box(scene, {id:'box4'});
-    box4.setLocalTranslationXYZ(0, 0, 0);
-    box4.setMaterial(mat4);
-    rootNode.addChildren(box4);
+    wallMat.setParam('diffuseMap', diffuseMap);
+    normalMap = new Texture2DVars(scene);
+    normalMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+    normalMap.setImageSrc(scene, './../Assets/Textures/brickwall_normal.jpg');
+    wallMat.setParam('normalMap', normalMap);
+    let wall = new Box(scene, {id:'wall'});
+    wall.setLocalTranslationXYZ(0, 0, 0);
+    wall.setMaterial(wallMat);
+    rootNode.addChildren(wall);
+
+    // floor
+    let floorMat = new Material(scene, {id:"floorMat", materialDef});
+    floorMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.2, 1.0));
+    floorMat.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
+    floorMat.setParam('specularColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
+    floorMat.setParam('shininess', new FloatVars().valueOf(32.0));
+    diffuseMap = new Texture2DVars(scene);
+    diffuseMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+    diffuseMap.setImageSrc(scene, './../Assets/Textures/bricks2.jpg');
+    floorMat.setParam('diffuseMap', diffuseMap);
+    normalMap = new Texture2DVars(scene);
+    normalMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+    normalMap.setImageSrc(scene, './../Assets/Textures/bricks2_normal.jpg');
+    floorMat.setParam('normalMap', normalMap);
+    let floor = new Plane(scene, {id:'floor', xSize:35, zSize:35, xSegments:1, zSegments:1});
+    floor.setLocalTranslationXYZ(0, -5, 0);
+    // floor.setLocalRotationFromEuler(MoreMath.toRadians(45), 0, 0);
+    floor.setMaterial(floorMat);
+    rootNode.addChildren(floor);
+
+    // grass
+    let grassMat = new Material(scene, {id:"grassMat", materialDef});
+    grassMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.2, 1.0));
+    grassMat.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
+    grassMat.setParam('specularColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
+    grassMat.setParam('shininess', new FloatVars().valueOf(32.0));
+    diffuseMap = new Texture2DVars(scene);
+    diffuseMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+    diffuseMap.setImageSrc(scene, './../Assets/Textures/ground 3.png');
+    grassMat.setParam('diffuseMap', diffuseMap);
+    normalMap = new Texture2DVars(scene);
+    normalMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+    normalMap.setImageSrc(scene, './../Assets/Textures/normal.jpg');
+    grassMat.setParam('normalMap', normalMap);
+    let grass = new Sphere(scene, {id:'grass', radius:2});
+    grass.setLocalTranslationXYZ(-5, 0, 0);
+    grass.setMaterial(grassMat);
+    rootNode.addChildren(grass);
+
+    // let positions = [-0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5];
+    // let uv0s = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0];
+    // let normals = [0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0];
+    // let tangents = [-1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0];
+    // let indices = [2, 1, 0, 3, 2, 0, 6, 5, 4, 7, 6, 4, 10, 9, 8, 11, 10, 8, 14, 13, 12, 15, 14, 12, 18, 17, 16, 19, 18, 16, 22, 21, 20, 23, 22, 20];
+    //
+    // let boxGeometry = new Geometry(scene, {id:'box'});
+    // let mesh = new Mesh();
+    // mesh.setData(Mesh.S_POSITIONS, positions);
+    // mesh.setData(Mesh.S_UV0, uv0s);
+    // mesh.setData(Mesh.S_NORMALS, normals);
+    // mesh.setData(Mesh.S_TANGENTS, tangents);
+    // mesh.setData(Mesh.S_INDICES, indices);
+    // boxGeometry.setMesh(mesh);
+    // boxGeometry.updateBound();
+    // boxGeometry.setMaterial(mat4);
+    // rootNode.addChildren(boxGeometry);
 
     let dirLight = new DirectionalLight(scene, {id:'dirLight'});
-    dirLight.setDirectionXYZ(-1, -1, 1);
+    dirLight.setDirectionXYZ(-1, -1, -1);
     dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
     rootNode.addChildren(dirLight);
 
