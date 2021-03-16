@@ -52,8 +52,8 @@
         console.log("modelNode:",modelNode);
         // 使用OctCullingControl来管理静态场景
         rootNode.addChildren(modelNode);
-        let octCullingControl = new OctCullingControl(modelNode, {id:'octCulling'});
-        octCullingControl.debug(rootNode, colorMat);
+        // let octCullingControl = new OctCullingControl(modelNode, {id:'octCulling'});
+        // octCullingControl.debug(rootNode, colorMat);
     });
 
     let dirLight = new DirectionalLight(scene, {id:'dirLight'});

@@ -5,6 +5,10 @@ import Mesh from "../Core/WebGL/Mesh.js";
 import Geometry from "../Core/Node/Geometry.js";
 import Tools from "../Core/Util/Tools.js";
 import Log from "../Core/Util/Log.js";
+import Vec4Vars from "../Core/WebGL/Vars/Vec4Vars.js";
+import FloatVars from "../Core/WebGL/Vars/FloatVars.js";
+import Vector4 from "../Core/Math3d/Vector4.js";
+import Texture2DVars from "../Core/WebGL/Vars/Texture2DVars.js";
 
 /**
  * OBJLoader。<br/>
@@ -24,6 +28,7 @@ export default class OBJLoader {
         this._m_Scene = scene;
         this._m_DefaultMatDef = null;
         this._m_Mats = {};
+        this._m_CurrentMat = null;
         let modelNode = new Node(scene, {id:modelId || Tools.nextId()});
         // 加载obj模型
         this._load(modelNode, src, callback);
@@ -566,8 +571,10 @@ export default class OBJLoader {
         textureCfg.encoding = encoding || "linear";
         //textureCfg.wrapS = self.wrap;
         //textureCfg.wrapT = self.wrap;
-        let texture = new Texture(modelNode, textureCfg);
-        return texture.id;
+        let texture = new Texture2DVars(this._m_Scene);
+        texture.setPreloadColor(this._m_Scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+        texture.setImageSrc(this._m_Scene, textureCfg.src);
+        return texture;
     }
 
     createMaterial(modelNode, materialCfg) {
@@ -575,8 +582,13 @@ export default class OBJLoader {
         if(this._m_DefaultMatDef){
             if(!this._m_Mats[materialCfg.id]){
                 let basicLightingMat = new Material(this._m_Scene, {id:materialCfg.id, materialDef:this._m_DefaultMatDef});
-                basicLightingMat.selectTechnology('BlinnPhongLight2');
                 this._m_Mats[materialCfg.id] = basicLightingMat;
+                this._m_CurrentMat = basicLightingMat;
+                // 初始参数
+                this._m_CurrentMat.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
+                this._m_CurrentMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
+                this._m_CurrentMat.setParam('specularColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
+                this._m_CurrentMat.setParam('shininess', new FloatVars().valueOf(32.0));
             }
         }
     }
@@ -621,34 +633,38 @@ export default class OBJLoader {
             switch (key.toLowerCase()) {
 
                 case "newmtl": // 添加一个材质实例到内存中
-                    this.createMaterial(modelNode, materialCfg);
                     materialCfg = {
                         id: value
                     };
-                    needCreate = true;
+                    this.createMaterial(modelNode, materialCfg);
                     break;
 
                 case 'ka':
                     materialCfg.ambient = this.parseRGB(value);
+                    this._m_CurrentMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(materialCfg.ambient[0], materialCfg.ambient[1], materialCfg.ambient[2], 1.0));
                     break;
 
                 case 'kd':
                     materialCfg.diffuse = this.parseRGB(value);
+                    this._m_CurrentMat.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(materialCfg.diffuse[0], materialCfg.diffuse[1], materialCfg.diffuse[2], 1.0));
                     break;
 
                 case 'ks':
                     materialCfg.specular = this.parseRGB(value);
+                    this._m_CurrentMat.setParam('specularColor', new Vec4Vars().valueFromXYZW(materialCfg.specular[0], materialCfg.specular[1], materialCfg.specular[2], 1.0));
                     break;
 
                 case 'map_kd':
                     if (!materialCfg.diffuseMap) {
                         materialCfg.diffuseMap = this.createTexture(modelNode, basePath, value, "sRGB");
+                        this._m_CurrentMat.setParam('diffuseMap', materialCfg.diffuseMap);
                     }
                     break;
 
                 case 'map_ks':
                     if (!materialCfg.specularMap) {
                         materialCfg.specularMap = this.createTexture(modelNode, basePath, value, "linear");
+                        this._m_CurrentMat.setParam('specularMap', materialCfg.specularMap);
                     }
                     break;
 
@@ -656,11 +672,13 @@ export default class OBJLoader {
                 case 'bump':
                     if (!materialCfg.normalMap) {
                         materialCfg.normalMap = this.createTexture(modelNode, basePath, value);
+                        this._m_CurrentMat.setParam('normalMap', materialCfg.normalMap);
                     }
                     break;
 
                 case 'ns':
                     materialCfg.shininess = parseFloat(value);
+                    this._m_CurrentMat.setParam('shininess', new FloatVars().valueOf(materialCfg.shininess));
                     break;
 
                 case 'd':
@@ -681,10 +699,6 @@ export default class OBJLoader {
 
                 default:
             }
-        }
-
-        if (needCreate) {
-            this.createMaterial(modelNode, materialCfg);
         }
     }
     createMeshes(modelNode, state){
@@ -724,8 +738,6 @@ export default class OBJLoader {
                 mesh.setData(Mesh.S_INDICES, indices);
 
 
-
-
                 // 获取引用的材质实例
                 if (materialId && materialId !== "") {
                     material = this._m_Mats[materialId];
@@ -737,7 +749,6 @@ export default class OBJLoader {
                     if(this._m_DefaultMatDef){
                         if(!this._m_Mats['Default']){
                             let basicLightingMat = new Material(this._m_Scene, {id:'Default', materialDef:this._m_DefaultMatDef});
-                            basicLightingMat.selectTechnology('BlinnPhongLight2');
                             this._m_Mats['Default'] = basicLightingMat;
                         }
                         material = this._m_Mats['Default'];
@@ -794,6 +805,18 @@ export default class OBJLoader {
             for(let mt in mtlobjs){
                 let material = mtlobjs[mt].material;
                 let mesh = mtlobjs[mt].mesh;
+                // 创建切线
+                let uv0s = mesh.getData(Mesh.S_UV0);
+                if(uv0s){
+                    // 切线数据
+                    let tangents = Tools.generatorTangents(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
+                    mesh.setData(Mesh.S_TANGENTS, tangents);
+                }
+                else{
+                    // 切线数据
+                    let tangents = Tools.generatorFillTangents(mesh.getData(Mesh.S_POSITIONS));
+                    mesh.setData(Mesh.S_TANGENTS, tangents);
+                }
                 // 创建Geometry
                 let geometry = new Geometry(modelNode, {id:'Geo_' + mt});
                 geometry.setMesh(mesh);

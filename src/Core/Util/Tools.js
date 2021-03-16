@@ -191,7 +191,21 @@ export default class Tools {
     }
 
     /**
+     * 返回与positions内存对齐的切线数据。<br/>
+     * @param {Number[]}[positions]
+     * @return {Number[]}[tangents]
+     */
+    static generatorFillTangents(positions){
+        let tangents = [];
+        for(let i = 0;i < positions.length;i++){
+            tangents[i] = positions[i];
+        }
+        return tangents;
+    }
+
+    /**
      * 使用给定的positions和uvs计算切线数据。<br/>
+     * @param {Number[]}[indices]
      * @param {Number[]}[positions]
      * @param {Number}[uvs]
      * @return {Number[]}[tangents]
