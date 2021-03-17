@@ -966,7 +966,16 @@ export default class MaterialDef{
             if(line.length == 0)continue;
             line = line.substring(0, line.length - 1);
             line = line.split(' ');
-            renderState["" + line[0] + ""] = "" + line[1];
+            if(line.length > 2){
+                let arr = [];
+                for(let i = 1;i < line.length;i++){
+                    arr.push(line[i]);
+                }
+                renderState["" + line[0] + ""] = arr;
+            }
+            else{
+                renderState["" + line[0] + ""] = "" + line[1];
+            }
         }
         // console.log("renderState:",renderState);
         blockObj.addPass(blockObj.getFromMaterialDef().getSubShaderDef(blockDef.getName()), renderState);

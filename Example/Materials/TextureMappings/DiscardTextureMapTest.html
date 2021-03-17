@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DiscardTextureMapTest</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" tabindex="0" width="400" height="300" style="border: none;margin: 0px;padding: 0px;"></canvas>
+</div>
+<script type="module">
+    import Scene from "../../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../../src/Core/RenderEngine.js";
+    import Node from "../../../src/Core/Node/Node.js";
+    import Material from "../../../src/Core/Material/Material.js";
+    import Vector3 from "../../../src/Core/Math3d/Vector3.js";
+    import MaterialDef from "../../../src/Core/Material/MaterialDef.js";
+    import Box from "../../../src/Core/Node/Shape/Box.js";
+    import FirstPersonController from "../../../src/Core/InputControl/FirstPersonController.js";
+    import Texture2DVars from "../../../src/Core/WebGL/Vars/Texture2DVars.js";
+    import Vector4 from "../../../src/Core/Math3d/Vector4.js";
+    import FloatVars from "../../../src/Core/WebGL/Vars/FloatVars.js";
+    import DirectionalLight from "../../../src/Core/Light/DirectionalLight.js";
+    import Plane from "../../../src/Core/Node/Shape/Plane.js";
+    import MoreMath from "../../../src/Core/Math3d/MoreMath.js";
+
+
+    // 创建scene
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    // 颜色材质定义
+    let colorMatDef = MaterialDef.load("../../../src/Core/Assets/MaterialDef/ColorDef");
+
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(-5, 2, 3), new Vector3(-3, 1.5, 0), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    let rootNode = new Node(scene, {id:'rootNode'});
+
+    let colorMap = null;
+    // 创建一个地板
+    let floor = new Plane(scene, {id:'floor', xSize:25, zSize:25});
+    colorMap = new Texture2DVars(scene);
+    colorMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+    colorMap.setImageSrc(scene, '../../Assets/Textures/metal.png');
+    let floorMat = new Material(scene, {id:'floorMat', materialDef:colorMatDef});
+    floorMat.setParam('colorMap', colorMap);
+    floor.setMaterial(floorMat);
+    rootNode.addChildren(floor);
+
+    // 添加几个遮挡物
+    colorMap = new Texture2DVars(scene);
+    colorMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+    colorMap.setImageSrc(scene, '../../Assets/Textures/marble.jpg');
+    let marbleMat = new Material(scene, {id:'marbleMat', materialDef:colorMatDef});
+    marbleMat.setParam('colorMap', colorMap);
+    let marble0 = new Box(scene, {id:'marble0'});
+    marble0.setMaterial(marbleMat);
+    marble0.setLocalTranslationXYZ(-3, 1, -5);
+    rootNode.addChildren(marble0);
+
+    let marble1 = new Box(scene, {id:'marble1'});
+    marble1.setMaterial(marbleMat);
+    marble1.setLocalTranslationXYZ(3, 1, -2);
+    rootNode.addChildren(marble1);
+
+    // 添加几个草
+    colorMap = new Texture2DVars(scene);
+    colorMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+    colorMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+    colorMap.setImageSrc(scene, '../../Assets/Textures/grass.png');
+    let grassMat = new Material(scene, {id:'grassMat', materialDef:colorMatDef});
+    grassMat.setParam('colorMap', colorMap);
+    // 设置透明剔除因子(小于该值的alpha将被剔除,0.6表示透明度0.4,即40%透明的部分都剔除)
+    grassMat.setParam('alphaDiscard', new FloatVars().valueOf(0.6));
+    let grass0 = new Plane(scene, {id:'grass0', xSize:2, zSize:2});
+    grass0.setMaterial(grassMat);
+    grass0.setLocalTranslationXYZ(-3, 1, -3.99);
+    grass0.setLocalRotationFromEuler(MoreMath.toRadians(90), 0, 0);
+    rootNode.addChildren(grass0);
+
+    let grass1 = new Plane(scene, {id:'grass1', xSize:2, zSize:2});
+    grass1.setMaterial(grassMat);
+    grass1.setLocalTranslationXYZ(3, 1, -5.99);
+    grass1.setLocalRotationFromEuler(MoreMath.toRadians(90), 0, 0);
+    rootNode.addChildren(grass1);
+
+    let grass2 = new Plane(scene, {id:'grass2', xSize:2, zSize:2});
+    grass2.setMaterial(grassMat);
+    grass2.setLocalTranslationXYZ(1, 1, 0.5);
+    grass2.setLocalRotationFromEuler(MoreMath.toRadians(90), 0, 0);
+    rootNode.addChildren(grass2);
+
+    let grass3 = new Plane(scene, {id:'grass3', xSize:2, zSize:2});
+    grass3.setMaterial(grassMat);
+    grass3.setLocalTranslationXYZ(0.25, 1, -1.5);
+    grass3.setLocalRotationFromEuler(MoreMath.toRadians(90), 0, 0);
+    rootNode.addChildren(grass3);
+
+    let grass4 = new Plane(scene, {id:'grass4', xSize:2, zSize:2});
+    grass4.setMaterial(grassMat);
+    grass4.setLocalTranslationXYZ(-0.35, 1, -2.0);
+    grass4.setLocalRotationFromEuler(MoreMath.toRadians(90), 0, 0);
+    rootNode.addChildren(grass4);
+
+    let dirLight = new DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(-1, -1, -1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dirLight);
+
+    let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+    scene.on('update', exTime=>{
+    });
+</script>
+</body>
+</html>

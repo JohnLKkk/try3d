@@ -11,6 +11,7 @@ export default class Plane extends Geometry{
     /**
      * 根据指定参数创建一个Plane。<br/>
      * @param {Component}[owner]
+     * @param {String}[cfg.id]
      * @param {Vector3}[cfg.center 中心点]
      * @param {Number}[cfg.xSize x方向半长,默认1]
      * @param {Number}[cfg.zSize z方向半长,默认1]

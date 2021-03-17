@@ -9,11 +9,20 @@ import Log from "../Util/Log.js";
 /**
  * 材质定义，材质定义定义了相关物体渲染时的着色材质属性，通过MaterialShaderSource完成对材质的实现。<br/>
  * @author Kkk
+ * @date 2020年12月25日8点25分
+ * @lastdata 2021年3月17日15点27分
  */
 export default class Material extends Component{
     getType(){
         return "Material";
     }
+
+    /**
+     * 创建一个材质实例。<br/>
+     * @param {Component}[owner]
+     * @param {String}[cfg.id]
+     * @param {MaterialDef}[cfg.materialDef]
+     */
     constructor(owner, cfg) {
         super(owner, cfg);
         // // 根据当前材质类型获取对应的着色器源码定义，并生成对应的着色器程序

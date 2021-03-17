@@ -13,7 +13,8 @@ export default class RenderState {
         "DepthWrite",
         "ColorWrite",
         "DepthTest",
-        "Blend"
+        "Blend",
+        "BlendFactor"
     ];
     constructor() {
         this._m_State = {

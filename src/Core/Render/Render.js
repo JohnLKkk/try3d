@@ -64,7 +64,8 @@ export default class Render extends Component{
         this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[4], 'On');
         // 关闭深度写入
         this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[1], 'Off');
-        // 设置默认blend方程
+        // 设置默认blend方程(默认方程)
+        this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[5], ['SRC_ALPHA', 'ONE_MINUS_SRC_ALPHA']);
 
 
     }
@@ -230,6 +231,30 @@ export default class Render extends Component{
                         }
                         else if(state[k] == 'Off'){
                             gl.disable(gl.DEPTH_TEST);
+                        }
+                        break;
+                    case RenderState.S_STATES[4]:
+                        if(state[k] == 'On'){
+                            gl.enable(gl.BLEND);
+                        }
+                        else if(state[k] == 'Off'){
+                            gl.disable(gl.BLEND);
+                        }
+                        break;
+                    case RenderState.S_STATES[5]:
+                        let sfactor = null; let dfactor = null;
+                        switch (state[k][0]) {
+                            case "SRC_ALPHA":
+                                sfactor = gl.SRC_ALPHA;
+                                break;
+                        }
+                        switch (state[k][1]) {
+                            case "ONE_MINUS_SRC_ALPHA":
+                                dfactor = gl.ONE_MINUS_SRC_ALPHA;
+                                break;
+                        }
+                        if(sfactor != null && dfactor != null){
+                            gl.blendFunc(sfactor, dfactor);
                         }
                         break;
                 }

@@ -20,6 +20,7 @@ export default class Geometry extends Node{
         this._m_Mesh = null;
         this._m_ModelAABBBoundingBox = null;
         this._m_Material = null;
+        this._m_Opaque = true;
     }
 
     /**
@@ -129,17 +130,31 @@ export default class Geometry extends Node{
     }
 
     /**
+     * 设置为不透明物体。<br/>
+     */
+    setOpaque(){
+        this._m_Opaque = true;
+    }
+
+    /**
      * 是否为非透明
      */
     isOpaque(){
-        return true;
+        return this._m_Opaque;
+    }
+
+    /**
+     * 设置为半透明物体。<br/>
+     */
+    setTranslucent(){
+        this._m_Opaque = false;
     }
 
     /**
      * 是否为半透明。<br/>
      */
     isTranslucent(){
-
+        return !this._m_Opaque;
     }
 
     /**

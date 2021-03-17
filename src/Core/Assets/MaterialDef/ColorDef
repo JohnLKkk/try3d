@@ -1,8 +1,9 @@
-// 颜色材质,提供指定颜色并渲染
+// 颜色材质,提供指定颜色或颜色纹理并渲染
 Def ColorDef{
     Params{
         vec4 color;
         sampler2D colorMap;
+        float alphaDiscard;
     }
     SubTechnology ScalePass{
         Vars{
@@ -30,6 +31,11 @@ Def ColorDef{
                     // 使用纹理
                     #ifdef Params.colorMap
                         Context.OutColor = texture(Params.colorMap, Context.InUv0);
+                        #ifdef Params.alphaDiscard
+                            if(Context.OutColor.a < Params.alphaDiscard){
+                                discard;
+                            }
+                        #endif
                     #else
                         Context.OutColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);
                     #endif
@@ -60,6 +66,11 @@ Def ColorDef{
                     // 使用纹理
                     #ifdef Params.colorMap
                         Context.OutColor = texture(Params.colorMap, uv0);
+                        #ifdef Params.alphaDiscard
+                            if(Context.OutColor.a < Params.alphaDiscard){
+                                discard;
+                            }
+                        #endif
                     #else
                         Context.OutColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
                     #endif

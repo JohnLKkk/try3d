@@ -14,6 +14,7 @@ export default class Box extends Geometry{
     /**
      * 创建一个Box。<br/>
      * @param {Component}[owner]
+     * @param {String}[cfg.id]
      * @param {Number}[cfg.xHalf x方向的半长度]
      * @param {Number}[cfg.yHalf y方向的半长度]
      * @param {Number}[cfg.zHalf z方向的半长度]
