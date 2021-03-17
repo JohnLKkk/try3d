@@ -683,7 +683,11 @@ export default class OBJLoader {
 
                 case 'd':
                     alpha = parseFloat(value);
-                    this._m_CurrentMat.setParam('alphaDiscard', new FloatVars().valueOf(0.1));
+                    if(alpha <= 0.1)
+                        this._m_CurrentMat.setParam('alphaDiscard', new FloatVars().valueOf(alpha));
+                    else{
+                        // this._m_CurrentMat.alphaMode = 'blend';
+                    }
                     if (alpha < 1) {
                         materialCfg.alpha = alpha;
                         materialCfg.alphaMode = "blend";
@@ -692,7 +696,11 @@ export default class OBJLoader {
 
                 case 'tr':
                     alpha = parseFloat(value);
-                    this._m_CurrentMat.setParam('alphaDiscard', new FloatVars().valueOf(0.1));
+                    if(alpha <= 0.1)
+                        this._m_CurrentMat.setParam('alphaDiscard', new FloatVars().valueOf(1 - alpha));
+                    else{
+                        // this._m_CurrentMat.alphaMode = 'blend';
+                    }
                     if (alpha > 0) {
                         materialCfg.alpha = 1 - alpha;
                         materialCfg.alphaMode = "blend";
@@ -824,6 +832,9 @@ export default class OBJLoader {
                 geometry.setMesh(mesh);
                 geometry.setMaterial(material);
                 geometry.updateBound();
+                if(material.alphaMode){
+                    geometry.setTranslucent();
+                }
 
 
                 modelNode.addChildren(geometry);

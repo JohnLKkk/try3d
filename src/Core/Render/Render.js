@@ -13,6 +13,7 @@ import DefaultRenderProgram from "./DefaultRenderProgram.js";
 import SinglePassLightingRenderProgram from "./SinglePassLightingRenderProgram.js";
 import Log from "../Util/Log.js";
 import Internal from "./Internal.js";
+import RenderQueue from "./RenderQueue.js";
 
 export default class Render extends Component{
     // 渲染路径
@@ -225,7 +226,6 @@ export default class Render extends Component{
                         }
                         break;
                     case RenderState.S_STATES[3]:
-                        console.log("depthTest");
                         if(state[k] == 'On'){
                             gl.enable(gl.DEPTH_TEST);
                         }
@@ -286,7 +286,8 @@ export default class Render extends Component{
         // 不透明队列
         let opaqueBucket = {};
         // 半透明队列
-        let translucentBucket = {};
+        // let translucentBucket = {};
+        let translucentBucket = [];
         visDrawables.forEach(drawable=>{
             if(drawable.isOpaque()){
                 hasOpaque = true;
@@ -297,10 +298,11 @@ export default class Render extends Component{
             }
             else if(drawable.isTranslucent()){
                 hasTranslucent = true;
-                if(!translucentBucket[drawable.getMaterial().getId()]){
-                    translucentBucket[drawable.getMaterial().getId()] = [];
-                }
-                translucentBucket[drawable.getMaterial().getId()].push(drawable);
+                // if(!translucentBucket[drawable.getMaterial().getId()]){
+                //     translucentBucket[drawable.getMaterial().getId()] = [];
+                // }
+                // translucentBucket[drawable.getMaterial().getId()].push(drawable);
+                translucentBucket.push(drawable);
             }
         });
 
@@ -479,11 +481,9 @@ export default class Render extends Component{
             // 这里有个问题,可以按照材质组作为整体组进行排序
             // 也可分开成独立物体进行排序
             // 由于默认关闭了深度写入,所有理论上所有面片都会渲染
-        }
-        for(let matId in translucentBucket){
-            translucentBucket[matId].forEach(geo=>{
-                // 获取当前选中的技术
-                let mat = this._m_Scene.getComponent(matId);
+            translucentBucket = RenderQueue.sortTranslucentBucket(this._m_Scene.getMainCamera(), translucentBucket);
+            translucentBucket.forEach(geo=>{
+                let mat = geo.getMaterial();
                 let currentTechnology = mat.getCurrentTechnology();
                 // 获取当前技术所有Forward路径下的SubShaders
                 let forwardSubPasss = currentTechnology.getSubPasss(Render.FORWARD);
@@ -505,6 +505,31 @@ export default class Render extends Component{
                 }
             });
         }
+        // for(let matId in translucentBucket){
+        //     translucentBucket[matId].forEach(geo=>{
+        //         // 获取当前选中的技术
+        //         let mat = this._m_Scene.getComponent(matId);
+        //         let currentTechnology = mat.getCurrentTechnology();
+        //         // 获取当前技术所有Forward路径下的SubShaders
+        //         let forwardSubPasss = currentTechnology.getSubPasss(Render.FORWARD);
+        //         // 如果该物体存在Forward路径渲染的需要,则执行Forward渲染
+        //         if(forwardSubPasss){
+        //             subShaders = forwardSubPasss.getSubShaders();
+        //             // 执行渲染
+        //             for(let subShader in subShaders){
+        //                 // 检测是否需要更新渲染状态
+        //                 if(subShaders[subShader].renderState){
+        //                     // 依次检测所有项
+        //                     this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
+        //                 }
+        //                 // 指定subShader
+        //                 mat._selectSubShader(subShaders[subShader].subShader);
+        //                 this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].draw(gl, this._m_Scene, this._m_FrameContext, geo, lights);
+        //                 // geo.draw(this._m_FrameContext);
+        //             }
+        //         }
+        //     });
+        // }
 
         // 检测是否启用了自定义forwardFrameBuffer
         if(useBackForwardFrameBuffer){
