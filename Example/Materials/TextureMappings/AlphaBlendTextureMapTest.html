@@ -40,7 +40,7 @@
     let floor = new Plane(scene, {id:'floor', xSize:25, zSize:25});
     colorMap = new Texture2DVars(scene);
     colorMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
-    colorMap.setImageSrc(scene, '../../Assets/Textures/metal.png');
+    colorMap.setImageSrc(scene, '../../Assets/Textures/terrain2.png');
     let floorMat = new Material(scene, {id:'floorMat', materialDef:colorMatDef});
     floorMat.setParam('colorMap', colorMap);
     floor.setMaterial(floorMat);
@@ -49,28 +49,44 @@
     // 添加几个遮挡物
     colorMap = new Texture2DVars(scene);
     colorMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
-    colorMap.setImageSrc(scene, '../../Assets/Textures/marble.jpg');
+    colorMap.setImageSrc(scene, '../../Assets/Textures/wall2.png');
     let marbleMat = new Material(scene, {id:'marbleMat', materialDef:colorMatDef});
     marbleMat.setParam('colorMap', colorMap);
-    let marble0 = new Box(scene, {id:'marble0'});
+    let marble0 = new Box(scene, {id:'marble0', yHalf:3});
     marble0.setMaterial(marbleMat);
     marble0.setLocalTranslationXYZ(-3, 1, -5);
     rootNode.addChildren(marble0);
 
-    let marble1 = new Box(scene, {id:'marble1'});
+    let marble1 = new Box(scene, {id:'marble1', yHalf:2.5});
     marble1.setMaterial(marbleMat);
     marble1.setLocalTranslationXYZ(3, 1, -2);
     rootNode.addChildren(marble1);
 
-    // 添加几个草
+    let marble2 = new Box(scene, {id:'marble2', yHalf:2.5});
+    marble2.setMaterial(marbleMat);
+    marble2.setLocalTranslationXYZ(-5, 1, -1);
+    rootNode.addChildren(marble2);
+
+    // 添加几个bot
+    let botMap = [];
     colorMap = new Texture2DVars(scene);
     colorMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
     colorMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
-    colorMap.setImageSrc(scene, '../../Assets/Textures/window.png');
-    let windowMat = new Material(scene, {id:'windowMat', materialDef:colorMatDef});
-    windowMat.setParam('colorMap', colorMap);
+    colorMap.setImageSrc(scene, '../../Assets/Textures/bot0.png');
+    botMap.push(colorMap);
+    colorMap = new Texture2DVars(scene);
+    colorMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+    colorMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+    colorMap.setImageSrc(scene, '../../Assets/Textures/bot1.png');
+    botMap.push(colorMap);
+    colorMap = new Texture2DVars(scene);
+    colorMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+    colorMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+    colorMap.setImageSrc(scene, '../../Assets/Textures/bot2.png');
+    botMap.push(colorMap);
+    let botMat = null;
     // 设置透明剔除因子(小于该值的alpha将被剔除,0.6表示透明度0.4,即40%透明的部分都剔除)
-    let window = null;
+    let bot = null;
     let position = [
         [0.25, 1, -1.5],
         [-0.25, 1, 0.5],
@@ -79,12 +95,14 @@
         [-2.25, 1, -3.5],
     ];
     for(let i = 0;i < position.length;i++){
-        window = new Plane(scene, {id:'window' + i, xSize:2, zSize:2});
-        window.setMaterial(windowMat);
-        window.setTranslucent();
-        window.setLocalTranslationXYZ(position[i][0], position[i][1], position[i][2]);
-        window.setLocalRotationFromEuler(MoreMath.toRadians(90), 0, 0);
-        rootNode.addChildren(window);
+        botMat = new Material(scene, {id:'botMat' + i, materialDef:colorMatDef});
+        botMat.setParam('colorMap', botMap[i % botMap.length]);
+        bot = new Plane(scene, {id:'bot' + i, xSize:2, zSize:2});
+        bot.setMaterial(botMat);
+        bot.setTranslucent();
+        bot.setLocalTranslationXYZ(position[i][0], position[i][1], position[i][2]);
+        bot.setLocalRotationFromEuler(MoreMath.toRadians(90), MoreMath.toRadians(10 + 5 * i), 0);
+        rootNode.addChildren(bot);
     }
 
     let renderEngine = new RenderEngine();

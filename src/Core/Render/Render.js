@@ -209,7 +209,7 @@ export default class Render extends Component{
                         }
                         break;
                     case RenderState.S_STATES[1]:
-                        console.log("depthWrite");
+                        // console.log("depthWrite");
                         if(state[k] == 'On'){
                             gl.depthMask(true);
                         }
