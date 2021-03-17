@@ -24,36 +24,34 @@
     import Camera from "../../src/Core/Scene/Camera.js";
     import MeshFactor from "../../src/Core/Util/MeshFactor.js";
     import Geometry from "../../src/Core/Node/Geometry.js";
+    import Vec4Vars from "../../src/Core/WebGL/Vars/Vec4Vars.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(25, 25, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
 
-    let testCamera = new Camera(scene, {id:'testCamera'});
-    testCamera.lookAt(new Vector3(0.07953452484227447,3.4589245565459605,1.1170058588214968), new Vector3(-0.6825071896076365,3.231178826615555,0.5108505091489007), new Vector3(0, 1, 0));
     let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
-    let colorMat = new Material(scene, {id:'colorWireFrustum', materialDef:colorDef});
-    let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
     // 根据当前相机创建测试用的视锥体
+    let testCamera = new Camera(scene, {id:'testCamera'});
+    testCamera.lookAt(new Vector3(25, 25, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let wireFrustumColorMat = new Material(scene, {id:'wireFrustumColorMat', materialDef:colorDef});
+    wireFrustumColorMat.setParam('color', new Vec4Vars().valueFromXYZW(1.0, 0.0, 0.0, 1.0));
+    let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
     wireFrustum.setMesh(MeshFactor.createViewFrustumMeshFromCamera(testCamera));
-    wireFrustum.setMaterial(colorMat);
+    wireFrustum.setMaterial(wireFrustumColorMat);
     wireFrustum.updateBound();
 
     let rootNode = new Node(scene, {id:'rootNode'});
     rootNode.addChildren(wireFrustum);
     let objLoader = new OBJLoader();
     objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/');
-    // scene.setFrustumCullingCamera(testCamera);
     objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/Jingzhuxuan/jinzuxuan.obj', modelNode=>{
-        // 关闭视锥剔除测试
-        // modelNode.setLocalRotationFromEuler(MoreMath.toRadians(-90), 0, 0);
-        // modelNode.setLocalScaleXYZ(0.1, 0.1, 0.1);
         console.log("实体:" + modelNode.getChildren().length);
-        console.log("modelNode:",modelNode);
         // 使用OctCullingControl来管理静态场景
         rootNode.addChildren(modelNode);
-        // let octCullingControl = new OctCullingControl(modelNode, {id:'octCulling'});
-        // octCullingControl.debug(rootNode, colorMat);
+        let octMat = new Material(scene, {id:'octMat', materialDef:colorDef});
+        let octCullingControl = new OctCullingControl(modelNode, {id:'octCulling'});
+        octCullingControl.debug(rootNode, octMat);
     });
 
     let dirLight = new DirectionalLight(scene, {id:'dirLight'});

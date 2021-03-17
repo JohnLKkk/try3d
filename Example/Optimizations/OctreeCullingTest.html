@@ -28,6 +28,7 @@
     import Camera from "../../src/Core/Scene/Camera.js";
     import OctCullingControl from "../../src/Core/Optimization/OctCullingControl.js";
     import Vec4Vars from "../../src/Core/WebGL/Vars/Vec4Vars.js";
+    import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let testCamera = new Camera(scene, {id:'testCamera'});
     testCamera.lookAt(new Vector3(25, 0, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -36,7 +37,10 @@
     let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
     console.log("materialDef:",materialDef);
     let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
-    basicLightingMat.selectTechnology('BlinnPhongLight2');
+    basicLightingMat.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
+    basicLightingMat.setParam('specularColor', new Vec4Vars().valueFromXYZW(0.8, 0.8, 0.8, 1.0));
+    basicLightingMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
+    basicLightingMat.setParam('shininess', new FloatVars().valueOf(24.0));
 
     let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
     let wireColorMat = new Material(scene, {id:'colorWireFrustum', materialDef:colorDef});

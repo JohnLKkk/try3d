@@ -229,7 +229,7 @@ export default class SubShader {
      * 返回当前SubShader定义Id。<br/>
      * 只有完全一致的着色源码定义，材质同一种类型的SubShader。<br/>
      * 一旦存在不同宏定义导致源码不一致，则也是不同DefId。<br/>
-     * 但目前仅用MaterDef+SubShaderName计算该DefId，所以需要后续完善。<br/>
+     * 目前使用用MaterDef+SubShaderName+宏定义编码计算该DefId。<br/>
      * @return {Number}
      */
     getDefId(){

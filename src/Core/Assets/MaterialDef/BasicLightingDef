@@ -9,6 +9,8 @@ Def BasicLightingDef{
         vec4 diffuseColor;
         vec4 specularColor;
         float shininess;
+        // 完全透明剔除因子(0-1),低于该值的透明片段被完全剔除而不进行混合
+        float alphaDiscard;
     }
     SubTechnology BlinnPhongLighting1{
         Vars{
@@ -227,6 +229,11 @@ Def BasicLightingDef{
                 #endif
                 #ifdef Params.diffuseMap
                     _diffuseColor = _diffuseColor * texture(Params.diffuseMap, wUv0);
+                    #ifdef Params.alphaDiscard
+                        if(_diffuseColor.a < Params.alphaDiscard){
+                            discard;
+                        }
+                    #endif
                 #endif
 
                 #ifdef Params.specularColor

@@ -11,6 +11,7 @@ export default class SubShaderDef {
     constructor(name) {
         this._m_Name = name;
         // 用于判断是否属于同一类别shaderDef
+        // 使用_m_Signature生成的定义id
         this._m_DefId = null;
         // 签名(每个subShader都是唯一签名的)
         this._m_Signature = null;
@@ -86,7 +87,8 @@ export default class SubShaderDef {
                 key += k + ',';
             });
             key = key.substr(0, key.length - 1);
-            this._m_DefId = Tools.uniqueId(this._m_Signature + key);
+            // this._m_DefId = Tools.uniqueId(this._m_Signature + key);
+            return Tools.uniqueId(this._m_Signature + key);
             // console.log("key:" + key + ";defId:" + this._m_DefId);
         }
         else{

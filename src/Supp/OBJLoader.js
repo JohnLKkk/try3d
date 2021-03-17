@@ -683,6 +683,7 @@ export default class OBJLoader {
 
                 case 'd':
                     alpha = parseFloat(value);
+                    this._m_CurrentMat.setParam('alphaDiscard', new FloatVars().valueOf(0.1));
                     if (alpha < 1) {
                         materialCfg.alpha = alpha;
                         materialCfg.alphaMode = "blend";
@@ -691,6 +692,7 @@ export default class OBJLoader {
 
                 case 'tr':
                     alpha = parseFloat(value);
+                    this._m_CurrentMat.setParam('alphaDiscard', new FloatVars().valueOf(0.1));
                     if (alpha > 0) {
                         materialCfg.alpha = 1 - alpha;
                         materialCfg.alphaMode = "blend";

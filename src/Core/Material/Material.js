@@ -208,9 +208,23 @@ export default class Material extends Component{
                     }
                 }
             }
+            // 检测是否存在已有参数(这里直接使用遍历,后续可改进,不过因为实时渲染阶段很少大规模调整参数,所以即使遍历也仅仅影响预加载阶段)
+            let needAdd = true;
+            if(this._m_ChangeParams.length > 0){
+                let p = null;
+                for(let i = 0;i < this._m_ChangeParams.length;i++){
+                    if(this._m_ChangeParams[i].paramName == paramName){
+                        this._m_ChangeParams[i].value = value;
+                        needAdd = false;
+                        break;
+                    }
+                }
+            }
             // 将其加入参数列表
             value.owner(this, paramName);
-            this._m_ChangeParams.push({paramName, value});
+            if(needAdd){
+                this._m_ChangeParams.push({paramName, value});
+            }
         }
     }
 
