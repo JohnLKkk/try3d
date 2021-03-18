@@ -32,7 +32,7 @@ export default class FirstPersonController extends Component{
         this._m_LastExTime = 0;
 
 
-        // 相交的一些属性
+        // 相机的一些属性
         this._m_Position = new Vector3();
         cfg.position = cfg.position || this._m_Scene.getMainCamera().getEye();
         if(cfg.position){

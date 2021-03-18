@@ -340,7 +340,7 @@ export default class MaterialDef{
                 param = params[k];
                 // Tools.find()匹配有bug
                 // 为了确保完全匹配最长的那个,暂时先这么处理
-                pr = Tools.find2(line, param.getPattern())
+                pr = Tools.find2(line, param.getPattern());
                 if(pr != -1){
                     if(!prsult){
                         prsult = {};
@@ -677,7 +677,7 @@ export default class MaterialDef{
                 param = params[k];
                 // Tools.find()匹配有bug
                 // 为了确保完全匹配最长的那个,暂时先这么处理
-                pr = Tools.find2(line, param.getPattern())
+                pr = Tools.find2(line, param.getPattern());
                 if(pr != -1){
                     if(!prsult){
                         prsult = {};

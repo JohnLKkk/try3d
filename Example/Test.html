@@ -45,6 +45,11 @@
         arr2.sort((a, b)=>{return a[0] - b[0];});
         console.log("arr2:",arr2);
 
+        let s = 'vec4 albedo = texture(Params.baseColorMap, wUv0) * Params.baseColor';
+        let i0 = Tools.find2(s, /Params.baseColor/);
+        console.log('i0 = ' , s.search(/Params.baseColor/g));
+        let i1 = Tools.find2(s, /Params.baseColorMap/);
+
     </script>
     <!--<script>-->
         <!--function findSrc(str, reg){-->

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MetalMaterialTest</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" tabindex="0" width="400" height="300" style="border: none;margin: 0px;padding: 0px;"></canvas>
+</div>
+<script type="module">
+    import Scene from "../../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../../src/Core/RenderEngine.js";
+    import Node from "../../../src/Core/Node/Node.js";
+    import Material from "../../../src/Core/Material/Material.js";
+    import Vector3 from "../../../src/Core/Math3d/Vector3.js";
+    import MaterialDef from "../../../src/Core/Material/MaterialDef.js";
+    import Box from "../../../src/Core/Node/Shape/Box.js";
+    import FirstPersonController from "../../../src/Core/InputControl/FirstPersonController.js";
+    import Texture2DVars from "../../../src/Core/WebGL/Vars/Texture2DVars.js";
+    import Vector4 from "../../../src/Core/Math3d/Vector4.js";
+    import FloatVars from "../../../src/Core/WebGL/Vars/FloatVars.js";
+    import DirectionalLight from "../../../src/Core/Light/DirectionalLight.js";
+    import Plane from "../../../src/Core/Node/Shape/Plane.js";
+    import MoreMath from "../../../src/Core/Math3d/MoreMath.js";
+    import Sphere from "../../../src/Core/Node/Shape/Sphere.js";
+    import Vec4Vars from "../../../src/Core/WebGL/Vars/Vec4Vars.js";
+
+
+    // 创建scene
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(-5, 2, 3), new Vector3(-3, 1.5, 0), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    let rootNode = new Node(scene, {id:'rootNode'});
+
+    // 金属工作流材质参数
+    let baseColorMap = null;
+    let normalMap = null;
+    let metallicMap = null;
+    let roughnessMap = null;
+    let aoMap = null;
+
+    let metalLightingDef = MaterialDef.load('../../../src/Core/Assets/MaterialDef/PrincipledLightingDef');
+    let getTexture = (src)=>{
+        let texture = new Texture2DVars(scene);
+        texture.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+        texture.setImageSrc(scene, src);
+        return texture;
+    };
+
+    // plastic
+    let plastic = new Sphere(scene, {id:'plastic'});
+    let plasticMat = new Material(scene, {id:'plasticMat', materialDef:metalLightingDef});
+    plasticMat.setParam('baseColor', new Vec4Vars().valueFromXYZW(0.5, 0.2, 0.2, 1.0));
+    plasticMat.setParam('baseColorMap', getTexture('../../Assets/Textures/pbr/plastic/albedo.png'));
+    plasticMat.setParam('normalMap', getTexture('../../Assets/Textures/pbr/plastic/normal.png'));
+    plastic.setMaterial(plasticMat);
+    rootNode.addChildren(plastic);
+
+    let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+    scene.on('update', exTime=>{
+    });
+</script>
+</body>
+</html>

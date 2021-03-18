@@ -1,0 +1,150 @@
+// 原理化光照材质定义
+Def PrincipledLightingDef{
+    Params{
+        vec4 baseColor;
+        sampler2D baseColorMap;
+        sampler2D normalMap;
+    }
+    SubTechnology SPPrincipledLighting{
+        Vars{
+            vec3 wNormal;
+            vec3 wPosition;
+            vec2 wUv0;
+            mat3 tbnMat;
+        }
+        Advanced{
+            RenderProgram SinglePassLighting;
+        }
+        Vs_Shader{
+            void main(){
+                #ifdef Context.Skins
+                    mat4 skinMat =
+                            Context.InWeight0.x * Context.Joints[int(Context.InJoint0.x)] +
+                            Context.InWeight0.y * Context.Joints[int(Context.InJoint0.y)] +
+                            Context.InWeight0.z * Context.Joints[int(Context.InJoint0.z)] +
+                            Context.InWeight0.w * Context.Joints[int(Context.InJoint0.w)];
+                    vec4 pos = Context.ModelMatrix * skinMat * vec4(Context.InPosition, 1.0f);
+                #else
+                    vec4 pos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                #endif
+
+
+                wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;
+                mat3 nMat = mat3(transpose(inverse(Context.ModelMatrix)));
+                vec3 norm = normalize(nMat * Context.InNormal);
+                vec3 t = normalize(nMat * Context.InTangent);
+                t = normalize(t - dot(t, norm) * norm);
+                vec3 b = cross(norm, t);
+                tbnMat = mat3(t, b, norm);
+                wNormal = norm;
+                wUv0 = Context.InUv0;
+
+
+                Context.OutPosition = Context.ProjectViewMatrix * pos;
+            }
+        }
+
+        Fs_Shader{
+            // 计算光照方向
+            // 对于DirLight,PointLight以及SpotLight,lightType依次为0.0,1.0,2.0
+            // 输出光照方向
+            // lightDir.w存储衰减率(对于DirLight,衰减值一直为1,对于Point或Spot,衰减值随着半径而变小,衰减值越小,表示衰减度越大)
+            void ComputeLightDir(in vec3 worldPos, in float lightType, in vec4 position, out vec4 lightDir, out vec3 lightVec){
+                // 只有lightType = 0.0时,posLight为0.0,否则posLight为1.0
+                float posLight = step(0.5f, lightType);
+
+                // 计算光照位置
+                // 对于DirLight,lightVec = position.xyz * sign(-0.5f) = position.xyz * -1.0f;其中position代表DirLight的方向
+                // 对于PointLight和SpotLight,lightVec = position.xyz * sign(1.0f - 0.5f) - (worldPos * 1.0f) = positions.xyz * 1.0f - worldPos;其中position代表Light的位置
+                lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);
+                float dist = length(lightVec);
+
+                // 对于DirLight,lightDir.w = 1.0f
+                lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
+
+                //lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
+                //lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
+
+                // 归一化
+                lightDir.xyz = lightVec / vec3(dist);
+            }
+            // 返回Spot范围衰减
+            float ComputeSpotFalloff(in vec4 spotDirection, in vec3 lightDir){
+                float curAngleCos = dot(lightDir, -spotDirection.xyz);
+                float innerAngleCos = floor(spotDirection.w) * 0.001f;
+                float outerAngleCos = fract(spotDirection.w);
+                float innerMinusOuter = innerAngleCos - outerAngleCos;
+                float falloff = clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f);
+                //if(curAngleCos > innerMinusOuter)
+                //    falloff = 1.0f;
+                //else
+                //    falloff = 0.0f;
+
+                #ifdef SRGB
+                    // Use quadratic falloff (notice the ^4)
+                    return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0, 1.0), 4.0);
+                #else
+                    // Use linear falloff
+                    return falloff;
+                #endif
+            }
+            void main(){
+                // 计算光照
+                vec4 lightColor;
+                vec4 lightData1;
+                vec4 lightDir = vec4(0.0f);
+                vec3 lightVec = vec3(0.0f);
+                vec2 lightBRDF = vec2(0.0f);
+                vec3 viewDir = normalize(Context.CameraPosition.xyz - wPosition.xyz);
+
+                vec3 normal = wNormal;
+                #ifdef Params.normalMap
+                    vec3 normalHeight = texture(Params.normalMap, wUv0).xyz;
+                    normal = tbnMat * normalize(normalHeight * 2.0f - 1.0f);
+                #endif
+
+                #ifdef Params.baseColor
+                    #ifdef Params.baseColorMap
+                        vec4 albedo = texture(Params.baseColorMap, wUv0) * Params.baseColor;
+                    #else
+                        vec4 albedo = Params.baseColor;
+                    #endif
+                #else
+                    #ifdef Params.baseColorMap
+                        vec4 albedo = texture(Params.baseColorMap, wUv0);
+                    #else
+                        vec4 albedo = vec4(1.0f);
+                    #endif
+                #endif
+
+                for( int i = 0;i < Context.CurLightCount;i+=3 ){
+                    lightColor = Context.WLightData[i];
+                    lightData1 = Context.WLightData[i + 1];
+                    ComputeLightDir(wPosition, lightColor.w, lightData1, lightDir, lightVec);
+
+                    // 计算SpotLight的衰减
+                    float spotFallOff = 1.0;
+                    if( lightColor.w > 1.0f )
+                    {
+                        // 计算SpotLight的范围衰减
+                        spotFallOff = ComputeSpotFalloff( Context.WLightData[i + 2], lightDir.xyz );
+                    }
+
+                    // 计算反射率
+                    // ComputeLighting(normal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, Params.shininess, lightBRDF);
+
+                    // Context.OutColor.rgb += lightColor.rgb * ( _diffuseColor.rgb * diffuseSumAdjust.rgb * vec3( lightBRDF.x ) + _specularColor.rgb * specularSumAdjust.rgb * vec3( lightBRDF.y ));
+                }
+                Context.OutColor.rgb = albedo.rgb;
+                Context.OutColor.a = 1.0;
+            }
+        }
+    }
+
+    Technology{
+        Sub_Pass{
+            Pass SPPrincipledLighting{
+            }
+        }
+    }
+}

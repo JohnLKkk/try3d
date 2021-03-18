@@ -60,7 +60,7 @@ Def BasicLightingDef{
             // brdf.x保存漫反射部分;brdf.y保存镜面反射部分
             void ComputeLighting(in vec3 vwNorm, in vec3 viewDir, in vec3 lightDir, in float attenuation, in float shininess, out vec2 brdf){
                 // diffuse部分
-                float diffuseBRDF = max(0.0f, dot(vwNorm, lightDir));
+                float diffuse = max(0.0f, dot(vwNorm, lightDir));
                 // specular部分
                 // 半角向量代替viewDir参与光照计算
                 vec3 H = normalize(viewDir + lightDir);
@@ -68,7 +68,7 @@ Def BasicLightingDef{
                 float specularBRDF = HdotN * diffuseBRDF;
 
                 // 衰减,对于PointLight和SpotLight来说有效,对于DirLight而言,attenuation一直为1
-                brdf.x = diffuseBRDF * attenuation;
+                brdf.x = diffuse * attenuation;
                 brdf.y = specularBRDF * diffuseBRDF * attenuation;
             }
             void main(){
