@@ -187,7 +187,7 @@ export default class SubShaderDef {
      * @param {String}[name 变量名称]
      */
     addVar(type, name){
-        this._m_Var_Table.push({type, name, pattern:eval("/" + name + "/")});
+        this._m_Var_Table.push({type, name, pattern:eval("/" + name + "/"), pattern2:eval("/" + name + "[\\s+-;.,\\*\\\\]{1,}/")});
     }
 
     /**

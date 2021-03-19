@@ -64,11 +64,13 @@ class Param{
         this.m_DefaultValue = null;
 
         this.m_Pattern = null;
+        this.m_Pattern2 = null;
         this.m_TagPattern = null;
         this.m_DefType = null;
     }
     creator(){
         this.m_Pattern = eval("/Params." + this.m_Name + "/");
+        this.m_Pattern2 = eval("/Params." + this.m_Name + "[\\s+-;.,\\*\\\\]{1,}/");
         this.m_TagPattern = eval("/Params." + this.m_Name + "/g");
         this.m_DefType = "" + this.m_Name;
     }
@@ -77,6 +79,9 @@ class Param{
     }
     getPattern(){
         return this.m_Pattern;
+    }
+    getPattern2(){
+        return this.m_Pattern2;
     }
     getTagPattern(){
         return this.m_TagPattern;
@@ -305,11 +310,17 @@ export default class MaterialDef{
             if(line.startsWith("//"))continue;
             let p = null;
             let pr = -1;
+            let pr2 = -1;
             let prsult = null;
             // 检测变量列表
             varTable.forEach(vars=>{
                 pr = Tools.find2(line, vars.pattern);
                 if(pr != -1){
+                    // 为了正确匹配一行的重复,再这里二次匹配并判断
+                    pr2 = Tools.find2(line, vars.pattern2);
+                    if(pr2 != null && pr2 != pr){
+                        pr = pr2;
+                    }
                     if(!prsult){
                         prsult = {};
                     }
@@ -332,9 +343,9 @@ export default class MaterialDef{
                     }
                 }
             }
-            // 检测材质参数列表
             p = null;
             pr = -1;
+            pr2 = -1;
             prsult = null;
             for(let k in params){
                 param = params[k];
@@ -342,6 +353,11 @@ export default class MaterialDef{
                 // 为了确保完全匹配最长的那个,暂时先这么处理
                 pr = Tools.find2(line, param.getPattern());
                 if(pr != -1){
+                    // 为了正确匹配一行的重复,再这里二次匹配并判断
+                    pr2 = Tools.find2(line, param.getPattern2());
+                    if(pr2 != null && pr2 != pr){
+                        pr = pr2;
+                    }
                     if(!prsult){
                         prsult = {};
                     }
@@ -377,6 +393,11 @@ export default class MaterialDef{
                 if(context.pattern == null)continue;
                 pr = Tools.find2(line, context.pattern);
                 if(pr != -1){
+                    // 为了正确匹配一行的重复,再这里二次匹配并判断
+                    pr2 = Tools.find2(line, context.pattern2);
+                    if(pr2 != null && pr2 != pr){
+                        pr = pr2;
+                    }
                     if(!prsult){
                         prsult = {};
                     }
@@ -642,11 +663,17 @@ export default class MaterialDef{
             if(line.startsWith("//"))continue;
             let p = null;
             let pr = -1;
+            let pr2 = -1;
             let prsult = null;
             // 检测变量列表
             varTable.forEach(vars=>{
                 pr = Tools.find2(line, vars.pattern);
                 if(pr != -1){
+                    // 为了正确匹配一行的重复,再这里二次匹配并判断
+                    pr2 = Tools.find2(line, vars.pattern2);
+                    if(pr2 != null && pr2 != pr){
+                        pr = pr2;
+                    }
                     if(!prsult){
                         prsult = {};
                     }
@@ -672,6 +699,7 @@ export default class MaterialDef{
             // 检测材质参数列表
             p = null;
             pr = -1;
+            pr2 = -1;
             prsult = null;
             for(let k in params){
                 param = params[k];
@@ -679,6 +707,11 @@ export default class MaterialDef{
                 // 为了确保完全匹配最长的那个,暂时先这么处理
                 pr = Tools.find2(line, param.getPattern());
                 if(pr != -1){
+                    // 为了正确匹配一行的重复,再这里二次匹配并判断
+                    pr2 = Tools.find2(line, param.getPattern2());
+                    if(pr2 != null && pr2 != pr){
+                        pr = pr2;
+                    }
                     if(!prsult){
                         prsult = {};
                     }
@@ -714,6 +747,11 @@ export default class MaterialDef{
                 if(context.pattern == null)continue;
                 pr = Tools.find2(line, context.pattern);
                 if(pr != -1){
+                    // 为了正确匹配一行的重复,再这里二次匹配并判断
+                    pr2 = Tools.find2(line, context.pattern2);
+                    if(pr2 != null && pr2 != pr){
+                        pr = pr2;
+                    }
                     if(!prsult){
                         prsult = {};
                     }
