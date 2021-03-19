@@ -2,8 +2,29 @@
 Def PrincipledLightingDef{
     Params{
         vec4 baseColor;
+        float metallic;
+        float roughness;
+        // 自发光
+        vec4 emissive;
+        float emissivePower;
+        // 自发光强度
+        float emissiveIntensity;
         sampler2D baseColorMap;
+        // metallic管线
         sampler2D normalMap;
+        sampler2D metallicRoughnessMap;
+        sampler2D metallicMap;
+        sampler2D roughnessMap;
+        // specular管线
+        bool useSpecGloss;
+        sampler2D specularGlossinessMap;
+        sampler2D specularMap;
+        sampler2D glossinessMap;
+        vec4 specular;
+        float glossiness;
+
+        // alphaDiscard
+        float alphaDiscard;
     }
     SubTechnology SPPrincipledLighting{
         Vars{
@@ -68,6 +89,54 @@ Def PrincipledLightingDef{
                 // 归一化
                 lightDir.xyz = lightVec / vec3(dist);
             }
+            #define PI 3.14159265358979323846264
+            // 镜面反射菲涅尔计算
+            vec3 F_Shlick(float vh,	vec3 F0){
+            	float fresnelFact = pow(2.0f, (-5.55473f * vh - 6.98316f) * vh);
+            	return mix(F0, vec3(1.0f, 1.0f, 1.0f), fresnelFact);
+            }
+            vec3 F_Schlick2(float cosTheta, vec3 F0)
+            {
+                return F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
+            }
+            // 计算直接光照
+            vec3 ComputeDirectLighting(in vec3 normal, in vec3 viewDir, in vec3 lightDir, in vec3 lightColor, in vec3 diffuseColor, in vec3 fZero, in float roughness, in float ndotv, out vec3 directLighting){
+                vec3 h = normalize(lightDir + viewDir);
+                float ndotl = max( dot( normal, lightDir ), 0.0f );
+                float ndoth = max( dot( normal, h), 0.0f );
+                float hdotv = max( dot( h, viewDir ), 0.0f );
+
+                // 这里,不使用c/Π计算diffuse fr(x, wi, wo)
+                // 而假设恒定
+                vec3 diffuse = vec3( ndotl ) * lightColor * diffuseColor;
+
+                // cook-torrence,BRDF : http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
+                float alpha = roughness * roughness;
+
+                // D, GGX 法线分布函数
+                float alpha2 = alpha * alpha;
+                float sum = (( ndoth * ndoth ) * ( alpha2 - 1.0f ) + 1.0f);
+                // 似乎这里D项直接输出与标准PBR不同,单独输出PI,sum和sum都是正常,唯独计算后的D与标准PBR比对不一致
+                // 所以这里PI * 0.2f
+                float denom = PI * 0.2f * sum * sum;
+                float D = alpha2 / denom;
+
+                // F, 菲涅尔项
+                vec3 F = F_Shlick( hdotv, fZero );
+
+                // G, 几何遮挡项
+                float k = alpha * 0.5f;
+                float G_V = ndotv + sqrt( ( ndotv - ndotv * k ) * ndotv + k );
+                float G_L = ndotl + sqrt( ( ndotl - ndotl * k ) * ndotl + k );
+                float G = 1.0f / max( G_V * G_L ,0.01f );
+
+                // specularBRDF
+                float t = D * G * ndotl;
+                vec3 specular =  vec3( t ) * F * lightColor;
+
+                directLighting = diffuse + specular;
+                return vec3( D * G );
+            }
             // 返回Spot范围衰减
             float ComputeSpotFalloff(in vec4 spotDirection, in vec3 lightDir){
                 float curAngleCos = dot(lightDir, -spotDirection.xyz);
@@ -94,14 +163,8 @@ Def PrincipledLightingDef{
                 vec4 lightData1;
                 vec4 lightDir = vec4(0.0f);
                 vec3 lightVec = vec3(0.0f);
-                vec2 lightBRDF = vec2(0.0f);
+                vec3 directLighting = vec3(0.0f);
                 vec3 viewDir = normalize(Context.CameraPosition.xyz - wPosition.xyz);
-
-                vec3 normal = wNormal;
-                #ifdef Params.normalMap
-                    vec3 normalHeight = texture(Params.normalMap, wUv0).xyz;
-                    normal = tbnMat * normalize(normalHeight * 2.0f - 1.0f);
-                #endif
 
                 #ifdef Params.baseColor
                     #ifdef Params.baseColorMap
@@ -117,26 +180,120 @@ Def PrincipledLightingDef{
                     #endif
                 #endif
 
+                #ifdef Params.alphaDiscard
+                    if(albedo.a < Params.alphaDiscard){
+                        discard;
+                    }
+                #endif
+
+                vec3 normal = wNormal;
+                #ifdef Params.normalMap
+                    vec3 normalHeight = texture(Params.normalMap, wUv0).xyz;
+                    normal = tbnMat * normalize(normalHeight * 2.0f - 1.0f);
+                #endif
+
+                #ifdef Params.metallicRoughnessMap
+                    vec2 rm = texture(Params.metallicRoughnessMap, wUv0).gb;
+                    #ifdef Params.roughness
+                        float _roughness = rm.x * max(Params.roughness, 1e-4);
+                    #else
+                        float _roughness = rm.x;
+                    #endif
+                    #ifdef Params.metallic
+                        float _metallic = rm.y * max(Params.metallic, 0.0f);
+                    #else
+                        float _metallic = rm.y;
+                    #endif
+                #else
+                    #ifdef Params.roughnessMap
+                        #ifdef Params.roughness
+                            float _roughness = texture(Params.roughnessMap, wUv0).r * max(Params.roughness, 1e-4);
+                        #else
+                            float _roughness = texture(Params.roughnessMap, wUv0).r;
+                        #endif
+                    #else
+                        #ifdef Params.roughness
+                            float _roughness = max(Params.roughness, 1e-4);
+                        #else
+                            float _roughness = 1.0f;
+                        #endif
+                    #endif
+                    #ifdef Params.metallicMap
+                        #ifdef Params.metallic
+                            float _metallic = texture(Params.metallicMap, wUv0).r * max(Params.metallic, 0.0f);
+                        #else
+                            float _metallic = texture(Params.metallicMap, wUv0).r;
+                        #endif
+                    #else
+                        #ifdef Params.metallic
+                            float _metallic = max(Params.metallic, 0.0f);
+                        #else
+                            float _metallic = 1.0f;
+                        #endif
+                    #endif
+                #endif
+
+                #ifdef Params.useSpecGloss
+                    #ifdef Params.specularGlossinessMap
+                        vec4 _specularColor = texture(Params.specularGlossinessMap, wUv0);
+                        #ifdef Params.glossiness
+                            float _glossiness = _specularColor.a * Params.glossiness;
+                        #else
+                            float _glossiness = _specularColor.a;
+                        #endif
+                        #ifdef Params.specular
+                            _specularColor *= Params.specular;
+                        #endif
+                    #else
+                        #ifdef Params.specularMap
+                            vec4 _specularColor = texture(Params.specularMap, wUv0);
+                        #else
+                            vec4 _specularColor = vec4(1.0f);
+                        #endif
+                        #ifdef Params.specular
+                            _specularColor *= Params.specular;
+                        #endif
+                        #ifdef Params.glossinessMap
+                            #ifdef Params.glossiness
+                                float _glossiness = texture(Params.glossinessMap, wUv0).r * Params.glossiness;
+                            #else
+                                float _glossiness = texture(Params.glossinessMap, wUv0).r;
+                            #endif
+                        #else
+                            float _glossiness = 1.0f;
+                        #endif
+                    #endif
+                    vec4 _diffuseColor = albedo;
+                    _roughness = 1.0f - _glossiness;
+                    vec3 fZero = _specularColor.rgb;
+                #else
+                    float nonMetalSpec = 0.04f;
+                    vec4 _specularColor = (nonMetalSpec - nonMetalSpec * _metallic) + albedo * _metallic;
+                    vec4 _diffuseColor = albedo - albedo * _metallic;
+                    vec3 fZero = vec3( 0.5f );
+                #endif
+
+                float ndotv = max( dot( normal, viewDir ), 0.0f );
                 for( int i = 0;i < Context.CurLightCount;i+=3 ){
                     lightColor = Context.WLightData[i];
                     lightData1 = Context.WLightData[i + 1];
                     ComputeLightDir(wPosition, lightColor.w, lightData1, lightDir, lightVec);
 
+                    // 计算PointLight的衰减
+                    float spotFallOff = 1.0 * lightDir.w;
                     // 计算SpotLight的衰减
-                    float spotFallOff = 1.0;
                     if( lightColor.w > 1.0f )
                     {
                         // 计算SpotLight的范围衰减
                         spotFallOff = ComputeSpotFalloff( Context.WLightData[i + 2], lightDir.xyz );
                     }
 
-                    // 计算反射率
-                    // ComputeLighting(normal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, Params.shininess, lightBRDF);
-
-                    // Context.OutColor.rgb += lightColor.rgb * ( _diffuseColor.rgb * diffuseSumAdjust.rgb * vec3( lightBRDF.x ) + _specularColor.rgb * specularSumAdjust.rgb * vec3( lightBRDF.y ));
+                    vec3 diff = ComputeDirectLighting(normal, viewDir, lightDir.xyz, lightColor.rgb, _diffuseColor.rgb, fZero, _roughness, ndotv, directLighting);
+                    Context.OutColor.rgb += directLighting * spotFallOff;
+                    //Context.OutColor.rgb = diff;
                 }
-                Context.OutColor.rgb = albedo.rgb;
-                Context.OutColor.a = 1.0;
+                Context.OutColor.a = albedo.a;
+
             }
         }
     }
