@@ -100,7 +100,7 @@ Def PrincipledLightingDef{
                 return F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
             }
             // 计算直接光照
-            vec3 ComputeDirectLighting(in vec3 normal, in vec3 viewDir, in vec3 lightDir, in vec3 lightColor, in vec3 diffuseColor, in vec3 fZero, in float roughness, in float ndotv, out vec3 directLighting){
+            void ComputeDirectLighting(in vec3 normal, in vec3 viewDir, in vec3 lightDir, in vec3 lightColor, in vec3 diffuseColor, in vec3 fZero, in float roughness, in float ndotv, out vec3 directLighting){
                 vec3 h = normalize(lightDir + viewDir);
                 float ndotl = max( dot( normal, lightDir ), 0.0f );
                 float ndoth = max( dot( normal, h), 0.0f );
@@ -116,9 +116,7 @@ Def PrincipledLightingDef{
                 // D, GGX 法线分布函数
                 float alpha2 = alpha * alpha;
                 float sum = (( ndoth * ndoth ) * ( alpha2 - 1.0f ) + 1.0f);
-                // 似乎这里D项直接输出与标准PBR不同,单独输出PI,sum和sum都是正常,唯独计算后的D与标准PBR比对不一致
-                // 所以这里PI * 0.2f
-                float denom = PI * 0.2f * sum * sum;
+                float denom = PI * sum * sum;
                 float D = alpha2 / denom;
 
                 // F, 菲涅尔项
@@ -135,7 +133,6 @@ Def PrincipledLightingDef{
                 vec3 specular =  vec3( t ) * F * lightColor;
 
                 directLighting = diffuse + specular;
-                return vec3( D * G );
             }
             // 返回Spot范围衰减
             float ComputeSpotFalloff(in vec4 spotDirection, in vec3 lightDir){
@@ -189,7 +186,7 @@ Def PrincipledLightingDef{
                 vec3 normal = wNormal;
                 #ifdef Params.normalMap
                     vec3 normalHeight = texture(Params.normalMap, wUv0).xyz;
-                    normal = tbnMat * normalize(normalHeight * 2.0f - 1.0f);
+                    normal = normalize(tbnMat * ( normalHeight * 2.0f - 1.0f ));
                 #endif
 
                 #ifdef Params.metallicRoughnessMap
@@ -288,9 +285,8 @@ Def PrincipledLightingDef{
                         spotFallOff = ComputeSpotFalloff( Context.WLightData[i + 2], lightDir.xyz );
                     }
 
-                    vec3 diff = ComputeDirectLighting(normal, viewDir, lightDir.xyz, lightColor.rgb, _diffuseColor.rgb, fZero, _roughness, ndotv, directLighting);
+                    ComputeDirectLighting(normal, viewDir, lightDir.xyz, lightColor.rgb, _diffuseColor.rgb, fZero, _roughness, ndotv, directLighting);
                     Context.OutColor.rgb += directLighting * spotFallOff;
-                    //Context.OutColor.rgb = diff;
                 }
                 Context.OutColor.a = albedo.a;
 

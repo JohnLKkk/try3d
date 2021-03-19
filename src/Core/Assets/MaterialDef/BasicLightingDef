@@ -246,7 +246,7 @@ Def BasicLightingDef{
                 vec3 normal = wNormal;
                 #ifdef Params.normalMap
                     vec3 normalHeight = texture(Params.normalMap, wUv0).xyz;
-                    normal = tbnMat * normalize(normalHeight * 2.0f - 1.0f);
+                    normal = normalize(tbnMat * ( normalHeight * 2.0f - 1.0f ));
                 #endif
 
 
