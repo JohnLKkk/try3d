@@ -1,20 +1,28 @@
 // 原理化光照材质定义
 Def PrincipledLightingDef{
     Params{
+        // 基础参数
         vec4 baseColor;
-        float metallic;
-        float roughness;
+        sampler2D baseColorMap;
+        sampler2D normalMap;
+
+        // lightMap或AO
+        sampler2D lightMap;
+        bool aoMap;
+        bool lightMapTexCoord;
+
         // 自发光
         vec4 emissive;
         float emissivePower;
-        // 自发光强度
         float emissiveIntensity;
-        sampler2D baseColorMap;
+
         // metallic管线
-        sampler2D normalMap;
+        float metallic;
+        float roughness;
         sampler2D metallicRoughnessMap;
         sampler2D metallicMap;
         sampler2D roughnessMap;
+
         // specular管线
         bool useSpecGloss;
         sampler2D specularGlossinessMap;
@@ -31,6 +39,7 @@ Def PrincipledLightingDef{
             vec3 wNormal;
             vec3 wPosition;
             vec2 wUv0;
+            vec2 wUv1;
             mat3 tbnMat;
         }
         Advanced{
@@ -59,6 +68,9 @@ Def PrincipledLightingDef{
                 tbnMat = mat3(t, b, norm);
                 wNormal = norm;
                 wUv0 = Context.InUv0;
+                #ifdef Params.lightMapTexCoord
+                    wUv1 = Context.InUv1;
+                #endif
 
 
                 Context.OutPosition = Context.ProjectViewMatrix * pos;
@@ -155,7 +167,6 @@ Def PrincipledLightingDef{
                 #endif
             }
             void main(){
-                // 计算光照
                 vec4 lightColor;
                 vec4 lightData1;
                 vec4 lightDir = vec4(0.0f);
@@ -268,6 +279,24 @@ Def PrincipledLightingDef{
                     vec4 _specularColor = (nonMetalSpec - nonMetalSpec * _metallic) + albedo * _metallic;
                     vec4 _diffuseColor = albedo - albedo * _metallic;
                     vec3 fZero = vec3( 0.5f );
+                #endif
+
+                #ifdef Params.lightMap
+                    vec3 _lightMapColor;
+                    #ifdef Params.lightMapTexCoord
+                        _lightMapColor = texture(Params.lightMap, wUv1).rgb;
+                    #else
+                        _lightMapColor = texture(Params.lightMap, wUv0).rgb;
+                    #endif
+                    #ifdef Params.aoMap
+                        _lightMapColor.gb = _lightMapColor.rr;
+                        vec3 ao = _lightMapColor;
+                    #else
+                        _specularColor.rgb *= _lightMapColor;
+                        _diffuseColor.rgb  *= _lightMapColor;
+                    #endif
+                #else
+                    vec3 ao = vec3(1.0f);
                 #endif
 
                 float ndotv = max( dot( normal, viewDir ), 0.0f );
