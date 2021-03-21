@@ -51,7 +51,7 @@ Def SkyBoxDef{
             void main(){
                 #ifdef Params.useCubeMap
                     // 立方体纹理
-                    Context.OutColor = textureCube( Params.cubeMap, wPosition );
+                    Context.OutColor = texture( Params.cubeMap, normalize( wPosition ) );
                 #else
                     #ifdef Params.useEnvMap
                         // 环境纹理

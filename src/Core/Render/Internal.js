@@ -77,8 +77,7 @@ export default class Internal {
         "            void main(){\n" +
         "                #ifdef Params.useCubeMap\n" +
         "                    // 立方体纹理\n" +
-        "                    Context.OutColor.rgb = texture( Params.cubeMap, normalize( wPosition ) ).rgb;\n" +
-        "                    Context.OutColor.a = 1.0f;\n" +
+        "                    Context.OutColor = texture( Params.cubeMap, normalize( wPosition ) );\n" +
         "                #else\n" +
         "                    #ifdef Params.useEnvMap\n" +
         "                        // 环境纹理\n" +
