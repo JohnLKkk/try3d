@@ -21,6 +21,7 @@
     import OBJLoader from "../../src/Supp/OBJLoader.js";
     import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
     import Stats from "../stats.min.js";
+    import OctCullingControl from "../../src/Core/Optimization/OctCullingControl.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(25, 25, 25), new Vector3(-20, 30, 20), new Vector3(0, 1, 0));
@@ -52,6 +53,7 @@
     objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/Cs72/cs.obj', modelNode=>{
         modelNode.setLocalScaleXYZ(0.1, 0.1, 0.1);
         rootNode.addChildren(modelNode);
+        let octCullingControl = new OctCullingControl(modelNode, {id:'octCulling'});
     });
     let dir = new DirectionalLight(scene, {id:'dirLight0'});
     dir.setDirectionXYZ(-1, -1, -1);

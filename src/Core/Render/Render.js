@@ -65,8 +65,8 @@ export default class Render extends Component{
         this._m_TranslucentRenderState = new RenderState();
         // 开启blend模式
         this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[4], 'On');
-        // 关闭深度写入
-        this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[1], 'Off');
+        // 关闭深度写入(不建议默认设置,因为对于大部分情况,都需要开启深度写入,以避免同一个物体前后交叉而没有深度写入导致错误情况产生,但可以通过具体材质进行控制)
+        // this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[1], 'Off');
         // 设置默认blend方程(默认方程)
         this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[5], ['SRC_ALPHA', 'ONE_MINUS_SRC_ALPHA']);
 

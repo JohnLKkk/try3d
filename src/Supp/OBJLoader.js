@@ -683,8 +683,10 @@ export default class OBJLoader {
 
                 case 'd':
                     alpha = parseFloat(value);
-                    if(alpha <= 0.1)
-                        this._m_CurrentMat.setParam('alphaDiscard', new FloatVars().valueOf(alpha));
+                    if(alpha <= 0.1){
+                        this._m_CurrentMat.alphaMode = 'blend';
+                        // this._m_CurrentMat.setParam('alphaDiscard', new FloatVars().valueOf(alpha));
+                    }
                     else{
                         // this._m_CurrentMat.alphaMode = 'blend';
                     }
@@ -696,8 +698,10 @@ export default class OBJLoader {
 
                 case 'tr':
                     alpha = parseFloat(value);
-                    if(alpha <= 0.1)
-                        this._m_CurrentMat.setParam('alphaDiscard', new FloatVars().valueOf(1 - alpha));
+                    if(alpha <= 0.1){
+                        this._m_CurrentMat.alphaMode = 'blend';
+                        // this._m_CurrentMat.setParam('alphaDiscard', new FloatVars().valueOf(1 - alpha));
+                    }
                     else{
                         // this._m_CurrentMat.alphaMode = 'blend';
                     }
