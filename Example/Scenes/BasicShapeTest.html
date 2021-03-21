@@ -22,6 +22,9 @@
     import Plane from "../../src/Core/Node/Shape/Plane.js";
     import Geometry from "../../src/Core/Node/Geometry.js";
     import MeshFactor from "../../src/Core/Util/MeshFactor.js";
+    import Mesh from "../../src/Core/WebGL/Mesh.js";
+    import Vec4Vars from "../../src/Core/WebGL/Vars/Vec4Vars.js";
+    import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(25, 0, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -30,7 +33,10 @@
     let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
     console.log("materialDef:",materialDef);
     let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
-    basicLightingMat.selectTechnology('BlinnPhongLight2');
+    basicLightingMat.setParam('shininess', new FloatVars().valueOf(32.0));
+    basicLightingMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
+    basicLightingMat.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
+    basicLightingMat.setParam('specularColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
     let box0 = new Box(scene, {id:'box0', xHalf:2, yHalf:1, zHalf:3});
     box0.setMaterial(basicLightingMat);
 
@@ -39,9 +45,12 @@
     box1.setLocalTranslationXYZ(-10, 0, 0);
     box1.setLocalRotationFromEuler(0, 35, 0);
 
-    let sphere0 = new Sphere(scene, {id:'sphere0', radius:2, widthSegments:18, heightSegments:24});
+    let sphere0 = new Sphere(scene, {id:'sphere0', radius:1});
     sphere0.setMaterial(basicLightingMat);
     sphere0.setLocalTranslationXYZ(10, 0, 0);
+    console.log('p:'+sphere0.getMesh().getData(Mesh.S_POSITIONS));
+    console.log('n:'+sphere0.getMesh().getData(Mesh.S_NORMALS));
+    console.log('i:'+sphere0.getMesh().getData(Mesh.S_INDICES));
 
     let sphere1 = new Sphere(scene, {id:'sphere1', radius:2, widthSegments:18, heightSegments:24, lod:0.1});
     sphere1.setMaterial(basicLightingMat);

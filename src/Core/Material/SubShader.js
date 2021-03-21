@@ -151,6 +151,12 @@ export default class SubShader {
                             fun = null;
                             loc = texId++;
                             break;
+                        case "samplerCube":
+                            gl.uniform1i(loc, texId);
+                            // 使用texId作为loc
+                            fun = null;
+                            loc = texId++;
+                            break;
                     }
                     this._m_MatParams[param.getName()] = {type:param.getType(), loc, fun};
                 }

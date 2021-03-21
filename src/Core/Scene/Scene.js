@@ -156,6 +156,24 @@ export default class Scene extends Component{
     }
 
     /**
+     * 设置天空盒。<br/>
+     * @param {Sky}[sky]
+     */
+    setSky(sky){
+        if(sky.getType() == 'SkyBox' || sky.getType() == 'SkyDome'){
+            this._m_Render.setSky(sky);
+        }
+    }
+
+    /**
+     * 返回天空盒。<br/>
+     * @return {Sky}
+     */
+    getSky(){
+        return this._m_Render.getSky();
+    }
+
+    /**
      * 添加场景节点。<br/>
      * @param {Node}[node]
      */

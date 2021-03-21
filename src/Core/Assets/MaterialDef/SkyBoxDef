@@ -1,0 +1,83 @@
+// 天空盒材质定义
+Def SkyBoxDef{
+    Params{
+        // 启用cubeMap通道
+        bool useCubeMap;
+        // 启用envMap通道
+        bool useEnvMap;
+        // 启用高动态映射
+        bool useHDR;
+        samplerCube cubeMap;
+        sampler2D envMap;
+    }
+    SubTechnology SkyBox{
+        Vars{
+            vec3 wPosition;
+        }
+        Vs_Shader{
+            void main(){
+                wPosition = Context.InPosition;
+                // 只需要旋转部分
+                vec4 pos = Context.ViewMatrix * vec4(Context.InPosition, 0.0f);
+                // 应用投影变换
+                pos.w = 1.0f;
+                pos = Context.ProjectMatrix * pos;
+                Context.OutPosition = pos.xyww;
+            }
+        }
+        Fs_Shader{
+            vec2 Optics_SphereCoord(in vec3 dir){
+                float dzplus1 = dir.z + 1.0f;
+
+                // 计算 1/2p
+                // NOTE: 仅当dir归一化时，此简化才有效。
+                float inv_two_p = 1.414f * sqrt(dzplus1);
+                //float inv_two_p = sqrt(dir.x * dir.x + dir.y * dir.y + dzplus1 * dzplus1);
+                inv_two_p *= 2.0f;
+                inv_two_p = 1.0f / inv_two_p;
+
+                // 计算texcoord
+                return (dir.xy * vec2(inv_two_p)) + vec2(0.5f);
+            }
+            const vec2 invAtan = vec2(0.159154943091895f, 0.318309886183790f);
+            #define PI 3.14159265358979323846264
+            // 转换环境纹理映射纹理坐标
+            vec2 fractTexcoord(const in vec3 v)
+            {
+                vec2 uv = vec2(atan(v.z, v.x) + PI, acos(v.y));
+                uv *= invAtan;
+                return uv;
+            }
+            void main(){
+                #ifdef Params.useCubeMap
+                    // 立方体纹理
+                    Context.OutColor = textureCube( Params.cubeMap, wPosition );
+                #else
+                    #ifdef Params.useEnvMap
+                        // 环境纹理
+                        vec2 uv = fractTexcoord( normalize( wPosition ) );
+                        #ifdef Params.useHDR
+                            // 解码hdr数据,也可以使用硬件RGB9_E5
+                            vec4 rgbe = texture( Params.envMap, uv );
+                            rgbe.rgb *= pow(2.0f,rgbe.a*255.0f-128.0f);
+                            // 色调映射(后续在后处理统一处理)
+                            rgbe.rgb = rgbe.rgb / (rgbe.rgb + vec3(1.0f));
+                            // 伽马矫正(后续在后处理统一处理)
+                            rgbe.rgb = pow(rgbe.rgb, vec3(1.0f / 2.2f));
+                            Context.OutColor.rgb = rgbe.rgb;
+                            Context.OutColor.a = 1.0f;
+                        #else
+                            Context.OutColor = texture( Params.envMap, uv );
+                        #endif
+                    #endif
+                #endif
+            }
+        }
+    }
+    Technology{
+        Sub_Pass{
+            Pass SkyBox{
+            }
+        }
+    }
+}

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SkyEnvHDRTest</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script type="module">
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import SkyBox from "../../src/Core/Node/Sky/SkyBox.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import BoolVars from "../../src/Core/WebGL/Vars/BoolVars.js";
+    import Texture2DVars from "../../src/Core/WebGL/Vars/Texture2DVars.js";
+    import Vector4 from "../../src/Core/Math3d/Vector4.js";
+    import OBJLoader from "../../src/Supp/OBJLoader.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(5, 5, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    firstPersonController.setMovementSpeed(10);
+
+    // 创建一个sky
+    let sky = new SkyBox(scene, {id:'sky'});
+    // 设置等距全景图作为sky纹理
+    sky.getMaterial().setParam('useEnvMap', new BoolVars().valueOf(true));
+    // 激活hdr通道
+    sky.getMaterial().setParam('useHDR', new BoolVars().valueOf(true));
+    let envMap = new Texture2DVars(scene);
+    envMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
+    envMap.setImageSrc(scene, '../Assets/Textures/hdr/newport_loft.hdr', {rgbe:true});
+    envMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+    envMap.setFilter(scene, Texture2DVars.S_FILTERS.S_LINEAR, Texture2DVars.S_FILTERS.S_LINEAR);
+    sky.getMaterial().setParam('envMap', envMap);
+
+    scene.setSky(sky);
+
+    // 创建一个场景
+    let rootNode = new Node(scene, {id:'rootNode'});
+    let objLoader = new OBJLoader();
+    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/');
+    objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/testScene.obj', modelNode=>{
+        rootNode.addChildren(modelNode);
+    });
+    let dir = new DirectionalLight(scene, {id:'dirLight0'});
+    dir.setDirectionXYZ(-1, -1, -1);
+    dir.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dir);
+
+
+    let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+</script>
+</body>
+</html>

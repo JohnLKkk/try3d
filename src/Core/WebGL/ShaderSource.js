@@ -66,6 +66,10 @@ export default class ShaderSource {
     static S_MAX_BONE = 256;
     static S_SKINS_SRC = '_C_SKINS';
 
+    // 常用宏
+    static S_SRGB_SRC = '_C_SRGB';
+    static S_GIPROBES_SRC = '_C_GIPROBES';
+
     static S_G_POSITION_SRC = "_gPosition";
     static S_G_NORMAL_SRC = "_gNormal";
     static S_G_ALBEDOSPEC_SRC = "_gAlbedoSpec";
@@ -74,6 +78,13 @@ export default class ShaderSource {
     static S_G_DEPTH_RENDER_BUFFER_SRC = "_gDepthRenderBuffer";
 
     static S_FORWARD_COLOR_MAP_SRC = "_forwardColorMap";
+
+    // 预过滤环境光照辐射
+    static S_PREF_ENV_MAP_SRC = "_prefEnvMap";
+    // 光探头数据
+    static S_WGIPROBE_SRC = "_wGIProbe";
+    // 球谐系数
+    static S_SH_COEFFS_SRC = "_ShCoeffs";
 
     // 上下文块
     static ContextBlocks = {
@@ -123,6 +134,8 @@ export default class ShaderSource {
         "Context.WLightData":{src:ShaderSource.S_W_LIGHT_DATA_SRC, pattern:/Context.WLightData/, pattern2:/Context.WLightData[\s+-;.,\*\\]{1,}/, tagPattern:/Context.WLightData/g, tag:ShaderSource.S_W_LIGHT_DATA_SRC, type:"vec4", utype:"uniform vec4", modifier:'[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']'},
         "Context.CurLightCount":{src:ShaderSource.S_CUR_LIGHT_COUNT_SRC, pattern:/Context.CurLightCount/, pattern2:/Context.CurLightCount[\s+-;.,\*\\]{1,}/, tagPattern:/Context.CurLightCount/g, tag:ShaderSource.S_CUR_LIGHT_COUNT_SRC, type:"int", utype:'uniform int'},
         "Context.CameraPosition":{src:ShaderSource.S_CAMERA_POSITION_SRC, pattern:/Context.CameraPosition/, pattern2:/Context.CameraPosition[\s+-;.,\*\\]{1,}/, tagPattern:/Context.CameraPosition/g, tag:ShaderSource.S_CAMERA_POSITION_SRC, def:'VIEW'},
+        "Context.WGIProbe":{src:ShaderSource.S_WGIPROBE_SRC, pattern:/Context.WGIProbe/, pattern2:/Context.WGIProbe[\s+-;.,\*\\]{1,}/, tagPattern:/Context.WGIProbe/g, tag:ShaderSource.S_WGIPROBE_SRC, type:"vec4", utype:"uniform vec4"},
+        "Context.ShCoeffs":{src:ShaderSource.S_SH_COEFFS_SRC, pattern:/Context.ShCoeffs/, pattern2:/Context.ShCoeffs[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ShCoeffs/g, tag:ShaderSource.S_SH_COEFFS_SRC, type:"vec3", utype:"uniform vec3", modifier:'[' + 9 + ']'},
 
         // 输入类型缓存
         "Context.InGPosition":{src:ShaderSource.S_G_POSITION_SRC, pattern:/Context.InGPosition/, pattern2:/Context.InGPosition[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGPosition/g, tag:ShaderSource.S_G_POSITION_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
@@ -130,6 +143,7 @@ export default class ShaderSource {
         "Context.InGAlbedoSpec":{src:ShaderSource.S_G_ALBEDOSPEC_SRC, pattern:/Context.InGAlbedoSpec/, pattern2:/Context.InGAlbedoSpec[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGAlbedoSpec/g, tag:ShaderSource.S_G_ALBEDOSPEC_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InGDepth":{src:ShaderSource.S_G_DEPTH_SRC, pattern:/Context.InGDepth/, pattern2:/Context.InGDepth[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGDepth/g, tag:ShaderSource.S_G_DEPTH_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InForwardColorMap":{src:ShaderSource.S_FORWARD_COLOR_MAP_SRC, pattern:/Context.InForwardColorMap/, pattern2:/Context.InForwardColorMap[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InForwardColorMap/g, tag:ShaderSource.S_FORWARD_COLOR_MAP_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
+        "Context.InPrefEnvMap":{src:ShaderSource.S_PREF_ENV_MAP_SRC, pattern:/Context.InPrefEnvMap/, pattern2:/Context.InPrefEnvMap[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InPrefEnvMap/g, tag:ShaderSource.S_PREF_ENV_MAP_SRC, type:"samplerCube", utype:"uniform samplerCube", flag:"renderData"},
         // 输出类型缓存
         "Context.OutGPosition":{src:ShaderSource.S_G_POSITION_SRC, loc:ShaderSource.S_G_POSITION, pattern:/Context.OutGPosition/, pattern2:/Context.OutGPosition[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutGPosition/g, tag:ShaderSource.S_G_POSITION_SRC, type:"vec3"},
         "Context.OutGNormal":{src:ShaderSource.S_G_NORMAL_SRC, loc:ShaderSource.S_G_NORMAL, pattern:/Context.OutGNormal/, pattern2:/Context.OutGNormal[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutGNormal/g, tag:ShaderSource.S_G_NORMAL_SRC, type:"vec3"},
@@ -137,7 +151,9 @@ export default class ShaderSource {
         "Context.OutGDepth":{src:ShaderSource.S_G_DEPTH_SRC, loc:ShaderSource.S_G_DEPTH, pattern:/Context.OutGDepth/, pattern2:/Context.OutGDepth[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutGDepth/g, tag:ShaderSource.S_G_DEPTH_SRC, type:"vec4"},
 
         // 全局变量
-        "Context.Skins":{src:ShaderSource.S_SKINS_SRC, loc:ShaderSource.S_G_DEPTH, pattern:/Context.Skins/, pattern2:/Context.Skins[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Skins/g, tag:ShaderSource.S_SKINS_SRC, isFlagVariable:true},
+        "Context.Skins":{src:ShaderSource.S_SKINS_SRC, pattern:/Context.Skins/, pattern2:/Context.Skins[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Skins/g, tag:ShaderSource.S_SKINS_SRC, isFlagVariable:true},
+        "Context.Srgb":{src:ShaderSource.S_SRGB_SRC, pattern:/Context.Srgb/, pattern2:/Context.Srgb[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Srgb/g, tag:ShaderSource.S_SRGB_SRC, isFlagVariable:true},
+        "Context.GIProbes":{src:ShaderSource.S_GIPROBES_SRC, pattern:/Context.GIProbes/, pattern2:/Context.GIProbes[\s+-;.,\*\\]{1,}/, tagPattern:/Context.GIProbes/g, tag:ShaderSource.S_GIPROBES_SRC, isFlagVariable:true},
 
         // 上下文定义
         '_C_SKINS':"#define " + ShaderSource.S_SKINS_SRC + " " + ShaderSource.S_SKINS_SRC,

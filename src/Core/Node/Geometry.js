@@ -158,9 +158,9 @@ export default class Geometry extends Node{
     }
 
     /**
-     * 是否为透明。<br/>
+     * 是否为Sky。<br/>
      */
-    isTransparent(){
+    isSky(){
 
     }
 

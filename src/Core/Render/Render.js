@@ -51,6 +51,8 @@ export default class Render extends Component{
         // 保存所有FramePicture对象
         this._m_FramePictures = [];
         this._m_FramePictureIDs = [];
+        // sky(每次只能渲染一个sky,因为没有必要存在多个sky)
+        this._m_Sky = null;
 
         // 帧上下文
         this._m_FrameContext = new FrameContext();
@@ -144,6 +146,23 @@ export default class Render extends Component{
     }
 
     /**
+     * 设置天空盒。<br/>
+     * @param {Sky}[sky SkyBox或SkyDome]
+     */
+    setSky(sky){
+        if(this._m_Sky == sky)return;
+        this._m_Sky = sky;
+    }
+
+    /**
+     * 返回天空盒。<br/>
+     * @return {Sky}
+     */
+    getSky(){
+        return this._m_Sky;
+    }
+
+    /**
      * 添加一个IDrawable对象,该对象必须实现IDrawable接口。<br/>
      * @param {IDrawable}[iDrawable]
      */
@@ -154,6 +173,10 @@ export default class Render extends Component{
                 this._m_FramePictureIDs[iDrawable.getId()] = iDrawable;
                 this._m_FramePictures.push(iDrawable);
             }
+            return;
+        }
+        if(iDrawable.isSky && iDrawable.isSky()){
+            // 天空盒(我们通过setSky()来设置天空盒)
             return;
         }
         // 每次添加一个drawable时,根据材质提前做好分区
@@ -473,6 +496,32 @@ export default class Render extends Component{
                 }
             });
         }
+
+        // 渲染sky
+        if(this._m_Sky){
+            // 获取当前选中的技术
+            let mat = this._m_Sky.getMaterial();
+            let currentTechnology = mat.getCurrentTechnology();
+            // 获取当前技术所有Forward路径下的SubShaders
+            let forwardSubPasss = currentTechnology.getSubPasss(Render.FORWARD);
+            // 如果该物体存在Forward路径渲染的需要,则执行Forward渲染
+            if(forwardSubPasss){
+                subShaders = forwardSubPasss.getSubShaders();
+                // 执行渲染
+                for(let subShader in subShaders){
+                    // 检测是否需要更新渲染状态
+                    if(subShaders[subShader].renderState){
+                        // 依次检测所有项
+                        this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
+                    }
+                    // 指定subShader
+                    mat._selectSubShader(subShaders[subShader].subShader);
+                    this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].draw(gl, this._m_Scene, this._m_FrameContext, this._m_Sky, lights);
+                    // geo.draw(this._m_FrameContext);
+                }
+            }
+        }
+
         // 接着渲染半透明队列
         // 半透明物体默认关闭深度写入(但是仍然可通过具体的SubPass控制渲染状态)
         if(hasTranslucent){

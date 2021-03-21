@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SkyCubeMapTest</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script type="module">
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import SkyBox from "../../src/Core/Node/Sky/SkyBox.js";
+    import Node  from "../../src/Core/Node/Node.js";
+    import BoolVars from "../../src/Core/WebGL/Vars/BoolVars.js";
+    import Vector4 from "../../src/Core/Math3d/Vector4.js";
+    import TextureCubeVars from "../../src/Core/WebGL/Vars/TextureCubeVars.js";
+    import OBJLoader from "../../src/Supp/OBJLoader.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import Stats from "../stats.min.js";
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(25, 25, 25), new Vector3(-20, 30, 20), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    firstPersonController.setMovementSpeed(100);
+
+    // 创建一个sky
+    let sky = new SkyBox(scene, {id:'sky'});
+    // 使用cubeMap作为天空盒材质
+    sky.getMaterial().setParam('useCubeMap', new BoolVars().valueOf(true));
+    let cubeMap = new TextureCubeVars(scene);
+    cubeMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
+
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.PositiveX, '../Assets/Textures/sky/Gk/ft.jpg');
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.NegativeX, '../Assets/Textures/sky/Gk/bk.jpg');
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.PositiveY, '../Assets/Textures/sky/Gk/up.jpg');
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.NegativeY, '../Assets/Textures/sky/Gk/dn.jpg');
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.PositiveZ, '../Assets/Textures/sky/Gk/lf.jpg');
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.NegativeZ, '../Assets/Textures/sky/Gk/rt.jpg');
+    cubeMap.setWrap(scene, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE);
+    sky.getMaterial().setParam('cubeMap', cubeMap);
+
+    scene.setSky(sky);
+
+    // 创建一个场景
+    let rootNode = new Node(scene, {id:'rootNode'});
+    let objLoader = new OBJLoader();
+    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/');
+    objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/Cs72/cs.obj', modelNode=>{
+        modelNode.setLocalScaleXYZ(0.1, 0.1, 0.1);
+        rootNode.addChildren(modelNode);
+    });
+    let dir = new DirectionalLight(scene, {id:'dirLight0'});
+    dir.setDirectionXYZ(-1, -1, -1);
+    dir.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dir);
+
+
+    let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+    });
+</script>
+</body>
+</html>

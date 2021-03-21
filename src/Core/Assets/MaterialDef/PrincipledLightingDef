@@ -92,11 +92,13 @@ Def PrincipledLightingDef{
                 lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);
                 float dist = length(lightVec);
 
-                // 对于DirLight,lightDir.w = 1.0f
-                lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
-
-                //lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
-                //lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
+                #ifdef Context.Srgb
+                    lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
+                    lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
+                #else
+                    // 对于DirLight,lightDir.w = 1.0f
+                    lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
+                #endif
 
                 // 归一化
                 lightDir.xyz = lightVec / vec3(dist);
@@ -158,13 +160,61 @@ Def PrincipledLightingDef{
                 //else
                 //    falloff = 0.0f;
 
-                #ifdef SRGB
-                    // Use quadratic falloff (notice the ^4)
-                    return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0, 1.0), 4.0);
+                #ifdef Context.Srgb
+                    // 使用二次衰减（请注意^ 4）
+                    return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f), 4.0f);
                 #else
-                    // Use linear falloff
+                    // 线性空间衰减
                     return falloff;
                 #endif
+            }
+            // 球谐函数
+            vec3 sphericalHarmonics( const in vec3 normal, const vec3 sph[9] ){
+                float x = normal.x;
+                float y = normal.y;
+                float z = normal.z;
+
+                vec3 result = (
+                    sph[0] +
+
+                    sph[1] * y +
+                    sph[2] * z +
+                    sph[3] * x +
+
+                    sph[4] * y * x +
+                    sph[5] * y * z +
+                    sph[6] * (3.0f * z * z - 1.0f) +
+                    sph[7] * (z * x) +
+                    sph[8] * (x*x - y*y)
+                );
+
+                return max(result, vec3(0.0f));
+            }
+            // 镜面反射趋势朝向
+            vec3 getSpecularDominantDir(const in vec3 N, const in vec3 R, const in float realRoughness){
+
+                float smoothness = 1.0f - realRoughness;
+                float lerpFactor = smoothness * (sqrt(smoothness) + realRoughness);
+                // 当我们在立方体贴图中获取时，结果未规范化
+                vec3 dominant = mix(N, R, lerpFactor);
+
+                return dominant;
+            }
+            // 拟合方程
+            // 关于镜面部分，有很多优化地方，除了常见的优化，还有很多可以替代方案，几乎可以在保证画质的前提下，在移动端35帧率提升到60帧率，详细可参考我的笔记:https://www.cnblogs.com/JhonKkk/p/14313882.html
+            vec3 integrateBRDFApprox( const in vec3 specular, in float roughness, in float NoV ){
+                const vec4 c0 = vec4( -1.0f, -0.0275f, -0.572f, 0.022f );
+                const vec4 c1 = vec4( 1.0f, 0.0425f, 1.04f, -0.04f );
+                vec4 r = roughness * c0 + c1;
+                float a004 = min( r.x * r.x, exp2( -9.28f * NoV ) ) * r.x + r.y;
+                vec2 ab = vec2( -1.04f, 1.04f ) * a004 + r.zw;
+                return specular * ab.x + ab.y;
+            }
+            // 近似镜面IBL多项式
+            vec3 approximateSpecularIBLPolynomial(in samplerCube envMap, in vec3 specularColor , in float roughness, in float ndotv, in vec3 refVec, in float mipMaps){
+                float lod = sqrt( roughness ) * (mipMaps - 1.0f);
+                vec3 prefilteredColor = textureLod(envMap, refVec.xyz, lod).rgb;
+                return prefilteredColor * integrateBRDFApprox(specularColor, roughness, ndotv);
             }
             void main(){
                 vec4 lightColor;
@@ -317,6 +367,31 @@ Def PrincipledLightingDef{
                     ComputeDirectLighting(normal, viewDir, lightDir.xyz, lightColor.rgb, _diffuseColor.rgb, fZero, _roughness, ndotv, directLighting);
                     Context.OutColor.rgb += directLighting * spotFallOff;
                 }
+
+                #ifdef Context.GIProbes
+                    // 作为webGL项目,暂时不实现探针混合(但作为可拓展,仍然加结尾s命名)
+
+                    // 计算反射视线
+                    vec3 _rv = reflect( -viewDir.xyz, normal.xyz );
+                    float _r = fract( Context.WGIProbe.w );
+                    float _mipMaps = Context.WGIProbe.w - _r;
+                    _rv = _r * ( wPosition.xyz - Context.WGIProbe.xyz ) + _rv;
+
+                    // 使用球谐计算diffuse( 避免Irr采样 )
+                    vec3 giLighting = sphericalHarmonics(normal.xyz, Context.ShCoeffs) * _diffuseColor.rgb;
+
+                    float horiz = dot(_rv, wNormal);
+                    float horizFadePower = 1.0f - _roughness;
+                    horiz = clamp( 1.0f + horizFadePower * horiz, 0.0f, 1.0f );
+                    horiz *= horiz;
+
+                    vec3 _dominantR = getSpecularDominantDir( normal, _rv.xyz, _roughness * _roughness );
+                    giLighting += approximateSpecularIBLPolynomial(Context.InPrefEnvMap, _specularColor.rgb, _roughness, ndotv, _dominantR, _mipMaps) * vec3( horiz );
+                    giLighting *= ao;
+
+                    Context.OutColor.rgb += giLighting * step( 0.0f, Context.WGIProbe.w );
+                #endif
+
                 Context.OutColor.a = albedo.a;
 
             }
