@@ -432,7 +432,7 @@ export default class Render extends Component{
                 // gl.depthMask(false);
             }
             this._m_RenderPrograms[deferredShadingPass.subShader.getRenderProgramType()].draw(gl, this._m_Scene, this._m_FrameContext, dfbFramePicture, lights);
-            dfbFramePicture.draw(this._m_FrameContext);
+            // dfbFramePicture.draw(this._m_FrameContext);
             if(this._m_FrameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){
                 gl.enable(gl.DEPTH_TEST);
                 // gl.depthMask(true);

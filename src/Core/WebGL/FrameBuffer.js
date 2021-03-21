@@ -4,6 +4,11 @@ import Picture from "../Node/Picture.js";
 import FramePicture from "../Node/FramePicture.js";
 import Log from "../Util/Log.js";
 
+/**
+ * FrameBuffer。<br/>
+ * @author Kkk
+ * @date 2021年2月28日5点28分
+ */
 export default class FrameBuffer {
     constructor(gl, name, w, h) {
         this._m_Name = name;
