@@ -48,6 +48,10 @@ export default class Camera extends Component{
         this._m_ProjectMatrixUpdate = false;
         this._m_ProjectViewMatrixUpdate = false;
 
+        // 相机参数
+        this._m_Fovy = cfg.fovy || 45.0;
+        this._m_FixedAspect = cfg.aspect || false;
+
         // 如果当前相机是一个主相机,则被激活用于主渲染
         this._m_IsRenderingCamera = false;
 
@@ -86,7 +90,7 @@ export default class Camera extends Component{
         let canvas = this._m_Scene.getCanvas();
         let gl = canvas.getGLContext();
         this._m_ViewMatrix.lookAt(this._m_Eye, this._m_At, this._m_Up);
-        this._m_ProjectMatrix.perspectiveM(45.0, canvas.getWidth() * 1.0 / canvas.getHeight(), 0.1, 1000);
+        this._m_ProjectMatrix.perspectiveM(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (canvas.getWidth() * 1.0 / canvas.getHeight()), 0.1, 1000);
         this._m_ViewMatrixUpdate = true;
         this._m_ProjectMatrixUpdate = true;
         this._m_UpdateCameraPosition = true;
@@ -97,7 +101,7 @@ export default class Camera extends Component{
             if(this._m_IsRenderingCamera){
                 gl.viewport(0, 0, canvas.getWidth(), canvas.getHeight());
             }
-            this._m_ProjectMatrix.perspectiveM(45.0, canvas.getWidth() * 1.0 / canvas.getHeight(), 0.1, 1000);
+            this._m_ProjectMatrix.perspectiveM(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (canvas.getWidth() * 1.0 / canvas.getHeight()), 0.1, 1000);
             this._m_ProjectMatrixUpdate = true;
             this._doUpdate();
         });
@@ -111,7 +115,7 @@ export default class Camera extends Component{
         // 默认是一个透视相机,所以这里基于透视算法建立投影平面
         // 这里直接基于fovY(45),near=0.1和far1000预建
         let defaultAspect = this._m_Scene.getCanvas().getWidth() * 1.0 / this._m_Scene.getCanvas().getHeight();
-        let h = Math.tan(MoreMath.toRadians(45.0) * 0.5) * 0.1;
+        let h = Math.tan(MoreMath.toRadians(this._m_Fovy) * 0.5) * 0.1;
         let w = h * defaultAspect;
         Log.debug("w:" + w + ";h:" + h + ";as:" + defaultAspect);
         this._m_FrustumLeft = -w;
@@ -213,6 +217,10 @@ export default class Camera extends Component{
         this._m_ViewMatrixUpdate = true;
         this._m_ProjectMatrixUpdate = true;
         this._m_ProjectViewMatrixUpdate = true;
+        if(isMainCamera){
+            // 更新一次数据,避免延帧渲染
+            this._doUpdate(true);
+        }
     }
 
     /**

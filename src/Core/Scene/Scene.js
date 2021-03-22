@@ -119,6 +119,9 @@ export default class Scene extends Component{
      * @param {Camera}[mainCamera]
      */
     setMainCamera(mainCamera){
+        if(this._m_MainCamera != mainCamera && this._m_MainCamera){
+            this._m_MainCamera.setIsRenderingCamera(false);
+        }
         this._m_MainCamera = mainCamera;
         this._m_MainCamera.setIsRenderingCamera(true);
     }
@@ -160,7 +163,7 @@ export default class Scene extends Component{
      * @param {Sky}[sky]
      */
     setSky(sky){
-        if(sky.getType() == 'SkyBox' || sky.getType() == 'SkyDome'){
+        if(sky == null || sky.getType() == 'SkyBox' || sky.getType() == 'SkyDome'){
             this._m_Render.setSky(sky);
         }
     }

@@ -497,30 +497,8 @@ export default class Render extends Component{
             });
         }
 
-        // 渲染sky
-        if(this._m_Sky){
-            // 获取当前选中的技术
-            let mat = this._m_Sky.getMaterial();
-            let currentTechnology = mat.getCurrentTechnology();
-            // 获取当前技术所有Forward路径下的SubShaders
-            let forwardSubPasss = currentTechnology.getSubPasss(Render.FORWARD);
-            // 如果该物体存在Forward路径渲染的需要,则执行Forward渲染
-            if(forwardSubPasss){
-                subShaders = forwardSubPasss.getSubShaders();
-                // 执行渲染
-                for(let subShader in subShaders){
-                    // 检测是否需要更新渲染状态
-                    if(subShaders[subShader].renderState){
-                        // 依次检测所有项
-                        this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
-                    }
-                    // 指定subShader
-                    mat._selectSubShader(subShaders[subShader].subShader);
-                    this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].draw(gl, this._m_Scene, this._m_FrameContext, this._m_Sky, lights);
-                    // geo.draw(this._m_FrameContext);
-                }
-            }
-        }
+        // 渲染env
+        this._drawEnv(gl, lights);
 
         // 接着渲染半透明队列
         // 半透明物体默认关闭深度写入(但是仍然可通过具体的SubPass控制渲染状态)
@@ -607,6 +585,62 @@ export default class Render extends Component{
         }
         // 一帧结束后
         this.fire(Render.POST_FRAME, [exTime]);
+    }
+
+    /**
+     * 使用默认输出缓存。<br/>
+     */
+    useDefaultFrame(){
+        if(this._m_FrameContext.m_LastFrameBuffer != null){
+            let gl = this._m_Scene.getCanvas().getGLContext();
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            this._m_FrameContext.m_LastFrameBuffer = null;
+        }
+    }
+
+    /**
+     * 设置渲染视口。<br/>
+     * @param {WebGL}[gl]
+     * @param {Number}[x 偏移量]
+     * @param {Number}[y 偏移量]
+     * @param {Number}[w 视口宽度]
+     * @param {Number}[h 视口高度]
+     */
+    setViewPort(gl, x, y, w, h){
+        gl.viewport(x, y, w, h);
+    }
+
+    /**
+     * 渲染环境。<br/>
+     * @param {WebGL}[gl]
+     * @param {Number[]}[lights]
+     */
+    _drawEnv(gl, lights){
+        // 渲染sky
+        if(this._m_Sky){
+            let subShaders = null;
+            // 获取当前选中的技术
+            let mat = this._m_Sky.getMaterial();
+            let currentTechnology = mat.getCurrentTechnology();
+            // 获取当前技术所有Forward路径下的SubShaders
+            let forwardSubPasss = currentTechnology.getSubPasss(Render.FORWARD);
+            // 如果该物体存在Forward路径渲染的需要,则执行Forward渲染
+            if(forwardSubPasss){
+                subShaders = forwardSubPasss.getSubShaders();
+                // 执行渲染
+                for(let subShader in subShaders){
+                    // 检测是否需要更新渲染状态
+                    if(subShaders[subShader].renderState){
+                        // 依次检测所有项
+                        this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
+                    }
+                    // 指定subShader
+                    mat._selectSubShader(subShaders[subShader].subShader);
+                    this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].draw(gl, this._m_Scene, this._m_FrameContext, this._m_Sky, lights);
+                    // geo.draw(this._m_FrameContext);
+                }
+            }
+        }
     }
     // _draw(exTime){
     //     // 一帧的开始

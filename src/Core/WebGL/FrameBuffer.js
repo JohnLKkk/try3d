@@ -32,6 +32,49 @@ export default class FrameBuffer {
     }
 
     /**
+     * 读取指定frameBuffer的像素数据。<br/>
+     * @param {WebGL}[gl]
+     * @param {String}[name 读取缓存名称]
+     * @param {WebGLEnum}[format]
+     * @param {WebGLEnum}[type]
+     * @param {Number}[x 开始偏移量]
+     * @param {Number}[y 开始偏移量]
+     * @param {Number}[w 读取宽度]
+     * @param {Number}[h 读取高度]
+     */
+    readPixels(gl, name, format, type, x, y, w, h){
+        x = x || 0;
+        y = y || 0;
+        w = w || this._m_Width;
+        h = h || this._m_Height;
+
+        let pixelUnit = -1;
+        let pixelType = null;
+        // 根据类型读取转换
+        switch (format) {
+            case gl.RGBA16F:
+                pixelType = Uint16Array;
+            case gl.RGBA8:
+            case gl.RGBA:
+                pixelType = Uint8Array;
+                pixelUnit = 4;
+                break;
+            case gl.RGB16F:
+                pixelType = Uint16Array;
+            case gl.RGB8:
+            case gl.RGB:
+                pixelType = Uint8Array;
+                pixelUnit = 3;
+                break;
+        }
+        const _format = gl.getParameter(gl.IMPLEMENTATION_COLOR_READ_FORMAT);
+        const _type = gl.getParameter(gl.IMPLEMENTATION_COLOR_READ_TYPE);
+        let pixels = new pixelType(w * h * pixelUnit);
+        gl.readPixels(x, y, w, h, format, type, pixels);
+        return pixels;
+    }
+
+    /**
      * 返回当前FramePicture。<br/>
      * @return {Picture}
      */
@@ -45,6 +88,28 @@ export default class FrameBuffer {
      */
     getFrameBuffer(){
         return this._m_Framebuffer;
+    }
+
+    /**
+     * 使用该FrameBuffer。<br/>
+     * @param {Render}[render]
+     */
+    use(render){
+        let frameContext = render.getFrameContext();
+        if(frameContext.m_LastFrameBuffer != this._m_Framebuffer){
+            let gl = render._m_Scene.getCanvas().getGLContext();
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_Framebuffer);
+            frameContext.m_LastFrameBuffer = this._m_Framebuffer;
+        }
+    }
+
+    /**
+     * 清楚frameBuffer。<br/>
+     * @param gl
+     * @private
+     */
+    clear(gl){
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
 
     /**
@@ -120,6 +185,12 @@ export default class FrameBuffer {
     getTextures(){
         return this._m_Textures;
     }
+
+    /**
+     * 返回指定名称的纹理附件。<br/>
+     * @param {String}[name]
+     * @return {Texture}
+     */
     getTexture(name){
         return this._m_NameTextures[name];
     }

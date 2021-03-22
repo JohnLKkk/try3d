@@ -1,5 +1,4 @@
-import Light from "./Light.js";
-import Vector3 from "../Math3d/Vector3.js";
+import Probe from "./Probe.js";
 
 /**
  * GIProbe。<br/>
@@ -8,7 +7,7 @@ import Vector3 from "../Math3d/Vector3.js";
  * @author Kkk
  * @date 2021年3月20日13点07分
  */
-export default class GIProbe extends Light{
+export default class GIProbe extends Probe{
     getType() {
         return 'GIProbe';
     }
@@ -18,26 +17,7 @@ export default class GIProbe extends Light{
 
     constructor(owner, cfg) {
         super(owner, cfg);
-        // 位置
-        this._m_Position = new Vector3();
     }
 
-    /**
-     * 设置光探头位置。<br/>
-     * @param {Number}[x]
-     * @param {Number}[y]
-     * @param {Number}[z]
-     */
-    setPositionFromXYZ(x, y, z){
-        this._m_Position.setToInXYZ(x, y, z);
-    }
-
-    /**
-     * 返回光探头位置。<br/>
-     * @return {Vector3}
-     */
-    getPosition(){
-        return this._m_Position;
-    }
 
 }

@@ -29,8 +29,8 @@ export default class Texture2DVars extends Vars{
         this._m_UpdateImage = false;
         this._m_Image = null;
         this._m_Rgbe = false;
-        this._m_RgbeWidth = -1;
-        this._m_RgbeHeight = -1;
+        this._m_Width = -1;
+        this._m_Height = -1;
         // 翻转y(需要在设置图像之前设置)
         this._m_FlipY = false;
         this._m_WrapS = null;
@@ -193,9 +193,9 @@ export default class Texture2DVars extends Vars{
             this._m_Image = (options && options.rgbe) ? image.dataRGBE : image;
             if(options && options.rgbe){
                 this._m_Rgbe = true;
-                this._m_RgbeWidth = image.width;
-                this._m_RgbeHeight = image.height;
             }
+            this._m_Width = image.width;
+            this._m_Height = image.height;
             this._m_UpdateImage = true;
             // //self._image = image; // For faster WebGL context restore - memory inefficient?
             // this.setImage(scene, image);
@@ -218,14 +218,16 @@ export default class Texture2DVars extends Vars{
      * @param {Scene}[scene]
      * @param {BufferData}[imgData]
      * @param {Boolean}[options.rgbe 表示rgbe数据的辐射度纹理]
+     * @param {Number}[options.width 当imgData是二进制数据数组时,需要单独设置纹理宽度]
+     * @param {Number}[options.height 当imgData是二进制数据数组时,需要单独设置纹理高度]
      */
     setImage(scene, imgData, options){
         this._m_Image = (options && options.rgbe) ? imgData.dataRGBE : imgData;
         if(options && options.rgbe){
             this._m_Rgbe = true;
-            this._m_RgbeWidth = imgData.width;
-            this._m_RgbeHeight = imgData.height;
         }
+        this._m_Width = (options && options.width != null) ? options.width : imgData.width;
+        this._m_Height = (options && options.height != null) ? options.height : imgData.height;
         this._m_UpdateImage = true;
         // 刷新所有材质持有
         for(let owner in this._m_OwnerFlags){
@@ -244,10 +246,10 @@ export default class Texture2DVars extends Vars{
         gl.bindTexture(gl.TEXTURE_2D, this._m_Texture);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this._m_FlipY);
         if(this._m_Rgbe){
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this._m_RgbeWidth, this._m_RgbeHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, image);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this._m_Width, this._m_Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image);
         }
         else{
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this._m_Width, this._m_Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image);
         }
         gl.bindTexture(gl.TEXTURE_2D, null);
     }
@@ -278,7 +280,7 @@ export default class Texture2DVars extends Vars{
             }
             this._m_UpdateImage = false;
             this._m_Image = null;
-            this._m_RgbeWidth = this._m_RgbeHeight = -1;
+            this._m_Width = this._m_Height = -1;
             this._m_Rgbe = false;
         }
 

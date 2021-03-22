@@ -225,15 +225,17 @@ export default class TextureCubeVars extends Vars{
      * @param {Number}[TextureCubeVars.Face]
      * @param {BufferData}[imgData]
      * @param {Boolean}[options.rgbe 表示rgbe数据的辐射度纹理]
+     * @param {Number}[options.width 当imgData是二进制数据数组时,需要单独设置纹理宽度]
+     * @param {Number}[options.height 当imgData是二进制数据数组时,需要单独设置纹理高度]
      */
     setImage(scene, face, imgData, options){
         this._m_UpdateImage = true;
         this._m_CubeMaps[face] = {imgData:(options && options.rgbe) ? imgData.dataRGBE : imgData};
         if(options && options.rgbe){
             this._m_CubeMaps[face].rgbe = true;
-            this._m_CubeMaps[face].width = imgData.width;
-            this._m_CubeMaps[face].height = imgData.height;
         }
+        this._m_CubeMaps[face].width = (options && options.width != null) ? options.width : imgData.width;
+        this._m_CubeMaps[face].height = (options && options.height != null) ? options.height : imgData.height;
         this._m_CubeMaps[face].updateImage = true;
         // 刷新所有材质持有
         for(let owner in this._m_OwnerFlags){

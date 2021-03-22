@@ -1,0 +1,32 @@
+// 将环境捕捉数据渲染并查看
+Def EnvCaptureOutDef{
+    Params{
+        samplerCube envCaptureMap;
+    }
+    SubTechnology EnvCaptureOut{
+        Vars{
+            vec3 wPosition;
+        }
+        Vs_Shader{
+            void main(){
+                wPosition = Context.InPosition;
+                Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+            }
+        }
+        Fs_Shader{
+            void main(){
+                #ifdef Params.envCaptureMap
+                    Context.OutColor = texture(Params.envCaptureMap, normalize(wPosition));
+                #else
+                    Context.OutColor = vec4(1.0f);
+                #endif
+            }
+        }
+    }
+    Technology{
+        Sub_Pass{
+            Pass EnvCaptureOut{
+            }
+        }
+    }
+}

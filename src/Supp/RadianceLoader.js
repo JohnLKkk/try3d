@@ -11,4 +11,17 @@ export default class RadianceLoader {
     static rgbeImg(){
         return new hdrpng().HDRImage();
     }
+
+    /**
+     * 加载HDR纹理数据。<br/>
+     * @param {String}[src]
+     * @param {Function}[callback]
+     */
+    loadHDR(src, callback){
+        let image = RadianceLoader.rgbeImg();
+        image.onload = ()=>{
+            callback(image);
+        };
+        image.src = src;
+    }
 }
