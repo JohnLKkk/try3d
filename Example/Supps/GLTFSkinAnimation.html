@@ -43,13 +43,13 @@
     gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
     gltfLoader.load(scene, './../Assets/Models/GLTF/Test/EstialKnigh20103.gltf', modelNode=>{
         rootNode.addChildren(modelNode);
-        modelNode.setLocalScaleXYZ(0.1, 0.1, 0.1);
+        modelNode.setLocalScaleXYZ(0.01, 0.01, 0.01);
         console.log('modelNode:',modelNode);
         let animationProcessors = modelNode.getComponentAtTypes('AnimationProcessor');
         animationProcessors[0].getAnimationActionAtIndex(0).play();
-        // 由于动画轨迹进行了缩放动画,而动画影响顶点,所以会出现包围盒不对应动画下的模型标准,所以这里对模型关闭剔除
-        let U3DMesh0 = rootNode.getChildrenAtName('U3DMesh0');
-        let U3DMesh1 = rootNode.getChildrenAtName('U3DMesh1');
+        // // 由于动画轨迹进行了缩放动画,而动画影响顶点,所以会出现包围盒不对应动画下的模型标准,所以这里对模型关闭剔除
+        // let U3DMesh0 = rootNode.getChildrenAtName('U3DMesh0');
+        // let U3DMesh1 = rootNode.getChildrenAtName('U3DMesh1');
         U3DMesh0.setFilterFlag(Node.S_NEVER);
         U3DMesh1.setFilterFlag(Node.S_NEVER);
     });
