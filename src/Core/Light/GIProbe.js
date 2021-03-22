@@ -17,6 +17,23 @@ export default class GIProbe extends Probe{
 
     constructor(owner, cfg) {
         super(owner, cfg);
+        this._m_ShCoeffs = null;
+    }
+
+    /**
+     * 设置球谐系数。<br/>
+     * @param {Vector3[]}[shCoeffs 9个球谐系数]
+     */
+    setShCoeffs(shCoeffs){
+        this._m_ShCoeffs = shCoeffs;
+    }
+
+    /**
+     * 返回球谐系数。<br/>
+     * @return {Vector3[]}
+     */
+    getShCoeffs(){
+        return this._m_ShCoeffs;
     }
 
 

@@ -49,6 +49,7 @@ class EnvCapture {
         this._m_CaptureCameres = [];
         this._m_CaptureFrames = [];
         this._m_CaptureResult = new TextureCubeVars(scene);
+        this._m_CapturePixels = [];
         this._m_Position = new Vector3();
         if(position){
             this._m_Position.setTo(position);
@@ -101,6 +102,7 @@ class EnvCapture {
     capture(){
         const gl = this._m_Scene.getCanvas().getGLContext();
         // 以便编译材质
+        this._m_Scene.getRender()._resetFrameContext();
         this._m_Scene.getRender()._drawEnv(gl);
         let mainCamera = this._m_Scene.getMainCamera();
         let render = this._m_Scene.getRender();
@@ -115,6 +117,7 @@ class EnvCapture {
             this._m_Scene.getRender()._drawEnv(gl);
 
             pixels = this._m_CaptureFrames[i].readPixels(gl, '', gl.RGBA, gl.UNSIGNED_BYTE);
+            this._m_CapturePixels[i] = pixels;
             // Log.log('pixels:',pixels);
             // 将像素数据设置到结果纹理中
             this._m_CaptureResult.setImage(this._m_Scene, EnvCapture._S_CAPTURE_FACE[i], pixels, {width:this._m_Resoulte, height:this._m_Resoulte});
@@ -132,6 +135,14 @@ class EnvCapture {
      */
     getCaptureTextureCube(){
         return this._m_CaptureResult;
+    }
+
+    /**
+     * 返回捕获数据。<br/>
+     * @return {ArrayBuffer[]}
+     */
+    getCapturePixels(){
+        return this._m_CapturePixels;
     }
 
 }
@@ -157,6 +168,12 @@ export default class ProbeTools {
     static _S_SQRT_3PI = Math.sqrt(3.0 / Math.PI);
     static _S_SQRT_5PI = Math.sqrt(5.0 / Math.PI);
     static _S_SQRT_15PI = Math.sqrt(15.0 / Math.PI);
+    // 有关这些系数，请参见Peter-Pike Sloan论文。
+    static _S_SH_BAND_FACTOR = [
+        1.0,
+        2.0 / 3.0, 2.0 / 3.0, 2.0 / 3.0,
+        1.0 / 4.0, 1.0 / 4.0, 1.0 / 4.0, 1.0 / 4.0, 1.0 / 4.0
+    ];
     /**
      * 捕获环境数据到探头中。<br/>
      * @param {Scene}[scene]
@@ -174,31 +191,79 @@ export default class ProbeTools {
         Log.timeEnd('capture!');
         return envCapture;
     }
+    static bakeGIProbe(scene, giProbe, options){
+        let resolute = (options && options.resolute != null) ? options.resolute : ProbeTools._S_DEFAULT_CAPTURE_RESOLUTE;
+        let envCapture = ProbeTools.captureProbe(scene, giProbe, options);
+
+        // 可以在子线程中进行
+        // 计算球谐系数
+        Log.time('shCoeffs');
+        let shCoeffs = ProbeTools.getShCoeffs(resolute, resolute, envCapture.getCapturePixels(), ProbeTools._S_FIX_SEAMS_METHOD.Wrap);
+        ProbeTools.prepareShCoefs(shCoeffs);
+        Log.timeEnd('shCoeffs');
+
+        // 计算prefilterMap
+    }
+
+    /**
+     * 准备球谐系数。<br/>
+     * @param {Vector3[]}[shCoefs]
+     */
+    static prepareShCoefs(shCoefs){
+
+        const sqrtPi = ProbeTools._S_SQRT_PI;
+        const sqrt3Pi = ProbeTools._S_SQRT_3PI;
+        const sqrt5Pi = ProbeTools._S_SQRT_5PI;
+        const sqrt15Pi = ProbeTools._S_SQRT_15PI;
+
+        let coef0 = (1.0 / (2.0 * sqrtPi));
+        let coef1 = -sqrt3Pi / 2.0;
+        let coef2 = -coef1;
+        let coef3 = coef1;
+        let coef4 = sqrt15Pi / 2.0;
+        let coef5 = -coef4;
+        let coef6 = sqrt5Pi / 4.0;
+        let coef7 = coef5;
+        let coef8 = sqrt15Pi / 4.0;
+
+        shCoefs[0].multLength(coef0).multLength(ProbeTools._S_SH_BAND_FACTOR[0]);
+        shCoefs[1].multLength(coef1).multLength(ProbeTools._S_SH_BAND_FACTOR[1]);
+        shCoefs[2].multLength(coef2).multLength(ProbeTools._S_SH_BAND_FACTOR[2]);
+        shCoefs[3].multLength(coef3).multLength(ProbeTools._S_SH_BAND_FACTOR[3]);
+        shCoefs[4].multLength(coef4).multLength(ProbeTools._S_SH_BAND_FACTOR[4]);
+        shCoefs[5].multLength(coef5).multLength(ProbeTools._S_SH_BAND_FACTOR[5]);
+        shCoefs[6].multLength(coef6).multLength(ProbeTools._S_SH_BAND_FACTOR[6]);
+        shCoefs[7].multLength(coef7).multLength(ProbeTools._S_SH_BAND_FACTOR[7]);
+        shCoefs[8].multLength(coef8).multLength(ProbeTools._S_SH_BAND_FACTOR[8]);
+
+    }
 
     /**
      * 返回此立方体贴图的球谐系数。<br/>
+     * @param {Number}[width map宽度]
+     * @param {Number}[height map高度]
      * @param {ArrayBuffer}[cubeMapPixels]
      * @param {Number}[ProbeTools._FIX_SEAMS_METHOD]
      * @return {Vector3[]}[9个向量的数组，代表每个RGB通道的系数]
      */
-    static getSHCoeffs(width, height, cubeMapPixels, fixSeamsMethod){
-        let shCoef = [9];
+    static getShCoeffs(width, height, cubeMapPixels, fixSeamsMethod){
+        let shCoef = [];
         for(let i = 0;i < 9;i++){
             shCoef.push(new Vector3());
         }
 
-        let shDir = [9];
+        let shDir = [];
         let weightAccum = 0.0;
         let weight;
 
         let texelVect = new Vector3();
         let color = new Vector4();
-        for(let f = 0;f < 6;i++){
+        for(let f = 0;f < 6;f++){
             for(let y = 0;y < height;y++){
                 for(let x = 0;x < width;x++){
                     weight = ProbeTools.getSAAV(x, y, width, f, texelVect, fixSeamsMethod);
                     ProbeTools.evalShBasis(texelVect, shDir);
-                    ProbeTools._getPixelColor(x, y, cubeMapPixels[f], color);
+                    ProbeTools._getPixelColor(x, y, width, height, cubeMapPixels[f], color);
 
                     for (let i = 0; i < 9; i++) {
                         shCoef[i].setToInXYZ(shCoef[i]._m_X + color._m_X * shDir[i] * weight, shCoef[i]._m_Y + color._m_Y * shDir[i] * weight, shCoef[i]._m_Z + color._m_Z * shDir[i] * weight);
@@ -221,12 +286,17 @@ export default class ProbeTools {
      * 从指定像素数据中读取(x,y)像素颜色值。<br/>
      * @param {Number}[x 坐标0-width]
      * @param {Number}[y 坐标0-height]
+     * @param {Number}[width map宽度]
+     * @param {Number}[height map高度]
      * @param {ArrayBuffer}[pixels]
      * @param {Vector4}[store]
      * @private
      */
-    static _getPixelColor(x, y, pixels, store){
-
+    static _getPixelColor(x, y, width, height, pixels, store){
+        store._m_X = pixels[y * width * 4 + x] / 255.0;
+        store._m_Y = pixels[y * width * 4 + x + 1] / 255.0;
+        store._m_Z = pixels[y * width * 4 + x + 2] / 255.0;
+        store._m_W = pixels[y * width * 4 + x + 3] / 255.0;
     }
 
     /**
@@ -235,9 +305,9 @@ export default class ProbeTools {
      * @param {Number[]}[shDir]
      */
     static evalShBasis(texelVect, shDir){
-        let xV = texelVect.x;
-        let yV = texelVect.y;
-        let zV = texelVect.z;
+        let xV = texelVect._m_X;
+        let yV = texelVect._m_Y;
+        let zV = texelVect._m_Z;
 
         let x2 = xV * xV;
         let y2 = yV * yV;
@@ -328,7 +398,7 @@ export default class ProbeTools {
         }
         if(fixSeamsMethod == ProbeTools._S_FIX_SEAMS_METHOD.Wrap){
             // wrap纹理像素在边缘附近居中。
-            let a = Math.pow(mapSize, 2.0) / pow((mapSize - 1.0), 3.0);
+            let a = Math.pow(mapSize, 2.0) / Math.pow((mapSize - 1.0), 3.0);
             u = a * Math.pow(u, 3.0) + u;
             v = a * Math.pow(v, 3.0) + v;
         }

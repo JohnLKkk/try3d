@@ -119,7 +119,9 @@ export default class FrameContext {
      * 重置上下文信息。
      */
     reset(){
-
+        this.m_LastSubShader = null;
+        this.m_LastSubShaderId = null;
+        this.m_LastFrameBuffer = null;
     }
 
 }

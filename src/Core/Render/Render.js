@@ -284,10 +284,19 @@ export default class Render extends Component{
             }
         }
     }
+
+    /**
+     * 重制渲染上下文。<br/>
+     * @private
+     */
+    _resetFrameContext(){
+        this._m_FrameContext.reset();
+    }
     // 后期开发渲染路径模块时,把_draw2开发完成然后删掉_draw函数
     _draw(exTime){
         // 一帧的开始
         this.fire(Render.PRE_FRAME, [exTime]);
+        this._resetFrameContext();
         // 视锥剔除,遮挡查询
         // 从所有可见drawable列表中,进行剔除,得到剔除后的列表
         // 这里暂时还没实现剔除,所以直接就是全部的drawables

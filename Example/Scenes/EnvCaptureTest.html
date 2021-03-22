@@ -66,6 +66,7 @@
         rootNode.addChildren(refProbe);
         // 捕捉环境数据
         let envCapture = ProbeTools.captureProbe(scene, refProbe, {resolute:256});
+        ProbeTools.bakeGIProbe(scene, refProbe);
         // 添加一个渲染探头,将捕捉数据渲染出来
         let refProbeGeo = new Sphere(scene, {id:'refProbeGeo'});
         let refProbeMat = new Material(scene, {id:'refProbeMat', materialDef:MaterialDef.load('./EnvCaptureOutDef')});
@@ -74,6 +75,7 @@
         rootNode.addChildren(refProbeGeo);
 
         scene.addSceneNode(rootNode);
+
 
     });
     let renderEngine = new RenderEngine();
