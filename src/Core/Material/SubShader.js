@@ -128,6 +128,8 @@ export default class SubShader {
      * @private
      */
     _loadShaderCaches(gl, frameContext){
+        // 重置
+        this._m_MatParams = [];
         this._m_NeedLoadShaderCaches = false;
         // 计算缓存变量
         this.use(gl);
@@ -282,8 +284,17 @@ export default class SubShader {
      * @param {Boolean}[isContextDefine 表明是否为上下文定义]
      */
     addDefine(param, isContextDefine){
+        let _new = false;
         if(!this._m_AleadyDefinedParams[param]){
             if(this._m_CanDefineParams[param] || isContextDefine){
+                _new = true;
+                this._m_AleadyDefinedParams[param] = true;
+            }
+        }
+        if(_new){
+            this._m_Defines = null;
+            this._m_KeyDefs = null;
+            for(let param in this._m_AleadyDefinedParams){
                 if(!this._m_Defines){
                     this._m_Defines = {};
                 }
@@ -324,7 +335,6 @@ export default class SubShader {
                     }
                     this._m_KeyDefs += param + ",";
                 }
-                this._m_AleadyDefinedParams[param] = true;
             }
         }
     }

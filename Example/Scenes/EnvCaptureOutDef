@@ -2,6 +2,7 @@
 Def EnvCaptureOutDef{
     Params{
         samplerCube envCaptureMap;
+        float lod;
     }
     SubTechnology EnvCaptureOut{
         Vars{
@@ -16,7 +17,11 @@ Def EnvCaptureOutDef{
         Fs_Shader{
             void main(){
                 #ifdef Params.envCaptureMap
-                    Context.OutColor = texture(Params.envCaptureMap, normalize(wPosition));
+                    #ifdef Params.lod
+                        Context.OutColor = textureLod(Params.envCaptureMap, normalize(wPosition), Params.lod);
+                    #else
+                        Context.OutColor = texture(Params.envCaptureMap, normalize(wPosition));
+                    #endif
                 #else
                     Context.OutColor = vec4(1.0f);
                 #endif

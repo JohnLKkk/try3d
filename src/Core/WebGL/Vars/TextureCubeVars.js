@@ -227,16 +227,30 @@ export default class TextureCubeVars extends Vars{
      * @param {Boolean}[options.rgbe 表示rgbe数据的辐射度纹理]
      * @param {Number}[options.width 当imgData是二进制数据数组时,需要单独设置纹理宽度]
      * @param {Number}[options.height 当imgData是二进制数据数组时,需要单独设置纹理高度]
+     * @param {Number}[options.mipmapLevel]
      */
     setImage(scene, face, imgData, options){
         this._m_UpdateImage = true;
-        this._m_CubeMaps[face] = {imgData:(options && options.rgbe) ? imgData.dataRGBE : imgData};
-        if(options && options.rgbe){
-            this._m_CubeMaps[face].rgbe = true;
+        let mipmapLevel = (options && options.mipmapLevel != null) ? options.mipmapLevel : null;
+        let faceImgData = null;
+        if(mipmapLevel != null){
+            if(!this._m_CubeMaps[face]){
+                this._m_CubeMaps[face] = [];
+            }
+            this._m_CubeMaps[face].push({imgData:(options && options.rgbe) ? imgData.dataRGBE : imgData, mipmapLevel:mipmapLevel});
+            faceImgData = this._m_CubeMaps[face][this._m_CubeMaps[face].length - 1];
         }
-        this._m_CubeMaps[face].width = (options && options.width != null) ? options.width : imgData.width;
-        this._m_CubeMaps[face].height = (options && options.height != null) ? options.height : imgData.height;
-        this._m_CubeMaps[face].updateImage = true;
+        else{
+            this._m_CubeMaps[face] = {imgData:(options && options.rgbe) ? imgData.dataRGBE : imgData};
+            faceImgData = this._m_CubeMaps[face];
+        }
+        if(options && options.rgbe){
+            faceImgData.rgbe = true;
+        }
+        faceImgData.width = (options && options.width != null) ? options.width : imgData.width;
+        faceImgData.height = (options && options.height != null) ? options.height : imgData.height;
+        faceImgData.updateImage = true;
+        faceImgData.mipmapLevel = (options && options.mipmapLevel) ? options.mipmapLevel : 0;
         // 刷新所有材质持有
         for(let owner in this._m_OwnerFlags){
             this._m_OwnerFlags[owner].owner.setParam(this._m_OwnerFlags[owner].flag, this);
@@ -255,10 +269,21 @@ export default class TextureCubeVars extends Vars{
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, this._m_Texture);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this._m_FlipY);
         if(image.rgbe){
-            gl.texImage2D(this._parseFace(gl, face), 0, gl.RGBA, image.width, image.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image.imgData);
+            gl.texImage2D(this._parseFace(gl, face), image.mipmapLevel, gl.RGBA, image.width, image.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image.imgData);
         }
         else{
-            gl.texImage2D(this._parseFace(gl, face), 0, gl.RGBA, image.width, image.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image.imgData);
+            if(Array.isArray(image)){
+                gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_BASE_LEVEL, 0);
+                gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAX_LEVEL, image.length);
+                let img = null;
+                for(let i = 0;i < image.length;i++){
+                    img = image[i];
+                    gl.texImage2D(this._parseFace(gl, face), img.mipmapLevel, gl.RGBA, img.width, img.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, img.imgData);
+                }
+            }
+            else{
+                gl.texImage2D(this._parseFace(gl, face), image.mipmapLevel, gl.RGBA, image.width, image.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image.imgData);
+            }
         }
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
     }

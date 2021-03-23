@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>EnvCaptureTest</title>
+    <title>GIProbeCaptureTest</title>
 </head>
 <body>
 <div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
@@ -26,9 +26,11 @@
     import Material from "../../src/Core/Material/Material.js";
     import MaterialDef from "../../src/Core/Material/MaterialDef.js";
     import RefProbe from "../../src/Core/Light/RefProbe.js";
+    import Input from "../../src/Core/InputControl/Input.js";
+    import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(5, 5, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(0.5, 0.5, 0.5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     firstPersonController.setMovementSpeed(10);
 
@@ -60,22 +62,43 @@
         dir.setColorRGBA(1.0, 1.0, 1.0, 1.0);
         rootNode.addChildren(dir);
 
-        // 添加一个反射探头
-        let refProbe = new RefProbe(scene, {id:'refProbe'});
-        refProbe.setPositionFromXYZ(0, 0, 0);
-        rootNode.addChildren(refProbe);
+        // 添加一个GI探头
+        let giProbe = new RefProbe(scene, {id:'GIProbe'});
+        giProbe.setPositionFromXYZ(0, 0, 0);
+        rootNode.addChildren(giProbe);
         // 捕捉环境数据
-        let envCapture = ProbeTools.captureProbe(scene, refProbe, {resolute:256});
+        let envCapture = ProbeTools.bakeGIProbe(scene, giProbe, {resolute:256});
         // 添加一个渲染探头,将捕捉数据渲染出来
-        let refProbeGeo = new Sphere(scene, {id:'refProbeGeo'});
-        let refProbeMat = new Material(scene, {id:'refProbeMat', materialDef:MaterialDef.load('./EnvCaptureOutDef')});
-        refProbeMat.setParam('envCaptureMap', envCapture.getCaptureTextureCube());
-        refProbeGeo.setMaterial(refProbeMat);
-        rootNode.addChildren(refProbeGeo);
+        let giProbeGeo = new Sphere(scene, {id:'giProbeGeo', radius:0.1});
+        let giProbeMat = new Material(scene, {id:'giProbeMat', materialDef:MaterialDef.load('./EnvCaptureOutDef')});
+        giProbeMat.setParam('envCaptureMap', envCapture.getPrefilterTextureCube());
+        // giProbeMat.setParam('lod', new FloatVars().valueOf(0));
+        giProbeGeo.setMaterial(giProbeMat);
+        rootNode.addChildren(giProbeGeo);
 
         scene.addSceneNode(rootNode);
 
 
+        let input = Input.getInput(scene, {id:scene.getId()});
+        let lod = 0;
+        input.on('keydown', (key)=>{
+            if(key == Input.S_KEY_U){
+                lod += 0.1;
+                // 由于分辨率为256,所以最大为9级别
+                lod = Math.max(0, lod);
+                lod = Math.min(9, lod);
+                console.log('lod:' + lod);
+                giProbeMat.setParam('lod', new FloatVars().valueOf(lod));
+            }
+            if(key == Input.S_KEY_J){
+                lod -= 0.1;
+                // 由于分辨率为256,所以最大为9级别
+                lod = Math.max(0, lod);
+                lod = Math.min(9, lod);
+                console.log('lod:' + lod);
+                giProbeMat.setParam('lod', new FloatVars().valueOf(lod));
+            }
+        });
     });
     let renderEngine = new RenderEngine();
     renderEngine.addScene(scene);

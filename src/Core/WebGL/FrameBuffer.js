@@ -144,6 +144,18 @@ export default class FrameBuffer {
     }
 
     /**
+     * 设置渲染使用的mipmap。<br/>
+     * 作废，webGL不支持。<br/>
+     * @param {WebGL}[gl]
+     * @param {String}[name]
+     * @param {WebGLEnum}[attachId]
+     * @param {Number}[mipmapLevel]
+     */
+    setMipMap(gl, name, attachId, mipmapLevel){
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, attachId, gl.TEXTURE_2D, this._m_NameTextures[name].getLoc(), mipmapLevel);
+    }
+
+    /**
      * 添加一个纹理缓冲。<br/>
      * @param {GLContext}[gl]
      * @param {String}[name]
@@ -154,15 +166,22 @@ export default class FrameBuffer {
      * @param {GLenum}[attachId]
      * @param {Boolean}[toDrawBuffer true表示启用该颜色输出缓存]
      */
-    addTexture(gl, name, internalformat, border, format, type, attachId, toDrawBuffer){
+    addTexture(gl, name, internalformat, border, format, type, attachId, toDrawBuffer, genMipmap){
         gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_Framebuffer);
 
         let loc = gl.createTexture();
         let texture = new Texture(name, loc, internalformat, this._m_Width, this._m_Height, border, format, type, null);
         gl.bindTexture(gl.TEXTURE_2D, loc);
         gl.texImage2D(gl.TEXTURE_2D, 0, internalformat, this._m_Width, this._m_Height, 0, format, type, null);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        if(genMipmap){
+            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        }
+        else{
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        }
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, attachId, gl.TEXTURE_2D, loc, 0);
