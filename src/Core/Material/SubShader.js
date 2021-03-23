@@ -136,9 +136,9 @@ export default class SubShader {
         // 获取program变量信息
         let useParams = this._m_Def.getUseParams();
         let useContexts = this._m_Def.getUseContexts();
+        let texId = 0;
         if(useParams && useParams.length > 0){
             // 解析材质参数
-            let texId = 0;
             useParams.forEach(param=>{
                 let loc = gl.getUniformLocation(this._m_ShaderProgram.getProgram(), param.getName());
                 if(loc){
@@ -165,7 +165,6 @@ export default class SubShader {
             });
         }
         if(useContexts && useContexts.length > 0){
-            let texId = 0;
             useContexts.forEach(context=>{
                 // 过滤掉layout in和layout out(即包含loc的变量)
                 if(!context.loc){
@@ -176,6 +175,7 @@ export default class SubShader {
                             case "mat4":
                                 fun = 'uniformMatrix4fv';
                                 break;
+                            case "samplerCube":
                             case "sampler2D":
                                 // 2D纹理
                                 gl.uniform1i(loc, texId);
@@ -280,15 +280,15 @@ export default class SubShader {
 
     /**
      * 添加参数定义。<br/>
-     * @param {String}[param 参数名]
+     * @param {String}[dparam 参数名]
      * @param {Boolean}[isContextDefine 表明是否为上下文定义]
      */
-    addDefine(param, isContextDefine){
+    addDefine(dparam, isContextDefine){
         let _new = false;
-        if(!this._m_AleadyDefinedParams[param]){
-            if(this._m_CanDefineParams[param] || isContextDefine){
+        if(!this._m_AleadyDefinedParams[dparam]){
+            if(this._m_CanDefineParams[dparam] || isContextDefine){
                 _new = true;
-                this._m_AleadyDefinedParams[param] = true;
+                this._m_AleadyDefinedParams[dparam] = true;
             }
         }
         if(_new){
@@ -306,7 +306,7 @@ export default class SubShader {
                     if(!this._m_Defines[ShaderSource.VERTEX_SHADER]){
                         this._m_Defines[ShaderSource.VERTEX_SHADER] = "";
                     }
-                    if(isContextDefine){
+                    if(isContextDefine && param == dparam){
                         this._m_Defines[ShaderSource.VERTEX_SHADER] += ShaderSource.Context_Data[param] + "\n";
                     }
                     else{
@@ -323,8 +323,8 @@ export default class SubShader {
                     if(!this._m_Defines[ShaderSource.FRAGMENT_SHADER]){
                         this._m_Defines[ShaderSource.FRAGMENT_SHADER] = "";
                     }
-                    if(isContextDefine){
-                        this._m_Defines[ShaderSource.VERTEX_SHADER] += ShaderSource.Context_Data[param] + "\n";
+                    if(isContextDefine && param == dparam){
+                        this._m_Defines[ShaderSource.FRAGMENT_SHADER] += ShaderSource.Context_Data[param] + "\n";
                     }
                     else{
                         this._m_Defines[ShaderSource.FRAGMENT_SHADER] += this._m_CanDefineParams[param] + "\n";

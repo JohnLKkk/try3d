@@ -11,6 +11,7 @@ import Material from "../Material/Material.js";
 import MaterialDef from "../Material/MaterialDef.js";
 import DefaultRenderProgram from "./DefaultRenderProgram.js";
 import SinglePassLightingRenderProgram from "./SinglePassLightingRenderProgram.js";
+import SinglePassIBLLightingRenderProgram from "./SinglePassIBLLightingRenderProgram.js";
 import Log from "../Util/Log.js";
 import Internal from "./Internal.js";
 import RenderQueue from "./RenderQueue.js";
@@ -119,6 +120,7 @@ export default class Render extends Component{
         // 加载可用渲染程序
         this._m_RenderPrograms[DefaultRenderProgram.PROGRAM_TYPE] = new DefaultRenderProgram();
         this._m_RenderPrograms[SinglePassLightingRenderProgram.PROGRAM_TYPE] = new SinglePassLightingRenderProgram();
+        this._m_RenderPrograms[SinglePassIBLLightingRenderProgram.PROGRAM_TYPE] = new SinglePassIBLLightingRenderProgram();
     }
 
     /**

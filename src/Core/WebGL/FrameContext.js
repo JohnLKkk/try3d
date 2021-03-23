@@ -7,7 +7,7 @@ import RenderState from "./RenderState.js";
 
 export default class FrameContext {
     constructor() {
-        this.m_LastMaterila = null;
+        this.m_LastMaterial = null;
         this.m_LastIDrawable = null;
         this.m_LastSubShader = null;
         this.m_LastSubShaderId = null;
@@ -119,6 +119,7 @@ export default class FrameContext {
      * 重置上下文信息。
      */
     reset(){
+        this.m_LastMaterial = null;
         this.m_LastSubShader = null;
         this.m_LastSubShaderId = null;
         this.m_LastFrameBuffer = null;

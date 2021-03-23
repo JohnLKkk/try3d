@@ -3,13 +3,15 @@ import RenderState from "../WebGL/RenderState.js";
 import DirectionalLight from "../Light/DirectionalLight.js";
 import TempVars from "../Util/TempVars.js";
 import Matrix44 from "../Math3d/Matrix44.js";
+import Log from "../Util/Log.js";
+import ShaderSource from "../WebGL/ShaderSource.js";
 
 /**
  * 在当个pass中批量处理多个灯光。<br/>
  * @author Kkk
  * @date 2021年2月17日16点09分
  */
-export default class SinglePassLightingRenderProgram extends DefaultRenderProgram{
+export default class SinglePassIBLLightingRenderProgram extends DefaultRenderProgram{
     static PROGRAM_TYPE = 'SinglePassIBLLighting';
     static S_CUR_LIGHT_COUNT = '_curLightCount';
     static S_V_LIGHT_DATA = '_vLightData';
@@ -20,6 +22,7 @@ export default class SinglePassLightingRenderProgram extends DefaultRenderProgra
     constructor(props) {
         super(props);
         this._m_AccumulationLights = new RenderState();
+        this._m_m_LastSubShader = null;
     }
 
     /**
@@ -41,15 +44,43 @@ export default class SinglePassLightingRenderProgram extends DefaultRenderProgra
             // 开启累积缓存模式
         }
         let conVars = frameContext.m_LastSubShader.getContextVars();
+        // 探头信息
+        let probeLoc = null;
+        if(conVars[SinglePassIBLLightingRenderProgram.S_WGIPROBE_SRC] && this._m_m_LastSubShader != frameContext.m_LastSubShader){
+            // Log.log('提交探头!');
+            let giProbe = scene.getGIProbes()[0];
+            let giData = TempVars.S_TEMP_VEC4;
+            // 探头位置
+            giData.setToInXYZW(giProbe.getPosition()._m_X, giProbe.getPosition()._m_Y, giProbe.getPosition()._m_Z, 1.0 / giProbe.getRadius() + giProbe.getPrefilterMipmap());
+            gl.uniform4fv(conVars[SinglePassIBLLightingRenderProgram.S_WGIPROBE_SRC].loc, giData.getBufferData(), 0, 4);
+            // 球谐系数
+            giData = giProbe.getShCoeffsBufferData();
+            gl.uniform3fv(conVars[SinglePassIBLLightingRenderProgram.S_SH_COEFFS_SRC].loc, giData.getBufferData(), 0, 9 * 3);
+            // prefilterEnvMap
+            giProbe.getPrefilterEnvMap()._upload(gl, conVars[SinglePassIBLLightingRenderProgram.S_PREF_ENV_MAP_SRC].loc);
+            this._m_m_LastSubShader = frameContext.m_LastSubShader;
+        }
+        else{
+            // 检测探头
+            let giProbes = scene.getGIProbes();
+            if(giProbes && giProbes.length > 0){
+                // 找出与之相交的探头
+                // 首次,更新材质定义
+                frameContext.m_LastMaterial.addDefine(ShaderSource.S_GIPROBES_SRC);
+            }
+        }
+
+
+        // 灯光信息
         let lightSpaceLoc = null;
         let lightSpace = null;
-        if(conVars[SinglePassLightingRenderProgram.S_V_LIGHT_DATA]){
+        if(conVars[SinglePassIBLLightingRenderProgram.S_V_LIGHT_DATA]){
             lightSpace = 1;
-            lightSpaceLoc = conVars[SinglePassLightingRenderProgram.S_V_LIGHT_DATA].loc;
+            lightSpaceLoc = conVars[SinglePassIBLLightingRenderProgram.S_V_LIGHT_DATA].loc;
         }
         else{
             lightSpace = 0;
-            lightSpaceLoc = conVars[SinglePassLightingRenderProgram.S_W_LIGHT_DATA].loc;
+            lightSpaceLoc = conVars[SinglePassIBLLightingRenderProgram.S_W_LIGHT_DATA].loc;
         }
         // 计算实际需要上载的灯光
         let curLightCount = (batchSize + lastIndex) > lights.length ? (lights.length - lastIndex) : batchSize;
@@ -134,7 +165,7 @@ export default class SinglePassLightingRenderProgram extends DefaultRenderProgra
         // 上载数据
         // gl[conVars[SinglePassLightingRenderProgram.S_LIGHT_DATA].fun]
         gl.uniform4fv(lightSpaceLoc, lightData.getBufferData(), 0, curLightCount * 12);
-        gl.uniform1i(conVars[SinglePassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, curLightCount * 3);
+        gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, curLightCount * 3);
     }
     draw(gl, scene, frameContext, iDrawable, lights) {
 

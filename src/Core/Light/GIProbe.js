@@ -1,4 +1,6 @@
 import Probe from "./Probe.js";
+import BoundingSphere from "../Math3d/Bounding/BoundingSphere.js";
+import UniformBuffer from "../WebGL/UniformBuffer.js";
 
 /**
  * GIProbe。<br/>
@@ -18,6 +20,42 @@ export default class GIProbe extends Probe{
     constructor(owner, cfg) {
         super(owner, cfg);
         this._m_ShCoeffs = null;
+        this._m_ShCoeffsBufferData = null;
+        this._m_PrefilterEnvMap = null;
+        this._m_PrefilterMipmap = 0;
+        this._m_Bounding = new BoundingSphere();
+    }
+
+    /**
+     * 设置PrefilterMipmap级别数量。<br/>
+     * @param {Number}[pfmm]
+     */
+    setPrefilterMipmap(pfmm){
+        this._m_PrefilterMipmap = pfmm;
+    }
+
+    /**
+     * 返回PrefilterMipmap级别数量。<br/>
+     * @return {Number}
+     */
+    getPrefilterMipmap(){
+        return this._m_PrefilterMipmap;
+    }
+
+    /**
+     * 设置半径范围。<br/>
+     * @param {Number}[radius]
+     */
+    setRadius(radius){
+        this._m_Bounding.setRaiuds(radius);
+    }
+
+    /**
+     * 返回半径。<br/>
+     * @return {Number}
+     */
+    getRadius(){
+        return this._m_Bounding.getRadius();
     }
 
     /**
@@ -26,6 +64,13 @@ export default class GIProbe extends Probe{
      */
     setShCoeffs(shCoeffs){
         this._m_ShCoeffs = shCoeffs;
+        this._m_ShCoeffsBufferData = new UniformBuffer(9 * 3);
+        let array = this._m_ShCoeffsBufferData.getArray();
+        for(let i = 0,t = 0;i < shCoeffs.length;i++){
+            array[t++] = shCoeffs[i]._m_X;
+            array[t++] = shCoeffs[i]._m_Y;
+            array[t++] = shCoeffs[i]._m_Z;
+        }
     }
 
     /**
@@ -34,6 +79,25 @@ export default class GIProbe extends Probe{
      */
     getShCoeffs(){
         return this._m_ShCoeffs;
+    }
+    getShCoeffsBufferData(){
+        return this._m_ShCoeffsBufferData;
+    }
+
+    /**
+     * 设置预过滤环境纹理。<br/>
+     * @param {TextureCubeVars}[prefilterEnvMap]
+     */
+    setPrefilterEnvMap(prefilterEnvMap){
+        this._m_PrefilterEnvMap = prefilterEnvMap;
+    }
+
+    /**
+     * 返回预过滤环境纹理。<br/>
+     * @return {TextureCubeVars}
+     */
+    getPrefilterEnvMap(){
+        return this._m_PrefilterEnvMap;
     }
 
 

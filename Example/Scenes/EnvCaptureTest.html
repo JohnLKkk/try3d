@@ -62,10 +62,10 @@
 
         // 添加一个反射探头
         let refProbe = new RefProbe(scene, {id:'refProbe'});
-        refProbe.setPositionFromXYZ(0, 0, 0);
+        refProbe.setPositionFromXYZ(1, 1, 1);
         rootNode.addChildren(refProbe);
         // 捕捉环境数据
-        let envCapture = ProbeTools.captureProbe(scene, refProbe, {resolute:256});
+        let envCapture = ProbeTools.captureProbe(scene, refProbe, {resolute:128});
         // 添加一个渲染探头,将捕捉数据渲染出来
         let refProbeGeo = new Sphere(scene, {id:'refProbeGeo'});
         let refProbeMat = new Material(scene, {id:'refProbeMat', materialDef:MaterialDef.load('./EnvCaptureOutDef')});

@@ -770,7 +770,7 @@ export default class MaterialDef{
                         // 记录该vsShader使用的context
                         if(!conContexts[context.src]){
                             if(context.isFlagVariable){
-                                subShaderDef.addContextDefine(ShaderSource.VERTEX_SHADER, context.src);
+                                subShaderDef.addContextDefine(ShaderSource.FRAGMENT_SHADER, context.src);
                             }
                             else{
                                 conContexts[context.src] = true;

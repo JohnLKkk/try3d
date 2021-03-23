@@ -43,7 +43,7 @@ Def PrincipledLightingDef{
             mat3 tbnMat;
         }
         Advanced{
-            RenderProgram SinglePassLighting;
+            RenderProgram SinglePassIBLLighting;
         }
         Vs_Shader{
             void main(){
@@ -53,7 +53,8 @@ Def PrincipledLightingDef{
                             Context.InWeight0.y * Context.Joints[int(Context.InJoint0.y)] +
                             Context.InWeight0.z * Context.Joints[int(Context.InJoint0.z)] +
                             Context.InWeight0.w * Context.Joints[int(Context.InJoint0.w)];
-                    vec4 pos = Context.ModelMatrix * skinMat * vec4(Context.InPosition, 1.0f);
+                    // vec4 pos = Context.ModelMatrix * skinMat * vec4(Context.InPosition, 1.0f);
+                    vec4 pos = skinMat * vec4(Context.InPosition, 1.0f);
                 #else
                     vec4 pos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
                 #endif
@@ -390,6 +391,7 @@ Def PrincipledLightingDef{
                     giLighting *= ao;
 
                     Context.OutColor.rgb += giLighting * step( 0.0f, Context.WGIProbe.w );
+                    // Context.OutColor.rgb = textureLod(Context.InPrefEnvMap, normal.xyz, 0.0f).rgb;
                 #endif
 
                 Context.OutColor.a = albedo.a;

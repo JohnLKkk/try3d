@@ -6,6 +6,11 @@ export default class Vector4 {
         this._m_Y = y || 0;
         this._m_Z = z || 0;
         this._m_W = (w != null && w != undefined) ? w : 1;
+        this.bufferData = new Float32Array(4);
+    }
+    getBufferData(){
+        this.bufferData.set([this._m_X, this._m_Y, this._m_Z, this._m_W]);
+        return this.bufferData;
     }
     setTo(vec4){
         this._m_X = vec4._m_X;

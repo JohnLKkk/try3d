@@ -98,7 +98,7 @@ class EnvCapture {
         const gl = this._m_Scene.getCanvas().getGLContext();
         for(let i = 0;i < 6;i++){
             this._m_CaptureCameres[i] = new Camera(this._m_Scene, {id:'capture_' + i + "_" + Tools.nextId(), fovy:90.0, aspect:1.0});
-            EnvCapture._S_CAPTURE_CONFIG[i].dir.sub(this._m_Position, at);
+            EnvCapture._S_CAPTURE_CONFIG[i].dir.add(this._m_Position, at);
             this._m_CaptureCameres[i].lookAt(this._m_Position, at, EnvCapture._S_CAPTURE_CONFIG[i].up);
             this._m_CaptureFrames[i] = new FrameBuffer(gl, 'capture_frame_' + i + "_" + Tools.nextId(), this._m_Resolute, this._m_Resolute);
             this._m_CaptureFrames[i].addTexture(gl, 'capture_texture_' + i, gl.RGBA, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT0, false, this._m_MipMap);
@@ -225,6 +225,14 @@ class EnvCapture {
         return this._m_PrefilterMap;
     }
 
+    /**
+     * 返回PrefilterMipMap级别数量。<br/>
+     * @return {Number}
+     */
+    getPrefilterMipMap(){
+        return this._m_PrefilterMipmap;
+    }
+
 }
 /**
  * ProbeTools。<br/>
@@ -285,11 +293,14 @@ export default class ProbeTools {
         Log.time('shCoeffs');
         let shCoeffs = ProbeTools.getShCoeffs(resolute, resolute, envCapture.getCapturePixels(), ProbeTools._S_FIX_SEAMS_METHOD.Wrap);
         ProbeTools.prepareShCoefs(shCoeffs);
+        giProbe.setShCoeffs(shCoeffs);
         Log.timeEnd('shCoeffs');
 
         // 计算prefilterMap
         Log.time('prefiltered');
         envCapture.prefiltered();
+        giProbe.setPrefilterEnvMap(envCapture.getPrefilterTextureCube());
+        giProbe.setPrefilterMipmap(envCapture.getPrefilterMipMap());
         Log.timeEnd('prefiltered');
         return envCapture;
     }

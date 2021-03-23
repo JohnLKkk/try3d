@@ -145,6 +145,7 @@ export default class Material extends Component{
             // 切换
             subShader.use(gl);
             frameContext.m_LastSubShaderId = subShader.getDefId();
+            frameContext.m_LastMaterial = this;
         }
         // 2.检测是否需要更新参数到subShader中(同种类型subShaderId,但存在不同具体实力化subShader对象,所以参数不同需要更新)
         if(frameContext.m_LastSubShader != subShader){
@@ -255,7 +256,7 @@ export default class Material extends Component{
                 for(let p in this._m_CurrentTechnology.getSubPassList()){
                     subPass = this._m_CurrentTechnology.getSubPasss(p);
                     subPass.getSubShaders().forEach(sb=>{
-                        sb.subShader.addDefine(paramName, ShaderSource.Context_Data[name] != null);
+                        sb.subShader.addDefine(paramName, name == paramName && ShaderSource.Context_Data[name] != null);
                     });
                 }
             }

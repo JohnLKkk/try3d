@@ -6,6 +6,7 @@ import Queue from "../Util/Queue.js";
 import Light from "../Light/Light.js";
 import Node from "../Node/Node.js";
 import Picture from "../Node/Picture.js";
+import GIProbe from "../Light/GIProbe.js";
 
 /**
  * Scene表示渲染一个3D世界的容器，包含各种组件，但它不能作为其他组件的子组件。<br/>
@@ -45,6 +46,12 @@ export default class Scene extends Component{
         this._m_Lights = [];
         // 灯光名称映射列表
         this._m_LightIds = {};
+        // GIProbes
+        this._m_GIProbes = [];
+        this._m_GIProbeIds = {};
+        // RefProbes
+        this._m_RefProbes = [];
+        this._m_RefProbeIds = {};
 
         // 初始化
         this._m_Render.startUp();
@@ -65,6 +72,23 @@ export default class Scene extends Component{
      */
     getLight(lightId){
         return this._m_LightIds[lightId];
+    }
+
+    /**
+     * 返回所有GIProbe。<br/>
+     * @return {GIProbe[]}
+     */
+    getGIProbes(){
+        return this._m_GIProbes;
+    }
+
+    /**
+     * 返回指定GIProbe。<br/>
+     * @param {Object}[giProbeId]
+     * @return {GIProbe}
+     */
+    getGIProbe(giProbeId){
+        return this._m_GIProbeIds[giProbeId];
     }
 
     /**
@@ -212,7 +236,13 @@ export default class Scene extends Component{
 
                 // 检测是否为light类型组件
                 if(component instanceof Light){
-                    if(!this._m_LightIds[component.getId()]){
+                    if(component instanceof GIProbe){
+                        if(!this._m_GIProbeIds[component.getId()]){
+                            this._m_GIProbes.push(component);
+                            this._m_GIProbeIds[component.getId()] = component;
+                        }
+                    }
+                    else if(!this._m_LightIds[component.getId()]){
                         this._m_Lights.push(component);
                         this._m_LightIds[component.getId()] = component;
                     }
