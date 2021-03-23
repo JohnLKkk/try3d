@@ -217,6 +217,8 @@ Def PrincipledLightingDef{
                 vec3 prefilteredColor = textureLod(envMap, refVec.xyz, lod).rgb;
                 return prefilteredColor * integrateBRDFApprox(specularColor, roughness, ndotv);
             }
+            #define GAMMA 2.2f
+            #define GAMMA_T 1.0f / GAMMA
             void main(){
                 vec4 lightColor;
                 vec4 lightData1;
@@ -238,6 +240,8 @@ Def PrincipledLightingDef{
                         vec4 albedo = vec4(1.0f);
                     #endif
                 #endif
+                // 记住我们在线性空间计算材质,这里的一个优化是在载入纹理时处理而不是在着色阶段
+                albedo.rgb = pow(albedo.rgb, vec3(GAMMA));
 
                 #ifdef Params.alphaDiscard
                     if(albedo.a < Params.alphaDiscard){
@@ -247,6 +251,7 @@ Def PrincipledLightingDef{
 
                 vec3 normal = wNormal;
                 #ifdef Params.normalMap
+                    // 这里做了一种简化,理论上应该在fs阶段计算tbn,但是从插值的角度来看,可以简化为tbn插值,减少在fs阶段计算tbn开销(虽然这么做不精确,但是折中下可以接受)
                     vec3 normalHeight = texture(Params.normalMap, wUv0).xyz;
                     normal = normalize(tbnMat * ( normalHeight * 2.0f - 1.0f ));
                 #endif
@@ -395,6 +400,10 @@ Def PrincipledLightingDef{
                 #endif
 
                 Context.OutColor.a = albedo.a;
+                // 色调映射(后续在后处理统一处理),理论上可以不需要
+                // Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));
+                // 伽马矫正(后续在后处理统一处理)
+                Context.OutColor.rgb = pow(Context.OutColor.rgb, vec3(GAMMA_T));
 
             }
         }

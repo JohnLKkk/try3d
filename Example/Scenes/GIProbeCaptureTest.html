@@ -25,9 +25,9 @@
     import Sphere from "../../src/Core/Node/Shape/Sphere.js";
     import Material from "../../src/Core/Material/Material.js";
     import MaterialDef from "../../src/Core/Material/MaterialDef.js";
-    import RefProbe from "../../src/Core/Light/RefProbe.js";
     import Input from "../../src/Core/InputControl/Input.js";
     import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
+    import GIProbe from "../../src/Core/Light/GIProbe.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(0.5, 0.5, 0.5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -63,7 +63,7 @@
         rootNode.addChildren(dir);
 
         // 添加一个GI探头
-        let giProbe = new RefProbe(scene, {id:'GIProbe'});
+        let giProbe = new GIProbe(scene, {id:'GIProbe'});
         giProbe.setPositionFromXYZ(0, 0, 0);
         rootNode.addChildren(giProbe);
         // 捕捉环境数据
