@@ -69,7 +69,7 @@
             return texture;
         };
 
-        // plastic
+        // metal
         let metal = new Sphere(scene, {id:'metal', widthSegments:35, heightSegments:35});
         let metalMat = new Material(scene, {id:'metalMat', materialDef:metalLightingDef});
         metalMat.setParam('baseColor', new Vec4Vars().valueFromXYZW(1.000, 0.766, 0.336, 1.0));
