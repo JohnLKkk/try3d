@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SimpleMetalMaterialTest</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" tabindex="0" width="400" height="300" style="border: none;margin: 0px;padding: 0px;"></canvas>
+</div>
+<script type="module">
+    import Scene from "../../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../../src/Core/RenderEngine.js";
+    import Node from "../../../src/Core/Node/Node.js";
+    import Material from "../../../src/Core/Material/Material.js";
+    import Vector3 from "../../../src/Core/Math3d/Vector3.js";
+    import MaterialDef from "../../../src/Core/Material/MaterialDef.js";
+    import FirstPersonController from "../../../src/Core/InputControl/FirstPersonController.js";
+    import Texture2DVars from "../../../src/Core/WebGL/Vars/Texture2DVars.js";
+    import Vector4 from "../../../src/Core/Math3d/Vector4.js";
+    import FloatVars from "../../../src/Core/WebGL/Vars/FloatVars.js";
+    import DirectionalLight from "../../../src/Core/Light/DirectionalLight.js";
+    import Sphere from "../../../src/Core/Node/Shape/Sphere.js";
+    import Vec4Vars from "../../../src/Core/WebGL/Vars/Vec4Vars.js";
+    import BoolVars from "../../../src/Core/WebGL/Vars/BoolVars.js";
+    import Stats from "../../stats.min.js";
+    import GIProbe from "../../../src/Core/Light/GIProbe.js";
+    import ProbeTools from "../../../src/Core/Util/ProbeTools.js";
+    import RadianceLoader from "../../../src/Supp/RadianceLoader.js";
+    import SkyBox from "../../../src/Core/Node/Sky/SkyBox.js";
+
+
+    // 创建scene
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    let rootNode = new Node(scene, {id:'rootNode'});
+
+    // 环境纹理加载完再开始创建创建
+    let radianceLoader = new RadianceLoader();
+    radianceLoader.loadHDR('../../Assets/Textures/hdr/newport_loft.hdr', imageData=>{
+        // 创建一个sky
+        let sky = new SkyBox(scene, {id:'sky'});
+        // 使用cubeMap作为天空盒材质
+        let envMap = new Texture2DVars(scene);
+        envMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
+        envMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+        envMap.setFilter(scene, Texture2DVars.S_FILTERS.S_LINEAR, Texture2DVars.S_FILTERS.S_LINEAR);
+        envMap.setImage(scene, imageData, {rgbe:true});
+        sky.getMaterial().setParam('envMap', envMap);
+        sky.getMaterial().setParam('useEnvMap', new BoolVars().valueOf(true));
+        sky.getMaterial().setParam('useHDR', new BoolVars().valueOf(true));
+
+        scene.setSky(sky);
+
+        // 金属工作流材质参数
+        let baseColorMap = null;
+        let normalMap = null;
+        let metallicMap = null;
+        let roughnessMap = null;
+        let aoMap = null;
+
+        let metalLightingDef = MaterialDef.load('../../../src/Core/Assets/MaterialDef/PrincipledLightingDef');
+        let getTexture = (src)=>{
+            let texture = new Texture2DVars(scene);
+            texture.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+            texture.setImageSrc(scene, src);
+            return texture;
+        };
+
+        // plastic
+        let metal = new Sphere(scene, {id:'metal', widthSegments:35, heightSegments:35});
+        let metalMat = new Material(scene, {id:'metalMat', materialDef:metalLightingDef});
+        metalMat.setParam('baseColor', new Vec4Vars().valueFromXYZW(1.000, 0.766, 0.336, 1.0));
+        metalMat.setParam('metallic', new FloatVars().valueOf(0.5));
+        metalMat.setParam('roughness', new FloatVars().valueOf(0.1));
+        metal.setMaterial(metalMat);
+        rootNode.addChildren(metal);
+
+        let dirLight = new DirectionalLight(scene, {id:'dirLight'});
+        dirLight.setDirectionXYZ(-1, -1, -1);
+        dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+        rootNode.addChildren(dirLight);
+
+        let giProbe = new GIProbe(scene, {id:'giProbe'});
+        giProbe.setRadius(10);
+        giProbe.setPositionFromXYZ(0, 5, 0);
+        let envCapture = ProbeTools.bakeGIProbe(scene, giProbe, {resolute:128});
+
+        // 添加一个渲染探头,将捕捉数据渲染出来
+        let giProbeGeo = new Sphere(scene, {id:'giProbeGeo', radius:1});
+        giProbeGeo.setLocalTranslation(giProbe.getPosition());
+        let giProbeMat = new Material(scene, {id:'giProbeMat', materialDef:MaterialDef.load('../../Scenes/EnvCaptureOutDef')});
+        giProbeMat.setParam('envCaptureMap', envCapture.getPrefilterTextureCube());
+        // giProbeMat.setParam('lod', new FloatVars().valueOf(0));
+        giProbeGeo.setMaterial(giProbeMat);
+        rootNode.addChildren(giProbeGeo);
+        console.log('giProbe.getShCoeffs():' , giProbe.getShCoeffsBufferData());
+    });
+
+
+
+    let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+    });
+</script>
+</body>
+</html>

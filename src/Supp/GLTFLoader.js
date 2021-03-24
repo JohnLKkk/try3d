@@ -17,6 +17,10 @@ import Skeleton from "../Core/Animation/Skin/Skeleton.js";
 import Joint from "../Core/Animation/Skin/Joint.js";
 import AnimationProcessor from "../Core/Animation/AnimationProcessor.js";
 import ShaderSource from "../Core/WebGL/ShaderSource.js";
+import Vec4Vars from "../Core/WebGL/Vars/Vec4Vars.js";
+import FloatVars from "../Core/WebGL/Vars/FloatVars.js";
+import Texture2DVars from "../Core/WebGL/Vars/Texture2DVars.js";
+import BoolVars from "../Core/WebGL/Vars/BoolVars.js";
 
 /**
  * GLTFLoader。<br/>
@@ -25,11 +29,21 @@ import ShaderSource from "../Core/WebGL/ShaderSource.js";
  * @date 2021年3月5日13点43分
  */
 export default class GLTFLoader {
-    static DATA = {5123:Uint16Array, 5124:Uint16Array, 5125:Uint32Array, 5126:Float32Array};
+    static DATA = {5121:Uint8Array, 5123:Uint16Array, 5124:Uint16Array, 5125:Uint32Array, 5126:Float32Array};
     static DATA_COMPONENT = {'SCALAR':1, 'VEC3':3, 'VEC4':4, 'MAT4':16};
+    static FILTERS = {
+        9729:Texture2DVars.S_FILTERS.S_LINEAR,
+        9728:Texture2DVars.S_FILTERS.S_NEAREST,
+        9987:Texture2DVars.S_FILTERS.S_LINEAR_MIPMAP_NEAREST
+    };
+    static WRAPS = {
+        10497:Texture2DVars.S_WRAPS.S_REPEAT,
+        33071:Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE
+    };
     load(scene, src, callback){
         this._m_Scene = scene;
         this._m_GLTFRootNode = null;
+        this._m_PrincipledMatDef = null;
         this._m_DefaultMatDef = null;
         this._m_Joints = {};
         this._m_Bones = [];
@@ -356,6 +370,7 @@ export default class GLTFLoader {
                 let texcoords = this._parseTexcoords(gltf, _primitive.attributes.TEXCOORD_0);
                 mesh.setData(Mesh.S_UV0, texcoords.data);
             }
+
             // skin部分
             if(isSkin){
                 if(Tools.checkIsNull(_primitive.attributes.JOINTS_0)){
@@ -374,22 +389,33 @@ export default class GLTFLoader {
                 let indices = this._parseIndices(gltf, _primitive.indices);
                 mesh.setData(indices.bufType == 5125 ? Mesh.S_INDICES_32 : Mesh.S_INDICES, indices.data);
             }
+            if(Tools.checkIsNull(_primitive.attributes.TANGENT)){
+                // normal属性
+                let tangents = this._parseTangents(gltf, _primitive.attributes.TANGENT);
+                mesh.setData(Mesh.S_TANGENTS, tangents.data);
+            }
+            else{
+                // 生成切线数据
+                if(mesh.getData(Mesh.S_UV0)){
+                    let tangents = Tools.generatorTangents(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
+                    mesh.setData(Mesh.S_TANGENTS, tangents);
+                }
+            }
             // 然后是材质(这里先跳过PBR材质)
             if(Tools.checkIsNull(_primitive.material)){
                 // 后续完善时,这里单独到一个函数中进行,因为解析PBR材质参数最好独立到一个解析函数中
 
-                if(!this._m_DefaultMatDef){
-                    this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "BasicLightingDef");
+                if(!this._m_PrincipledMatDef){
+                    this._m_PrincipledMatDef = MaterialDef.load(this._m_AssetsPath + "PrincipledLightingDef");
                 }
-                let matId = gltf.materials[_primitive.material].name;
+                let matId = this._getName(gltf.materials[_primitive.material].name);
                 let material = null;
                 if(this._m_Mats[matId]){
                     material = this._m_Mats[matId];
                 }
                 else{
-                    // 创建新材质,后续移到独立方法创建适配的pbr材质或转换phong材质
-                    material = new Material(this._m_Scene, {id:matId, materialDef:this._m_DefaultMatDef});
-                    material.selectTechnology('BlinnPhongLight2');
+                    material = new Material(this._m_Scene, {id:matId, materialDef:this._m_PrincipledMatDef});
+                    this._parseMaterial(gltf, _primitive.material, material);
                     this._m_Mats[matId] = material;
                 }
                 geometryNode.setMaterial(material);
@@ -397,7 +423,7 @@ export default class GLTFLoader {
             else{
                 // 添加一个默认材质
                 if(!this._m_DefaultMatDef){
-                    this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "BasicLightingDef");
+                    this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "ColorDef");
                 }
                 let matId = 'default_gltf_mat';
                 let material = null;
@@ -407,7 +433,6 @@ export default class GLTFLoader {
                 else{
                     // 创建新材质,后续移到独立方法创建适配的pbr材质或转换phong材质
                     material = new Material(this._m_Scene, {id:matId, materialDef:this._m_DefaultMatDef});
-                    material.selectTechnology('BlinnPhongLight2');
                     this._m_Mats[matId] = material;
                 }
                 geometryNode.setMaterial(material);
@@ -421,6 +446,88 @@ export default class GLTFLoader {
             }
         }
     }
+    _samplerMap(gltf, i){
+        let map = gltf.textures[i];
+        let img = gltf.images[map.source];
+        let texture = new Texture2DVars(this._m_Scene);
+        texture.setImageSrc(this._m_Scene, this._m_BasePath + img.uri);
+        if(Tools.checkIsNull(map.sampler)){
+            let sampler = gltf.samplers[map.sampler];
+            // 设置纹理采样参数
+            if(Tools.checkIsNull(sampler)){
+                let magFilter = sampler.magFilter;
+                let minFilter = sampler.minFilter;
+                if(magFilter && minFilter){
+                    texture.setFilter(this._m_Scene, GLTFLoader.FILTERS[minFilter], GLTFLoader.FILTERS[magFilter]);
+                }
+                let wrapS = sampler.wrapS;
+                let wrapT = sampler.wrapT;
+                if(wrapS && wrapT){
+                    texture.setWrap(this._m_Scene, GLTFLoader.WRAPS[wrapS], GLTFLoader.WRAPS[wrapT]);
+                }
+            }
+        }
+        return texture;
+    }
+    _parseMaterial(gltf, i, material){
+        let _material = gltf.materials[i];
+        // metallic管道
+        if(_material['pbrMetallicRoughness']){
+            let pbrMetallicRoughness = _material['pbrMetallicRoughness'];
+            let baseColorFactor = pbrMetallicRoughness.baseColorFactor;
+            if(baseColorFactor){
+                material.setParam('baseColor', new Vec4Vars().valueFromXYZW(baseColorFactor[0], baseColorFactor[1], baseColorFactor[2], baseColorFactor[3]));
+            }
+            let roughnessFactor = pbrMetallicRoughness.roughnessFactor;
+            if(Tools.checkIsNull(roughnessFactor)){
+                material.setParam('roughness', new FloatVars().valueOf(roughnessFactor));
+            }
+            let metallicFactor = pbrMetallicRoughness.metallicFactor;
+            if(Tools.checkIsNull(metallicFactor)){
+                material.setParam('metallic', new FloatVars().valueOf(metallicFactor));
+            }
+            let baseColorTexture = pbrMetallicRoughness.baseColorTexture;
+            if(Tools.checkIsNull(baseColorTexture)){
+                material.setParam('baseColorMap', this._samplerMap(gltf, baseColorTexture.index));
+            }
+            let metallicRoughnessTexture = pbrMetallicRoughness.metallicRoughnessTexture;
+            if(Tools.checkIsNull(metallicRoughnessTexture)){
+                material.setParam('metallicRoughnessMap', this._samplerMap(gltf, metallicRoughnessTexture.index));
+            }
+        }
+        // specular管道
+        if(_material.extensions && _material.extensions['KHR_materials_pbrSpecularGlossiness']){
+            let KHR_materials_pbrSpecularGlossiness = _material.extensions["KHR_materials_pbrSpecularGlossiness"];
+            material.setParam('useSpecGloss', new BoolVars().valueOf(true));
+            let diffuseTexture = KHR_materials_pbrSpecularGlossiness.diffuseTexture;
+            if(Tools.checkIsNull(diffuseTexture)){
+                material.setParam('baseColorMap', this._samplerMap(gltf, diffuseTexture.index));
+            }
+            let specularGlossinessTexture = KHR_materials_pbrSpecularGlossiness.specularGlossinessTexture;
+            if(Tools.checkIsNull(specularGlossinessTexture)){
+                material.setParam('specularGlossinessMap', this._samplerMap(gltf, specularGlossinessTexture.index));
+            }
+        }
+        let normalTexture = _material.normalTexture;
+        if(Tools.checkIsNull(normalTexture)){
+            // 可能还需要解析scale
+            material.setParam('normalMap', this._samplerMap(gltf, normalTexture.index));
+        }
+        let occlusionTexture = _material.occlusionTexture;
+        if(Tools.checkIsNull(occlusionTexture)){
+            let texCoord = occlusionTexture.texCoord;
+            material.setParam('lightMap', this._samplerMap(gltf, occlusionTexture.index));
+            if(texCoord != 0){
+                // 激活独立通道纹理
+            }
+            else{
+                material.setParam('aoMap', new BoolVars().valueOf(true));
+            }
+        }
+        if(_material.emissiveFactor){
+
+        }
+    }
     _parsePositions(gltf, i){
         let _positionsAccessors = gltf.accessors[i];
         // 解析
@@ -431,6 +538,17 @@ export default class GLTFLoader {
         // 然后通过accessors.byteOffset和count来截取
         let positions = new GLTFLoader.DATA[_positionsAccessors.componentType](_buffer, (_bufferView.byteOffset || 0) + (_positionsAccessors.byteOffset || 0), _positionsAccessors.count * 3);
         return {data:positions, bufType:_positionsAccessors.componentType};
+    }
+    _parseTangents(gltf, i){
+        let _tangentsAccessors = gltf.accessors[i];
+        // 解析
+        let _buffers = gltf.buffers;
+        let _bufferView = gltf.bufferViews[_tangentsAccessors.bufferView];
+        let _buffer = _buffers[_bufferView.buffer].data;
+        // 后续应该统一缓存,而不是每次newFloat32Array
+        // 然后通过accessors.byteOffset和count来截取
+        let tangents = new GLTFLoader.DATA[_tangentsAccessors.componentType](_buffer, (_bufferView.byteOffset || 0) + (_tangentsAccessors.byteOffset || 0), _tangentsAccessors.count * 3);
+        return {data:tangents, bufType:_tangentsAccessors.componentType};
     }
     _parseNormals(gltf, i){
         let _normalsAccessors = gltf.accessors[i];

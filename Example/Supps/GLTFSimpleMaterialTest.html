@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>GLTFSkinAnimation</title>
+    <title>GLTFSimpleMaterialTest</title>
 </head>
 <body>
 <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
@@ -24,11 +24,11 @@
     import GLTFLoader from "../../src/Supp/GLTFLoader.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(5, 5, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
 
     let testCamera = new Camera(scene, {id:'testCamera'});
-    testCamera.lookAt(new Vector3(5, 5, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    testCamera.lookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
     let colorMat = new Material(scene, {id:'colorWireFrustum', materialDef:colorDef});
     let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
@@ -41,24 +41,23 @@
     rootNode.addChildren(wireFrustum);
     let gltfLoader = new GLTFLoader();
     gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
-    gltfLoader.load(scene, './../Assets/Models/GLTF/Test/EstialKnigh20103.gltf', modelNode=>{
+    gltfLoader.load(scene, './../Assets/Models/GLTF/SpecGlossVsMetalRough/SpecGlossVsMetalRough.gltf', modelNode=>{
         rootNode.addChildren(modelNode);
-        modelNode.setLocalScaleXYZ(0.01, 0.01, 0.01);
-        console.log('modelNode:',modelNode);
-        let animationProcessors = modelNode.getComponentAtTypes('AnimationProcessor');
-        animationProcessors[0].getAnimationActionAtIndex(0).play();
-        // // 由于动画轨迹进行了缩放动画,而动画影响顶点,所以会出现包围盒不对应动画下的模型标准,所以这里对模型关闭剔除
-        // let U3DMesh0 = rootNode.getChildrenAtName('U3DMesh0');
-        // let U3DMesh1 = rootNode.getChildrenAtName('U3DMesh1');
-        // U3DMesh0.setFilterFlag(Node.S_NEVER);
-        // U3DMesh1.setFilterFlag(Node.S_NEVER);
     });
 
-
     let dirLight = new DirectionalLight(scene, {id:'dirLight'});
-    dirLight.setDirectionXYZ(-1, -1, 1);
+    dirLight.setDirectionXYZ(-1, -1, -1);
     dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
     rootNode.addChildren(dirLight);
+
+    let gl = scene.getCanvas().getGLContext();
+    console.log('gl.LINEAR' + gl.LINEAR);
+    console.log('gl.NEAREST' + gl.NEAREST);
+    console.log('gl.NEAREST_MIPMAP_LINEAR' + gl.NEAREST_MIPMAP_LINEAR);
+    console.log('gl.LINEAR_MIPMAP_NEAREST' + gl.LINEAR_MIPMAP_NEAREST);
+    console.log('gl.LINEAR_MIPMAP_LINEAR' + gl.LINEAR_MIPMAP_LINEAR);
+    console.log('gl.REPEAT' + gl.REPEAT);
+    console.log('gl.CLAMP_TO_EDGE' + gl.CLAMP_TO_EDGE);
 
     let renderEngine = new RenderEngine();
     scene.addSceneNode(rootNode);
