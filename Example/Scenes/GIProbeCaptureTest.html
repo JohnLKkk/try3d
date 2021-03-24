@@ -7,6 +7,16 @@
 <body>
 <div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
     <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+    <div style="position:fixed;right: 0px;top: 0px;background-color: black">
+        <p style="margin: 5px;padding: 5px;color: white;">
+            GIProbe用于烘焙全局光照,是新一代实时渲染的重要技术,<br/>
+            该案例演示如何仅在TEORT_WebGL中进行指定“光探头”的<br/>
+            烘焙,你可以按住键盘U键以查看高粗糙度(Roughness)的烘培<br/>
+            结果,按住键盘J键以查看低粗糙度(Roughness)的烘培结果。<br/>
+            (注意:请确保页面获取焦点,即先把鼠标点击页面以便键盘接收<br/>
+            输入。)<br/>
+        </p>
+    </div>
 </div>
 <script type="module">
     import Scene from "../../src/Core/Scene/Scene.js";
@@ -14,6 +24,7 @@
     import Vector3 from "../../src/Core/Math3d/Vector3.js";
     import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
     import SkyBox from "../../src/Core/Node/Sky/SkyBox.js";
+    import Internal from "../../src/Core/Render/Internal.js";
     import Node  from "../../src/Core/Node/Node.js";
     import BoolVars from "../../src/Core/WebGL/Vars/BoolVars.js";
     import Vector4 from "../../src/Core/Math3d/Vector4.js";
@@ -32,7 +43,7 @@
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(0.5, 0.5, 0.5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
-    firstPersonController.setMovementSpeed(10);
+    firstPersonController.setMovementSpeed(1);
 
     // 环境纹理加载完再开始创建创建
     let radianceLoader = new RadianceLoader();
@@ -67,10 +78,10 @@
         giProbe.setPositionFromXYZ(0, 0, 0);
         rootNode.addChildren(giProbe);
         // 捕捉环境数据
-        let envCapture = ProbeTools.bakeGIProbe(scene, giProbe, {resolute:256});
+        let envCapture = ProbeTools.bakeGIProbe(scene, giProbe, {resolute:128});
         // 添加一个渲染探头,将捕捉数据渲染出来
         let giProbeGeo = new Sphere(scene, {id:'giProbeGeo', radius:0.1});
-        let giProbeMat = new Material(scene, {id:'giProbeMat', materialDef:MaterialDef.load('./EnvCaptureOutDef')});
+        let giProbeMat = new Material(scene, {id:'giProbeMat', materialDef:MaterialDef.parse(Internal.S_ENV_CAPTURE_OUT_DEF)});
         giProbeMat.setParam('envCaptureMap', envCapture.getPrefilterTextureCube());
         // giProbeMat.setParam('lod', new FloatVars().valueOf(0));
         giProbeGeo.setMaterial(giProbeMat);

@@ -144,8 +144,8 @@
         rootNode.addChildren(dirLight);
 
         let giProbe = new GIProbe(scene, {id:'giProbe'});
-        giProbe.setRadius(10);
-        giProbe.setPositionFromXYZ(0, 5, 0);
+        giProbe.setRadius(20);
+        giProbe.setPositionFromXYZ(5, 5, 5);
         let envCapture = ProbeTools.bakeGIProbe(scene, giProbe, {resolute:128});
 
         // 添加一个渲染探头,将捕捉数据渲染出来

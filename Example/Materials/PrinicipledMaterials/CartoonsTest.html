@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>EnvironmentTest</title>
+    <title>CartoonsTest</title>
     <style>
         #baseColor input{
             width: 50px;
@@ -41,18 +41,19 @@
     import RadianceLoader from "../../../src/Supp/RadianceLoader.js";
     import SkyBox from "../../../src/Core/Node/Sky/SkyBox.js";
     import GLTFLoader from "../../../src/Supp/GLTFLoader.js";
+    import MoreMath from "../../../src/Core/Math3d/MoreMath.js";
 
 
     // 创建scene
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(0, 0, 20), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(0.14250750944191434,-0.8575145061624769,-8.764358330711921), new Vector3(0.45170584045592854,-0.7132451362248271,-7.824367511078059), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     let rootNode = new Node(scene, {id:'rootNode'});
 
     // 环境纹理加载完再开始创建创建
     let radianceLoader = new RadianceLoader();
-    radianceLoader.loadHDR('../../Assets/Textures/hdr/inside.hdr', imageData=>{
+    radianceLoader.loadHDR('../../Assets/Textures/hdr/env1.hdr', imageData=>{
         // 创建一个sky
         let sky = new SkyBox(scene, {id:'sky'});
         // 使用cubeMap作为天空盒材质
@@ -100,17 +101,12 @@
         giProbeGeo.setMaterial(giProbeMat);
         rootNode.addChildren(giProbeGeo);
 
-        // 将烘焙环境光作为sky材质
-        sky.setMaterial(new Material(scene, {id:'giProbeMat', materialDef:MaterialDef.parse(Internal.S_ENV_CAPTURE_OUT_DEF)}));
-        sky.getMaterial().selectTechnology('EnvSky');
-        sky.getMaterial().setParam('envCaptureMap', envCapture.getPrefilterTextureCube());
-        sky.getMaterial().setParam('lod', new FloatVars().valueOf(4));
-
         let gltfLoader = new GLTFLoader();
         gltfLoader.setAssetsPath("../../../src/Core/Assets/MaterialDef/");
-        gltfLoader.load(scene, '../../Assets/Models/GLTF/EnvironmentTest/EnvironmentTest.gltf', (modelNode)=>{
+        gltfLoader.load(scene, '../../Assets/Models/GLTF/ftm/scene.gltf', (modelNode)=>{
+            modelNode.setLocalRotationFromEuler(MoreMath.toRadians(0), 0, 0);
             rootNode.addChildren(modelNode);
-        }, {batch:true});
+        }, {batch:false});
 
     });
 

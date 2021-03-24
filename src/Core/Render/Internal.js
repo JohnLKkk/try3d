@@ -236,4 +236,77 @@ export default class Internal {
         "        }\n" +
         "    }\n" +
         "}\n";
+    static S_ENV_CAPTURE_OUT_DEF = "// 将环境捕捉数据渲染并查看\n" +
+        "// 同时,也支持将IBL作为SkyEnv进行场景环境渲染\n" +
+        "Def EnvCaptureOutDef{\n" +
+        "    Params{\n" +
+        "        samplerCube envCaptureMap;\n" +
+        "        float lod;\n" +
+        "    }\n" +
+        "    SubTechnology EnvCaptureOut{\n" +
+        "        Vars{\n" +
+        "            vec3 wPosition;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                wPosition = Context.InPosition;\n" +
+        "                Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            void main(){\n" +
+        "                #ifdef Params.envCaptureMap\n" +
+        "                    #ifdef Params.lod\n" +
+        "                        Context.OutColor = textureLod(Params.envCaptureMap, normalize(wPosition), Params.lod);\n" +
+        "                    #else\n" +
+        "                        Context.OutColor = texture(Params.envCaptureMap, normalize(wPosition));\n" +
+        "                    #endif\n" +
+        "                #else\n" +
+        "                    Context.OutColor = vec4(1.0f);\n" +
+        "                #endif\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    SubTechnology EnvSkyOut{\n" +
+        "        Vars{\n" +
+        "            vec3 wPosition;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                wPosition = Context.InPosition;\n" +
+        "                // 只需要旋转部分\n" +
+        "                vec4 pos = Context.ViewMatrix * vec4(Context.InPosition, 0.0f);\n" +
+        "                // 应用投影变换\n" +
+        "                pos.w = 1.0f;\n" +
+        "                pos = Context.ProjectMatrix * pos;\n" +
+        "                Context.OutPosition = pos.xyww;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            void main(){\n" +
+        "                #ifdef Params.envCaptureMap\n" +
+        "                    #ifdef Params.lod\n" +
+        "                        Context.OutColor = textureLod(Params.envCaptureMap, normalize(wPosition), Params.lod);\n" +
+        "                    #else\n" +
+        "                        Context.OutColor = texture(Params.envCaptureMap, normalize(wPosition));\n" +
+        "                    #endif\n" +
+        "                #else\n" +
+        "                    Context.OutColor = vec4(1.0f);\n" +
+        "                #endif\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology{\n" +
+        "        Sub_Pass{\n" +
+        "            Pass EnvCaptureOut{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology EnvSky{\n" +
+        "        Sub_Pass{\n" +
+        "            Pass EnvSkyOut{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "}\n";
 }

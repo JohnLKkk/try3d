@@ -9,7 +9,7 @@ import ShaderSource from "../WebGL/ShaderSource.js";
 /**
  * 在当个pass中批量处理多个灯光。<br/>
  * @author Kkk
- * @date 2021年2月17日16点09分
+ * @date 2021年3月21日19点20分
  */
 export default class SinglePassIBLLightingRenderProgram extends DefaultRenderProgram{
     static PROGRAM_TYPE = 'SinglePassIBLLighting';
@@ -46,19 +46,27 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         let conVars = frameContext.m_LastSubShader.getContextVars();
         // 探头信息
         let probeLoc = null;
-        if(conVars[SinglePassIBLLightingRenderProgram.S_WGIPROBE_SRC] && this._m_m_LastSubShader != frameContext.m_LastSubShader){
-            // Log.log('提交探头!');
-            let giProbe = scene.getGIProbes()[0];
-            let giData = TempVars.S_TEMP_VEC4;
-            // 探头位置
-            giData.setToInXYZW(giProbe.getPosition()._m_X, giProbe.getPosition()._m_Y, giProbe.getPosition()._m_Z, 1.0 / giProbe.getRadius() + giProbe.getPrefilterMipmap());
-            gl.uniform4fv(conVars[SinglePassIBLLightingRenderProgram.S_WGIPROBE_SRC].loc, giData.getBufferData(), 0, 4);
-            // 球谐系数
-            giData = giProbe.getShCoeffsBufferData();
-            gl.uniform3fv(conVars[SinglePassIBLLightingRenderProgram.S_SH_COEFFS_SRC].loc, giData.getBufferData(), 0, 9 * 3);
-            // prefilterEnvMap
-            giProbe.getPrefilterEnvMap()._upload(gl, conVars[SinglePassIBLLightingRenderProgram.S_PREF_ENV_MAP_SRC].loc);
-            this._m_m_LastSubShader = frameContext.m_LastSubShader;
+        if(conVars[SinglePassIBLLightingRenderProgram.S_WGIPROBE_SRC]){
+            if(this._m_m_LastSubShader != frameContext.m_LastSubShader){
+                // 提取相交的探头
+                // 并更新探头数据进行混合渲染(但这里未实现,先记录下)
+                // Log.log('提交探头!');
+                let giProbe = scene.getGIProbes()[0];
+                let giData = TempVars.S_TEMP_VEC4;
+                // 探头位置
+                giData.setToInXYZW(giProbe.getPosition()._m_X, giProbe.getPosition()._m_Y, giProbe.getPosition()._m_Z, 1.0 / giProbe.getRadius() + giProbe.getPrefilterMipmap());
+                gl.uniform4fv(conVars[SinglePassIBLLightingRenderProgram.S_WGIPROBE_SRC].loc, giData.getBufferData(), 0, 4);
+                // 球谐系数
+                giData = giProbe.getShCoeffsBufferData();
+                gl.uniform3fv(conVars[SinglePassIBLLightingRenderProgram.S_SH_COEFFS_SRC].loc, giData.getBufferData(), 0, 9 * 3);
+                // prefilterEnvMap
+                giProbe.getPrefilterEnvMap()._upload(gl, conVars[SinglePassIBLLightingRenderProgram.S_PREF_ENV_MAP_SRC].loc);
+                this._m_m_LastSubShader = frameContext.m_LastSubShader;
+            }
+            else{
+                // 说明提交过探头数据
+                // 这里,检测已经提交的探头数据,然后分析是否与之相交,否则关闭探头数据,避免错误的渲染和额外的渲染
+            }
         }
         else{
             // 检测探头
