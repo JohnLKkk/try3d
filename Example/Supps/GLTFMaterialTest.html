@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GLTFSimpleMaterialTest</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
+    <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script type="module">
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import Stats from "../stats.min.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import Camera from "../../src/Core/Scene/Camera.js";
+    import MeshFactor from "../../src/Core/Util/MeshFactor.js";
+    import Geometry from "../../src/Core/Node/Geometry.js";
+    import GLTFLoader from "../../src/Supp/GLTFLoader.js";
+    import RadianceLoader from "../../src/Supp/RadianceLoader.js";
+    import BoolVars from "../../src/Core/WebGL/Vars/BoolVars.js";
+    import GIProbe from "../../src/Core/Light/GIProbe.js";
+    import ProbeTools from "../../src/Core/Util/ProbeTools.js";
+    import Texture2DVars from "../../src/Core/WebGL/Vars/Texture2DVars.js";
+    import SkyBox from "../../src/Core/Node/Sky/SkyBox.js";
+    import Vector4 from "../../src/Core/Math3d/Vector4.js";
+    import Sphere from "../../src/Core/Node/Shape/Sphere.js";
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(2, 0, 10), new Vector3(-2, 0, 0), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    firstPersonController.setMovementSpeed(2);
+
+    let rootNode = new Node(scene, {id:'rootNode'});
+
+    // 环境纹理加载完再开始创建创建
+    let radianceLoader = new RadianceLoader();
+    radianceLoader.loadHDR('../Assets/Textures/hdr/newport_loft.hdr', imageData=> {
+        // 创建一个sky
+        let sky = new SkyBox(scene, {id: 'sky'});
+        // 使用cubeMap作为天空盒材质
+        let envMap = new Texture2DVars(scene);
+        envMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
+        envMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+        envMap.setFilter(scene, Texture2DVars.S_FILTERS.S_LINEAR, Texture2DVars.S_FILTERS.S_LINEAR);
+        envMap.setImage(scene, imageData, {rgbe: true});
+        sky.getMaterial().setParam('envMap', envMap);
+        sky.getMaterial().setParam('useEnvMap', new BoolVars().valueOf(true));
+        sky.getMaterial().setParam('useHDR', new BoolVars().valueOf(true));
+
+        scene.setSky(sky);
+
+
+        let gltfLoader = new GLTFLoader();
+        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+        gltfLoader.load(scene, './../Assets/Models/GLTF/SpecGlossVsMetalRough/SpecGlossVsMetalRough.gltf', modelNode=>{
+            modelNode.setLocalScaleXYZ(10, 10, 10);
+            modelNode.setLocalTranslationXYZ(-5, 0, 5);
+            rootNode.addChildren(modelNode);
+            let giProbe = new GIProbe(scene, {id:'giProbe'});
+            giProbe.setRadius(10);
+            giProbe.setPositionFromXYZ(0, 5, 0);
+            let envCapture = ProbeTools.bakeGIProbe(scene, giProbe, {resolute:128});
+
+            // 重置加载器
+            gltfLoader.reset();
+            gltfLoader.load(scene, './../Assets/Models/GLTF/MetalRoughSpheres/MetalRoughSpheres.gltf', modelNode=>{
+                rootNode.addChildren(modelNode);
+            });
+        }, {batch:true});
+    });
+
+
+    let dirLight = new DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(-1, -1, -1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dirLight);
+
+    let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+    });
+</script>
+</body>
+</html>

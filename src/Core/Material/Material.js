@@ -129,6 +129,28 @@ export default class Material extends Component{
     }
 
     /**
+     * 预加载材质。<br/>
+     */
+    preload(){
+        let subPassList = this.getCurrentTechnology().getSubPassList();
+        if(subPassList){
+            let subPasss = null;
+            let currentSubShader = null;
+            let gl = this._m_Scene.getCanvas().getGLContext();
+            let frameContext = this._m_Scene.getRender().getFrameContext();
+            for(let path in subPassList){
+                subPasss = subPassList[path];
+                subPasss.getSubShaders().forEach(subPass=>{
+                    if(subPass.subShader.needCompile()){
+                        subPass.subShader._compile(gl, frameContext);
+                        // 然后提交参数
+                    }
+                });
+            }
+        }
+    }
+
+    /**
      * 使用指定subShader进行材质着色。<br/>
      * @param {SubShader}[subShader]
      */
@@ -137,8 +159,10 @@ export default class Material extends Component{
         let gl = this._m_Scene.getCanvas().getGLContext();
         let frameContext = this._m_Scene.getRender().getFrameContext();
         // 检测是否需要重新编译subShader
+        let recompile = false;
         if(this._m_CurrentSubShader.needCompile()){
             this._m_CurrentSubShader._compile(gl, frameContext);
+            recompile = true;
         }
         // 1.先检测是否需要切换subShader(根据shader种类)(这里检测可能与理论不一样，打印出id来调试...)
         if(frameContext.m_LastSubShaderId != subShader.getDefId()){
@@ -166,7 +190,7 @@ export default class Material extends Component{
                 // 检测是否需要更新该参数
                 if(this._m_ParamValues[param.paramName]){
                     // 如果值相同就跳过
-                    if(!this._m_ParamValues[param.paramName].compare(param.value)){
+                    if(recompile || !this._m_ParamValues[param.paramName].compare(param.value)){
                         // 提交参数并保存参数
                         this._m_CurrentSubShader.uploadParam(gl, param.paramName, param.value);
                         this._m_ParamValues[param.paramName] = param.value;

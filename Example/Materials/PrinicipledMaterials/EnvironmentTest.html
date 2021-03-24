@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SimpleMetalMaterialTest</title>
+    <title>EnvironmentTest</title>
     <style>
         #baseColor input{
             width: 50px;
@@ -18,16 +18,6 @@
 <body>
 <div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
     <canvas id="canvas" tabindex="0" width="400" height="300" style="border: none;margin: 0px;padding: 0px;"></canvas>
-    <div style="position:fixed;right: 0px;top: 0px;margin: 20px;align-content: center">
-        <span style="color: white;display: inline-block;width: 100px;text-align: right;padding-right: 10px;">baseColor:</span><span id="baseColor"><input type="text" value="1.000"><input type="text" value="0.766"><input type="text" value="0.336"></span><br/>
-        <span style="color: white;display: inline-block;width: 100px;text-align: right;padding-right: 10px;">metallic:</span><input id="metallic" type="range" min="0" max="1.0" step="0.1" value="0.5"><br/>
-        <span style="color: white;display: inline-block;width: 100px;text-align: right;padding-right: 10px;">roughness:</span><input id="roughness" type="range" min="0" max="1.0" step="0.1" value="0.1"><br/>
-    </div>
-    <div style="position:fixed;right: 0px;bottom: 0px;margin: 20px;align-content: center">
-        <span style="color: white;display: inline-block;width: 100px;text-align: right;padding-right: 10px;">baseColor:</span><span id="baseColor2"><input type="text" value="1.000"><input type="text" value="0.766"><input type="text" value="0.336"></span><br/>
-        <span style="color: white;display: inline-block;width: 100px;text-align: right;padding-right: 10px;">specular:</span><span id="specular"><input type="text" value="0.5"><input type="text" value="0.5"><input type="text" value="0.5"></span><br/>
-        <span style="color: white;display: inline-block;width: 100px;text-align: right;padding-right: 10px;">glossiness:</span><input id="glossiness" type="range" min="0" max="1.0" step="0.1" value="0.9"><br/>
-    </div>
 </div>
 <script type="module">
     import Scene from "../../../src/Core/Scene/Scene.js";
@@ -49,12 +39,13 @@
     import ProbeTools from "../../../src/Core/Util/ProbeTools.js";
     import RadianceLoader from "../../../src/Supp/RadianceLoader.js";
     import SkyBox from "../../../src/Core/Node/Sky/SkyBox.js";
+    import GLTFLoader from "../../../src/Supp/GLTFLoader.js";
 
 
     // 创建scene
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(-10, 0, 0), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(0, 0, 20), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     let rootNode = new Node(scene, {id:'rootNode'});
 
@@ -90,27 +81,6 @@
             return texture;
         };
 
-        // metal
-        let metal = new Sphere(scene, {id:'metal', widthSegments:35, heightSegments:35});
-        let metalMat = new Material(scene, {id:'metalMat', materialDef:metalLightingDef});
-        metalMat.setParam('baseColor', new Vec4Vars().valueFromXYZW(1.000, 0.766, 0.336, 1.0));
-        metalMat.setParam('metallic', new FloatVars().valueOf(0.5));
-        metalMat.setParam('roughness', new FloatVars().valueOf(0.1));
-        metal.setMaterial(metalMat);
-        metal.setLocalTranslationXYZ(0, 0, -2);
-        rootNode.addChildren(metal);
-
-        // specular
-        let specular = new Sphere(scene, {id:'specular', widthSegments:35, heightSegments:35});
-        let specularMat = new Material(scene, {id:'specularMat', materialDef:metalLightingDef});
-        specularMat.setParam('baseColor', new Vec4Vars().valueFromXYZW(1.000, 0.766, 0.336, 1.0));
-        specularMat.setParam('specular', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
-        specularMat.setParam('glossiness', new FloatVars().valueOf(0.9));
-        specularMat.setParam('useSpecGloss', new BoolVars().valueOf(true));
-        specular.setMaterial(specularMat);
-        specular.setLocalTranslationXYZ(0, 0, 2);
-        rootNode.addChildren(specular);
-
         let dirLight = new DirectionalLight(scene, {id:'dirLight'});
         dirLight.setDirectionXYZ(-1, -1, -1);
         dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
@@ -129,52 +99,12 @@
         giProbeGeo.setMaterial(giProbeMat);
         rootNode.addChildren(giProbeGeo);
 
-        // 材质参数
-        let setColor = (id, callback)=>{
-            let dom = document.getElementById(id);
-            let color = [1.000, 0.766, 0.336, 1.0];
-            for(let i = 0;i < dom.childNodes.length;i++){
-                dom.childNodes[i].onchange = ()=>{
-                    if(dom.childNodes[i].value > 1.0){
-                        dom.childNodes[i].value = 1.0;
-                    }
-                    else if(dom.childNodes[i].value < 0.0){
-                        dom.childNodes[i].value = 0.0;
-                    }
-                    color[i] = Number(dom.childNodes[i].value);
-                    if(callback){
-                        callback(color);
-                    }
-                };
-            }
-        };
-        setColor('baseColor', (baseColor)=>{
-            metalMat.setParam('baseColor', new Vec4Vars().valueFromXYZW(baseColor[0], baseColor[1], baseColor[2], baseColor[3]));
-        });
-        setColor('baseColor2', (baseColor)=>{
-            specularMat.setParam('baseColor', new Vec4Vars().valueFromXYZW(baseColor[0], baseColor[1], baseColor[2], baseColor[3]));
-        });
-        setColor('specular', (specular)=>{
-            specularMat.setParam('specular', new Vec4Vars().valueFromXYZW(specular[0], specular[1], specular[2], specular[3]));
-        });
+        let gltfLoader = new GLTFLoader();
+        gltfLoader.setAssetsPath("../../../src/Core/Assets/MaterialDef/");
+        gltfLoader.load(scene, '../../Assets/Models/GLTF/EnvironmentTest/EnvironmentTest.gltf', (modelNode)=>{
+            rootNode.addChildren(modelNode);
+        }, {batch:true});
 
-        let setFloat = (id, callback)=>{
-            let dom = document.getElementById(id);
-            dom.onchange = ()=>{
-                if(callback){
-                    callback(Number(dom.value));
-                }
-            };
-        };
-        setFloat('metallic', (value)=>{
-            metalMat.setParam('metallic', new FloatVars().valueOf(value));
-        });
-        setFloat('roughness', (value)=>{
-            metalMat.setParam('roughness', new FloatVars().valueOf(value));
-        });
-        setFloat('glossiness', (value)=>{
-            specularMat.setParam('glossiness', new FloatVars().valueOf(value));
-        });
     });
 
 

@@ -252,6 +252,21 @@ export default class Matrix44 {
     }
 
     /**
+     * 转置该矩阵。<br/>
+     */
+    transpose(){
+        let array = [];
+        for(let i = 0;i < this.m.length;i++){
+            array[i] = this.m[i];
+        }
+        for(let i = 0, t = 0;i < 4;i++){
+            for(let j = 0;j < 4;j++){
+                this.m[t++] = array[j * 4 + i];
+            }
+        }
+    }
+
+    /**
      * 将矩阵所有值设置为正。<br/>
      */
     absLocal(){

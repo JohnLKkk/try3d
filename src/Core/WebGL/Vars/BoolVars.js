@@ -21,7 +21,8 @@ export default class BoolVars extends Vars{
      * @return {Boolean}
      */
     compare(boolVars) {
-        return this._m_Bool == boolVars._m_Bool;
+        // return this._m_Bool == boolVars._m_Bool;
+        return false;
     }
     _upload(gl, loc, fun){
         gl.uniform1i(loc, this._m_Bool);

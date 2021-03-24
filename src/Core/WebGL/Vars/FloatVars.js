@@ -22,7 +22,8 @@ export default class FloatVars extends Vars{
      * @return {Boolean}
      */
     compare(floatVars) {
-        return this._m_Float == floatVars._m_Float;
+        // return this._m_Float == floatVars._m_Float;
+        return false;
     }
     _upload(gl, loc, fun){
         gl.uniform1f(loc, this._m_Float);

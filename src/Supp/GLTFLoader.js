@@ -21,6 +21,8 @@ import Vec4Vars from "../Core/WebGL/Vars/Vec4Vars.js";
 import FloatVars from "../Core/WebGL/Vars/FloatVars.js";
 import Texture2DVars from "../Core/WebGL/Vars/Texture2DVars.js";
 import BoolVars from "../Core/WebGL/Vars/BoolVars.js";
+import Vector4 from "../Core/Math3d/Vector4.js";
+import Matrix44 from "../Core/Math3d/Matrix44.js";
 
 /**
  * GLTFLoader。<br/>
@@ -40,8 +42,17 @@ export default class GLTFLoader {
         10497:Texture2DVars.S_WRAPS.S_REPEAT,
         33071:Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE
     };
-    load(scene, src, callback){
+
+    /**
+     * 加载一个GLTF模型。<br/>
+     * @param {Scene}[scene]
+     * @param {String}[src]
+     * @param {Function}[callback]
+     * @param {Boolean}[options.batch 对于静态场景,可以设置为true以进行优化数据,对于包含动画场景的模型,静止使用该变量]
+     */
+    load(scene, src, callback, options){
         this._m_Scene = scene;
+        this._m_Batch = options && options.batch;
         this._m_GLTFRootNode = null;
         this._m_PrincipledMatDef = null;
         this._m_DefaultMatDef = null;
@@ -52,8 +63,26 @@ export default class GLTFLoader {
         this._m_Skeletons = {};
         this._m_AnimationProcessors = {};
         this._m_Mats = {};
+        this._m_MatMeshs = {};
         this._m_BasePath = AssetLoader.getBasePath(src);
         this._loadGLTF(src, callback);
+    }
+
+    /**
+     * 重置加载器。<br/>
+     */
+    reset(){
+        this._m_GLTFRootNode = null;
+        this._m_PrincipledMatDef = null;
+        this._m_DefaultMatDef = null;
+        this._m_Joints = {};
+        this._m_Bones = [];
+        this._m_Nodes = {};
+        this._m_Aps = [];
+        this._m_Skeletons = {};
+        this._m_AnimationProcessors = {};
+        this._m_Mats = {};
+        this._m_MatMeshs = {};
     }
 
     /**
@@ -108,25 +137,51 @@ export default class GLTFLoader {
                         if(Tools.checkIsNull(gltf.scene)){
                             scene = this._addScene(gltf);
                         }
-                        this._bindBone();
-
-                        // 解析动画剪辑
-                        if(Tools.checkIsNull(gltf.animations)){
-                            this._parseAnimations(gltf);
-                            this._m_Aps.forEach(ap=>{
-                                ap.skeleton.finished();
-                            });
+                        if(!this._m_Batch){
+                            this._bindBone();
+                            // 解析动画剪辑
+                            if(Tools.checkIsNull(gltf.animations)){
+                                this._parseAnimations(gltf);
+                                this._m_Aps.forEach(ap=>{
+                                    ap.skeleton.finished();
+                                });
+                            }
+                        }
+                        else{
+                            // 创建batch场景
+                            this._batchScene();
                         }
 
+
                         Log.log('当前材质:' , this._m_Mats);
+                        // 预编译所有材质
+                        if(this._m_Mats){
+                            for(let matId in this._m_Mats){
+                                this._m_Mats[matId].preload();
+                            }
+                        }
                         if(callback){
-                            callback(scene);
+                            callback(this._m_GLTFRootNode);
                         }
                     });
                 }
             }
             Log.log('gltf:',gltf);
         });
+    }
+    _batchScene(){
+        if(this._m_MatMeshs){
+            let mesh = null;
+            let geometry = null;
+            for(let matId in this._m_MatMeshs){
+                mesh = this._m_MatMeshs[matId].mesh;
+                geometry = new Geometry(this._m_Scene, {id:matId + "_" + Tools.nextId()});
+                geometry.setMesh(mesh);
+                geometry.updateBound();
+                geometry.setMaterial(this._m_Mats[matId]);
+                this._m_GLTFRootNode.addChildren(geometry);
+            }
+        }
     }
     _bindBone(){
         let jis = null;
@@ -232,7 +287,14 @@ export default class GLTFLoader {
         if(Tools.checkIsNull(gltf.scene)){
             let _scene = gltf.scenes[gltf.scene];
             let sceneNode = new Node(this._m_Scene, {id:_scene.name});
-            this._m_GLTFRootNode = sceneNode;
+            if(this._m_Batch){
+                // 因为batchScene已经执行了合并变换操作,所以在这里消除
+                this._m_GLTFRootNode = new Node(this._m_Scene, {id:Tools.nextId() + "_scene"});
+                this._m_GLTFRootNode.addChildren(sceneNode);
+            }
+            else{
+                this._m_GLTFRootNode = sceneNode;
+            }
             // 检查子节点
             if(Tools.checkIsNull(_scene.nodes)){
                 // 添加子节点
@@ -240,7 +302,7 @@ export default class GLTFLoader {
                     this._addNode(gltf, sceneNode, node);
                 });
             }
-            return sceneNode;
+            return this._m_GLTFRootNode;
         }
         return null;
     }
@@ -291,36 +353,6 @@ export default class GLTFLoader {
                 this._addNode(gltf, node, nodeI);
             });
         }
-        // 解析mesh结构
-        if(Tools.checkIsNull(_node.mesh)){
-            this._parseMesh(gltf, node, _node.mesh, Tools.checkIsNull(_node.skin));
-            if(Tools.checkIsNull(_node.skin)){
-                // 添加骨架
-                // 如果已经存在skin则直接应用这套骨架
-                let skeleton = null;
-                if(this._m_Skeletons[_node.skin]){
-                    skeleton = this._m_Skeletons[_node.skin];
-                }
-                else{
-                    skeleton = this._parseSkins(gltf, _node.skin);
-                    this._m_Skeletons[_node.skin] = skeleton;
-                    Log.log('创建Skeleton!');
-                }
-                node.getChildren().forEach(skinGeometryNode=>{
-                    skinGeometryNode.setSkeleton(skeleton);
-                });
-                // 添加AnimationProcessor
-                if(this._m_AnimationProcessors[_node.skin]){
-                    // 说明该ap被多个skin引用,应该将其附加到这些skin的父类
-                }
-                else{
-                    // 这里将所有animationProcessor附加到根节点中,而不再附加到最近层级,虽然没有了层级描述性,但方便了使用和管理
-                    let animationProcessor = new AnimationProcessor(this._m_GLTFRootNode, {id:Tools.nextId() + "_animationProcessor"});
-                    this._m_Aps.push({skeleton, animationProcessor});
-                    this._m_AnimationProcessors[_node.skin] = animationProcessor;
-                }
-            }
-        }
         if(node){
             // 变换
             if(Tools.checkIsNull(_node.scale)){
@@ -334,6 +366,286 @@ export default class GLTFLoader {
             }
             if(Tools.checkIsNull(_node.matrix)){
                 node.setLocalMatrixFromArray(_node.matrix);
+            }
+        }
+        // 解析mesh结构
+        if(Tools.checkIsNull(_node.mesh)){
+            if(this._m_Batch){
+                // batch将一致处理，所以这里会忽略导致动画数据被过滤掉
+                this._parseMeshBatch(gltf, node, _node.mesh);
+            }
+            else{
+                this._parseMesh(gltf, node, _node.mesh, Tools.checkIsNull(_node.skin));
+                if(Tools.checkIsNull(_node.skin)){
+                    // 添加骨架
+                    // 如果已经存在skin则直接应用这套骨架
+                    let skeleton = null;
+                    if(this._m_Skeletons[_node.skin]){
+                        skeleton = this._m_Skeletons[_node.skin];
+                    }
+                    else{
+                        skeleton = this._parseSkins(gltf, _node.skin);
+                        this._m_Skeletons[_node.skin] = skeleton;
+                        Log.log('创建Skeleton!');
+                    }
+                    node.getChildren().forEach(skinGeometryNode=>{
+                        skinGeometryNode.setSkeleton(skeleton);
+                    });
+                    // 添加AnimationProcessor
+                    if(this._m_AnimationProcessors[_node.skin]){
+                        // 说明该ap被多个skin引用,应该将其附加到这些skin的父类
+                    }
+                    else{
+                        // 这里将所有animationProcessor附加到根节点中,而不再附加到最近层级,虽然没有了层级描述性,但方便了使用和管理
+                        let animationProcessor = new AnimationProcessor(this._m_GLTFRootNode, {id:Tools.nextId() + "_animationProcessor"});
+                        this._m_Aps.push({skeleton, animationProcessor});
+                        this._m_AnimationProcessors[_node.skin] = animationProcessor;
+                    }
+                }
+            }
+        }
+    }
+    _transformVertex(inPosition, inMat4){
+        let inVec4 = new Vector4();
+        let outVec4 = new Vector4();
+        let outPositions = [];
+        for(let i = 0;i < inPosition.length;i+=3){
+            inVec4.setToInXYZW(inPosition[i], inPosition[i + 1], inPosition[i + 2], 1.0);
+            Matrix44.multiplyMV(outVec4, inVec4, inMat4);
+            outPositions.push(outVec4._m_X);
+            outPositions.push(outVec4._m_Y);
+            outPositions.push(outVec4._m_Z);
+        }
+        return outPositions;
+    }
+    _transformNormal(inPosition, inMat4){
+        let normalMatrix = new Matrix44();
+        normalMatrix.set(inMat4);
+        normalMatrix.inert();
+        normalMatrix.transpose();
+        let inVec4 = new Vector4();
+        let outVec4 = new Vector4();
+        let outPositions = [];
+        for(let i = 0;i < inPosition.length;i+=3){
+            inVec4.setToInXYZW(inPosition[i], inPosition[i + 1], inPosition[i + 2], 0.0);
+            Matrix44.multiplyMV(outVec4, inVec4, inMat4);
+            outPositions.push(outVec4._m_X);
+            outPositions.push(outVec4._m_Y);
+            outPositions.push(outVec4._m_Z);
+        }
+        return outPositions;
+    }
+    _parseMeshBatch(gltf, parrent, meshI){
+        let _mesh = gltf.meshes[meshI];
+        let _primitives = _mesh.primitives;
+        let _primitive = null;
+        let geometryNode = null;
+        let mesh = null;
+        for(let i = 0;i < _primitives.length;i++){
+            _primitive = _primitives[i];
+            let matId = null;
+            if(Tools.checkIsNull(_primitive.material)){
+                // 后续完善时,这里单独到一个函数中进行,因为解析PBR材质参数最好独立到一个解析函数中
+
+                if(!this._m_PrincipledMatDef){
+                    this._m_PrincipledMatDef = MaterialDef.load(this._m_AssetsPath + "PrincipledLightingDef");
+                }
+                matId = this._getName(gltf.materials[_primitive.material].name);
+                let material = null;
+                if(this._m_Mats[matId]){
+                    material = this._m_Mats[matId];
+                }
+                else{
+                    material = new Material(this._m_Scene, {id:matId, materialDef:this._m_PrincipledMatDef});
+                    this._parseMaterial(gltf, _primitive.material, material);
+                    this._m_Mats[matId] = material;
+                }
+            }
+            else{
+                // 添加一个默认材质
+                if(!this._m_DefaultMatDef){
+                    this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "ColorDef");
+                }
+                matId = 'default_gltf_mat';
+                let material = null;
+                if(this._m_Mats[matId]){
+                    material = this._m_Mats[matId];
+                }
+                else{
+                    // 创建新材质,后续移到独立方法创建适配的pbr材质或转换phong材质
+                    material = new Material(this._m_Scene, {id:matId, materialDef:this._m_DefaultMatDef});
+                    this._m_Mats[matId] = material;
+                }
+            }
+            if(!this._m_MatMeshs[matId]){
+                // 解析mesh
+                mesh = new Mesh();
+                // 首先是几何属性
+                if(Tools.checkIsNull(_primitive.attributes.POSITION)){
+                    // position属性
+                    let positions = this._parsePositions(gltf, _primitive.attributes.POSITION);
+                    if(parrent){
+                        positions.data = this._transformVertex(positions.data, parrent.getWorldMatrix());
+                    }
+                    mesh.setData(Mesh.S_POSITIONS, positions.data);
+                }
+                if(Tools.checkIsNull(_primitive.attributes.NORMAL)){
+                    // normal属性
+                    let normals = this._parseNormals(gltf, _primitive.attributes.NORMAL);
+                    if(parrent){
+                        normals.data = this._transformNormal(normals.data, parrent.getWorldMatrix());
+                    }
+                    mesh.setData(Mesh.S_NORMALS, normals.data);
+                }
+                if(Tools.checkIsNull(_primitive.attributes.TEXCOORD_0)){
+                    // 第一道texCoord属性(暂时跳过lightMap)
+                    let texcoords = this._parseTexcoords(gltf, _primitive.attributes.TEXCOORD_0);
+                    let t = [];
+                    for(let i = 0;i < texcoords.data.length;i++){
+                        t.push(texcoords.data[i]);
+                    }
+                    mesh.setData(Mesh.S_UV0, t);
+                }
+                // 其次是索引
+                if(Tools.checkIsNull(_primitive.indices)){
+                    // indices数据
+                    let indices = this._parseIndices(gltf, _primitive.indices);
+                    // 因为ArrayBuffer不存在push方法,所以这里转换为array
+                    let t = [];
+                    for(let i = 0;i < indices.data.length;i++){
+                        t.push(indices.data[i]);
+                    }
+                    mesh.setData(indices.bufType == 5125 ? Mesh.S_INDICES_32 : Mesh.S_INDICES, t);
+                }
+                if(Tools.checkIsNull(_primitive.attributes.TANGENT)){
+                    // normal属性
+                    let tangents = this._parseTangents(gltf, _primitive.attributes.TANGENT);
+                    let t = [];
+                    for(let i = 0;i < tangents.data.length;i++){
+                        t.push(tangents.data[i]);
+                    }
+                    mesh.setData(Mesh.S_TANGENTS, t);
+                }
+                else{
+                    // 生成切线数据
+                    if(mesh.getData(Mesh.S_UV0)){
+                        let tangents = Tools.generatorTangents(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
+                        mesh.setData(Mesh.S_TANGENTS, tangents);
+                    }
+                    else{
+                        // 为了内存对齐
+                        let tangents = Tools.generatorFillTangents(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
+                        mesh.setData(Mesh.S_TANGENTS, tangents);
+                    }
+                }
+                this._m_MatMeshs[matId] = {mesh};
+            }
+            else{
+                mesh = this._m_MatMeshs[matId].mesh;
+                let meshPositionsLength = 0;
+                // 首先是几何属性
+                if(Tools.checkIsNull(_primitive.attributes.POSITION)){
+                    // position属性
+                    let positions = this._parsePositions(gltf, _primitive.attributes.POSITION);
+                    if(parrent){
+                        positions.data = this._transformVertex(positions.data, parrent.getWorldMatrix());
+                    }
+                    let meshPositions = mesh.getData(Mesh.S_POSITIONS);
+                    if(meshPositions){
+                        meshPositionsLength = meshPositions.length;
+                        positions.data.forEach(pos=>{
+                            meshPositions.push(pos);
+                        });
+                        mesh.setData(Mesh.S_POSITIONS, meshPositions);
+                    }
+                }
+                if(Tools.checkIsNull(_primitive.attributes.NORMAL)){
+                    // normal属性
+                    let normals = this._parseNormals(gltf, _primitive.attributes.NORMAL);
+                    if(parrent){
+                        normals.data = this._transformNormal(normals.data, parrent.getWorldMatrix());
+                    }
+                    let meshNormals = mesh.getData(Mesh.S_NORMALS);
+                    if(meshNormals){
+                        normals.data.forEach(nor=>{
+                            meshNormals.push(nor);
+                        });
+                        mesh.setData(Mesh.S_NORMALS, meshNormals);
+                    }
+                }
+                if(Tools.checkIsNull(_primitive.attributes.TEXCOORD_0)){
+                    // 第一道texCoord属性(暂时跳过lightMap)
+                    let texcoords = this._parseTexcoords(gltf, _primitive.attributes.TEXCOORD_0);
+                    let meshTexCoords = mesh.getData(Mesh.S_UV0);
+                    if(meshTexCoords){
+                        texcoords.data.forEach(tex=>{
+                            meshTexCoords.push(tex);
+                        });
+                        mesh.setData(Mesh.S_UV0, meshTexCoords);
+                    }
+                }
+                // 其次是索引
+                if(Tools.checkIsNull(_primitive.indices)){
+                    // indices数据
+                    let indices = this._parseIndices(gltf, _primitive.indices);
+                    let meshIndices = mesh.getData(Mesh.S_INDICES);
+                    let offset = 0;
+                    if(meshIndices){
+                        offset = meshPositionsLength / 3
+                        indices.data.forEach(ind=>{
+                            meshIndices.push(ind + offset);
+                        });
+                        mesh.setData(indices.bufType == 5125 ? Mesh.S_INDICES_32 : Mesh.S_INDICES, meshIndices);
+                        if(indices.bufType != 5125){
+                            mesh.setData(Mesh.S_INDICES, null);
+                        }
+                    }
+                    else{
+                        meshIndices = mesh.getData(Mesh.S_INDICES_32);
+                        if(meshIndices){
+                            offset = meshPositionsLength / 3
+                            indices.data.forEach(ind=>{
+                                meshIndices.push(ind + offset);
+                            });
+                            mesh.setData(Mesh.S_INDICES_32, meshIndices);
+                        }
+                    }
+                }
+                if(Tools.checkIsNull(_primitive.attributes.TANGENT)){
+                    // normal属性
+                    let tangents = this._parseTangents(gltf, _primitive.attributes.TANGENT);
+                    let meshTangents = mesh.getData(Mesh.S_TANGENTS);
+                    if(meshTangents){
+                        tangents.data.forEach(tan=>{
+                            meshTangents.push(tan);
+                        });
+                        mesh.setData(Mesh.S_TANGENTS, meshTangents);
+                    }
+                }
+                else{
+                    // 生成切线数据
+                    if(mesh.getData(Mesh.S_UV0)){
+                        let tangents = Tools.generatorTangents(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
+                        let meshTangents = mesh.getData(Mesh.S_TANGENTS);
+                        if(meshTangents){
+                            tangents.forEach(tan=>{
+                                meshTangents.push(tan);
+                            });
+                            mesh.setData(Mesh.S_TANGENTS, meshTangents);
+                        }
+                    }
+                    else{
+                        // 为了内存对齐
+                        let tangents = Tools.generatorFillTangents(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
+                        let meshTangents = mesh.getData(Mesh.S_TANGENTS);
+                        if(meshTangents){
+                            tangents.forEach(tan=>{
+                                meshTangents.push(tan);
+                            });
+                            mesh.setData(Mesh.S_TANGENTS, meshTangents);
+                        }
+                    }
+                }
             }
         }
     }
@@ -517,7 +829,7 @@ export default class GLTFLoader {
         if(Tools.checkIsNull(occlusionTexture)){
             let texCoord = occlusionTexture.texCoord;
             material.setParam('lightMap', this._samplerMap(gltf, occlusionTexture.index));
-            if(texCoord != 0){
+            if(texCoord != null && texCoord != 0){
                 // 激活独立通道纹理
             }
             else{

@@ -324,7 +324,11 @@ Def PrincipledLightingDef{
                                 float _glossiness = texture(Params.glossinessMap, wUv0).r;
                             #endif
                         #else
-                            float _glossiness = 1.0f;
+                            #ifdef Params.glossiness
+                                float _glossiness = Params.glossiness;
+                            #else
+                                float _glossiness = 1.0f;
+                            #endif
                         #endif
                     #endif
                     vec4 _diffuseColor = albedo;
@@ -350,6 +354,7 @@ Def PrincipledLightingDef{
                     #else
                         _specularColor.rgb *= _lightMapColor;
                         _diffuseColor.rgb  *= _lightMapColor;
+                        vec3 ao = vec3(1.0f);
                     #endif
                 #else
                     vec3 ao = vec3(1.0f);
