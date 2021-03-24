@@ -154,5 +154,30 @@ export default class SinglePassLightingRenderProgram extends DefaultRenderProgra
             iDrawable.draw(frameContext);
         }
     }
+    drawArrays(gl, scene, frameContext, iDrawables, lights){
+        // 如果灯光数量为0,则直接执行渲染
+        if(lights.length == 0){
+            iDrawables.forEach(iDrawable=>{
+                iDrawable.draw(frameContext);
+            });
+            return;
+        }
+        // 计算灯光是否处于iDrawable可见范围
+
+        // 批量提交灯光
+        // 应该根据引擎获取每次提交的灯光批次数量
+        // 但是每个批次不应该超过4
+        let batchSize = 4;
+        let lastIndex = 0;
+        while(lastIndex < lights.length){
+            // 更新灯光信息
+            lastIndex = this._uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex);
+            // 最后draw
+            iDrawables.forEach(iDrawable=>{
+                iDrawable.draw(frameContext);
+            });
+        }
+
+    }
 
 }

@@ -483,29 +483,49 @@ export default class Render extends Component{
         // 正向路径部分...
         // 先渲染不透明队列
         for(let matId in opaqueBucket){
-            opaqueBucket[matId].forEach(geo=>{
-                // 获取当前选中的技术
-                let mat = this._m_Scene.getComponent(matId);
-                let currentTechnology = mat.getCurrentTechnology();
-                // 获取当前技术所有Forward路径下的SubShaders
-                let forwardSubPasss = currentTechnology.getSubPasss(Render.FORWARD);
-                // 如果该物体存在Forward路径渲染的需要,则执行Forward渲染
-                if(forwardSubPasss){
-                    subShaders = forwardSubPasss.getSubShaders();
-                    // 执行渲染
-                    for(let subShader in subShaders){
-                        // 检测是否需要更新渲染状态
-                        if(subShaders[subShader].renderState){
-                            // 依次检测所有项
-                            this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
-                        }
-                        // 指定subShader
-                        mat._selectSubShader(subShaders[subShader].subShader);
-                        this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].draw(gl, this._m_Scene, this._m_FrameContext, geo, lights);
-                        // geo.draw(this._m_FrameContext);
+            // opaqueBucket[matId].forEach(geo=>{
+            //     // 获取当前选中的技术
+            //     let mat = this._m_Scene.getComponent(matId);
+            //     let currentTechnology = mat.getCurrentTechnology();
+            //     // 获取当前技术所有Forward路径下的SubShaders
+            //     let forwardSubPasss = currentTechnology.getSubPasss(Render.FORWARD);
+            //     // 如果该物体存在Forward路径渲染的需要,则执行Forward渲染
+            //     if(forwardSubPasss){
+            //         subShaders = forwardSubPasss.getSubShaders();
+            //         // 执行渲染
+            //         for(let subShader in subShaders){
+            //             // 检测是否需要更新渲染状态
+            //             if(subShaders[subShader].renderState){
+            //                 // 依次检测所有项
+            //                 this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
+            //             }
+            //             // 指定subShader
+            //             mat._selectSubShader(subShaders[subShader].subShader);
+            //             this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].draw(gl, this._m_Scene, this._m_FrameContext, geo, lights);
+            //             // geo.draw(this._m_FrameContext);
+            //         }
+            //     }
+            // });
+            // 获取当前选中的技术
+            let mat = this._m_Scene.getComponent(matId);
+            let currentTechnology = mat.getCurrentTechnology();
+            // 获取当前技术所有Forward路径下的SubShaders
+            let forwardSubPasss = currentTechnology.getSubPasss(Render.FORWARD);
+            // 如果该物体存在Forward路径渲染的需要,则执行Forward渲染
+            if(forwardSubPasss){
+                subShaders = forwardSubPasss.getSubShaders();
+                // 执行渲染
+                for(let subShader in subShaders){
+                    // 检测是否需要更新渲染状态
+                    if(subShaders[subShader].renderState){
+                        // 依次检测所有项
+                        this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
                     }
+                    // 指定subShader
+                    mat._selectSubShader(subShaders[subShader].subShader);
+                    this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].drawArrays(gl, this._m_Scene, this._m_FrameContext, opaqueBucket[matId], lights);
                 }
-            });
+            }
         }
 
         // 渲染env

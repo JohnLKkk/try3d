@@ -22,4 +22,18 @@ export default class DefaultRenderProgram {
         iDrawable.draw(frameContext);
     }
 
+    /**
+     * 渲染指定iDrawable列表。<br/>
+     * @param {WebGLContext}[gl]
+     * @param {Scene}[scene]
+     * @param {FrameContext}[frameContext]
+     * @param {IDrawable[]}[iDrawables]
+     * @param {Light[]}[lights]
+     */
+    drawArrays(gl, scene, frameContext, iDrawables, lights){
+        iDrawables.forEach(iDrawable=>{
+            iDrawable.draw(frameContext);
+        });
+    }
+
 }
