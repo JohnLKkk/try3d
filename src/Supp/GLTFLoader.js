@@ -179,6 +179,12 @@ export default class GLTFLoader {
                 geometry.setMesh(mesh);
                 geometry.updateBound();
                 geometry.setMaterial(this._m_Mats[matId]);
+                if(this._m_Mats[matId].renderState){
+                    // 暂时先这么简陋实现,后期再封装完整的渲染状态系统
+                    if(this._m_Mats[matId].renderState.alphaMode == 'BLEND' || this._m_Mats[matId].renderState.alphaMode == 'MASK'){
+                        geometry.setTranslucent();
+                    }
+                }
                 this._m_GLTFRootNode.addChildren(geometry);
             }
         }
@@ -530,12 +536,19 @@ export default class GLTFLoader {
                     // 生成切线数据
                     if(mesh.getData(Mesh.S_UV0)){
                         let tangents = Tools.generatorTangents2(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0), mesh.getData(Mesh.S_NORMALS));
-                        mesh.setData(Mesh.S_TANGENTS, tangents);
+                        let t = [];
+                        for(let i = 0;i < tangents.length;i++){
+                            t.push(tangents[i]);
+                        }
+                        mesh.setData(Mesh.S_TANGENTS, t);
                     }
                     else{
                         // 为了内存对齐
                         let tangents = Tools.generatorFillTangents2(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
-                        mesh.setData(Mesh.S_TANGENTS, tangents);
+                        for(let i = 0;i < tangents.length;i++){
+                            t.push(tangents[i]);
+                        }
+                        mesh.setData(Mesh.S_TANGENTS, t);
                     }
                 }
                 this._m_MatMeshs[matId] = {mesh};
@@ -591,7 +604,7 @@ export default class GLTFLoader {
                     let meshIndices = mesh.getData(Mesh.S_INDICES);
                     let offset = 0;
                     if(meshIndices){
-                        offset = meshPositionsLength / 3
+                        offset = meshPositionsLength / 3;
                         indices.data.forEach(ind=>{
                             meshIndices.push(ind + offset);
                         });
@@ -603,7 +616,7 @@ export default class GLTFLoader {
                     else{
                         meshIndices = mesh.getData(Mesh.S_INDICES_32);
                         if(meshIndices){
-                            offset = meshPositionsLength / 3
+                            offset = meshPositionsLength / 3;
                             indices.data.forEach(ind=>{
                                 meshIndices.push(ind + offset);
                             });
@@ -737,7 +750,7 @@ export default class GLTFLoader {
                 geometryNode.setMaterial(material);
                 if(material.renderState){
                     // 暂时先这么简陋实现,后期再封装完整的渲染状态系统
-                    if(material.renderState.alphaMode == 'BLEND'){
+                    if(material.renderState.alphaMode == 'BLEND' || material.renderState.alphaMode == 'MASK'){
                         geometryNode.setTranslucent();
                     }
                 }

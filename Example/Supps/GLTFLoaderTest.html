@@ -22,6 +22,13 @@
     import MeshFactor from "../../src/Core/Util/MeshFactor.js";
     import Geometry from "../../src/Core/Node/Geometry.js";
     import GLTFLoader from "../../src/Supp/GLTFLoader.js";
+    import RadianceLoader from "../../src/Supp/RadianceLoader.js";
+    import SkyBox from "../../src/Core/Node/Sky/SkyBox.js";
+    import Vector4 from "../../src/Core/Math3d/Vector4.js";
+    import Texture2DVars from "../../src/Core/WebGL/Vars/Texture2DVars.js";
+    import BoolVars from "../../src/Core/WebGL/Vars/BoolVars.js";
+    import GIProbe from "../../src/Core/Light/GIProbe.js";
+    import ProbeTools from "../../src/Core/Util/ProbeTools.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -30,25 +37,44 @@
     let testCamera = new Camera(scene, {id:'testCamera'});
     testCamera.lookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
-    let colorMat = new Material(scene, {id:'colorWireFrustum', materialDef:colorDef});
-    let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
-    // 根据当前相机创建测试用的视锥体
-    wireFrustum.setMesh(MeshFactor.createViewFrustumMeshFromCamera(testCamera));
-    wireFrustum.setMaterial(colorMat);
-    wireFrustum.updateBound();
-
     let rootNode = new Node(scene, {id:'rootNode'});
-    rootNode.addChildren(wireFrustum);
-    let gltfLoader = new GLTFLoader();
-    gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
-    gltfLoader.load(scene, './../Assets/Models/GLTF/Sponza/Sponza.gltf', modelNode=>{
-        rootNode.addChildren(modelNode);
+
+
+    // 环境纹理加载完再开始创建创建
+    let radianceLoader = new RadianceLoader();
+    radianceLoader.loadHDR('./../Assets/Textures/hdr/env1.hdr', imageData=>{
+        // 创建一个sky
+        let sky = new SkyBox(scene, {id:'sky'});
+        // 使用cubeMap作为天空盒材质
+        let envMap = new Texture2DVars(scene);
+        envMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
+        envMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+        envMap.setFilter(scene, Texture2DVars.S_FILTERS.S_LINEAR, Texture2DVars.S_FILTERS.S_LINEAR);
+        envMap.setImage(scene, imageData, {rgbe:true});
+        sky.getMaterial().setParam('envMap', envMap);
+        sky.getMaterial().setParam('useEnvMap', new BoolVars().valueOf(true));
+        sky.getMaterial().setParam('useHDR', new BoolVars().valueOf(true));
+
+        scene.setSky(sky);
+
+        let gltfLoader = new GLTFLoader();
+        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+        gltfLoader.load(scene, './../Assets/Models/GLTF/Sponza/Sponza.gltf', modelNode=>{
+            rootNode.addChildren(modelNode);
+        }, {batch:true});
+
+        let dirLight = new DirectionalLight(scene, {id:'dirLight'});
+        dirLight.setDirectionXYZ(-1, -1, 1);
+        dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+        rootNode.addChildren(dirLight);
+
+        let giProbe = new GIProbe(scene, {id:'giProbe'});
+        giProbe.setRadius(20);
+        giProbe.setPositionFromXYZ(0, 5, 0);
+        let envCapture = ProbeTools.bakeGIProbe(scene, giProbe, {resolute:128});
     });
 
-    let dirLight = new DirectionalLight(scene, {id:'dirLight'});
-    dirLight.setDirectionXYZ(-1, -1, 1);
-    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
-    rootNode.addChildren(dirLight);
+
 
     let renderEngine = new RenderEngine();
     scene.addSceneNode(rootNode);
