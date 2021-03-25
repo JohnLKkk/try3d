@@ -75,14 +75,6 @@
         let roughnessMap = null;
         let aoMap = null;
 
-        let metalLightingDef = MaterialDef.load('../../../src/Core/Assets/MaterialDef/PrincipledLightingDef');
-        let getTexture = (src)=>{
-            let texture = new Texture2DVars(scene);
-            texture.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
-            texture.setImageSrc(scene, src);
-            return texture;
-        };
-
         let dirLight = new DirectionalLight(scene, {id:'dirLight'});
         dirLight.setDirectionXYZ(-1, -1, -1);
         dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);

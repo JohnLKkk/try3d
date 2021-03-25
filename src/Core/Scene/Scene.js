@@ -44,8 +44,12 @@ export default class Scene extends Component{
 
         // 灯光列表
         this._m_Lights = [];
+        // 激活灯光
+        this._m_EnableLights = [];
         // 灯光名称映射列表
         this._m_LightIds = {};
+        // 激活灯光名称映射列表
+        this._m_EnableLightIds = {};
         // GIProbes
         this._m_GIProbes = [];
         this._m_GIProbeIds = {};
@@ -63,6 +67,43 @@ export default class Scene extends Component{
      */
     getLights(){
         return this._m_Lights;
+    }
+
+    /**
+     * 返回激活的灯光。<br/>
+     * @return {Array}
+     */
+    getEnableLights(){
+        return this._m_EnableLights;
+    }
+
+    /**
+     * 激活一个灯光。<br/>
+     * @param {Light}[light]
+     */
+    enableLight(light){
+        console.log('ss');
+        if(!this._m_EnableLightIds[light.getId()]){
+            this._m_EnableLightIds[light.getId()] = light;
+            console.log('激活');
+            light.enable();
+            this._m_EnableLights.push(light);
+        }
+    }
+
+    /**
+     * 禁用一个灯光。<br/>
+     * @param {Light}[light]
+     */
+    disableLight(light){
+        if(this._m_EnableLightIds[light.getId()]){
+            this._m_EnableLightIds[light.getId()] = null;
+            light.disable();
+            let i = this._m_EnableLights.indexOf(light);
+            if(i > -1){
+                this._m_EnableLights.splice(i, 1);
+            }
+        }
     }
 
     /**
@@ -245,6 +286,11 @@ export default class Scene extends Component{
                     else if(!this._m_LightIds[component.getId()]){
                         this._m_Lights.push(component);
                         this._m_LightIds[component.getId()] = component;
+                        // 由于Light是Node的子类,而Node是Component的子类,因此在完成Component构造之前,Light还没构造完成(蛋疼...)
+                        // 所以会导致下面方法返回undefined,一种解决方案是让isEnable默认返回true,或者在Light构造中完成enableLight调用,这里选择第二种方案
+                        // if(component.isEnable()){
+                        //     this.enableLight(component);
+                        // }
                     }
                 }
             }

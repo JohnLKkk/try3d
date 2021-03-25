@@ -17,6 +17,35 @@ export default class Light extends Node{
         super(owner, cfg);
         // 灯光可以附加在任何节点中
         this._m_Color = new Vector4();
+        this._m_Enable = true;
+        this._m_Scene.enableLight(this);
+    }
+
+    /**
+     * 激活该灯光。<br/>
+     */
+    enable(){
+        if(this._m_Enable)return;
+        this._m_Enable = true;
+        this._m_Scene.enableLight(this);
+    }
+
+    /**
+     * 禁用该灯光。<br/>
+     */
+    disable(){
+        if(this._m_Enable){
+            this._m_Enable = false;
+            this._m_Scene.disableLight(this);
+        }
+    }
+
+    /**
+     * 判断该灯是否激活。<br/>
+     * @return {Boolean}
+     */
+    isEnable(){
+        return this._m_Enable;
     }
 
     /**

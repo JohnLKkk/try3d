@@ -316,7 +316,7 @@ export default class Render extends Component{
         // 使用后置缓存?
         let useBackForwardFrameBuffer = false;
         // 灯光列表
-        let lights = this._m_Scene.getLights();
+        let lights = this._m_Scene.getEnableLights();
         // 不透明队列
         let opaqueBucket = {};
         // 半透明队列

@@ -26,23 +26,14 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
     }
 
     /**
-     *
-     * @param gl
-     * @param scene
+     * 混合GI探头信息。<br/>
+     * 暂时仅仅只是提交单个探头信息。<br/>
+     * @param {WebGL}[gl]
+     * @param {Scene}[scene]
      * @param {FrameContext}[frameContext]
-     * @param lights
-     * @param batchSize
-     * @param lastIndex
      * @private
      */
-    _uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex){
-        if(lastIndex == 0){
-            // 提交合计的ambientColor(场景可能添加多个ambientLight)
-            // 也可以设计为场景只能存在一个ambientColor
-        }
-        else{
-            // 开启累积缓存模式
-        }
+    _blendGIProbes(gl, scene, frameContext){
         let conVars = frameContext.m_LastSubShader.getContextVars();
         // 探头信息
         let probeLoc = null;
@@ -77,6 +68,29 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
                 frameContext.m_LastMaterial.addDefine(ShaderSource.S_GIPROBES_SRC);
             }
         }
+    }
+
+    /**
+     *
+     * @param gl
+     * @param scene
+     * @param {FrameContext}[frameContext]
+     * @param lights
+     * @param batchSize
+     * @param lastIndex
+     * @private
+     */
+    _uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex){
+        if(lastIndex == 0){
+            // 提交合计的ambientColor(场景可能添加多个ambientLight)
+            // 也可以设计为场景只能存在一个ambientColor
+        }
+        else{
+            // 开启累积缓存模式
+        }
+        let conVars = frameContext.m_LastSubShader.getContextVars();
+        // 探头信息
+        this._blendGIProbes(gl, scene, frameContext);
 
 
         // 灯光信息
@@ -179,6 +193,7 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
 
         // 如果灯光数量为0,则直接执行渲染
         if(lights.length == 0){
+            this._blendGIProbes(gl, scene, frameContext);
             iDrawable.draw(frameContext);
             return;
         }
@@ -200,6 +215,7 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         // 如果灯光数量为0,则直接执行渲染
         if(lights.length == 0){
             iDrawables.forEach(iDrawable=>{
+                this._blendGIProbes(gl, scene, frameContext);
                 iDrawable.draw(frameContext);
             });
             return;

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>EnvironmentTest</title>
+    <title>DepthOfFieldTest</title>
     <style>
         #baseColor input{
             width: 50px;
@@ -20,40 +20,40 @@
     <canvas id="canvas" tabindex="0" width="400" height="300" style="border: none;margin: 0px;padding: 0px;"></canvas>
 </div>
 <script type="module">
-    import Scene from "../../../src/Core/Scene/Scene.js";
-    import RenderEngine from "../../../src/Core/RenderEngine.js";
-    import Internal from "../../../src/Core/Render/Internal.js";
-    import Node from "../../../src/Core/Node/Node.js";
-    import Material from "../../../src/Core/Material/Material.js";
-    import Vector3 from "../../../src/Core/Math3d/Vector3.js";
-    import MaterialDef from "../../../src/Core/Material/MaterialDef.js";
-    import FirstPersonController from "../../../src/Core/InputControl/FirstPersonController.js";
-    import Texture2DVars from "../../../src/Core/WebGL/Vars/Texture2DVars.js";
-    import Vector4 from "../../../src/Core/Math3d/Vector4.js";
-    import FloatVars from "../../../src/Core/WebGL/Vars/FloatVars.js";
-    import DirectionalLight from "../../../src/Core/Light/DirectionalLight.js";
-    import Sphere from "../../../src/Core/Node/Shape/Sphere.js";
-    import Vec4Vars from "../../../src/Core/WebGL/Vars/Vec4Vars.js";
-    import BoolVars from "../../../src/Core/WebGL/Vars/BoolVars.js";
-    import Stats from "../../stats.min.js";
-    import GIProbe from "../../../src/Core/Light/GIProbe.js";
-    import ProbeTools from "../../../src/Core/Util/ProbeTools.js";
-    import RadianceLoader from "../../../src/Supp/RadianceLoader.js";
-    import SkyBox from "../../../src/Core/Node/Sky/SkyBox.js";
-    import GLTFLoader from "../../../src/Supp/GLTFLoader.js";
-    import Input from "../../../src/Core/InputControl/Input.js";
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Internal from "../../src/Core/Render/Internal.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import Texture2DVars from "../../src/Core/WebGL/Vars/Texture2DVars.js";
+    import Vector4 from "../../src/Core/Math3d/Vector4.js";
+    import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import Sphere from "../../src/Core/Node/Shape/Sphere.js";
+    import Vec4Vars from "../../src/Core/WebGL/Vars/Vec4Vars.js";
+    import BoolVars from "../../src/Core/WebGL/Vars/BoolVars.js";
+    import Stats from "../stats.min.js";
+    import GIProbe from "../../src/Core/Light/GIProbe.js";
+    import ProbeTools from "../../src/Core/Util/ProbeTools.js";
+    import RadianceLoader from "../../src/Supp/RadianceLoader.js";
+    import SkyBox from "../../src/Core/Node/Sky/SkyBox.js";
+    import GLTFLoader from "../../src/Supp/GLTFLoader.js";
+    import MoreMath from "../../src/Core/Math3d/MoreMath.js";
 
 
     // 创建scene
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(0, 0, 20), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     let rootNode = new Node(scene, {id:'rootNode'});
 
     // 环境纹理加载完再开始创建创建
     let radianceLoader = new RadianceLoader();
-    radianceLoader.loadHDR('../../Assets/Textures/hdr/inside.hdr', imageData=>{
+    radianceLoader.loadHDR('./../Assets/Textures/hdr/env1.hdr', imageData=>{
         // 创建一个sky
         let sky = new SkyBox(scene, {id:'sky'});
         // 使用cubeMap作为天空盒材质
@@ -75,13 +75,7 @@
         let roughnessMap = null;
         let aoMap = null;
 
-        let metalLightingDef = MaterialDef.load('../../../src/Core/Assets/MaterialDef/PrincipledLightingDef');
-        let getTexture = (src)=>{
-            let texture = new Texture2DVars(scene);
-            texture.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
-            texture.setImageSrc(scene, src);
-            return texture;
-        };
+
 
         let dirLight = new DirectionalLight(scene, {id:'dirLight'});
         dirLight.setDirectionXYZ(-1, -1, -1);
@@ -101,28 +95,14 @@
         giProbeGeo.setMaterial(giProbeMat);
         rootNode.addChildren(giProbeGeo);
 
-        // 将烘焙环境光作为sky材质
-        sky.setMaterial(new Material(scene, {id:'giProbeMat', materialDef:MaterialDef.parse(Internal.S_ENV_CAPTURE_OUT_DEF)}));
-        sky.getMaterial().selectTechnology('EnvSky');
-        sky.getMaterial().setParam('envCaptureMap', envCapture.getPrefilterTextureCube());
-        sky.getMaterial().setParam('lod', new FloatVars().valueOf(4));
-
         let gltfLoader = new GLTFLoader();
-        gltfLoader.setAssetsPath("../../../src/Core/Assets/MaterialDef/");
-        gltfLoader.load(scene, '../../Assets/Models/GLTF/EnvironmentTest/EnvironmentTest.gltf', (modelNode)=>{
+        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+        gltfLoader.load(scene, './../Assets/Models/GLTF/PineForest/scene.gltf', (modelNode)=>{
+            // modelNode.setLocalRotationFromEuler(MoreMath.toRadians(0), 0, 0);
+            // modelNode.setLocalScaleXYZ(0.001, 0.001, 0.001);
             rootNode.addChildren(modelNode);
-        }, {batch:true});
+        }, {batch:false});
 
-        let input = Input.getInput(scene, {id:scene.getId()})
-        input.on('keydown', (key)=>{
-            if(key == Input.S_KEY_O){
-                dirLight.enable();
-            }
-            else if(key == Input.S_KEY_C){
-                console.log('ss');
-                dirLight.disable();
-            }
-        });
     });
 
 
@@ -140,6 +120,8 @@
     document.body.appendChild(stats.domElement);
     scene.on('update', (exTime)=>{
         stats.update();
+        // console.log('eye:' + mainCamera.getEye().toString());
+        // console.log('at:' + mainCamera.getAt().toString());
     });
 </script>
 </body>
