@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>EnvironmentTest</title>
+    <title>ReflectionOfMirrorTest</title>
     <style>
         #baseColor input{
             width: 50px;
@@ -43,16 +43,16 @@
     import RadianceLoader from "../../../src/Supp/RadianceLoader.js";
     import SkyBox from "../../../src/Core/Node/Sky/SkyBox.js";
     import GLTFLoader from "../../../src/Supp/GLTFLoader.js";
-    import Input from "../../../src/Core/InputControl/Input.js";
+    import MoreMath from "../../../src/Core/Math3d/MoreMath.js";
 
-    addInfos('环境光渲染', '该例子演示了仅在环境光下的间接光照与直接光的对比情况，请确保页面获取焦点，按下键盘C键关闭定向光以便查看间接光照效果，按下键盘O键开启定向光查看全局光照效果。');
-
+    addInfos('反射环境', '这个例子演示了在原理化材质下,不同材质对环境的反射,注意观察地板,电视机以及桌子。');
 
     // 创建scene
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(0, 0, 20), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(2.0431339468598524,0.6282158298654541,-7.931068277214022), new Vector3(1.2523008349430977,0.5968050707873266,-8.542293565720803), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    firstPersonController.setMovementSpeed(1);
     let rootNode = new Node(scene, {id:'rootNode'});
 
     // 环境纹理加载完再开始创建创建
@@ -79,23 +79,10 @@
         let roughnessMap = null;
         let aoMap = null;
 
-        let metalLightingDef = MaterialDef.load('../../../src/Core/Assets/MaterialDef/PrincipledLightingDef');
-        let getTexture = (src)=>{
-            let texture = new Texture2DVars(scene);
-            texture.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
-            texture.setImageSrc(scene, src);
-            return texture;
-        };
-
-        let dirLight = new DirectionalLight(scene, {id:'dirLight'});
-        dirLight.setDirectionXYZ(-1, -1, -1);
-        dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
-        rootNode.addChildren(dirLight);
-
         let giProbe = new GIProbe(scene, {id:'giProbe'});
-        giProbe.setRadius(20);
+        giProbe.setRadius(100);
         giProbe.setPositionFromXYZ(0, 5, 0);
-        let envCapture = ProbeTools.bakeGIProbe(scene, giProbe, {resolute:128});
+        let envCapture = ProbeTools.bakeGIProbe(scene, giProbe, {resolute:512});
 
         // 添加一个渲染探头,将捕捉数据渲染出来
         let giProbeGeo = new Sphere(scene, {id:'giProbeGeo', radius:1});
@@ -105,27 +92,14 @@
         giProbeGeo.setMaterial(giProbeMat);
         rootNode.addChildren(giProbeGeo);
 
-        // 将烘焙环境光作为sky材质
-        sky.setMaterial(new Material(scene, {id:'giProbeMat', materialDef:MaterialDef.parse(Internal.S_ENV_CAPTURE_OUT_DEF)}));
-        sky.getMaterial().selectTechnology('EnvSky');
-        sky.getMaterial().setParam('envCaptureMap', envCapture.getPrefilterTextureCube());
-        sky.getMaterial().setParam('lod', new FloatVars().valueOf(4));
-
         let gltfLoader = new GLTFLoader();
         gltfLoader.setAssetsPath("../../../src/Core/Assets/MaterialDef/");
-        gltfLoader.load(scene, '../../Assets/Models/GLTF/EnvironmentTest/EnvironmentTest.gltf', (modelNode)=>{
+        gltfLoader.load(scene, '../../Assets/Models/GLTF/TvCabinet/scene.gltf', (modelNode)=>{
+            // modelNode.setLocalRotationFromEuler(MoreMath.toRadians(0), 0, 0);
+            modelNode.setLocalScaleXYZ(10, 10, 10);
             rootNode.addChildren(modelNode);
         }, {batch:true});
 
-        let input = Input.getInput(scene, {id:scene.getId()});
-        input.on('keydown', (key)=>{
-            if(key == Input.S_KEY_O){
-                dirLight.enable();
-            }
-            else if(key == Input.S_KEY_C){
-                dirLight.disable();
-            }
-        });
     });
 
 

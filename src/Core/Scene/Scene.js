@@ -82,10 +82,8 @@ export default class Scene extends Component{
      * @param {Light}[light]
      */
     enableLight(light){
-        console.log('ss');
         if(!this._m_EnableLightIds[light.getId()]){
             this._m_EnableLightIds[light.getId()] = light;
-            console.log('激活');
             light.enable();
             this._m_EnableLights.push(light);
         }

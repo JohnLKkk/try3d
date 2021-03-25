@@ -5,7 +5,7 @@
     <title>BasicLightingTest</title>
 </head>
 <body>
-<div style="width: 60%;height: 100%;position:fixed">
+<div style="width: 60%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
     <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
 </div>
 <script type="module">
@@ -23,127 +23,25 @@
     import PointLight from "../../src/Core/Light/PointLight.js";
     import SpotLight from "../../src/Core/Light/SpotLight.js";
     import MoreMath from "../../src/Core/Math3d/MoreMath.js";
+    import Vec4Vars from "../../src/Core/WebGL/Vars/Vec4Vars.js";
+    import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
+    import Box from "../../src/Core/Node/Shape/Box.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(15, 15, 15), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
-    console.log("materialDef:",materialDef);
     let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
-    let cubeGeometry = new Geometry(scene, {id:'cube'});
-    let cubeMesh = new Mesh();
-    cubeMesh.setData(Mesh.S_POSITIONS, [
-        -5.0, -5.0, -5.0,
-        5.0, -5.0, -5.0,
-        5.0, 5.0, -5.0,
-        5.0, 5.0, -5.0,
-        -5.0, 5.0, -5.0,
-        -5.0, -5.0, -5.0,
+    basicLightingMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
+    basicLightingMat.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
+    basicLightingMat.setParam('specularColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
+    basicLightingMat.setParam('shininess', new FloatVars().valueOf(32.0));
 
-        -5.0, -5.0, 5.0,
-        5.0, -5.0, 5.0,
-        5.0, 5.0, 5.0,
-        5.0, 5.0, 5.0,
-        -5.0, 5.0, 5.0,
-        -5.0, -5.0, 5.0,
-
-        -5.0, 5.0, 5.0,
-        -5.0, 5.0, -5.0,
-        -5.0, -5.0, -5.0,
-        -5.0, -5.0, -5.0,
-        -5.0, -5.0, 5.0,
-        -5.0, 5.0, 5.0,
-
-        5.0, 5.0, 5.0,
-        5.0, 5.0, -5.0,
-        5.0, -5.0, -5.0,
-        5.0, -5.0, -5.0,
-        5.0, -5.0, 5.0,
-        5.0, 5.0, 5.0,
-
-        -5.0, -5.0, -5.0,
-        5.0, -5.0, -5.0,
-        5.0, -5.0, 5.0,
-        5.0, -5.0, 5.0,
-        -5.0, -5.0, 5.0,
-        -5.0, -5.0, -5.0,
-
-        -5.0, 5.0, -5.0,
-        5.0, 5.0, -5.0,
-        5.0, 5.0, 5.0,
-        5.0, 5.0, 5.0,
-        -5.0, 5.0, 5.0,
-        -5.0, 5.0, -5.0
-    ]);
-    cubeMesh.setData(Mesh.S_NORMALS, [
-        0.0, 0.0, -1.0,
-        0.0, 0.0, -1.0,
-        0.0, 0.0, -1.0,
-        0.0, 0.0, -1.0,
-        0.0, 0.0, -1.0,
-        0.0, 0.0, -1.0,
-
-        0.0, 0.0, 1.0,
-        0.0, 0.0, 1.0,
-        0.0, 0.0, 1.0,
-        0.0, 0.0, 1.0,
-        0.0, 0.0, 1.0,
-        0.0, 0.0, 1.0,
-
-        -1.0, 0.0, 0.0,
-        -1.0, 0.0, 0.0,
-        -1.0, 0.0, 0.0,
-        -1.0, 0.0, 0.0,
-        -1.0, 0.0, 0.0,
-        -1.0, 0.0, 0.0,
-
-        1.0, 0.0, 0.0,
-        1.0, 0.0, 0.0,
-        1.0, 0.0, 0.0,
-        1.0, 0.0, 0.0,
-        1.0, 0.0, 0.0,
-        1.0, 0.0, 0.0,
-
-        0.0, -1.0, 0.0,
-        0.0, -1.0, 0.0,
-        0.0, -1.0, 0.0,
-        0.0, -1.0, 0.0,
-        0.0, -1.0, 0.0,
-        0.0, -1.0, 0.0,
-
-        0.0, 1.0, 0.0,
-        0.0, 1.0, 0.0,
-        0.0, 1.0, 0.0,
-        0.0, 1.0, 0.0,
-        0.0, 1.0, 0.0,
-        0.0, 1.0, 0.0
-    ]);
-    cubeMesh.setData(Mesh.S_INDICES, [
-        0, 1, 2,
-        3, 4, 5,
-
-        6, 7, 8,
-        9, 10, 11,
-
-        12, 13, 14,
-        15, 16, 17,
-
-        18, 19, 20,
-        21, 22, 23,
-
-        24, 25, 26,
-        27, 28, 29,
-
-        30, 31, 32,
-        33, 34, 35
-    ]);
-    cubeGeometry.setMesh(cubeMesh);
-    cubeGeometry.updateBound();
-    basicLightingMat.selectTechnology('BlinnPhongLight2');
-    cubeGeometry.setMaterial(basicLightingMat);
+    let cube = new Box(scene, {id:'cube', xHalf:2.5, yHalf:2.5, zHalf:2.5});
+    cube.setMaterial(basicLightingMat);
 
     let rootNode = new Node(scene, {id:'rootNode'});
-    rootNode.addChildren(cubeGeometry);
+    rootNode.addChildren(cube);
 
     let dirLight = new DirectionalLight(scene, {id:'dirLight'});
     dirLight.setDirectionXYZ(-1, -1, 1);
@@ -160,8 +58,8 @@
     spotLight.setPositionXYZ(8, 0, 0);
     spotLight.setDirectionXYZ(-1, 0, 0);
     spotLight.setColorRGBA(1.0, 0.0, 0.0, 1.0);
-    // spotLight.setInnerCorner(MoreMath.toRadians(3));
-    // spotLight.setOuterCorner(MoreMath.toRadians(5));
+    spotLight.setInnerCorner(MoreMath.toRadians(3));
+    spotLight.setOuterCorner(MoreMath.toRadians(5));
 
     let renderEngine = new RenderEngine();
     scene.addSceneNode(rootNode);

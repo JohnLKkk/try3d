@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SimpleMetalMaterialTest</title>
+    <title>SimpleMaterialTest</title>
     <style>
         #baseColor input{
             width: 50px;
@@ -14,6 +14,8 @@
             width: 50px;
         }
     </style>
+    <link rel="stylesheet" type="text/css" href="../../Assets/Htmls/Css/Base.css"/>
+    <script src="../../Assets/Htmls/Js/Infos.js"></script>
 </head>
 <body>
 <div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
@@ -22,8 +24,7 @@
         <span style="color: white;display: inline-block;width: 100px;text-align: right;padding-right: 10px;">baseColor:</span><span id="baseColor"><input type="text" value="1.000"><input type="text" value="0.766"><input type="text" value="0.336"></span><br/>
         <span style="color: white;display: inline-block;width: 100px;text-align: right;padding-right: 10px;">metallic:</span><input id="metallic" type="range" min="0" max="1.0" step="0.1" value="0.5"><br/>
         <span style="color: white;display: inline-block;width: 100px;text-align: right;padding-right: 10px;">roughness:</span><input id="roughness" type="range" min="0" max="1.0" step="0.1" value="0.1"><br/>
-    </div>
-    <div style="position:fixed;right: 0px;bottom: 0px;margin: 20px;align-content: center">
+        <br/>
         <span style="color: white;display: inline-block;width: 100px;text-align: right;padding-right: 10px;">baseColor:</span><span id="baseColor2"><input type="text" value="1.000"><input type="text" value="0.766"><input type="text" value="0.336"></span><br/>
         <span style="color: white;display: inline-block;width: 100px;text-align: right;padding-right: 10px;">specular:</span><span id="specular"><input type="text" value="0.5"><input type="text" value="0.5"><input type="text" value="0.5"></span><br/>
         <span style="color: white;display: inline-block;width: 100px;text-align: right;padding-right: 10px;">glossiness:</span><input id="glossiness" type="range" min="0" max="1.0" step="0.1" value="0.9"><br/>
@@ -51,6 +52,7 @@
     import SkyBox from "../../../src/Core/Node/Sky/SkyBox.js";
     import Internal from "../../../src/Core/Render/Internal.js";
 
+    addInfos('材质参数的简单用法', '这个例子通过使用单个量(比如Vec4,Float)来调整物体表面材质参数,配合纹理,可以产生更加逼真的效果。');
 
     // 创建scene
     let scene = new Scene({cavnas:document.getElementById('canvas')});

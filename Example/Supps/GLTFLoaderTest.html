@@ -31,7 +31,7 @@
     import ProbeTools from "../../src/Core/Util/ProbeTools.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(10.00694701577273,4.752059754747693,-0.8094167189698362), new Vector3(9.020200568330681,4.844430342194254,-0.6760033649333097), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
 
     let testCamera = new Camera(scene, {id:'testCamera'});
