@@ -823,12 +823,12 @@ export default class OBJLoader {
                 let uv0s = mesh.getData(Mesh.S_UV0);
                 if(uv0s){
                     // 切线数据
-                    let tangents = Tools.generatorTangents(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
+                    let tangents = Tools.generatorTangents2(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0), mesh.getData(Mesh.S_NORMALS));
                     mesh.setData(Mesh.S_TANGENTS, tangents);
                 }
                 else{
                     // 切线数据
-                    let tangents = Tools.generatorFillTangents(mesh.getData(Mesh.S_POSITIONS));
+                    let tangents = Tools.generatorFillTangents2(mesh.getData(Mesh.S_POSITIONS));
                     mesh.setData(Mesh.S_TANGENTS, tangents);
                 }
                 // 创建Geometry

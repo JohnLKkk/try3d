@@ -310,7 +310,14 @@ export default class SubShader {
                         this._m_Defines[ShaderSource.VERTEX_SHADER] += ShaderSource.Context_Data[param] + "\n";
                     }
                     else{
-                        this._m_Defines[ShaderSource.VERTEX_SHADER] += this._m_CanDefineParams[param] + "\n";
+                        // 先判断该参数是否属于contextDefine(因为dparam!=param,但param仍有可能属于contextDefine
+                        if(ShaderSource.Context_Data[param] != null){
+                            this._m_Defines[ShaderSource.VERTEX_SHADER] += ShaderSource.Context_Data[param] + "\n";
+                        }
+                        else{
+                            // 属于材质参数定义
+                            this._m_Defines[ShaderSource.VERTEX_SHADER] += this._m_CanDefineParams[param] + "\n";
+                        }
                     }
 
                     if(!this._m_KeyDefs){
@@ -327,7 +334,14 @@ export default class SubShader {
                         this._m_Defines[ShaderSource.FRAGMENT_SHADER] += ShaderSource.Context_Data[param] + "\n";
                     }
                     else{
-                        this._m_Defines[ShaderSource.FRAGMENT_SHADER] += this._m_CanDefineParams[param] + "\n";
+                        // 先判断该参数是否属于contextDefine(因为dparam!=param,但param仍有可能属于contextDefine
+                        if(ShaderSource.Context_Data[param] != null){
+                            this._m_Defines[ShaderSource.FRAGMENT_SHADER] += ShaderSource.Context_Data[param] + "\n";
+                        }
+                        else{
+                            // 属于材质参数定义
+                            this._m_Defines[ShaderSource.FRAGMENT_SHADER] += this._m_CanDefineParams[param] + "\n";
+                        }
                     }
 
                     if(!this._m_KeyDefs){

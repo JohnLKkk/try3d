@@ -22,37 +22,63 @@
     import MeshFactor from "../../src/Core/Util/MeshFactor.js";
     import Geometry from "../../src/Core/Node/Geometry.js";
     import GLTFLoader from "../../src/Supp/GLTFLoader.js";
+    import RadianceLoader from "../../src/Supp/RadianceLoader.js";
+    import GIProbe from "../../src/Core/Light/GIProbe.js";
+    import ProbeTools from "../../src/Core/Util/ProbeTools.js";
+    import Texture2DVars from "../../src/Core/WebGL/Vars/Texture2DVars.js";
+    import Vector4 from "../../src/Core/Math3d/Vector4.js";
+    import BoolVars from "../../src/Core/WebGL/Vars/BoolVars.js";
+    import SkyBox from "../../src/Core/Node/Sky/SkyBox.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(5, 5, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(2, 2, 2), new Vector3(0, 1, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    firstPersonController.setMovementSpeed(1);
 
     let testCamera = new Camera(scene, {id:'testCamera'});
     testCamera.lookAt(new Vector3(5, 5, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
     let colorMat = new Material(scene, {id:'colorWireFrustum', materialDef:colorDef});
-    let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
-    // 根据当前相机创建测试用的视锥体
-    wireFrustum.setMesh(MeshFactor.createViewFrustumMeshFromCamera(testCamera));
-    wireFrustum.setMaterial(colorMat);
-    wireFrustum.updateBound();
 
     let rootNode = new Node(scene, {id:'rootNode'});
-    rootNode.addChildren(wireFrustum);
-    let gltfLoader = new GLTFLoader();
-    gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
-    gltfLoader.load(scene, './../Assets/Models/GLTF/Test/EstialKnigh20103.gltf', modelNode=>{
-        rootNode.addChildren(modelNode);
-        modelNode.setLocalScaleXYZ(0.01, 0.01, 0.01);
-        console.log('modelNode:',modelNode);
-        let animationProcessors = modelNode.getComponentAtTypes('AnimationProcessor');
-        animationProcessors[0].getAnimationActionAtIndex(0).play();
-        // // 由于动画轨迹进行了缩放动画,而动画影响顶点,所以会出现包围盒不对应动画下的模型标准,所以这里对模型关闭剔除
-        // let U3DMesh0 = rootNode.getChildrenAtName('U3DMesh0');
-        // let U3DMesh1 = rootNode.getChildrenAtName('U3DMesh1');
-        // U3DMesh0.setFilterFlag(Node.S_NEVER);
-        // U3DMesh1.setFilterFlag(Node.S_NEVER);
+
+
+    // 环境纹理加载完再开始创建创建
+    let radianceLoader = new RadianceLoader();
+    radianceLoader.loadHDR('./../Assets/Textures/hdr/Path.hdr', imageData=>{
+
+        // 创建一个sky
+        let sky = new SkyBox(scene, {id:'sky'});
+        // 使用cubeMap作为天空盒材质
+        let envMap = new Texture2DVars(scene);
+        envMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
+        envMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+        envMap.setFilter(scene, Texture2DVars.S_FILTERS.S_LINEAR, Texture2DVars.S_FILTERS.S_LINEAR);
+        envMap.setImage(scene, imageData, {rgbe:true});
+        sky.getMaterial().setParam('envMap', envMap);
+        sky.getMaterial().setParam('useEnvMap', new BoolVars().valueOf(true));
+        sky.getMaterial().setParam('useHDR', new BoolVars().valueOf(true));
+        scene.setSky(sky);
+
+
+
+        let gltfLoader = new GLTFLoader();
+        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+        gltfLoader.load(scene, './../Assets/Models/GLTF/EstialKnight/EstialKnight.gltf', modelNode=>{
+            rootNode.addChildren(modelNode);
+            console.log('modelNode:',modelNode);
+            let animationProcessors = modelNode.getComponentAtTypes('AnimationProcessor');
+            animationProcessors[0].getAnimationActionAtIndex(0).play();
+            let giProbe = new GIProbe(scene, {id:'giProbe'});
+            giProbe.setRadius(20);
+            giProbe.setPositionFromXYZ(0, 5, 0);
+            let envCapture = ProbeTools.bakeGIProbe(scene, giProbe, {resolute:128});
+            // 某些动画轨迹进行了缩放动画,而动画影响顶点,所以会出现包围盒不对应动画下的模型标准,所以这里可以对模型关闭剔除(但一般建模人员不会这么处理,除非是新手)
+        });
+
     });
+
+
 
 
     let dirLight = new DirectionalLight(scene, {id:'dirLight'});

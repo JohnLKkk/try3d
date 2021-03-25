@@ -118,7 +118,7 @@ export default class ShaderSource {
     static Context_Data = {
         "Context.InPosition":{src:ShaderSource.S_POSITION_SRC, loc:ShaderSource.S_POSITION, pattern:/Context.InPosition/, pattern2:/Context.InPosition[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InPosition/g, tag:ShaderSource.S_POSITION_SRC, type:"vec3"},
         "Context.InNormal":{src:ShaderSource.S_NORMAL_SRC, loc:ShaderSource.S_NORMAL, pattern:/Context.InNormal/, pattern2:/Context.InNormal[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InNormal/g, tag:ShaderSource.S_NORMAL_SRC, type:"vec3"},
-        "Context.InTangent":{src:ShaderSource.S_TANGENT_SRC, loc:ShaderSource.S_TANGENT, pattern:/Context.InTangent/, pattern2:/Context.InTangent[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InTangent/g, tag:ShaderSource.S_TANGENT_SRC, type:"vec3"},
+        "Context.InTangent":{src:ShaderSource.S_TANGENT_SRC, loc:ShaderSource.S_TANGENT, pattern:/Context.InTangent/, pattern2:/Context.InTangent[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InTangent/g, tag:ShaderSource.S_TANGENT_SRC, type:"vec4"},
         "Context.InUv0":{src:ShaderSource.S_UV0_SRC, loc:ShaderSource.S_UV0, pattern:/Context.InUv0/, pattern2:/Context.InUv0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InUv0/g, tag:ShaderSource.S_UV0_SRC, type:"vec2"},
         "Context.InJoint0":{src:ShaderSource.S_JOINT_0_SRC, loc:ShaderSource.S_JOINT_0, pattern:/Context.InJoint0/, pattern2:/Context.InJoint0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InJoint0/g, tag:ShaderSource.S_JOINT_0_SRC, type:"vec4"},
         "Context.InWeight0":{src:ShaderSource.S_WEIGHT_0_SRC, loc:ShaderSource.S_WEIGHT_0, pattern:/Context.InWeight0/, pattern2:/Context.InWeight0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InWeight0/g, tag:ShaderSource.S_WEIGHT_0_SRC, type:"vec4"},

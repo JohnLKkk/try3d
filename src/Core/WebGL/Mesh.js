@@ -169,7 +169,7 @@ export default class Mesh {
                         ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_NORMAL, 3, gl.FLOAT, 0, 0);
                         break;
                     case Mesh.S_TANGENTS:
-                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_TANGENT, 3, gl.FLOAT, 0, 0);
+                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_TANGENT, 4, gl.FLOAT, 0, 0);
                         break;
                     case Mesh.S_INDICES:
                         if(this._m_Datas[key].lod){

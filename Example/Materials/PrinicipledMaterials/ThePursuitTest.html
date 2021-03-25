@@ -47,7 +47,7 @@
     // 创建scene
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(0.14250750944191434,-0.8575145061624769,-8.764358330711921), new Vector3(0.45170584045592854,-0.7132451362248271,-7.824367511078059), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(-110.81252064007592,8.322129345189792,5.440956242271252), new Vector3(-111.19772977458258,8.06491175389563,6.327214124279335), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     let rootNode = new Node(scene, {id:'rootNode'});
 
@@ -106,6 +106,8 @@
         gltfLoader.load(scene, '../../Assets/Models/GLTF/ThePursuit/scene.gltf', (modelNode)=>{
             // modelNode.setLocalRotationFromEuler(MoreMath.toRadians(0), 0, 0);
             modelNode.setLocalScaleXYZ(0.001, 0.001, 0.001);
+            let animationProcessors = modelNode.getComponentAtTypes('AnimationProcessor');
+            animationProcessors[0].getAnimationActionAtIndex(0).play();
             rootNode.addChildren(modelNode);
         }, {batch:false});
 
@@ -126,6 +128,8 @@
     document.body.appendChild(stats.domElement);
     scene.on('update', (exTime)=>{
         stats.update();
+        // console.log('eye:' + mainCamera.getEye().toString());
+        // console.log('at:' + mainCamera.getAt().toString());
     });
 </script>
 </body>

@@ -185,7 +185,7 @@ export default class Box extends Geometry{
         ]);
 
         // 切线数据
-        let tangents = Tools.generatorTangents(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
+        let tangents = Tools.generatorTangents2(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0), mesh.getData(Mesh.S_NORMALS));
         mesh.setData(Mesh.S_TANGENTS, tangents);
 
         this.setMesh(mesh);

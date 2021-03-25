@@ -33,6 +33,7 @@
     import ProbeTools from "../../../src/Core/Util/ProbeTools.js";
     import RadianceLoader from "../../../src/Supp/RadianceLoader.js";
     import SkyBox from "../../../src/Core/Node/Sky/SkyBox.js";
+    import Internal from "../../../src/Core/Render/Internal.js";
 
 
     // 创建scene
@@ -151,7 +152,7 @@
         // 添加一个渲染探头,将捕捉数据渲染出来
         let giProbeGeo = new Sphere(scene, {id:'giProbeGeo', radius:1});
         giProbeGeo.setLocalTranslation(giProbe.getPosition());
-        let giProbeMat = new Material(scene, {id:'giProbeMat', materialDef:MaterialDef.load('../../Scenes/EnvCaptureOutDef')});
+        let giProbeMat = new Material(scene, {id:'giProbeMat', materialDef:MaterialDef.parse(Internal.S_ENV_CAPTURE_OUT_DEF)});
         giProbeMat.setParam('envCaptureMap', envCapture.getPrefilterTextureCube());
         // giProbeMat.setParam('lod', new FloatVars().valueOf(0));
         giProbeGeo.setMaterial(giProbeMat);

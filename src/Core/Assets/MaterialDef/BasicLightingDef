@@ -110,13 +110,13 @@ Def BasicLightingDef{
     SubTechnology SingleBlinnPhongLighting{
         Vars{
             vec3 wNormal;
+            vec4 wTangent;
             vec3 wPosition;
             vec2 wUv0;
             // 三种成分用于调和光照,可来自材质颜色的定义,也可以来自vertex_light
             vec3 ambientSumAdjust;
             vec4 diffuseSumAdjust;
             vec3 specularSumAdjust;
-            mat3 tbnMat;
         }
         Advanced{
             RenderProgram SinglePassLighting;
@@ -139,10 +139,10 @@ Def BasicLightingDef{
                 wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;
                 mat3 nMat = mat3(transpose(inverse(Context.ModelMatrix)));
                 vec3 norm = normalize(nMat * Context.InNormal);
-                vec3 t = normalize(nMat * Context.InTangent);
-                t = normalize(t - dot(t, norm) * norm);
-                vec3 b = cross(norm, t);
-                tbnMat = mat3(t, b, norm);
+                wTangent = vec4(normalize(nMat * Context.InTangent.xyz), Context.InTangent.w);
+                //t = normalize(t - dot(t, norm) * norm);
+                //vec3 b = cross(norm, t);
+                //tbnMat = mat3(t, b, norm);
                 wNormal = norm;
                 wUv0 = Context.InUv0;
 
@@ -245,9 +245,11 @@ Def BasicLightingDef{
                     _specularColor = _specularColor * texture(Params.specularMap, wUv0);
                 #endif
 
-                vec3 normal = wNormal;
+                vec3 normal = normalize( wNormal );
                 #ifdef Params.normalMap
                     vec3 normalHeight = texture(Params.normalMap, wUv0).xyz;
+                    vec3 tangent = normalize(wTangent.xyz);
+                    mat3 tbnMat = mat3(tangent, wTangent.w * cross(normal, tangent), normal);
                     normal = normalize(tbnMat * ( normalHeight * 2.0f - 1.0f ));
                 #endif
 

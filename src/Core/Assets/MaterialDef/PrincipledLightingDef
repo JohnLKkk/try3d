@@ -37,10 +37,10 @@ Def PrincipledLightingDef{
     SubTechnology SPPrincipledLighting{
         Vars{
             vec3 wNormal;
+            vec4 wTangent;
             vec3 wPosition;
             vec2 wUv0;
             vec2 wUv1;
-            mat3 tbnMat;
         }
         Advanced{
             RenderProgram SinglePassIBLLighting;
@@ -63,10 +63,11 @@ Def PrincipledLightingDef{
                 wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;
                 mat3 nMat = mat3(transpose(inverse(Context.ModelMatrix)));
                 vec3 norm = normalize(nMat * Context.InNormal);
-                vec3 t = normalize(nMat * Context.InTangent);
-                t = normalize(t - dot(t, norm) * norm);
-                vec3 b = cross(norm, t);
-                tbnMat = mat3(t, b, norm);
+                //vec3 t = normalize(nMat * Context.InTangent);
+                wTangent = vec4(normalize(nMat * Context.InTangent.xyz), Context.InTangent.w);
+                //t = normalize(t - dot(t, norm) * norm);
+                //vec3 b = cross(norm, t);
+                //tbnMat = mat3(t, b, norm);
                 wNormal = norm;
                 wUv0 = Context.InUv0;
                 #ifdef Params.lightMapTexCoord
@@ -253,6 +254,8 @@ Def PrincipledLightingDef{
                 #ifdef Params.normalMap
                     // 这里做了一种简化,理论上应该在fs阶段计算tbn,但是从插值的角度来看,可以简化为tbn插值,减少在fs阶段计算tbn开销(虽然这么做不精确,但是折中下可以接受)
                     vec3 normalHeight = texture(Params.normalMap, wUv0).xyz;
+                    vec3 tangent = normalize(wTangent.xyz);
+                    mat3 tbnMat = mat3(tangent, wTangent.w * cross(normal, tangent), normal);
                     normal = normalize(tbnMat * ( normalHeight * 2.0f - 1.0f ));
                 #endif
 

@@ -529,12 +529,12 @@ export default class GLTFLoader {
                 else{
                     // 生成切线数据
                     if(mesh.getData(Mesh.S_UV0)){
-                        let tangents = Tools.generatorTangents(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
+                        let tangents = Tools.generatorTangents2(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0), mesh.getData(Mesh.S_NORMALS));
                         mesh.setData(Mesh.S_TANGENTS, tangents);
                     }
                     else{
                         // 为了内存对齐
-                        let tangents = Tools.generatorFillTangents(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
+                        let tangents = Tools.generatorFillTangents2(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
                         mesh.setData(Mesh.S_TANGENTS, tangents);
                     }
                 }
@@ -709,8 +709,12 @@ export default class GLTFLoader {
             else{
                 // 生成切线数据
                 if(mesh.getData(Mesh.S_UV0)){
-                    let tangents = Tools.generatorTangents(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
+                    console.log('生成切线数据');
+                    let tangents = Tools.generatorTangents2(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0), mesh.getData(Mesh.S_NORMALS));
                     mesh.setData(Mesh.S_TANGENTS, tangents);
+                }
+                else{
+                    console.log('-----------------------------');
                 }
             }
             // 然后是材质(这里先跳过PBR材质)
@@ -731,6 +735,12 @@ export default class GLTFLoader {
                     this._m_Mats[matId] = material;
                 }
                 geometryNode.setMaterial(material);
+                if(material.renderState){
+                    // 暂时先这么简陋实现,后期再封装完整的渲染状态系统
+                    if(material.renderState.alphaMode == 'BLEND'){
+                        geometryNode.setTranslucent();
+                    }
+                }
             }
             else{
                 // 添加一个默认材质
@@ -839,6 +849,14 @@ export default class GLTFLoader {
         if(_material.emissiveFactor){
 
         }
+        let renderState = {};
+        if(_material.alphaMode){
+            renderState.alphaMode = _material.alphaMode;
+        }
+        if(_material.doubleSided){
+            renderState.doubleSided = _material.doubleSided;
+        }
+        material.renderState = renderState;
     }
     _parsePositions(gltf, i){
         let _positionsAccessors = gltf.accessors[i];
@@ -859,7 +877,7 @@ export default class GLTFLoader {
         let _buffer = _buffers[_bufferView.buffer].data;
         // 后续应该统一缓存,而不是每次newFloat32Array
         // 然后通过accessors.byteOffset和count来截取
-        let tangents = new GLTFLoader.DATA[_tangentsAccessors.componentType](_buffer, (_bufferView.byteOffset || 0) + (_tangentsAccessors.byteOffset || 0), _tangentsAccessors.count * 3);
+        let tangents = new GLTFLoader.DATA[_tangentsAccessors.componentType](_buffer, (_bufferView.byteOffset || 0) + (_tangentsAccessors.byteOffset || 0), _tangentsAccessors.count * 4);
         return {data:tangents, bufType:_tangentsAccessors.componentType};
     }
     _parseNormals(gltf, i){

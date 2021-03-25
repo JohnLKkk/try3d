@@ -191,6 +191,140 @@ export default class Tools {
     }
 
     /**
+     * 使用给定的positions和uvs计算切线数据。<br/>
+     * @param {Number[]}[indices]
+     * @param {Number[]}[positions]
+     * @param {Number[]}[uvs]
+     * @param {Number[]}[normals]
+     * @return {Float32Array}
+     */
+    static generatorTangents2(indices, positions, uvs, normals){
+        // 每个顶点的切线数据
+        let nVertices = positions.length / 3;
+        let tangents = new Float32Array(4 * nVertices);
+
+        let tan1 = [], tan2 = [];
+
+        for(let i = 0;i < nVertices;i++){
+            tan1[i] = new Vector3();
+            tan2[i] = new Vector3();
+        }
+
+        let vA = new Vector3(),
+            vB = new Vector3(),
+            vC = new Vector3(),
+
+            uvA = new Vector2(),
+            uvB = new Vector2(),
+            uvC = new Vector2(),
+
+            sdir = new Vector3(),
+            tdir = new Vector3();
+
+        let handleTriangle = ( a, b, c )=>{
+
+            vA.setToInXYZ(positions[a * 3], positions[a * 3 + 1], positions[a * 3 + 2]);
+            vB.setToInXYZ(positions[b * 3], positions[b * 3 + 1], positions[b * 3 + 2]);
+            vC.setToInXYZ(positions[c * 3], positions[c * 3 + 1], positions[c * 3 + 2]);
+
+            uvA.setToInXY(uvs[a * 2], uvs[a * 2 + 1]);
+            uvB.setToInXY(uvs[b * 2], uvs[b * 2 + 1]);
+            uvC.setToInXY(uvs[c * 2], uvs[c * 2 + 1]);
+
+            vB.sub( vA );
+            vC.sub( vA );
+
+            uvB.sub( uvA );
+            uvC.sub( uvA );
+
+            let r = 1.0 / ( uvB._m_X * uvC._m_Y - uvC._m_X * uvB._m_Y );
+
+            // 忽略具有重合或共线顶点的uv三角形
+
+            if ( ! isFinite( r ) ) return;
+
+            sdir.setTo(vB);
+            sdir.multLength(uvC._m_Y);
+            sdir.addInXYZ(vC._m_X * -uvB._m_Y, vC._m_Y * -uvB._m_Y, vC._m_Z * -uvB._m_Y);
+            sdir.multLength(r);
+
+            tdir.setTo(vC);
+            tdir.multLength(uvB._m_X);
+            tdir.addInXYZ(vB._m_X * -uvC._m_X, vB._m_Y * -uvC._m_X, vB._m_Z * -uvC._m_X);
+            tdir.multLength(r);
+
+            tan1[ a ].add( sdir );
+            tan1[ b ].add( sdir );
+            tan1[ c ].add( sdir );
+
+            tan2[ a ].add( tdir );
+            tan2[ b ].add( tdir );
+            tan2[ c ].add( tdir );
+
+        };
+
+        for(let i = 0;i < indices.length;i+=3){
+            handleTriangle(
+                indices[ i + 0 ],
+                indices[ i + 1 ],
+                indices[ i + 2 ]
+            );
+        }
+
+        let tmp = new Vector3(), tmp2 = new Vector3();
+        let n = new Vector3(), n2 = new Vector3();
+        let w, t, test;
+
+        let handleVertex = ( v )=>{
+
+            n.setToInXYZ(normals[v * 3], normals[v * 3 + 1], normals[v * 3 + 2]);
+            n2.setTo(n);
+
+            t = tan1[ v ];
+
+            // 格拉姆-施密特正交化
+
+            tmp.setTo( t );
+            tmp.sub( n.multLength( n.dot( t ) ) ).normal();
+
+            // 计算up
+
+            n2.cross(t, tmp2);
+            test = tmp2.dot( tan2[ v ] );
+            w = ( test < 0.0 ) ? - 1.0 : 1.0;
+
+            tangents[ v * 4 ] = tmp._m_X;
+            tangents[ v * 4 + 1 ] = tmp._m_Y;
+            tangents[ v * 4 + 2 ] = tmp._m_Z;
+            tangents[ v * 4 + 3 ] = w;
+
+        };
+
+        for(let i = 0;i < indices.length;i+=3){
+            handleVertex( indices[ i + 0 ] );
+            handleVertex( indices[ i + 1 ] );
+            handleVertex( indices[ i + 2 ] );
+        }
+
+        return tangents;
+    }
+
+    /**
+     * 返回与positions内存对齐的切线数据。<br/>
+     * @param {Number[]}[positions]
+     * @return {Number[]}[tangents]
+     */
+    static generatorFillTangents2(positions){
+        let nVertices = positions.length / 3;
+        let l = 4 * nVertices;
+        let tangents = [];
+        for(let i = 0;i < l;i++){
+            tangents[i] = 0.0;
+        }
+        return tangents;
+    }
+
+    /**
      * 返回与positions内存对齐的切线数据。<br/>
      * @param {Number[]}[positions]
      * @return {Number[]}[tangents]
@@ -247,11 +381,11 @@ export default class Tools {
             uv2.setToInXY(uvs[indices[i + 2] * 2], uvs[indices[i + 2] * 2 + 1]);
 
             p1.sub(p0, e1);
-            p1.sub(p2, e2);
+            p2.sub(p0, e2);
             uv1.sub(uv0, uv);
             du1 = uv._m_X;
             dv1 = uv._m_Y;
-            uv1.sub(uv2, uv);
+            uv2.sub(uv0, uv);
             du2 = uv._m_X;
             dv2 = uv._m_Y;
 
@@ -260,6 +394,11 @@ export default class Tools {
             tx = dUV[0] * e1._m_X + dUV[1] * e2._m_X;
             ty = dUV[0] * e1._m_Y + dUV[1] * e2._m_Y;
             tz = dUV[0] * e1._m_Z + dUV[1] * e2._m_Z;
+            let l = tx * tx + ty * ty + tz * tz;
+            l = 1.0 / Math.sqrt(l);
+            tx *= l;
+            ty *= l;
+            tz *= l;
             Tools._generatorWeightedTangent(indices[i], indices[i + 1], indices[i + 2], tx, ty, tz, tangentMaps);
         }
 
