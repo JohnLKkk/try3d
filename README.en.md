@@ -3,6 +3,15 @@
 #### Description
 This is my attempt at WebGL called TEORT series project. For fun, this project is mainly a renderer designed by some new ideas that I recently researched. Currently, the renderer is still in its infancy, but it contains some visible results. Initially the project was hosted on gite as a private project, now I also update it to github.
 
+#### Showcase
+
+![image](https://gitee.com/JoyClm/teort_-web-gl/raw/master/Screenshot/a.png)
+![image](https://gitee.com/JoyClm/teort_-web-gl/raw/master/Screenshot/b.png)
+![image](https://gitee.com/JoyClm/teort_-web-gl/raw/master/Screenshot/c.jpg)
+![image](https://gitee.com/JoyClm/teort_-web-gl/raw/master/Screenshot/e.png)
+![image](https://gitee.com/JoyClm/teort_-web-gl/raw/master/Screenshot/f.png)
+![image](https://gitee.com/JoyClm/teort_-web-gl/raw/master/Screenshot/g.png)
+
 #### Software Architecture
 1. Basic
     1. Scene management
