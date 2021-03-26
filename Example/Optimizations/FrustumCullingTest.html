@@ -25,6 +25,8 @@
     import MoreMath from "../../src/Core/Math3d/MoreMath.js";
     import Stats from "./../stats.min.js";
     import Camera from "../../src/Core/Scene/Camera.js";
+    import Vec4Vars from "../../src/Core/WebGL/Vars/Vec4Vars.js";
+    import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let testCamera = new Camera(scene, {id:'testCamera'});
     testCamera.lookAt(new Vector3(25, 0, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -33,7 +35,10 @@
     let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
     console.log("materialDef:",materialDef);
     let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
-    basicLightingMat.selectTechnology('BlinnPhongLight2');
+    basicLightingMat.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
+    basicLightingMat.setParam('specularColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
+    basicLightingMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
+    basicLightingMat.setParam('shininess', new FloatVars().valueOf(32.0));
 
     let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
     // 根据当前相机创建测试用的视锥体
