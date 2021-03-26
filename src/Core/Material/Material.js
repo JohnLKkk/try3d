@@ -159,10 +159,8 @@ export default class Material extends Component{
         let gl = this._m_Scene.getCanvas().getGLContext();
         let frameContext = this._m_Scene.getRender().getFrameContext();
         // 检测是否需要重新编译subShader
-        let recompile = false;
         if(this._m_CurrentSubShader.needCompile()){
             this._m_CurrentSubShader._compile(gl, frameContext);
-            recompile = true;
         }
         // 1.先检测是否需要切换subShader(根据shader种类)(这里检测可能与理论不一样，打印出id来调试...)
         if(frameContext.m_LastSubShaderId != subShader.getDefId()){
@@ -170,10 +168,12 @@ export default class Material extends Component{
             subShader.use(gl);
             frameContext.m_LastSubShaderId = subShader.getDefId();
             frameContext.m_LastMaterial = this;
+            frameContext.m_SM++;
         }
         // 2.检测是否需要更新参数到subShader中(同种类型subShaderId,但存在不同具体实力化subShader对象,所以参数不同需要更新)
         if(frameContext.m_LastSubShader != subShader){
             frameContext.m_LastSubShader = subShader;
+            frameContext.m_SS++;
             // Log.log('切换!');
             // 先检查材质值
             for(let n in this._m_ParamValues){
@@ -190,7 +190,7 @@ export default class Material extends Component{
                 // 检测是否需要更新该参数
                 if(this._m_ParamValues[param.paramName]){
                     // 如果值相同就跳过
-                    if(recompile || !this._m_ParamValues[param.paramName].compare(param.value)){
+                    if(!this._m_ParamValues[param.paramName].compare(param.value)){
                         // 提交参数并保存参数
                         this._m_CurrentSubShader.uploadParam(gl, param.paramName, param.value);
                         this._m_ParamValues[param.paramName] = param.value;

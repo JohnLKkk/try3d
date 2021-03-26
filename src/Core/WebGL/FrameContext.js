@@ -12,6 +12,11 @@ export default class FrameContext {
         this.m_LastSubShader = null;
         this.m_LastSubShaderId = null;
         this.m_LastFrameBuffer = null;
+        // 统计
+        // 每帧切换的材质
+        this.m_SM = 0;
+        // 每帧切换的shader
+        this.m_SS = 0;
         // 默认帧缓存(只存在forward渲染路径时,为null,否则创建一个fbo)
         this._m_DefaultFrameBuffer = null;
         // 当前需要的上下文
@@ -123,6 +128,8 @@ export default class FrameContext {
         this.m_LastSubShader = null;
         this.m_LastSubShaderId = null;
         this.m_LastFrameBuffer = null;
+        this.m_SM = 0;
+        this.m_SS = 0;
     }
 
 }
