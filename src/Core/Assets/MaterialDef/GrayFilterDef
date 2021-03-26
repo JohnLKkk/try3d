@@ -1,0 +1,25 @@
+// 灰度过滤
+Def GrayFilterDef{
+    SubTechnology GrayFilter{
+        Vars{
+            vec2 uv0;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = vec4(Context.InPosition, 1.0f);
+                uv0 = Context.InUv0;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                Context.OutColor = vec4(texture(Context.InScreen, uv0).ggg, 1.0f);
+            }
+        }
+    }
+    Technology{
+        Sub_Pass PostFilter{
+            Pass GrayFilter{
+            }
+        }
+    }
+}

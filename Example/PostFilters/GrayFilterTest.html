@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GrayFilterTest</title>
+    <style>
+        #baseColor input{
+            width: 50px;
+        }
+        #baseColor2 input{
+            width: 50px;
+        }
+        #specular input{
+            width: 50px;
+        }
+    </style>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" tabindex="0" width="400" height="300" style="border: none;margin: 0px;padding: 0px;"></canvas>
+</div>
+<script type="module">
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import Stats from "../stats.min.js";
+    import OBJLoader from "../../src/Supp/OBJLoader.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+
+
+    // 创建scene
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    let rootNode = new Node(scene, {id:'rootNode'});
+
+    let dirLight = new DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(-1, -1, -1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dirLight);
+
+    let objLoader = new OBJLoader();
+    objLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+    objLoader.load(scene, 'grayScene', './../Assets/Models/OBJ/Jingzhuxuan/jinzuxuan.obj', (modelNode)=>{
+        rootNode.addChildren(modelNode);
+        mainCamera.addFilterFromMaterial(new Material(scene, {id:'grayFilter', materialDef:MaterialDef.load('../../src/Core/Assets/MaterialDef/GrayFilterDef')}));
+    });
+
+    let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+        // console.log('eye:' + mainCamera.getEye().toString());
+        // console.log('at:' + mainCamera.getAt().toString());
+    });
+</script>
+</body>
+</html>

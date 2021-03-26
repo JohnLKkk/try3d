@@ -6,6 +6,8 @@ import ShaderSource from "../WebGL/ShaderSource.js";
 import Plane from "../Math3d/Plane.js";
 import MoreMath from "../Math3d/MoreMath.js";
 import Log from "../Util/Log.js";
+import Render from "../Render/Render.js";
+import Filter from "../Filters/Filter.js";
 
 /**
  * Camera定义了3D空间中的观察者,渲染3D世界时,3D世界中必须有一个Camera,否则无法渲染。<br/>
@@ -105,6 +107,21 @@ export default class Camera extends Component{
             this._m_ProjectMatrixUpdate = true;
             this._doUpdate();
         });
+
+        // FilterPost
+        this._m_Filters = [];
+
+        // postFilter
+        this._m_Scene.getRender().on(Render.POST_QUEUE, (exTime)=>{
+            if(this._m_IsRenderingCamera){
+
+            }
+        });
+        this._m_Scene.getRender().on(Render.POST_FRAME, (exTime)=>{
+            if(this._m_IsRenderingCamera){
+
+            }
+        });
     }
 
     /**
@@ -157,6 +174,14 @@ export default class Camera extends Component{
         }
 
         this._doUpdate();
+    }
+
+    /**
+     * 添加一个后处理。<br/>
+     * @param {Material}[material]
+     */
+    addFilterFromMaterial(material){
+        this._m_Filters.push(Filter.newFilterFromMaterial(this, material));
     }
 
     /**
