@@ -4,9 +4,11 @@
 这是我在名为TEORT系列项目的WebGL的一次尝试，出于好玩，该项目主要是我近期研究的一些新思路而设计而成的渲染器。目前，该渲染器还在初期阶段，但以包含一些可见成果。最初该项目作为私人项目托管在gite上，现在我同时将其更新到github上。
 
 #### 展示
-![image](https://gitee.com/JoyClm/teort_-web-gl/blob/master/Screenshot/a.png)
-![image](https://gitee.com/JoyClm/teort_-web-gl/blob/master/Screenshot/b.png)
-![image](https://gitee.com/JoyClm/teort_-web-gl/blob/master/Screenshot/c.png)
+
+![image](https://gitee.com/JoyClm/teort_-web-gl/raw/master/Screenshot/a.png)
+![image](https://gitee.com/JoyClm/teort_-web-gl/raw/master/Screenshot/b.png)
+![image](https://gitee.com/JoyClm/teort_-web-gl/raw/master/Screenshot/c.jpg)
+
 
 #### 特性
 1.  基本
