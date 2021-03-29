@@ -1,5 +1,8 @@
 // 灰度过滤
 Def GrayFilterDef{
+    Params{
+        bool useGMat;
+    }
     SubTechnology GrayFilter{
         Vars{
             vec2 uv0;
@@ -11,8 +14,14 @@ Def GrayFilterDef{
             }
         }
         Fs_Shader{
+            const vec3 W = vec3(0.3f, 0.59f, 0.11f);
             void main(){
-                Context.OutColor = vec4(texture(Context.InScreen, uv0).ggg, 1.0f);
+                #ifdef Params.useGMat
+                    Context.OutColor = vec4(texture(Context.InScreen, uv0).ggg, 1.0f);
+                #else
+                    float gray = dot( texture(Context.InScreen, uv0).rgb, W );
+                    Context.OutColor = vec4(gray, gray, gray, 1.0f);
+                #endif
             }
         }
     }

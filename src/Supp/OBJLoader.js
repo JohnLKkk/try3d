@@ -574,6 +574,7 @@ export default class OBJLoader {
         let texture = new Texture2DVars(this._m_Scene);
         texture.setPreloadColor(this._m_Scene, new Vector4(0.2, 0.2, 0.2, 1.0));
         texture.setImageSrc(this._m_Scene, textureCfg.src);
+        texture.setFlipY(true);
         return texture;
     }
 

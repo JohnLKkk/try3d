@@ -121,7 +121,9 @@ export default class Camera extends Component{
             if(this._m_IsRenderingCamera){
                 if(this.demandFilter()){
                     this._m_Filters.forEach(filter=>{
-                        filter.postFilter();
+                        if(filter.isEnable()){
+                            filter.postFilter();
+                        }
                     });
                 }
             }
@@ -185,7 +187,9 @@ export default class Camera extends Component{
      * @param {Material}[material]
      */
     addFilterFromMaterial(material){
-        this._m_Filters.push(Filter.newFilterFromMaterial(this, material));
+        let newFilter = Filter.newFilterFromMaterial(this, material);
+        this._m_Filters.push(newFilter);
+        return newFilter;
     }
 
     /**

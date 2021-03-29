@@ -25,6 +25,7 @@ export default class Filter extends Component{
                 return true;
             }
         }
+        this._m_Enable = true;
         // Js的执行顺序,导致这里无法new FramePicture,所以这里new Picture
         this._m_FramePicture = new FilterFramePicture(owner, {id:Tools.nextId()});
         this._m_PreFrames = null;
@@ -81,6 +82,28 @@ export default class Filter extends Component{
         filter._m_FramePicture.setMaterial(material);
         filter.finish();
         return filter;
+    }
+
+    /**
+     * 是否激活该Filter。<br/>
+     * @return {Boolean}
+     */
+    isEnable(){
+        return this._m_Enable;
+    }
+
+    /**
+     * 激活该Filter。<br/>
+     */
+    enable(){
+        this._m_Enable = true;
+    }
+
+    /**
+     * 禁用该Filter。<br/>
+     */
+    disable(){
+        this._m_Enable = false;
     }
 }
 
