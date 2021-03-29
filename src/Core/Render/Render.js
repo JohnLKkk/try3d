@@ -652,7 +652,9 @@ export default class Render extends Component{
      * 渲染指定列表。<br/>
      * 假设该列表已排序。<br/>
      * @param {WebGL}[gl]
-     * @param lights
+     * @param {String}[path]
+     * @param {Object}[lights]
+     * @param {Light[]}[lights]
      */
     draw(gl, path, bucks, lights){
         let subShaders = null;

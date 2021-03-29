@@ -1,0 +1,77 @@
+// Bloom
+Def BloomFilterDef{
+    Globals BloomExtract{
+        color0 extractTexture;
+    }
+    Params{
+        // 辉光阈值
+        float extractThreshold;
+        // 使用辉光纹理
+        bool useGlowMap;
+    }
+    SubTechnology ExtractPass{
+        Vars{
+            vec2 uv0;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = vec4(Context.InPosition, 1.0f);
+                uv0 = Context.InUv0;
+            }
+        }
+        Fs_Shader{
+            const vec3 DEFAULT_GRAY = vec3(0.2126f, 0.7152f, 0.0722f);
+            #define DEFAULT_EXTRACT_THRESHOLD 1.0
+            #define GAMMA 2.2f
+            #define GAMMA_T 1.0f / GAMMA
+            void main(){
+                vec4 screenColor = texture(Context.InScreen, uv0);
+                screenColor.rgb = pow(screenColor.rgb, GAMMA);
+                // 记住我们在线性空间计算,所以这里需要映射回来
+                float threshold = dot(screenColor.rgb, DEFAULT_GRAY);
+                #ifdef Params.extractThreshold
+                    if(threshold > Params.extractThreshold){
+                        screenColor.rgb = pow(screenColor, GAMMA_T);
+                        Globals.extractTexture = screenColor;
+                    }
+                    else{
+                        Globals.extractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+                    }
+                #else
+                    if(threshold > DEFAULT_EXTRACT_THRESHOLD){
+                        screenColor.rgb = pow(screenColor, GAMMA_T);
+                        Globals.extractTexture = screenColor;
+                    }
+                    else{
+                        Globals.extractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+                    }
+                #endif
+            }
+        }
+    }
+    SubTechnology BloomPass{
+        Vars{
+            vec2 uv0;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = vec4(Context.InPosition, 1.0f);
+                uv0 = Context.InUv0;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                // 1.对ExtractTexture应用某种模糊(Blur)处理
+                // 2.结合ExtractTexture和ScreenColor实现bloom
+            }
+        }
+    }
+    Technology{
+        Sub_Pass BloomFilter{
+            Pass ExtractPass{
+            }
+            Pass BloomPass{
+            }
+        }
+    }
+}
