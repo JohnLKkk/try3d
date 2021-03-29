@@ -76,6 +76,7 @@ export default class ShaderSource {
     // 纹理深度(目前webGL2.0不支持深度纹理,但作为标记,仍然在这里提供)
     static S_G_DEPTH_SRC = "_gDepth";
     static S_G_DEPTH_RENDER_BUFFER_SRC = "_gDepthRenderBuffer";
+    static S_SCREEN_SRC = "_screen";
 
     static S_FORWARD_COLOR_MAP_SRC = "_forwardColorMap";
 
@@ -142,6 +143,7 @@ export default class ShaderSource {
         "Context.InGNormal":{src:ShaderSource.S_G_NORMAL_SRC, pattern:/Context.InGNormal/, pattern2:/Context.InGNormal[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGNormal/g, tag:ShaderSource.S_G_NORMAL_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InGAlbedoSpec":{src:ShaderSource.S_G_ALBEDOSPEC_SRC, pattern:/Context.InGAlbedoSpec/, pattern2:/Context.InGAlbedoSpec[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGAlbedoSpec/g, tag:ShaderSource.S_G_ALBEDOSPEC_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InGDepth":{src:ShaderSource.S_G_DEPTH_SRC, pattern:/Context.InGDepth/, pattern2:/Context.InGDepth[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGDepth/g, tag:ShaderSource.S_G_DEPTH_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
+        "Context.InScreen":{src:ShaderSource.S_FORWARD_COLOR_MAP_SRC, pattern:/Context.InScreen/, pattern2:/Context.InScreen[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InScreen/g, tag:ShaderSource.S_FORWARD_COLOR_MAP_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InForwardColorMap":{src:ShaderSource.S_FORWARD_COLOR_MAP_SRC, pattern:/Context.InForwardColorMap/, pattern2:/Context.InForwardColorMap[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InForwardColorMap/g, tag:ShaderSource.S_FORWARD_COLOR_MAP_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InPrefEnvMap":{src:ShaderSource.S_PREF_ENV_MAP_SRC, pattern:/Context.InPrefEnvMap/, pattern2:/Context.InPrefEnvMap[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InPrefEnvMap/g, tag:ShaderSource.S_PREF_ENV_MAP_SRC, type:"samplerCube", utype:"uniform samplerCube"},
         // 输出类型缓存

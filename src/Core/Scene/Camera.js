@@ -119,7 +119,11 @@ export default class Camera extends Component{
         });
         this._m_Scene.getRender().on(Render.POST_FRAME, (exTime)=>{
             if(this._m_IsRenderingCamera){
-
+                if(this.demandFilter()){
+                    this._m_Filters.forEach(filter=>{
+                        filter.postFilter();
+                    });
+                }
             }
         });
     }
@@ -182,6 +186,22 @@ export default class Camera extends Component{
      */
     addFilterFromMaterial(material){
         this._m_Filters.push(Filter.newFilterFromMaterial(this, material));
+    }
+
+    /**
+     * 返回所有后处理器。<br/>
+     * @return {Filter[]}
+     */
+    getFilters(){
+        return this._m_Filters;
+    }
+
+    /**
+     * 要求后处理。<br/>
+     * @return {Boolean}
+     */
+    demandFilter(){
+        return this._m_Filters != null && this._m_Filters.length > 0;
     }
 
     /**

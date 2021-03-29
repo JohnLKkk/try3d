@@ -477,6 +477,13 @@ export default class Render extends Component{
             gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
         }
         else{
+            // 检测filters
+            let mainCamera = this._m_Scene.getMainCamera();
+            if(mainCamera.demandFilter()){
+                useBackForwardFrameBuffer = true;
+                gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
+                this._m_FrameContext.m_LastFrameBuffer = this._m_FrameContext._m_DefaultFrameBuffer;
+            }
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         }
 
@@ -639,6 +646,46 @@ export default class Render extends Component{
      */
     setViewPort(gl, x, y, w, h){
         gl.viewport(x, y, w, h);
+    }
+
+    /**
+     * 渲染指定列表。<br/>
+     * 假设该列表已排序。<br/>
+     * @param {WebGL}[gl]
+     * @param lights
+     */
+    draw(gl, path, bucks, lights){
+        let subShaders = null;
+        let mat = null;
+        let currentTechnology = null;
+        let subPasss = null;
+        if(bucks){
+            for(let matId in bucks){
+                // 获取当前选中的技术
+                mat = this._m_Scene.getComponent(matId);
+                currentTechnology = mat.getCurrentTechnology();
+                subPasss = currentTechnology.getSubPasss(path);
+                if(subPasss){
+                    subShaders = subPasss.getSubShaders();
+                    // 执行渲染
+                    for(let subShader in subShaders){
+                        let renderDatas = subShaders[subShader].subShader.getRenderDatas();
+                        for(let k in renderDatas){
+                            gl.activeTexture(gl.TEXTURE0 + renderDatas[k].loc);
+                            gl.bindTexture(gl.TEXTURE_2D, this._m_FrameContext.getFrameBuffer(renderDatas[k].refId).getTexture(renderDatas[k].dataId).getLoc());
+                        }
+                        // 检测是否需要更新渲染状态
+                        if(subShaders[subShader].renderState){
+                            // 依次检测所有项
+                            this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
+                        }
+                        // 指定subShader
+                        mat._selectSubShader(subShaders[subShader].subShader);
+                        this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].drawArrays(gl, this._m_Scene, this._m_FrameContext, bucks[matId], lights);
+                    }
+                }
+            }
+        }
     }
 
     /**
