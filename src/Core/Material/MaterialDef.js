@@ -5,6 +5,7 @@ import Tools from "../Util/Tools.js";
 import SubShaderDef from "./SubShaderDef.js";
 import TechnologyDef from "./TechnologyDef.js";
 import Render from "../Render/Render.js";
+import Log from "../Util/Log.js";
 
 class Block{
     /**
@@ -168,6 +169,8 @@ export default class MaterialDef{
         // 解析
         // 材质名称
         this._m_Name = name;
+        // 全局参数
+        this._m_Globals = {};
         // 材质参数(元素类型Param)
         this._m_Params = {};
         // subShaderDefs
@@ -204,6 +207,29 @@ export default class MaterialDef{
     getParams(){
         return this._m_Params;
     }
+    addGlobal(name, type, varName){
+        // 布局如下:
+        // name->
+        //      varName->
+        //              type
+        if(!this._m_Globals[name]){
+            this._m_Globals[name] = {};
+        }
+        this._m_Globals[name][varName] = [];
+        // in部分
+        this._m_Globals[name][varName].push({type:type, refName:name, name:varName, pattern:eval("/Globals.In" + varName + "/"), pattern2:eval("/Globals.In" + varName + "[\\s+-;.,\\*\\\\]{1,}/"), tagPattern:eval("/Globals.In" + varName + "/g")});
+        let t = type.indexOf('color');
+        if(t > -1){
+            let loc = type.substring(t + 5, type.length);
+            Log.log('loc:' + loc);
+            // 获取附件计数
+            // out部分
+            this._m_Globals[name][varName].push({type:type, loc:loc, refName:name, name:varName, pattern:eval("/Globals.Out" + varName + "/"), pattern2:eval("/Globals.Out" + varName + "[\\s+-;.,\\*\\\\]{1,}/"), tagPattern:eval("/Globals.Out" + varName + "/g")});
+        }
+    }
+    getGlobals(){
+        return this._m_Globals;
+    }
     setName(name){
         this._m_Name = name;
     }
@@ -215,6 +241,25 @@ export default class MaterialDef{
     }
     static trim(str){
         return str.replace(/(^\s*)|(\s*$)/g, "");
+    }
+    static parseGlobals(matDef, blockDef){
+        let name = blockDef.getName();
+        // Log.log('name = ' + name);
+        let data = blockDef.getData();
+        let line = null;
+        let attach = null;
+        for(let i = blockDef.getStart() + 1;i < blockDef.getEnd();i++){
+            line = data[i];
+            line = Tools.trim(line);
+            line = line.substring(0, line.length - 1).split(" ");
+            matDef.addGlobal(name, line[0], line[1]);
+            // if(!ShaderSource.Context_RenderDataRefFBs[line[0]]){
+            //     ShaderSource.Context_RenderDataRefFBs[line[0]] = name;
+            // }
+            // else if(ShaderSource.Context_RenderDataRefFBs[line[0]] != name){
+            //     Log.error("错误的匹配[[" + ShaderSource.Context_RenderDataRefFBs[line[0]] + "]]与[[" + name + "]]");
+            // }
+        }
     }
 
     /**
@@ -647,14 +692,17 @@ export default class MaterialDef{
         let useContexts = [];
         let useVars = [];
         let varTable = subShaderDef.getVarTable();
+        let globals = subShaderDef.getFromMaterialDef().getGlobals();
+        let global = null;
         let params = subShaderDef.getFromMaterialDef().getParams();
         let param = null;
         let useParam = false;
         let useParams = [];
-        let useGlobalTextures = [];
+        let useGlobal = false;
         let conParams = {};
         let conContexts = {};
         let conVars = {};
+        let conGlobals = {};
         // 全局变量(一般是全局纹理,即自定义frameBuffer或内置延迟着色路径的frameBuffer的纹理数据块,需要使用一种其他解析注入方式)
         let useGlobals = [];
         let useFBId = null;
@@ -694,6 +742,51 @@ export default class MaterialDef{
                         conVars[p.name] = true;
                         useVars.push(p);
                     }
+                }
+            }
+            // 检测全局变量
+            p = null;
+            pr = -1;
+            pr2 = -1;
+            prsult = null;
+            let ginout = null;
+            for(let k in globals){
+                global = globals[k];
+                for(let g in global){
+                    for(let i = 0;i < global[g].length;i++){
+                        ginout = global[g][i];
+                        pr = Tools.find2(line, ginout.pattern);
+                        if(pr != -1){
+                            pr2 = Tools.find2(line, ginout.pattern2);
+                            if(pr2 != null && pr2 != pr){
+                                pr = pr2;
+                            }
+                            if(!prsult){
+                                prsult = {};
+                            }
+                            if(prsult[pr] != null){
+                                if(prsult[pr].name.length < param.name.length){
+                                    prsult[pr] = ginout;
+                                }
+                            }
+                            else{
+                                prsult[pr] = ginout;
+                            }
+                        }
+                    }
+                }
+            }
+            if(prsult){
+                for(let pr in prsult){
+                    p = prsult[pr];
+                    if(!conGlobals[p.name]){
+                        // 记录使用的材质参数
+                        useGlobals.push(p);
+                        conGlobals[p.name] = true;
+                    }
+                    // 设置材质参数
+                    line = Tools.repSrc(line, p.pattern, p.tagPattern, p.name);
+                    useGlobal = true;
                 }
             }
             // 检测材质参数列表
@@ -797,6 +890,28 @@ export default class MaterialDef{
                 // inParams += "#endif\n";
             }
             shader = inParams + shader;
+        }
+        // 添加全局变量
+        if(useGlobal){
+            subShaderDef.addUseGlobals(useGlobals);
+            let inGlobals = "\n";
+            let g = null;
+            for(let k in useGlobals){
+                g = useGlobals[k];
+                // 添加参数
+                // inParams += "#ifdef " + param.getDefType() + "\n";
+                if(g.loc != null || g.loc != undefined){
+                    // 后续从matDef解析类型
+                    // in部分
+                    inGlobals += "layout (location=" + g.loc + ") out " + "sampler2D" + " " + g.name + ";\n";
+                }
+                else{
+                    // out部分
+                    inGlobals += "sampler2D" + " " + g.name + ";\n";
+                }
+                // inParams += "#endif\n";
+            }
+            shader = inGlobals + shader;
         }
         // 检测shader是否需要添加变量
         if(useVars.length > 0){
@@ -1024,6 +1139,9 @@ export default class MaterialDef{
                 case "Def":
                     // 创建一个材质定义
                     blockObj.setName(blockDef.getName());
+                    break;
+                case "Globals":
+                    MaterialDef.parseGlobals(blockObj, blockDef);
                     break;
                 case "Params":
                     // 材质参数

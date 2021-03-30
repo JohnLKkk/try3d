@@ -9,6 +9,7 @@ import Tools from "../Util/Tools.js";
 import Picture from "../Node/Picture.js";
 
 export default class Filter extends Component{
+    static S_PRE_FRAME_FILTER = "PreFrame";
     static S_POST_FILTER = "PostFilter";
     constructor(owner, cfg) {
         super(owner, cfg);
@@ -44,6 +45,11 @@ export default class Filter extends Component{
      * @private
      */
     _init(){
+        if(this._m_FramePicture.getMaterial().getCurrentTechnology().getSubPasss(Filter.S_PRE_FRAME_FILTER)){
+            this._m_PreFrames = {};
+            this._m_PostFilters[this._m_FramePicture.getMaterial().getId()] = [];
+            this._m_PostFilters[this._m_FramePicture.getMaterial().getId()].push(this._m_FramePicture);
+        }
         if(this._m_FramePicture.getMaterial().getCurrentTechnology().getSubPasss(Filter.S_POST_FILTER)){
             this._m_PostFilters = {};
             this._m_PostFilters[this._m_FramePicture.getMaterial().getId()] = [];
@@ -56,9 +62,9 @@ export default class Filter extends Component{
      * @param {RenderQueue}[renderQueue]
      */
     preFrame(renderQueue){
-        let gl = this._m_Scene.getCanvas().getGLContext();
-        // 只渲染当前可见物体,并只渲染包含指定pass的物体
-        // 检测该物体是否包含指定pass
+        if(this._m_PreFrames){
+            // 渲染指定pass
+        }
     }
 
     /**

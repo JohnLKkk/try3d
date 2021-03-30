@@ -135,6 +135,7 @@ export default class SubShader {
         this.use(gl);
         // 获取program变量信息
         let useParams = this._m_Def.getUseParams();
+        let useGlobals = this._m_Def.getUseGlobals();
         let useContexts = this._m_Def.getUseContexts();
         let texId = 0;
         if(useParams && useParams.length > 0){
@@ -161,6 +162,18 @@ export default class SubShader {
                             break;
                     }
                     this._m_MatParams[param.getName()] = {type:param.getType(), loc, fun};
+                }
+            });
+        }
+        if(useGlobals && useGlobals.length > 0){
+            useGlobals.forEach(global=>{
+                // 创建全局变量
+                if(!frameContext.getFrameBuffer(global.refName)){
+
+                }
+                // 初始化全局变量
+                if(!this._m_RenderDatas[global.name]){
+                    this._m_RenderDatas[global.name] = {type:global.type, loc, fun, refId:ShaderSource.Context_RenderDataRefFBs[context.src], dataId:context.src};
                 }
             });
         }

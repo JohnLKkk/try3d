@@ -32,18 +32,18 @@ Def BloomFilterDef{
                 #ifdef Params.extractThreshold
                     if(threshold > Params.extractThreshold){
                         screenColor.rgb = pow(screenColor, GAMMA_T);
-                        Globals.extractTexture = screenColor;
+                        Globals.OutextractTexture = screenColor;
                     }
                     else{
-                        Globals.extractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+                        Globals.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);
                     }
                 #else
                     if(threshold > DEFAULT_EXTRACT_THRESHOLD){
                         screenColor.rgb = pow(screenColor, GAMMA_T);
-                        Globals.extractTexture = screenColor;
+                        Globals.OutextractTexture = screenColor;
                     }
                     else{
-                        Globals.extractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+                        Globals.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);
                     }
                 #endif
             }
