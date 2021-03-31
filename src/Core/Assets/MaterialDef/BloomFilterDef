@@ -1,7 +1,16 @@
 // Bloom
 Def BloomFilterDef{
     Globals BloomExtract{
-        color0 extractTexture;
+        color0 vec4 extractTexture;
+        depth24_stencil8 inner depthAndStencil;
+    }
+    Globals VBlur{
+        color0 vec4 color;
+        depth24_stencil8 inner depthAndStencil;
+    }
+    Globals HBlur{
+        color0 vec4 color;
+        depth24_stencil8 inner depthAndStencil;
     }
     Params{
         // 辉光阈值
@@ -21,31 +30,122 @@ Def BloomFilterDef{
         }
         Fs_Shader{
             const vec3 DEFAULT_GRAY = vec3(0.2126f, 0.7152f, 0.0722f);
-            #define DEFAULT_EXTRACT_THRESHOLD 1.0
+            #define DEFAULT_EXTRACT_THRESHOLD 0.5
             #define GAMMA 2.2f
             #define GAMMA_T 1.0f / GAMMA
             void main(){
                 vec4 screenColor = texture(Context.InScreen, uv0);
-                screenColor.rgb = pow(screenColor.rgb, GAMMA);
+                //screenColor.rgb = pow(screenColor.rgb, vec3(GAMMA));
                 // 记住我们在线性空间计算,所以这里需要映射回来
                 float threshold = dot(screenColor.rgb, DEFAULT_GRAY);
                 #ifdef Params.extractThreshold
                     if(threshold > Params.extractThreshold){
-                        screenColor.rgb = pow(screenColor, GAMMA_T);
-                        Globals.OutextractTexture = screenColor;
+                        GlobalsBloomExtract.OutextractTexture = screenColor;
                     }
                     else{
-                        Globals.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+                        GlobalsBloomExtract.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);
                     }
                 #else
                     if(threshold > DEFAULT_EXTRACT_THRESHOLD){
-                        screenColor.rgb = pow(screenColor, GAMMA_T);
-                        Globals.OutextractTexture = screenColor;
+                        GlobalsBloomExtract.OutextractTexture = screenColor;
                     }
                     else{
-                        Globals.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+                        GlobalsBloomExtract.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);
                     }
                 #endif
+            }
+        }
+    }
+    SubTechnology FirstHBlurPass{
+            Vars{
+                vec2 uv0;
+            }
+            Vs_Shader{
+                void main(){
+                    Context.OutPosition = vec4(Context.InPosition, 1.0f);
+                    uv0 = Context.InUv0;
+                }
+            }
+            Fs_Shader{
+                void main(){
+                    float blurSize = 1.0f / float(textureSize(GlobalsBloomExtract.InextractTexture, 0).x);
+                    vec4 sum = vec4(0.0f);
+
+                    // 水平方向模糊
+                    // 采样9个部分
+                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x - 4.0f*blurSize, uv0.y )) * 0.06f;
+                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x - 3.0f*blurSize, uv0.y )) * 0.09f;
+                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x - 2.0f*blurSize, uv0.y)) * 0.12f;
+                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x - blurSize, uv0.y )) * 0.15f;
+                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x, uv0.y)) * 0.16f;
+                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x + blurSize, uv0.y )) * 0.15f;
+                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x + 2.0f*blurSize, uv0.y )) * 0.12f;
+                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x + 3.0f*blurSize, uv0.y )) * 0.09f;
+                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x + 4.0f*blurSize, uv0.y )) * 0.06f;
+
+                    GlobalsHBlur.Outcolor = sum;
+                }
+            }
+        }
+    SubTechnology HBlurPass{
+        Vars{
+            vec2 uv0;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = vec4(Context.InPosition, 1.0f);
+                uv0 = Context.InUv0;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                float blurSize = 1.0f / float(textureSize(GlobalsVBlur.Incolor, 0).x);
+                vec4 sum = vec4(0.0f);
+
+                // 水平方向模糊
+                // 采样9个部分
+                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x - 4.0f*blurSize, uv0.y )) * 0.06f;
+                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x - 3.0f*blurSize, uv0.y )) * 0.09f;
+                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x - 2.0f*blurSize, uv0.y)) * 0.12f;
+                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x - blurSize, uv0.y )) * 0.15f;
+                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x, uv0.y)) * 0.16f;
+                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x + blurSize, uv0.y )) * 0.15f;
+                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x + 2.0f*blurSize, uv0.y )) * 0.12f;
+                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x + 3.0f*blurSize, uv0.y )) * 0.09f;
+                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x + 4.0f*blurSize, uv0.y )) * 0.06f;
+
+                GlobalsHBlur.Outcolor = sum;
+            }
+        }
+    }
+    SubTechnology VBlurPass{
+        Vars{
+            vec2 uv0;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = vec4(Context.InPosition, 1.0f);
+                uv0 = Context.InUv0;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                float blurSize = 1.0f / float(textureSize(GlobalsHBlur.Incolor, 0).y);
+                vec4 sum = vec4(0.0f);
+
+                // 垂直方向模糊
+                // 采样9个部分
+                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y - 4.0f*blurSize)) * 0.06f;
+                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y - 3.0f*blurSize)) * 0.09f;
+                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y - 2.0f*blurSize)) * 0.12f;
+                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y - blurSize)) * 0.15f;
+                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y)) * 0.16f;
+                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y + blurSize)) * 0.15f;
+                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y + 2.0f*blurSize)) * 0.12f;
+                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y + 3.0f*blurSize)) * 0.09f;
+                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y + 4.0f*blurSize)) * 0.06f;
+
+                GlobalsVBlur.Outcolor = sum;
             }
         }
     }
@@ -60,15 +160,41 @@ Def BloomFilterDef{
             }
         }
         Fs_Shader{
+            #define GAMMA 2.2f
+            #define GAMMA_T 1.0f / GAMMA
             void main(){
                 // 1.对ExtractTexture应用某种模糊(Blur)处理
                 // 2.结合ExtractTexture和ScreenColor实现bloom
+                vec4 screenColor = texture(Context.InScreen, uv0);
+                vec3 blurColor = texture(GlobalsVBlur.Incolor, uv0).rgb;
+                screenColor.rgb += blurColor;
+                const float exposure = 0.5f;
+                //vec3 result = vec3(1.0f) - exp(-screenColor.rgb * exposure);
+                //result = pow(result, vec3(GAMMA_T));
+                //Context.OutColor = vec4(result, screenColor.a);
+                Context.OutColor = screenColor;
             }
         }
     }
     Technology{
-        Sub_Pass BloomFilter{
+        //Sub_Pass PreFrame{
+        //    Pass ExtractPass{
+        //    }
+        //}
+        Sub_Pass PostFilter{
             Pass ExtractPass{
+            }
+            Pass FirstHBlurPass{
+            }
+            Pass VBlurPass{
+            }
+            Pass HBlurPass{
+            }
+            Pass VBlurPass{
+            }
+            Pass HBlurPass{
+            }
+            Pass VBlurPass{
             }
             Pass BloomPass{
             }

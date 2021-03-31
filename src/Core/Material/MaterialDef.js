@@ -207,7 +207,21 @@ export default class MaterialDef{
     getParams(){
         return this._m_Params;
     }
-    addGlobal(name, type, varName){
+    getGlobalInner(type){
+        if(type.indexOf('color') > -1){
+            return 'color';
+        }
+        else if(type.indexOf('depth24_stencil8') > -1){
+            return 'depth24_stencil8';
+        }
+        else if(type.indexOf('depth') > -1){
+            return 'depth';
+        }
+        else if(type.indexOf('stencil') > -1){
+            return 'stencil';
+        }
+    }
+    addGlobal(name, type, dataType, varName){
         // 布局如下:
         // name->
         //      varName->
@@ -215,16 +229,22 @@ export default class MaterialDef{
         if(!this._m_Globals[name]){
             this._m_Globals[name] = {};
         }
+        let pName = varName;
+        varName = "_" + name + varName;
         this._m_Globals[name][varName] = [];
-        // in部分
-        this._m_Globals[name][varName].push({type:type, refName:name, name:varName, pattern:eval("/Globals.In" + varName + "/"), pattern2:eval("/Globals.In" + varName + "[\\s+-;.,\\*\\\\]{1,}/"), tagPattern:eval("/Globals.In" + varName + "/g")});
+        let innerType = this.getGlobalInner(type);
         let t = type.indexOf('color');
         if(t > -1){
+            // in部分
+            this._m_Globals[name][varName].push({type:innerType, dataType:'uniform sampler2D', refName:name, name:varName, pattern:eval("/Globals" + name + ".In" + pName + "/"), pattern2:eval("/Globals" + name + ".In" + pName + "[\\s+-;.,\\*\\\\]{1,}/"), tagPattern:eval("/Globals" + name + ".In" + pName + "/g")});
             let loc = type.substring(t + 5, type.length);
             Log.log('loc:' + loc);
             // 获取附件计数
             // out部分
-            this._m_Globals[name][varName].push({type:type, loc:loc, refName:name, name:varName, pattern:eval("/Globals.Out" + varName + "/"), pattern2:eval("/Globals.Out" + varName + "[\\s+-;.,\\*\\\\]{1,}/"), tagPattern:eval("/Globals.Out" + varName + "/g")});
+            this._m_Globals[name][varName].push({type:innerType, dataType:dataType, loc:loc, refName:name, name:varName, pattern:eval("/Globals" + name + ".Out" + pName + "/"), pattern2:eval("/Globals" + name + ".Out" + pName + "[\\s+-;.,\\*\\\\]{1,}/"), tagPattern:eval("/Globals" + name + ".Out" + pName + "/g")});
+        }
+        else{
+            this._m_Globals[name][varName].push({type:innerType, dataType:dataType, refName:name, name:varName, pattern:eval("/Globals" + name + ".In" + pName + "/"), pattern2:eval("/Globals" + name + ".In" + pName + "[\\s+-;.,\\*\\\\]{1,}/"), tagPattern:eval("/Globals" + name + ".In" + pName + "/g")});
         }
     }
     getGlobals(){
@@ -252,7 +272,7 @@ export default class MaterialDef{
             line = data[i];
             line = Tools.trim(line);
             line = line.substring(0, line.length - 1).split(" ");
-            matDef.addGlobal(name, line[0], line[1]);
+            matDef.addGlobal(name, line[0], line[1], line[2]);
             // if(!ShaderSource.Context_RenderDataRefFBs[line[0]]){
             //     ShaderSource.Context_RenderDataRefFBs[line[0]] = name;
             // }
@@ -902,12 +922,12 @@ export default class MaterialDef{
                 // inParams += "#ifdef " + param.getDefType() + "\n";
                 if(g.loc != null || g.loc != undefined){
                     // 后续从matDef解析类型
-                    // in部分
-                    inGlobals += "layout (location=" + g.loc + ") out " + "sampler2D" + " " + g.name + ";\n";
+                    // out部分
+                    inGlobals += "layout (location=" + g.loc + ") out " + g.dataType + " " + g.name + ";\n";
                 }
                 else{
-                    // out部分
-                    inGlobals += "sampler2D" + " " + g.name + ";\n";
+                    // in部分
+                    inGlobals += g.dataType + " " + g.name + ";\n";
                 }
                 // inParams += "#endif\n";
             }

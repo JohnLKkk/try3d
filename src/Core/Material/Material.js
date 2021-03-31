@@ -5,6 +5,7 @@ import SubShader from "./SubShader.js";
 import Technology from "./Technology.js";
 import ShaderSource from "../WebGL/ShaderSource.js";
 import Log from "../Util/Log.js";
+import FrameBuffer from "../WebGL/FrameBuffer.js";
 
 /**
  * 材质定义，材质定义定义了相关物体渲染时的着色材质属性，通过MaterialShaderSource完成对材质的实现。<br/>
@@ -68,6 +69,7 @@ export default class Material extends Component{
             let subShaderDefs = materialDef.getSubShaderDefs();
             let subShaders = {};
             for(let sS in subShaderDefs){
+                this._initGlobals(materialDef, subShaderDefs[sS]);
                 subShaders[subShaderDefs[sS].getName()] = new SubShader(gl, cfg.frameContext || this._m_Scene.getRender().getFrameContext(), subShaderDefs[sS]);
             }
             let technologyDefs = materialDef.getTechnologyDefs();
@@ -97,6 +99,46 @@ export default class Material extends Component{
         else{
             // 错误
             console.log("找不到materialDef...");
+        }
+    }
+    _newAtc(gl, gfb, type, name, loc){
+        // 暂时只处理这两种
+        if(type == 'color'){
+            gfb.addTexture(gl, name, gl.RGBA, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT0 + Number(loc), true);
+        }
+        else if(type == 'depth24_stencil8'){
+            gfb.addBuffer(gl, name, gl.DEPTH24_STENCIL8, gl.DEPTH_STENCIL_ATTACHMENT);
+        }
+    }
+    _initGlobals(materialDef){
+        let frameContext = this._m_Scene.getRender().getFrameContext();
+        let globals = materialDef.getGlobals();
+        let gl = this._m_Scene.getCanvas().getGLContext();
+        let loc = null, fun = null;
+        let w = this._m_Scene.getCanvas().getWidth();
+        let h = this._m_Scene.getCanvas().getHeight();
+        for(let global in globals){
+            if(!frameContext.getFrameBuffer(global)){
+                let gf = globals[global];
+                let gfb = new FrameBuffer(gl, global, w, h);
+                frameContext.addFrameBuffer(global, gfb);
+                if(gf){
+                    for(let atc in gf){
+                        gf[atc][0].type
+                        if(gf[atc].length > 1){
+                            this._newAtc(gl, gfb, gf[atc][1].type, gf[atc][1].name, gf[atc][1].loc);
+                        }
+                        else if(gf[atc].length > 0){
+                            this._newAtc(gl, gfb, gf[atc][0].type, gf[atc][0].name);
+                        }
+                        else{
+                            Log.log('错误的atc!');
+                        }
+                    }
+                    gfb.finish(gl, this._m_Scene, true);
+                }
+                Log.log('create global ' + global);
+            }
         }
     }
     getRenderTechnology(renderPathType){

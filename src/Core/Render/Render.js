@@ -662,6 +662,8 @@ export default class Render extends Component{
         let currentTechnology = null;
         let subPasss = null;
         if(bucks){
+            let resetFrameBuffer = this._m_FrameContext.m_LastFrameBuffer;
+            let outFB = null;
             for(let matId in bucks){
                 // 获取当前选中的技术
                 mat = this._m_Scene.getComponent(matId);
@@ -671,6 +673,19 @@ export default class Render extends Component{
                     subShaders = subPasss.getSubShaders();
                     // 执行渲染
                     for(let subShader in subShaders){
+                        if(subShaders[subShader].subShader.getFBId() != null){
+                            outFB = this._m_FrameContext.getFrameBuffer(subShaders[subShader].subShader.getFBId());
+                            if(this._m_FrameContext.m_LastFrameBuffer != outFB){
+                                this._m_FrameContext.m_LastFrameBuffer = outFB;
+                                gl.bindFramebuffer(gl.FRAMEBUFFER, outFB.getFrameBuffer());
+                                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+                            }
+                        }
+                        else if(this._m_FrameContext.m_LastFrameBuffer != resetFrameBuffer){
+                            // 不需要clear
+                            gl.bindFramebuffer(gl.FRAMEBUFFER, resetFrameBuffer);
+                            this._m_FrameContext.m_LastFrameBuffer = resetFrameBuffer;
+                        }
                         let renderDatas = subShaders[subShader].subShader.getRenderDatas();
                         for(let k in renderDatas){
                             gl.activeTexture(gl.TEXTURE0 + renderDatas[k].loc);
@@ -686,6 +701,10 @@ export default class Render extends Component{
                         this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].drawArrays(gl, this._m_Scene, this._m_FrameContext, bucks[matId], lights);
                     }
                 }
+            }
+            if(this._m_FrameContext.m_LastFrameBuffer != resetFrameBuffer){
+                gl.bindFramebuffer(gl.FRAMEBUFFER, resetFrameBuffer);
+                this._m_FrameContext.m_LastFrameBuffer = resetFrameBuffer;
             }
         }
     }

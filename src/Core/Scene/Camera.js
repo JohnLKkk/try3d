@@ -112,7 +112,7 @@ export default class Camera extends Component{
         this._m_Filters = [];
 
         // postFilter
-        this._m_Scene.getRender().on(Render.POST_QUEUE, (exTime)=>{
+        this._m_Scene.getRender().on(Render.POST_QUEUE, (renderQueue)=>{
             if(this._m_IsRenderingCamera){
 
             }

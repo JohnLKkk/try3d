@@ -47,8 +47,8 @@ export default class Filter extends Component{
     _init(){
         if(this._m_FramePicture.getMaterial().getCurrentTechnology().getSubPasss(Filter.S_PRE_FRAME_FILTER)){
             this._m_PreFrames = {};
-            this._m_PostFilters[this._m_FramePicture.getMaterial().getId()] = [];
-            this._m_PostFilters[this._m_FramePicture.getMaterial().getId()].push(this._m_FramePicture);
+            this._m_PreFrames[this._m_FramePicture.getMaterial().getId()] = [];
+            this._m_PreFrames[this._m_FramePicture.getMaterial().getId()].push(this._m_FramePicture);
         }
         if(this._m_FramePicture.getMaterial().getCurrentTechnology().getSubPasss(Filter.S_POST_FILTER)){
             this._m_PostFilters = {};
@@ -63,7 +63,9 @@ export default class Filter extends Component{
      */
     preFrame(renderQueue){
         if(this._m_PreFrames){
-            // 渲染指定pass
+            // 启用物体材质渲染pass
+            // ...
+            // 或者使用PreFrame Post进行渲染
         }
     }
 

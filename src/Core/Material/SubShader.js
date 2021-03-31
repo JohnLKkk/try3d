@@ -121,6 +121,7 @@ export default class SubShader {
         this._loadShaderCaches(gl, frameContext);
     }
 
+
     /**
      * 加载Shader缓存数据块。<br/>
      * @param {WebGL}[gl]
@@ -166,21 +167,30 @@ export default class SubShader {
             });
         }
         if(useGlobals && useGlobals.length > 0){
+            let loc = null, fun = null;
             useGlobals.forEach(global=>{
-                // 创建全局变量
-                if(!frameContext.getFrameBuffer(global.refName)){
-
+                if(global.loc == null || global.loc == undefined){
+                    // in部分
+                    // 初始化全局变量
+                    if(!this._m_RenderDatas[global.name]){
+                        loc = gl.getUniformLocation(this._m_ShaderProgram.getProgram(), global.name);
+                        gl.uniform1i(loc, texId);
+                        // 使用texId作为loc
+                        fun = null;
+                        loc = texId++;
+                        this._m_RenderDatas[global.name] = {type:global.type, loc, fun, refId:global.refName, dataId:global.name};
+                    }
                 }
-                // 初始化全局变量
-                if(!this._m_RenderDatas[global.name]){
-                    this._m_RenderDatas[global.name] = {type:global.type, loc, fun, refId:ShaderSource.Context_RenderDataRefFBs[context.src], dataId:context.src};
+                else{
+                    // 激活指定fb
+                    this._m_FBId = global.refName;
                 }
             });
         }
         if(useContexts && useContexts.length > 0){
             useContexts.forEach(context=>{
                 // 过滤掉layout in和layout out(即包含loc的变量)
-                if(!context.loc){
+                if(context.loc == null || context.loc == undefined){
                     let loc = gl.getUniformLocation(this._m_ShaderProgram.getProgram(), context.src);
                     if(loc){
                         let fun = null;
