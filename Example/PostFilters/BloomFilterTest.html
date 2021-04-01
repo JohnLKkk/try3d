@@ -21,9 +21,19 @@
 <div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
     <canvas id="canvas" tabindex="0" width="400" height="300" style="border: none;margin: 0px;padding: 0px;"></canvas>
 </div>
+<div style="position: fixed;top: 0px;right: 0px;">
+    <p style="color: white;text-align: right" id="bloomParams">
+        extractThreshold:<input style="margin-left:10px;width: 100px;" type="text" value="0.5"/><br/>
+        exposurePower:<input style="margin-left:10px;width: 100px;" type="text" value="2.0"/><br/>
+        bloomIntensity:<input style="margin-left:10px;width: 100px;" type="text" value="2.0"/><br/>
+        blurScale:<input style="margin-left:10px;width: 100px;" type="text" value="1.5"/><br/>
+    </p>
+</div>
 <script type="module">
-    addInfos('GrayFilter', '该案例演示了基本的Bloom过滤器!');
 
+    addInfos('BloomFilter', '该案例演示了基本的Bloom过滤器,extractThreshold表示泛光阈值,exposurePower表示曝光程度,bloomIntensity表示泛光强度,blurScale用于计算泛光缩放尺度(可能会产生锯齿)。');
+
+    import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
     import Scene from "../../src/Core/Scene/Scene.js";
     import RenderEngine from "../../src/Core/RenderEngine.js";
     import Node from "../../src/Core/Node/Node.js";
@@ -53,20 +63,54 @@
     objLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
     objLoader.load(scene, 'grayScene', './../Assets/Models/OBJ/MainScene/mainScene.obj', (modelNode)=>{
         rootNode.addChildren(modelNode);
-        let grayFilter = mainCamera.addFilterFromMaterial(new Material(scene, {id:'bloomFilter', materialDef:MaterialDef.load('../../src/Core/Assets/MaterialDef/BloomFilterDef')}));
-        let mat = grayFilter._m_FramePicture.getMaterial();
-        console.log('mat:',mat);
+        let bloomFilter = mainCamera.addFilterFromMaterial(new Material(scene, {id:'bloomFilter', materialDef:MaterialDef.load('../../src/Core/Assets/MaterialDef/BloomFilterDef')}));
+        let mat = bloomFilter.getMaterial();
+        // mat.setParam('extractThreshold', new FloatVars().valueOf(0.5));
+        // mat.setParam('exposurePower', new FloatVars().valueOf(2.0));
+        // mat.setParam('bloomIntensity', new FloatVars().valueOf(2.0));
+        // mat.setParam('blurScale', new FloatVars().valueOf(1.5));
         let sceneInput = Input.getInput(scene, {id:scene.getId()});
-        // sceneInput.on('keydown', (key)=>{
-        //     if(key == Input.S_KEY_J){
-        //         grayFilter.disable();
-        //     }
-        // });
-        // sceneInput.on('keydown', (key)=>{
-        //     if(key == Input.S_KEY_I){
-        //         grayFilter.enable();
-        //     }
-        // });
+
+        let setParam = (id, callback)=>{
+            let bloomParams = document.getElementById(id);
+            let l = bloomParams.getElementsByTagName('input').length;
+            for(let i = 0;i < l;i++){
+                bloomParams.getElementsByTagName('input')[i].onchange = ()=>{
+                    if(callback){
+                        callback(i, bloomParams.getElementsByTagName('input')[i].value);
+                    }
+                };
+            }
+        };
+        setParam('bloomParams', (i, value)=>{
+            let mat = bloomFilter.getMaterial();
+            switch (i) {
+                case 0:
+                    mat.setParam('extractThreshold', new FloatVars().valueOf(Number(value)));
+                    break;
+                case 1:
+                    mat.setParam('exposurePower', new FloatVars().valueOf(Number(value)));
+                    break;
+                case 2:
+                    mat.setParam('bloomIntensity', new FloatVars().valueOf(Number(value)));
+                    break;
+                case 3:
+                    mat.setParam('blurScale', new FloatVars().valueOf(Number(value)));
+                    break;
+            }
+        });
+
+
+        sceneInput.on('keydown', (key)=>{
+            if(key == Input.S_KEY_J){
+                bloomFilter.disable();
+            }
+        });
+        sceneInput.on('keydown', (key)=>{
+            if(key == Input.S_KEY_I){
+                bloomFilter.enable();
+            }
+        });
     });
 
     let renderEngine = new RenderEngine();

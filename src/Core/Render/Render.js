@@ -673,6 +673,8 @@ export default class Render extends Component{
                     subShaders = subPasss.getSubShaders();
                     // 执行渲染
                     for(let subShader in subShaders){
+                        // 指定subShader
+                        mat._selectSubShader(subShaders[subShader].subShader);
                         if(subShaders[subShader].subShader.getFBId() != null){
                             outFB = this._m_FrameContext.getFrameBuffer(subShaders[subShader].subShader.getFBId());
                             if(this._m_FrameContext.m_LastFrameBuffer != outFB){
@@ -696,8 +698,6 @@ export default class Render extends Component{
                             // 依次检测所有项
                             this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
                         }
-                        // 指定subShader
-                        mat._selectSubShader(subShaders[subShader].subShader);
                         this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].drawArrays(gl, this._m_Scene, this._m_FrameContext, bucks[matId], lights);
                     }
                 }

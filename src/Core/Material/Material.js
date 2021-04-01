@@ -1,6 +1,4 @@
 import Component from "../Component.js";
-import SubShaderSource from "./SubShaderSource.js";
-import ShaderProgram from "../WebGL/ShaderProgram.js";
 import SubShader from "./SubShader.js";
 import Technology from "./Technology.js";
 import ShaderSource from "../WebGL/ShaderSource.js";
@@ -101,6 +99,16 @@ export default class Material extends Component{
             console.log("找不到materialDef...");
         }
     }
+
+    /**
+     * 创建指定附件。<br/>
+     * @param {WebGL}[gl]
+     * @param {FrameBuffer}[gfb]
+     * @param {String}[type]
+     * @param {String}[name]
+     * @param {Number}[loc]
+     * @private
+     */
     _newAtc(gl, gfb, type, name, loc){
         // 暂时只处理这两种
         if(type == 'color'){
@@ -110,6 +118,12 @@ export default class Material extends Component{
             gfb.addBuffer(gl, name, gl.DEPTH24_STENCIL8, gl.DEPTH_STENCIL_ATTACHMENT);
         }
     }
+
+    /**
+     * 初始化全局变量,以便在整个渲染上下文中共享可访问的块。<br/>
+     * @param {MaterialDef}[materialDef]
+     * @private
+     */
     _initGlobals(materialDef){
         let frameContext = this._m_Scene.getRender().getFrameContext();
         let globals = materialDef.getGlobals();
@@ -141,6 +155,12 @@ export default class Material extends Component{
             }
         }
     }
+
+    /**
+     * 返回指定的渲染技术。<br/>
+     * @param {String}[renderPathType]
+     * @return {Technology}
+     */
     getRenderTechnology(renderPathType){
         return this._m_RenderTechnologys.get(renderPathType);
     }
@@ -247,6 +267,12 @@ export default class Material extends Component{
             this._m_ChangeParams.length = 0;
         }
     }
+
+    /**
+     * 初始化。<br/>
+     * 这个函数暂时作废。<br/>
+     * @private
+     */
     _init(){
         // let gl = this._m_Scene.getCanvas().getGLContext();
         // this.use();

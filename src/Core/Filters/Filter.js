@@ -34,6 +34,14 @@ export default class Filter extends Component{
     }
 
     /**
+     * 返回材质。<br/>
+     * @return {Material}
+     */
+    getMaterial(){
+        return this._m_FramePicture.getMaterial();
+    }
+
+    /**
      * 准备就绪。<br/>
      */
     finish(){

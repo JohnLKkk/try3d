@@ -15,7 +15,15 @@ Def BloomFilterDef{
     Params{
         // 辉光阈值
         float extractThreshold;
-        // 使用辉光纹理
+        // 曝光程度(默认2)
+        float exposurePower;
+        // 辉光强度
+        float bloomIntensity;
+        // 模糊缩放(默认1.5)
+        float blurScale;
+
+
+        // 使用辉光纹理(应该继承具体的Def下只需,后续完善)
         bool useGlowMap;
     }
     SubTechnology ExtractPass{
@@ -30,29 +38,50 @@ Def BloomFilterDef{
         }
         Fs_Shader{
             const vec3 DEFAULT_GRAY = vec3(0.2126f, 0.7152f, 0.0722f);
-            #define DEFAULT_EXTRACT_THRESHOLD 0.5
+            #define DEFAULT_EXTRACT_THRESHOLD 0.5f
             #define GAMMA 2.2f
             #define GAMMA_T 1.0f / GAMMA
             void main(){
-                vec4 screenColor = texture(Context.InScreen, uv0);
+                ivec2 iTexC = ivec2(uv0 * vec2(textureSize(Context.InScreen, 0)));
+                vec4 screenColor = texelFetch(Context.InScreen, iTexC, 0);
+
+                float threshold = 0.0f;
+                float power = 2.0f;
+                #ifdef Params.extractThreshold
+                    threshold = Params.extractThreshold;
+                #else
+                    threshold = DEFAULT_EXTRACT_THRESHOLD;
+                #endif
+                #ifdef Params.exposurePower
+                    power = Params.exposurePower;
+                #endif
+
+                if( (screenColor.r + screenColor.g + screenColor.b) / 3.0f < threshold ){
+                    GlobalsBloomExtract.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+                }
+                else{
+                    GlobalsBloomExtract.OutextractTexture = pow( screenColor, vec4(power) );
+                }
+
+                //vec4 screenColor = texture(Context.InScreen, uv0);
                 //screenColor.rgb = pow(screenColor.rgb, vec3(GAMMA));
                 // 记住我们在线性空间计算,所以这里需要映射回来
-                float threshold = dot(screenColor.rgb, DEFAULT_GRAY);
-                #ifdef Params.extractThreshold
-                    if(threshold > Params.extractThreshold){
-                        GlobalsBloomExtract.OutextractTexture = screenColor;
-                    }
-                    else{
-                        GlobalsBloomExtract.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);
-                    }
-                #else
-                    if(threshold > DEFAULT_EXTRACT_THRESHOLD){
-                        GlobalsBloomExtract.OutextractTexture = screenColor;
-                    }
-                    else{
-                        GlobalsBloomExtract.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);
-                    }
-                #endif
+                //float threshold = dot(screenColor.rgb, DEFAULT_GRAY);
+                //#ifdef Params.extractThreshold
+                //    if(threshold > Params.extractThreshold){
+                //        GlobalsBloomExtract.OutextractTexture = screenColor;
+                //    }
+                //    else{
+                //        GlobalsBloomExtract.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+                //    }
+                //#else
+                //    if(threshold > DEFAULT_EXTRACT_THRESHOLD){
+                //        GlobalsBloomExtract.OutextractTexture = screenColor;
+                //    }
+                //    else{
+                //        GlobalsBloomExtract.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+                //    }
+                //#endif
             }
         }
     }
@@ -67,8 +96,13 @@ Def BloomFilterDef{
                 }
             }
             Fs_Shader{
+                #define DEFAULT_BLUR_SCALE 1.5f
                 void main(){
-                    float blurSize = 1.0f / float(textureSize(GlobalsBloomExtract.InextractTexture, 0).x);
+                    #ifdef Params.blurScale
+                        float blurSize = Params.blurScale / float(textureSize(GlobalsVBlur.Incolor, 0).x);
+                    #else
+                        float blurSize = DEFAULT_BLUR_SCALE / float(textureSize(GlobalsVBlur.Incolor, 0).x);
+                    #endif
                     vec4 sum = vec4(0.0f);
 
                     // 水平方向模糊
@@ -98,8 +132,14 @@ Def BloomFilterDef{
             }
         }
         Fs_Shader{
+            #define DEFAULT_BLUR_SCALE 1.5f
             void main(){
-                float blurSize = 1.0f / float(textureSize(GlobalsVBlur.Incolor, 0).x);
+                #ifdef Params.blurScale
+                    float blurSize = Params.blurScale / float(textureSize(GlobalsVBlur.Incolor, 0).x);
+                #else
+                    float blurSize = DEFAULT_BLUR_SCALE / float(textureSize(GlobalsVBlur.Incolor, 0).x);
+                #endif
+
                 vec4 sum = vec4(0.0f);
 
                 // 水平方向模糊
@@ -129,8 +169,13 @@ Def BloomFilterDef{
             }
         }
         Fs_Shader{
+            #define DEFAULT_BLUR_SCALE 1.5f
             void main(){
-                float blurSize = 1.0f / float(textureSize(GlobalsHBlur.Incolor, 0).y);
+                #ifdef Params.blurScale
+                    float blurSize = Params.blurScale / float(textureSize(GlobalsHBlur.Incolor, 0).y);
+                #else
+                    float blurSize = DEFAULT_BLUR_SCALE / float(textureSize(GlobalsHBlur.Incolor, 0).y);
+                #endif
                 vec4 sum = vec4(0.0f);
 
                 // 垂直方向模糊
@@ -176,7 +221,48 @@ Def BloomFilterDef{
             }
         }
     }
+    SubTechnology FastBloomPass{
+        Vars{
+            vec2 uv0;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = vec4(Context.InPosition, 1.0f);
+                uv0 = Context.InUv0;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                vec4 screenColor = texture(Context.InScreen, uv0);
+                //vec3 blurColor = pow(texture(GlobalsVBlur.Incolor, uv0).rgb, vec3(1.0f / 2.0f));
+                //blurColor = vec3(1.0f) - exp(-blurColor.rgb * 0.5f);
+                vec3 blurColor = texture(GlobalsVBlur.Incolor, uv0).rgb;
+
+                float _bInd = 2.0f;
+                #ifdef Params.bloomIntensity
+                    _bInd = Params.bloomIntensity;
+                #endif
+
+                screenColor.rgb += blurColor * _bInd;
+                Context.OutColor = screenColor;
+                //测试
+                //Context.OutColor = vec4(blurColor, 1.0f);
+            }
+        }
+    }
     Technology{
+        Sub_Pass PostFilter{
+            Pass ExtractPass{
+            }
+            Pass FirstHBlurPass{
+            }
+            Pass VBlurPass{
+            }
+            Pass FastBloomPass{
+            }
+        }
+    }
+    Technology MultiBloom{
         //Sub_Pass PreFrame{
         //    Pass ExtractPass{
         //    }

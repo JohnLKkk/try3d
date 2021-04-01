@@ -296,6 +296,7 @@ export default class MaterialDef{
             line = data[i];
             // 按空格分割(去掉最后的;号)
             line = Tools.trim(line);
+            if(line.startsWith("//"))continue;
             line = line.substring(0, line.length - 1).split(" ");
             param = new Param();
             param.setName(line[1]);
