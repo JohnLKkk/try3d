@@ -5,12 +5,13 @@
 
 #### 展示
 
-![image](https://gitee.com/JoyClm/teort_-web-gl/raw/master/Screenshot/a.png)
-![image](https://gitee.com/JoyClm/teort_-web-gl/raw/master/Screenshot/b.png)
-![image](https://gitee.com/JoyClm/teort_-web-gl/raw/master/Screenshot/c.jpg)
-![image](https://gitee.com/JoyClm/teort_-web-gl/raw/master/Screenshot/e.png)
-![image](https://gitee.com/JoyClm/teort_-web-gl/raw/master/Screenshot/f.png)
-![image](https://gitee.com/JoyClm/teort_-web-gl/raw/master/Screenshot/g.png)
+![image](https://github.com/JohnLKkk/TEORT_WebGL/raw/master/Screenshot/a.jpg)
+![image](https://github.com/JohnLKkk/TEORT_WebGL/raw/master/Screenshot/b.jpg)
+![image](https://github.com/JohnLKkk/TEORT_WebGL/raw/master/Screenshot/c.jpg)
+![image](https://github.com/JohnLKkk/TEORT_WebGL/raw/master/Screenshot/d.jpg)
+![image](https://github.com/JohnLKkk/TEORT_WebGL/raw/master/Screenshot/e.jpg)
+![image](https://github.com/JohnLKkk/TEORT_WebGL/raw/master/Screenshot/f.jpg)
+![image](https://github.com/JohnLKkk/TEORT_WebGL/raw/master/Screenshot/g.jpg)
 
 
 #### 特性
