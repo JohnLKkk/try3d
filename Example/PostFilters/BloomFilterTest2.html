@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BloomFilterTest2</title>
+    <style>
+        #baseColor input{
+            width: 50px;
+        }
+        #baseColor2 input{
+            width: 50px;
+        }
+        #specular input{
+            width: 50px;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="../Assets/Htmls/Css/Base.css"/>
+    <script src="../Assets/Htmls/Js/Infos.js"></script>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" tabindex="0" width="400" height="300" style="border: none;margin: 0px;padding: 0px;"></canvas>
+</div>
+<div style="position: fixed;top: 0px;right: 0px;">
+    <p style="color: white;text-align: right" id="bloomParams">
+        extractThreshold:<input style="margin-left:10px;width: 100px;" type="text" value="0.5"/><br/>
+        exposurePower:<input style="margin-left:10px;width: 100px;" type="text" value="2.0"/><br/>
+        bloomIntensity:<input style="margin-left:10px;width: 100px;" type="text" value="2.0"/><br/>
+        blurScale:<input style="margin-left:10px;width: 100px;" type="text" value="1.5"/><br/>
+    </p>
+</div>
+<script type="module">
+
+
+
+    addInfos('BloomFilter', '该案例演示了基本的Bloom过滤器,extractThreshold表示泛光阈值,exposurePower表示曝光程度,bloomIntensity表示泛光强度,blurScale用于计算泛光缩放尺度(可能会产生锯齿)。');
+
+    import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Internal from "../../src/Core/Render/Internal.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import Stats from "../stats.min.js";
+    import OBJLoader from "../../src/Supp/OBJLoader.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+    import Input from "../../src/Core/InputControl/Input.js";
+    import Vector4 from "../../src/Core/Math3d/Vector4.js";
+    import BoolVars from "../../src/Core/WebGL/Vars/BoolVars.js";
+    import Texture2DVars from "../../src/Core/WebGL/Vars/Texture2DVars.js";
+    import ProbeTools from "../../src/Core/Util/ProbeTools.js";
+    import GIProbe from "../../src/Core/Light/GIProbe.js";
+    import GLTFLoader from "../../src/Supp/GLTFLoader.js";
+    import Sphere from "../../src/Core/Node/Shape/Sphere.js";
+    import RadianceLoader from "../../src/Supp/RadianceLoader.js";
+    import SkyBox from "../../src/Core/Node/Sky/SkyBox.js";
+
+
+    // 创建scene
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(10.3588325122952,3.696423461300515,-7.198110791968401), new Vector3(9.38997938525171,3.5901593899642834,-6.974433423061531), new Vector3(0, 1, 0));
+    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
+    firstPersonController.setMovementSpeed(1);
+    let rootNode = new Node(scene, {id:'rootNode'});
+
+    // 环境纹理加载完再开始创建创建
+    let radianceLoader = new RadianceLoader();
+    radianceLoader.loadHDR('../Assets/Textures/hdr/inside.hdr', imageData=>{
+        // 创建一个sky
+        let sky = new SkyBox(scene, {id:'sky'});
+        // 使用cubeMap作为天空盒材质
+        let envMap = new Texture2DVars(scene);
+        envMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
+        envMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+        envMap.setFilter(scene, Texture2DVars.S_FILTERS.S_LINEAR, Texture2DVars.S_FILTERS.S_LINEAR);
+        envMap.setImage(scene, imageData, {rgbe:true});
+        sky.getMaterial().setParam('envMap', envMap);
+        sky.getMaterial().setParam('useEnvMap', new BoolVars().valueOf(true));
+        sky.getMaterial().setParam('useHDR', new BoolVars().valueOf(true));
+
+        scene.setSky(sky);
+
+        // 金属工作流材质参数
+        let baseColorMap = null;
+        let normalMap = null;
+        let metallicMap = null;
+        let roughnessMap = null;
+        let aoMap = null;
+
+        let giProbe = new GIProbe(scene, {id:'giProbe'});
+        giProbe.setRadius(100);
+        giProbe.setPositionFromXYZ(0, 5, 0);
+        let envCapture = ProbeTools.bakeGIProbe(scene, giProbe, {resolute:512});
+
+        // 添加一个渲染探头,将捕捉数据渲染出来
+        // let giProbeGeo = new Sphere(scene, {id:'giProbeGeo', radius:1});
+        // giProbeGeo.setLocalTranslation(giProbe.getPosition());
+        // let giProbeMat = new Material(scene, {id:'giProbeMat', materialDef:MaterialDef.parse(Internal.S_ENV_CAPTURE_OUT_DEF)});
+        // giProbeMat.setParam('envCaptureMap', envCapture.getPrefilterTextureCube());
+        // giProbeGeo.setMaterial(giProbeMat);
+        // rootNode.addChildren(giProbeGeo);
+
+        let gltfLoader = new GLTFLoader();
+        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+        gltfLoader.load(scene, '../Assets/Models/GLTF/TheGreatDrawingRoom/scene.gltf', (modelNode)=>{
+            // modelNode.setLocalRotationFromEuler(MoreMath.toRadians(0), 0, 0);
+            // modelNode.setLocalScaleXYZ(10, 10, 10);
+            rootNode.addChildren(modelNode);
+
+
+            let bloomFilter = mainCamera.addFilterFromMaterial(new Material(scene, {id:'bloomFilter', materialDef:MaterialDef.load('../../src/Core/Assets/MaterialDef/BloomFilterDef')}));
+            let mat = bloomFilter.getMaterial();
+            mat.setParam('extractThreshold', new FloatVars().valueOf(0.5));
+            mat.setParam('exposurePower', new FloatVars().valueOf(2.0));
+            mat.setParam('bloomIntensity', new FloatVars().valueOf(2.0));
+            mat.setParam('blurScale', new FloatVars().valueOf(1.5));
+            let sceneInput = Input.getInput(scene, {id:scene.getId()});
+
+            let setParam = (id, callback)=>{
+                let bloomParams = document.getElementById(id);
+                let l = bloomParams.getElementsByTagName('input').length;
+                for(let i = 0;i < l;i++){
+                    bloomParams.getElementsByTagName('input')[i].onchange = ()=>{
+                        if(callback){
+                            callback(i, bloomParams.getElementsByTagName('input')[i].value);
+                        }
+                    };
+                }
+            };
+            setParam('bloomParams', (i, value)=>{
+                let mat = bloomFilter.getMaterial();
+                switch (i) {
+                    case 0:
+                        mat.setParam('extractThreshold', new FloatVars().valueOf(Number(value)));
+                        break;
+                    case 1:
+                        mat.setParam('exposurePower', new FloatVars().valueOf(Number(value)));
+                        break;
+                    case 2:
+                        mat.setParam('bloomIntensity', new FloatVars().valueOf(Number(value)));
+                        break;
+                    case 3:
+                        mat.setParam('blurScale', new FloatVars().valueOf(Number(value)));
+                        break;
+                }
+            });
+
+
+            sceneInput.on('keydown', (key)=>{
+                if(key == Input.S_KEY_J){
+                    bloomFilter.disable();
+                }
+            });
+            sceneInput.on('keydown', (key)=>{
+                if(key == Input.S_KEY_I){
+                    bloomFilter.enable();
+                }
+            });
+
+        }, {batch:false});
+
+    });
+
+    let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        // let eye = mainCamera.getEye();
+        // let at = mainCamera.getAt();
+        // console.log('eye:',eye);
+        // console.log('at:',at);
+        stats.update();
+    });
+</script>
+</body>
+</html>
