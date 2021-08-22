@@ -31,13 +31,19 @@
 </div>
 <script type="module">
 
+
+
+
     addInfos('BloomFilter', '该案例演示了基本的Bloom过滤器,extractThreshold表示泛光阈值,exposurePower表示曝光程度,bloomIntensity表示泛光强度,blurScale用于计算泛光缩放尺度(可能会产生锯齿)。');
 
+    import BoolVars from "../../src/Core/WebGL/Vars/BoolVars.js";
+    import Texture2DVars from "../../src/Core/WebGL/Vars/Texture2DVars.js";
     import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
     import Scene from "../../src/Core/Scene/Scene.js";
     import RenderEngine from "../../src/Core/RenderEngine.js";
     import Node from "../../src/Core/Node/Node.js";
     import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import SkyBox from "../../src/Core/Node/Sky/SkyBox.js";
     import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
     import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
     import Stats from "../stats.min.js";
@@ -45,12 +51,28 @@
     import Material from "../../src/Core/Material/Material.js";
     import MaterialDef from "../../src/Core/Material/MaterialDef.js";
     import Input from "../../src/Core/InputControl/Input.js";
+    import Vector4 from "../../src/Core/Math3d/Vector4.js";
 
 
     // 创建scene
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+
+
+    // 创建一个sky
+    let sky = new SkyBox(scene, {id:'sky'});
+    // 使用cubeMap作为天空盒材质
+    sky.getMaterial().setParam('useEnvMap', new BoolVars().valueOf(true));
+    let envMap = new Texture2DVars(scene);
+    envMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
+    envMap.setImageSrc(scene, '../Assets/Textures/sky/skydome.jpg');
+    envMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+    envMap.setFilter(scene, Texture2DVars.S_FILTERS.S_LINEAR, Texture2DVars.S_FILTERS.S_LINEAR);
+    sky.getMaterial().setParam('envMap', envMap);
+    scene.setSky(sky);
+
+
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     let rootNode = new Node(scene, {id:'rootNode'});
 

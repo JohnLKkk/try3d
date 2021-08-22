@@ -13,7 +13,7 @@ export default class Canvas extends Component{
         if(this._m_Canvas){
             this._m_GL = this._m_Canvas.getContext(cfg.version, {antialias: true, depth:true});
             if(!this._m_GL){
-                Log.error("浏览器不支持webgl2.0标准!");
+                Log.error("浏览器不支持" + cfg.version + "!");
             }
             else{
                 this._init();
@@ -41,7 +41,7 @@ export default class Canvas extends Component{
                 canvas.height = document.documentElement.clientHeight;
             }
             Log.debug("改变大小:" + canvas.width + "," + canvas.height);
-            self.fire('resize');
+            self.fire('resize', [canvas.width, canvas.height]);
         };
         // WindowManager.getInstance().addListener(WindowManager.S_ON_WINDOW_SIZE_CHANGE, );
         window.onresize = resetSize;

@@ -27,6 +27,8 @@ export default class FrameBuffer {
         this._m_DrawBuffers = [];
         this._m_Width = w;
         this._m_Height = h;
+        // frameBuffer元素信息
+        this._m_RData = {};
         // 当前帧图像输出
         this._m_FramePicture = null;
     }
@@ -133,6 +135,27 @@ export default class FrameBuffer {
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+
+        this._rData('buffer', {name, format, attachId});
+    }
+
+    /**
+     * FrameBuffer元素信息。<br/>
+     * @param {String}[type]
+     * @param {Object}[cfg]
+     * @private
+     */
+    _rData(type, cfg){
+        if(this._m_RData){
+            this._m_RData[type] = {
+                keys:{},
+                values:[]
+            };
+        }
+        if(!this._m_RData[type].keys[cfg.name]){
+            this._m_RData[type].keys[cfg.name] = true;
+            this._m_RData[type].values.push(cfg);
+        }
     }
 
     /**
@@ -195,6 +218,8 @@ export default class FrameBuffer {
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.bindTexture(gl.TEXTURE_2D, null);
+
+        this._rData('texture', {name, internalformat, border, format, type, attachId, toDrawBuffer, genMipmap});
     }
 
     /**
@@ -212,6 +237,51 @@ export default class FrameBuffer {
      */
     getTexture(name){
         return this._m_NameTextures[name];
+    }
+
+    /**
+     * 重新设置frameBuffer大小。<br/>
+     * @param {GLContext}[gl]
+     * @param {Number}[w]
+     * @param {Number}[h]
+     */
+    resize(gl, w, h){
+        if(this._m_Width != w || this._m_Height != h){
+            this._m_Width = w;
+            this._m_Height = h;
+
+            // 删除掉当前帧缓冲
+            gl.deleteFramebuffer(this._m_Framebuffer);
+            // 重新创建
+            this._m_Framebuffer = gl.createFramebuffer();
+            // texture列表
+            this._m_Textures = [];
+            // textureName:texture
+            this._m_NameTextures = {};
+            // key:attachId,value:texture
+            this._m_MapTextures = {};
+            // buffer列表
+            this._m_Buffers = [];
+            // key:attachId,value:buffer
+            this._m_MapBuffers = {};
+            // 所有启用的drawBuffer
+            this._m_DrawBuffers = [];
+            let data = null;
+            for(let type in this._m_RData){
+                data = this._m_RData[type].values;
+                if(type == 'buffer'){
+                    data.forEach(d=>{
+                        this.addBuffer(gl, d.name, d.format, d.attachId);
+                    });
+                }
+                else if(type == 'texture'){
+                    data.forEach(d=>{
+                        this.addTexture(gl, d.name, d.internalformat, d.border, d.format, d.type, d.attachId, d.toDrawBuffer, d.genMipmap);
+                    });
+                }
+            }
+            this.finish(gl);
+        }
     }
 
     /**

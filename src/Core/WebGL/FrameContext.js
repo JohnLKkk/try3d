@@ -34,6 +34,18 @@ export default class FrameContext {
     }
 
     /**
+     * 上下文视口发生变换。<br/>
+     * @param {GLContext}[gl]
+     * @param {Number}[w]
+     * @param {Number}[h]
+     */
+    resize(gl, w, h){
+        for(let k in this.m_FrameBuffers){
+            this.m_FrameBuffers[k].resize(gl, w, h);
+        }
+    }
+
+    /**
      * 返回当前上下文block。<br/>
      * @param {String}[id]
      * @return {*}

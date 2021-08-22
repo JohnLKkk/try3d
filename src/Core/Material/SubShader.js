@@ -116,6 +116,8 @@ export default class SubShader {
         // 并非一定需要编译,因为可能该ShaderProgram来自引擎其他地方
         if(this._m_ShaderProgram.needCompile()){
             this._m_ShaderProgram._compile(gl);
+            // 清空渲染数据
+            this._m_RenderDatas = {};
             Log.log("编译!");
         }
         this._loadShaderCaches(gl, frameContext);

@@ -99,9 +99,9 @@ Def BloomFilterDef{
                 #define DEFAULT_BLUR_SCALE 1.5f
                 void main(){
                     #ifdef Params.blurScale
-                        float blurSize = Params.blurScale / float(textureSize(GlobalsVBlur.Incolor, 0).x);
+                        float blurSize = Params.blurScale / float(textureSize(GlobalsBloomExtract.InextractTexture, 0).x);
                     #else
-                        float blurSize = DEFAULT_BLUR_SCALE / float(textureSize(GlobalsVBlur.Incolor, 0).x);
+                        float blurSize = DEFAULT_BLUR_SCALE / float(textureSize(GlobalsBloomExtract.InextractTexture, 0).x);
                     #endif
                     vec4 sum = vec4(0.0f);
 

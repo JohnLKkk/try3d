@@ -121,6 +121,14 @@ export default class Render extends Component{
         this._m_RenderPrograms[DefaultRenderProgram.PROGRAM_TYPE] = new DefaultRenderProgram();
         this._m_RenderPrograms[SinglePassLightingRenderProgram.PROGRAM_TYPE] = new SinglePassLightingRenderProgram();
         this._m_RenderPrograms[SinglePassIBLLightingRenderProgram.PROGRAM_TYPE] = new SinglePassIBLLightingRenderProgram();
+
+
+
+        // 监听canvas的基本事件
+        this._m_Scene.getCanvas().on('resize', (w, h)=>{
+            this._m_FrameContext.resize(gl, w, h);
+            this._m_FrameContext._m_DefaultFrameBuffer = this._m_FrameContext.getFrameBuffer(Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER).getFrameBuffer();
+        });
     }
 
     /**
