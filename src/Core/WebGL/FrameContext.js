@@ -17,6 +17,8 @@ export default class FrameContext {
         this.m_SM = 0;
         // 每帧切换的shader
         this.m_SS = 0;
+        // batchLightLastIndex
+        this._m_BatchLightLastIndex = 0;
         // 默认帧缓存(只存在forward渲染路径时,为null,否则创建一个fbo)
         this._m_DefaultFrameBuffer = null;
         // 当前需要的上下文
@@ -31,6 +33,23 @@ export default class FrameContext {
         this.m_Shaders = {};
         // 内存中所有的Blocks
         this._m_ContextBlocks = {};
+    }
+
+    /**
+     * 返回BatchLightLastIndex。<br/>
+     * @return {number}
+     */
+    getBatchLightLastIndex(){
+        return this._m_BatchLightLastIndex;
+    }
+
+    /**
+     * 设置batchLightLastIndex。<br/>
+     * @param {Number}[lastIndex]
+     * @constructor
+     */
+    set BatchLightLastIndex(lastIndex){
+        this._m_BatchLightLastIndex = lastIndex;
     }
 
     /**
@@ -136,6 +155,7 @@ export default class FrameContext {
      * 重置上下文信息。
      */
     reset(){
+        this._m_BatchLightLastIndex = 0;
         this.m_LastMaterial = null;
         this.m_LastSubShader = null;
         this.m_LastSubShaderId = null;

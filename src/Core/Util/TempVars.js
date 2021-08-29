@@ -19,11 +19,15 @@ export default class TempVars {
 
     // 最大缓存4个灯光,每个灯光3个数据段,每个段是一个vec4(4个float)
     static S_LIGHT_DATA_4 = new UniformBuffer(4 * 3 * 4);
+    static S_LIGHT_DATA = TempVars.S_LIGHT_DATA_4;
     // 最大缓存8个灯光,每个灯光3个数据段,每个段是一个vec4(4个float)
     static S_LIGHT_DATA_8 = new UniformBuffer(8 * 3 * 4);
     // 9个球谐系数,每个系数3个float
     static S_SH_COEFFS = new UniformBuffer(9 * 3);
     constructor() {
+    }
+    static mallocLightData(size){
+        TempVars.S_LIGHT_DATA = new UniformBuffer(size * 3 * 4);
     }
 
 }

@@ -230,15 +230,15 @@ Def PrincipledLightingDef{
 
                 #ifdef Params.baseColor
                     #ifdef Params.baseColorMap
-                        vec4 albedo = texture(Params.baseColorMap, wUv0) * Params.baseColor;
+                        vec4 albedo = texture(Params.baseColorMap, wUv0) * Params.baseColor * vec4(Context.AmbientLightColor, 1.0);
                     #else
-                        vec4 albedo = Params.baseColor;
+                        vec4 albedo = Params.baseColor * vec4(Context.AmbientLightColor, 1.0);
                     #endif
                 #else
                     #ifdef Params.baseColorMap
-                        vec4 albedo = texture(Params.baseColorMap, wUv0);
+                        vec4 albedo = texture(Params.baseColorMap, wUv0) * vec4(Context.AmbientLightColor, 1.0);
                     #else
-                        vec4 albedo = vec4(1.0f);
+                        vec4 albedo = vec4(1.0f) * vec4(Context.AmbientLightColor, 1.0);
                     #endif
                 #endif
                 // 记住我们在线性空间计算材质,这里的一个优化是在载入纹理时处理而不是在着色阶段

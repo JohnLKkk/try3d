@@ -7,6 +7,7 @@ import Light from "../Light/Light.js";
 import Node from "../Node/Node.js";
 import Picture from "../Node/Picture.js";
 import GIProbe from "../Light/GIProbe.js";
+import Vector3 from "../Math3d/Vector3.js";
 
 /**
  * Scene表示渲染一个3D世界的容器，包含各种组件，但它不能作为其他组件的子组件。<br/>
@@ -44,6 +45,7 @@ export default class Scene extends Component{
 
         // 灯光列表
         this._m_Lights = [];
+        this._m_AmbientLightColor = new Vector3(1.0, 1.0, 1.0);
         // 激活灯光
         this._m_EnableLights = [];
         // 灯光名称映射列表
@@ -59,6 +61,25 @@ export default class Scene extends Component{
 
         // 初始化
         this._m_Render.startUp();
+    }
+
+    /**
+     * 返回场景环境光。<br/>
+     * @return {Vector3}
+     * @constructor
+     */
+    get AmbientLightColor(){
+        return this._m_AmbientLightColor;
+    }
+
+    /**
+     * 设置场景环境光。<br/>
+     * @param {Number}[r]
+     * @param {Number}[g]
+     * @param {Number}[b]
+     */
+    setAmbientLightColor(r, g, b){
+        this._m_AmbientLightColor.setToInXYZ(r, g, b);
     }
 
     /**

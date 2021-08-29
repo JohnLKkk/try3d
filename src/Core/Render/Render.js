@@ -15,6 +15,7 @@ import SinglePassIBLLightingRenderProgram from "./SinglePassIBLLightingRenderPro
 import Log from "../Util/Log.js";
 import Internal from "./Internal.js";
 import RenderQueue from "./RenderQueue.js";
+import TempVars from "../Util/TempVars.js";
 
 export default class Render extends Component{
     // 渲染路径
@@ -72,6 +73,30 @@ export default class Render extends Component{
         this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[5], ['SRC_ALPHA', 'ONE_MINUS_SRC_ALPHA']);
 
 
+        // 一些杂项
+        // singlePass batchLightSize 默认为4
+        this._m_BatchLightSize = 4;
+    }
+
+    /**
+     * 设置批次渲染光源数目。<br/>
+     * @param {Number}[size]
+     */
+    setBatchLightSize(size){
+        if(size != this._m_BatchLightSize){
+            if(size > 50)size = 50;
+            TempVars.mallocLightData(size);
+            this._m_BatchLightSize = size;
+            ShaderSource.resizeBatchLightSize(size);
+        }
+    }
+
+    /**
+     * 返回批次渲染光源数目。<br/>
+     * @return {number}
+     */
+    getBatchLightSize(){
+        return this._m_BatchLightSize;
     }
 
     /**
@@ -216,8 +241,10 @@ export default class Render extends Component{
      */
     _checkRenderState(gl, renderState, currentRenderState){
         let state = renderState.getState();
+        let change = false;
         for(let k in state){
             if(currentRenderState.getFlag(k) != state[k]){
+                change = true;
                 // 更新状态机
                 // console.log("更新渲染状态[" + k + ":" + currentRenderState.getFlag(k) + "=>" + state[k] + "]");
                 currentRenderState.setFlag(k, state[k]);
@@ -280,10 +307,21 @@ export default class Render extends Component{
                             case "SRC_ALPHA":
                                 sfactor = gl.SRC_ALPHA;
                                 break;
+                            case "ONE":
+                                sfactor = gl.ONE;
+                                break;
                         }
                         switch (state[k][1]) {
+                            case "SRC_ALPHA":
+                                dfactor = gl.SRC_ALPHA;
+                            case "ONE_MINUS_SRC_COLOR":
+                                dfactor = gl.ONE_MINUS_SRC_COLOR;
+                                break;
                             case "ONE_MINUS_SRC_ALPHA":
                                 dfactor = gl.ONE_MINUS_SRC_ALPHA;
+                                break;
+                            case "ONE":
+                                dfactor = gl.ONE;
                                 break;
                         }
                         if(sfactor != null && dfactor != null){
@@ -293,6 +331,7 @@ export default class Render extends Component{
                 }
             }
         }
+        return change;
     }
 
     /**
@@ -304,14 +343,18 @@ export default class Render extends Component{
     }
     // 后期开发渲染路径模块时,把_draw2开发完成然后删掉_draw函数
     _draw(exTime){
+        let gl = this._m_Scene.getCanvas().getGLContext();
         // 一帧的开始
         this.fire(Render.PRE_FRAME, [exTime]);
         this._resetFrameContext();
+        this._checkRenderState(gl, this._m_FrameContext.getRenderState().reset(), this._m_FrameContext.getRenderState());
         // 视锥剔除,遮挡查询
         // 从所有可见drawable列表中,进行剔除,得到剔除后的列表
         // 这里暂时还没实现剔除,所以直接就是全部的drawables
         // 剔除的时候,需要先排除GUI元素
         let visDrawables = this._m_VisDrawables;
+
+        let stateChange = false;
 
         // 按材质分类
         // 1.实时创建分类列表
@@ -351,7 +394,6 @@ export default class Render extends Component{
         // 排队,各种剔除之后(考虑设计一个RenderQueue,保存剔除后的待渲染的不透明，半透明，透明列表，然后作为参数传递到postQueue中)
         this.fire(Render.POST_QUEUE,[exTime]);
 
-        let gl = this._m_Scene.getCanvas().getGLContext();
 
 
         // 不透明物体渲染默认默认开启深度测试,深度写入(但是仍然可以通过具体的SubPass控制渲染状态)
@@ -363,8 +405,10 @@ export default class Render extends Component{
         let renderInDeferredShading = false;
         let deferredShadingPass = null;
         for(let matId in opaqueBucket){
+            this._m_FrameContext.getRenderState().restore();
             let subShader = null;
             opaqueBucket[matId].forEach(geo=>{
+                stateChange = false;
                 // 获取当前选中的技术
                 let mat = this._m_Scene.getComponent(matId);
                 let currentTechnology = mat.getCurrentTechnology();
@@ -391,7 +435,7 @@ export default class Render extends Component{
                     // 检测是否需要更新渲染状态
                     if(subShaders[subShader].renderState){
                         // 依次检测所有项
-                        this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
+                        stateChange = this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
                     }
                     // 指定subShader
                     mat._selectSubShader(subShaders[subShader].subShader);
@@ -399,6 +443,9 @@ export default class Render extends Component{
                     // deferredShadingPass
                     subShader = Render.DEFERRED_SHADING_PASS_GROUP[1];
                     deferredShadingPass = subShaders[subShader];
+                }
+                if(stateChange){
+                    this._checkRenderState(gl, this._m_FrameContext.restore(), this._m_FrameContext.getRenderState());
                 }
             });
         }
@@ -498,6 +545,8 @@ export default class Render extends Component{
         // 正向路径部分...
         // 先渲染不透明队列
         for(let matId in opaqueBucket){
+            this._m_FrameContext.getRenderState().restore();
+            stateChange = false;
             // opaqueBucket[matId].forEach(geo=>{
             //     // 获取当前选中的技术
             //     let mat = this._m_Scene.getComponent(matId);
@@ -534,12 +583,15 @@ export default class Render extends Component{
                     // 检测是否需要更新渲染状态
                     if(subShaders[subShader].renderState){
                         // 依次检测所有项
-                        this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
+                        stateChange = this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
                     }
                     // 指定subShader
                     mat._selectSubShader(subShaders[subShader].subShader);
                     this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].drawArrays(gl, this._m_Scene, this._m_FrameContext, opaqueBucket[matId], lights);
                 }
+            }
+            if(stateChange){
+                this._checkRenderState(gl, this._m_FrameContext.restore(), this._m_FrameContext.getRenderState());
             }
         }
 
@@ -550,12 +602,14 @@ export default class Render extends Component{
         // 半透明物体默认关闭深度写入(但是仍然可通过具体的SubPass控制渲染状态)
         if(hasTranslucent){
             this._checkRenderState(gl, this._m_TranslucentRenderState, this._m_FrameContext.getRenderState());
+            this._m_FrameContext.getRenderState().restore();
             // 排序半透明队列
             // 这里有个问题,可以按照材质组作为整体组进行排序
             // 也可分开成独立物体进行排序
             // 由于默认关闭了深度写入,所有理论上所有面片都会渲染
             translucentBucket = RenderQueue.sortTranslucentBucket(this._m_Scene.getMainCamera(), translucentBucket);
             translucentBucket.forEach(geo=>{
+                stateChange = false;
                 let mat = geo.getMaterial();
                 let currentTechnology = mat.getCurrentTechnology();
                 // 获取当前技术所有Forward路径下的SubShaders
@@ -568,13 +622,16 @@ export default class Render extends Component{
                         // 检测是否需要更新渲染状态
                         if(subShaders[subShader].renderState){
                             // 依次检测所有项
-                            this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
+                            stateChange = this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
                         }
                         // 指定subShader
                         mat._selectSubShader(subShaders[subShader].subShader);
                         this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].draw(gl, this._m_Scene, this._m_FrameContext, geo, lights);
                         // geo.draw(this._m_FrameContext);
                     }
+                }
+                if(stateChange){
+                    this._checkRenderState(gl, this._m_FrameContext.restore(), this._m_FrameContext.getRenderState());
                 }
             });
         }

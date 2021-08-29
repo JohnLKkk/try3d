@@ -129,6 +129,14 @@ export default class FirstPersonController extends Component{
     }
 
     /**
+     * 设置鼠标旋转率。<br/>
+     * @param {Number}[mouseSensitivity]
+     */
+    setMouseSensitivity(mouseSensitivity){
+        this._m_MouseSensitivity = mouseSensitivity;
+    }
+
+    /**
      * 手动同步控制器与view的状态。<br/>
      */
     refresh(){

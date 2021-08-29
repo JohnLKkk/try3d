@@ -14,6 +14,7 @@ import ShaderSource from "../WebGL/ShaderSource.js";
 export default class SinglePassIBLLightingRenderProgram extends DefaultRenderProgram{
     static PROGRAM_TYPE = 'SinglePassIBLLighting';
     static S_CUR_LIGHT_COUNT = '_curLightCount';
+    static S_AMBIENT_LIGHT_COLOR = '_ambientLightColor';
     static S_V_LIGHT_DATA = '_vLightData';
     static S_W_LIGHT_DATA = '_wLightData';
     static S_PREF_ENV_MAP_SRC = '_prefEnvMap';
@@ -22,6 +23,9 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
     constructor(props) {
         super(props);
         this._m_AccumulationLights = new RenderState();
+        this._m_AccumulationLights.setFlag(RenderState.S_STATES[4], 'On');
+        this._m_AccumulationLights.setFlag(RenderState.S_STATES[1], 'Off');
+        this._m_AccumulationLights.setFlag(RenderState.S_STATES[5], ['SRC_ALPHA', 'ONE']);
         this._m_m_LastSubShader = null;
     }
 
@@ -81,14 +85,20 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
      * @private
      */
     _uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex){
+        let conVars = frameContext.m_LastSubShader.getContextVars();
         if(lastIndex == 0){
             // 提交合计的ambientColor(场景可能添加多个ambientLight)
             // 也可以设计为场景只能存在一个ambientColor
+            let ambientLightColor = scene.AmbientLightColor;
+            gl.uniform3f(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
         }
         else{
             // 开启累积缓存模式
+            // 我们使用result = s * s_alpha + d * 1.0
+            // 所以,渲染当前pass,s部分在当前混合下应该使用一个全黑的ambientLightColor(因为第一个pass已经计算了ambientLightColor)
+            gl.uniform3f(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, 0.0, 0.0, 0.0);
+            scene.getRender()._checkRenderState(gl, this._m_AccumulationLights, frameContext.getRenderState());
         }
-        let conVars = frameContext.m_LastSubShader.getContextVars();
         // 探头信息
         this._blendGIProbes(gl, scene, frameContext);
 
@@ -188,6 +198,7 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         // gl[conVars[SinglePassLightingRenderProgram.S_LIGHT_DATA].fun]
         gl.uniform4fv(lightSpaceLoc, lightData.getBufferData(), 0, curLightCount * 12);
         gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, curLightCount * 3);
+        return curLightCount + lastIndex;
     }
     draw(gl, scene, frameContext, iDrawable, lights) {
 
@@ -202,14 +213,17 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         // 批量提交灯光
         // 应该根据引擎获取每次提交的灯光批次数量
         // 但是每个批次不应该超过4
-        let batchSize = 4;
-        let lastIndex = 0;
+        let batchSize = scene.getRender().getBatchLightSize();
+        let lastIndex = frameContext.getBatchLightLastIndex();
+        frameContext.getRenderState().store();
         while(lastIndex < lights.length){
             // 更新灯光信息
             lastIndex = this._uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex);
             // 最后draw
             iDrawable.draw(frameContext);
         }
+        scene.getRender()._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
+        frameContext.BatchLightLastIndex = lastIndex;
     }
     drawArrays(gl, scene, frameContext, iDrawables, lights){
         // 如果灯光数量为0,则直接执行渲染
@@ -225,8 +239,9 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         // 批量提交灯光
         // 应该根据引擎获取每次提交的灯光批次数量
         // 但是每个批次不应该超过4
-        let batchSize = 4;
-        let lastIndex = 0;
+        let batchSize = scene.getRender().getBatchLightSize();
+        let lastIndex = frameContext.getBatchLightLastIndex();
+        frameContext.getRenderState().store();
         while(lastIndex < lights.length){
             // 更新灯光信息
             lastIndex = this._uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex);
@@ -235,6 +250,8 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
                 iDrawable.draw(frameContext);
             });
         }
+        scene.getRender()._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
+        frameContext.BatchLightLastIndex = lastIndex;
 
     }
 

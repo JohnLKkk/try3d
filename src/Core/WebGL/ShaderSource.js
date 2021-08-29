@@ -56,9 +56,18 @@ export default class ShaderSource {
     // 灯光系统
     static S_V_LIGHT_DATA_SRC = '_vLightData';
     static S_W_LIGHT_DATA_SRC = '_wLightData';
+    static S_AMBIENT_LIGHT_COLOR = '_ambientLightColor';
     static S_CUR_LIGHT_COUNT_SRC = '_curLightCount';
     static S_NB_LIGHTS = '_NB_LIGHTS';
+    // 默认为4个灯光批次
     static S_BATCH_LIGHT_SIZE = 4 * 3;
+    static resizeBatchLightSize(size){
+        if(size != ShaderSource.S_BATCH_LIGHT_SIZE){
+            ShaderSource.S_BATCH_LIGHT_SIZE = size * 3;
+            ShaderSource.Context_Data["Context.VLightData"].modifier = '[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']';
+            ShaderSource.Context_Data["Context.WLightData"].modifier = '[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']';
+        }
+    }
 
     static S_CAMERA_POSITION_SRC = "_cameraPosition";
 
@@ -133,6 +142,7 @@ export default class ShaderSource {
         "Context.Joints":{src:ShaderSource.S_JOINTS_SRC, pattern:/Context.Joints/, pattern2:/Context.Joints[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Joints/g, tag:ShaderSource.S_JOINTS_SRC, type:"vec4", utype:"uniform mat4", modifier:'[' + ShaderSource.S_MAX_BONE + ']'},
         "Context.VLightData":{src:ShaderSource.S_V_LIGHT_DATA_SRC, pattern:/Context.VLightData/, pattern2:/Context.VLightData[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLightData/g, tag:ShaderSource.S_V_LIGHT_DATA_SRC, type:"vec4", utype:"uniform vec4", modifier:'[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']'},
         "Context.WLightData":{src:ShaderSource.S_W_LIGHT_DATA_SRC, pattern:/Context.WLightData/, pattern2:/Context.WLightData[\s+-;.,\*\\]{1,}/, tagPattern:/Context.WLightData/g, tag:ShaderSource.S_W_LIGHT_DATA_SRC, type:"vec4", utype:"uniform vec4", modifier:'[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']'},
+        "Context.AmbientLightColor":{src:ShaderSource.S_AMBIENT_LIGHT_COLOR, pattern:/Context.AmbientLightColor/, pattern2:/Context.AmbientLightColor[\s+-;.,\*\\]{1,}/, tagPattern:/Context.AmbientLightColor/g, tag:ShaderSource.S_AMBIENT_LIGHT_COLOR, type:"vec3", utype:"uniform vec3"},
         "Context.CurLightCount":{src:ShaderSource.S_CUR_LIGHT_COUNT_SRC, pattern:/Context.CurLightCount/, pattern2:/Context.CurLightCount[\s+-;.,\*\\]{1,}/, tagPattern:/Context.CurLightCount/g, tag:ShaderSource.S_CUR_LIGHT_COUNT_SRC, type:"int", utype:'uniform int'},
         "Context.CameraPosition":{src:ShaderSource.S_CAMERA_POSITION_SRC, pattern:/Context.CameraPosition/, pattern2:/Context.CameraPosition[\s+-;.,\*\\]{1,}/, tagPattern:/Context.CameraPosition/g, tag:ShaderSource.S_CAMERA_POSITION_SRC, def:'VIEW'},
         "Context.WGIProbe":{src:ShaderSource.S_WGIPROBE_SRC, pattern:/Context.WGIProbe/, pattern2:/Context.WGIProbe[\s+-;.,\*\\]{1,}/, tagPattern:/Context.WGIProbe/g, tag:ShaderSource.S_WGIPROBE_SRC, type:"vec4", utype:"uniform vec4"},

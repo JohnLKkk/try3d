@@ -148,7 +148,7 @@ Def BasicLightingDef{
 
 
                 // 如果是顶点光照,则在这里将光源变化到切线空间
-                ambientSumAdjust = Params.ambientColor.rgb;
+                ambientSumAdjust = Params.ambientColor.rgb * Context.AmbientLightColor;
                 diffuseSumAdjust = vec4(1.0f);
                 specularSumAdjust = vec3(1.0f);
                 Context.OutPosition = Context.ProjectViewMatrix * pos;
