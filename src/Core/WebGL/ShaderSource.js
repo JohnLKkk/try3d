@@ -26,9 +26,9 @@ export default class ShaderSource {
     static S_MV = 0x015;
     static S_VP = 0x016;
     static S_NDP = 0x017;
-    static S_G_POSITION = 0;
-    static S_G_NORMAL = 1;
-    static S_G_ALBEDOSPEC = 2;
+    static S_G_BUFFER0 = 0;
+    static S_G_BUFFER1 = 1;
+    static S_G_BUFFER2 = 2;
     static S_G_DEPTH = 3;
 
 
@@ -79,9 +79,9 @@ export default class ShaderSource {
     static S_SRGB_SRC = '_C_SRGB';
     static S_GIPROBES_SRC = '_C_GIPROBES';
 
-    static S_G_POSITION_SRC = "_gPosition";
-    static S_G_NORMAL_SRC = "_gNormal";
-    static S_G_ALBEDOSPEC_SRC = "_gAlbedoSpec";
+    static S_G_BUFFER0_SRC = "_gBuffer0";
+    static S_G_BUFFER1_SRC = "_gBuffer1";
+    static S_G_BUFFER2_SRC = "_gBuffer2";
     // 纹理深度(目前webGL2.0不支持深度纹理,但作为标记,仍然在这里提供)
     static S_G_DEPTH_SRC = "_gDepth";
     static S_G_DEPTH_RENDER_BUFFER_SRC = "_gDepthRenderBuffer";
@@ -117,9 +117,9 @@ export default class ShaderSource {
         'VIEW':{blockIndex:0x002, blockDef:ShaderSource.VIEW},
     };
     static Context_RenderDataRefFBs = {
-        "_gPosition":'DefaultDeferredShadingFrameBuffer',
-        "_gNormal":'DefaultDeferredShadingFrameBuffer',
-        "_gAlbedoSpec":'DefaultDeferredShadingFrameBuffer',
+        "_gBuffer0":'DefaultDeferredShadingFrameBuffer',
+        "_gBuffer1":'DefaultDeferredShadingFrameBuffer',
+        "_gBuffer2":'DefaultDeferredShadingFrameBuffer',
         "_gDepth":'DefaultDeferredShadingFrameBuffer',
         "_forwardColorMap":'DefaultForwardShadingFrameBuffer',
     };
@@ -149,17 +149,17 @@ export default class ShaderSource {
         "Context.ShCoeffs":{src:ShaderSource.S_SH_COEFFS_SRC, pattern:/Context.ShCoeffs/, pattern2:/Context.ShCoeffs[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ShCoeffs/g, tag:ShaderSource.S_SH_COEFFS_SRC, type:"vec3", utype:"uniform vec3", modifier:'[' + 9 + ']'},
 
         // 输入类型缓存
-        "Context.InGPosition":{src:ShaderSource.S_G_POSITION_SRC, pattern:/Context.InGPosition/, pattern2:/Context.InGPosition[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGPosition/g, tag:ShaderSource.S_G_POSITION_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
-        "Context.InGNormal":{src:ShaderSource.S_G_NORMAL_SRC, pattern:/Context.InGNormal/, pattern2:/Context.InGNormal[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGNormal/g, tag:ShaderSource.S_G_NORMAL_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
-        "Context.InGAlbedoSpec":{src:ShaderSource.S_G_ALBEDOSPEC_SRC, pattern:/Context.InGAlbedoSpec/, pattern2:/Context.InGAlbedoSpec[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGAlbedoSpec/g, tag:ShaderSource.S_G_ALBEDOSPEC_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
+        "Context.InGBuffer0":{src:ShaderSource.S_G_BUFFER0_SRC, pattern:/Context.InGBuffer0/, pattern2:/Context.InGBuffer0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGBuffer0/g, tag:ShaderSource.S_G_BUFFER0_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
+        "Context.InGBuffer1":{src:ShaderSource.S_G_BUFFER1_SRC, pattern:/Context.InGBuffer1/, pattern2:/Context.InGBuffer1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGBuffer1/g, tag:ShaderSource.S_G_BUFFER1_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
+        "Context.InGBuffer2":{src:ShaderSource.S_G_BUFFER2_SRC, pattern:/Context.InGBuffer2/, pattern2:/Context.InGBuffer2[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGBuffer2/g, tag:ShaderSource.S_G_BUFFER2_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InGDepth":{src:ShaderSource.S_G_DEPTH_SRC, pattern:/Context.InGDepth/, pattern2:/Context.InGDepth[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGDepth/g, tag:ShaderSource.S_G_DEPTH_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InScreen":{src:ShaderSource.S_FORWARD_COLOR_MAP_SRC, pattern:/Context.InScreen/, pattern2:/Context.InScreen[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InScreen/g, tag:ShaderSource.S_FORWARD_COLOR_MAP_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InForwardColorMap":{src:ShaderSource.S_FORWARD_COLOR_MAP_SRC, pattern:/Context.InForwardColorMap/, pattern2:/Context.InForwardColorMap[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InForwardColorMap/g, tag:ShaderSource.S_FORWARD_COLOR_MAP_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InPrefEnvMap":{src:ShaderSource.S_PREF_ENV_MAP_SRC, pattern:/Context.InPrefEnvMap/, pattern2:/Context.InPrefEnvMap[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InPrefEnvMap/g, tag:ShaderSource.S_PREF_ENV_MAP_SRC, type:"samplerCube", utype:"uniform samplerCube"},
         // 输出类型缓存
-        "Context.OutGPosition":{src:ShaderSource.S_G_POSITION_SRC, loc:ShaderSource.S_G_POSITION, pattern:/Context.OutGPosition/, pattern2:/Context.OutGPosition[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutGPosition/g, tag:ShaderSource.S_G_POSITION_SRC, type:"vec3"},
-        "Context.OutGNormal":{src:ShaderSource.S_G_NORMAL_SRC, loc:ShaderSource.S_G_NORMAL, pattern:/Context.OutGNormal/, pattern2:/Context.OutGNormal[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutGNormal/g, tag:ShaderSource.S_G_NORMAL_SRC, type:"vec3"},
-        "Context.OutGAlbedoSpec":{src:ShaderSource.S_G_ALBEDOSPEC_SRC, loc:ShaderSource.S_G_ALBEDOSPEC, pattern:/Context.OutGAlbedoSpec/, pattern2:/Context.OutGAlbedoSpec[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutGAlbedoSpec/g, tag:ShaderSource.S_G_ALBEDOSPEC_SRC, type:"vec4"},
+        "Context.OutGBuffer0":{src:ShaderSource.S_G_BUFFER0_SRC, loc:ShaderSource.S_G_BUFFER0, pattern:/Context.OutGBuffer0/, pattern2:/Context.OutGBuffer0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutGBuffer0/g, tag:ShaderSource.S_G_BUFFER0_SRC, type:"vec4"},
+        "Context.OutGBuffer1":{src:ShaderSource.S_G_BUFFER1_SRC, loc:ShaderSource.S_G_BUFFER1, pattern:/Context.OutGBuffer1/, pattern2:/Context.OutGBuffer1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutGBuffer1/g, tag:ShaderSource.S_G_BUFFER1_SRC, type:"vec4"},
+        "Context.OutGBuffer2":{src:ShaderSource.S_G_BUFFER2_SRC, loc:ShaderSource.S_G_BUFFER2, pattern:/Context.OutGBuffer2/, pattern2:/Context.OutGBuffer2[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutGBuffer2/g, tag:ShaderSource.S_G_BUFFER2_SRC, type:"vec4"},
         "Context.OutGDepth":{src:ShaderSource.S_G_DEPTH_SRC, loc:ShaderSource.S_G_DEPTH, pattern:/Context.OutGDepth/, pattern2:/Context.OutGDepth[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutGDepth/g, tag:ShaderSource.S_G_DEPTH_SRC, type:"vec4"},
 
         // 全局变量

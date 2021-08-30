@@ -34,10 +34,10 @@ Def DefaultDeferredShadingTestDef{
         }
         Fs_Shader{
             void main(){
-                Context.OutGPosition = fragPos;
-                Context.OutGNormal = vec3(1.0f, 0.2f, 0.2f);
-                Context.OutGAlbedoSpec.rgb = vec3(1.0f, 0.0f, 0.0f);
-                Context.OutGAlbedoSpec.a = 1.0f;
+                Context.OutGBuffer0.xyz = fragPos;
+                Context.OutGBuffer1 = vec4(1.0f, 0.2f, 0.2f, 0.0);
+                Context.OutGBuffer2.rgb = vec3(1.0f, 0.0f, 0.0f);
+                Context.OutGBuffer2.a = 1.0f;
             }
         }
     }
@@ -55,7 +55,7 @@ Def DefaultDeferredShadingTestDef{
         }
         Fs_Shader{
             void main(){
-                vec3 pos = texture(Context.InGPosition, uv0).rgb;
+                vec3 pos = texture(Context.InGBuffer0, uv0).rgb;
                 Context.OutColor = vec4(pos, 1.0f);
                 //Context.OutColor = vec4(gl_FragDepth, gl_FragDepth, gl_FragDepth, 1.0f);
                 //Context.OutColor = vec4(vec3(1.0f, 0, 0), 1.0f);
