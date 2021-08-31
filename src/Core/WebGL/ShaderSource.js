@@ -56,6 +56,14 @@ export default class ShaderSource {
     // 灯光系统
     static S_V_LIGHT_DATA_SRC = '_vLightData';
     static S_W_LIGHT_DATA_SRC = '_wLightData';
+    // multi pass 下每个光源的三个信息
+    static S_MULTI_ID_SRC = '_multiId';
+    static S_V_LIGHT_DATA0_SRC = '_vLightData0';
+    static S_V_LIGHT_DATA1_SRC = '_vLightData1';
+    static S_V_LIGHT_DATA2_SRC = '_vLightData2';
+    static S_W_LIGHT_DATA0_SRC = '_wLightData0';
+    static S_W_LIGHT_DATA1_SRC = '_wLightData1';
+    static S_W_LIGHT_DATA2_SRC = '_wLightData2';
     static S_AMBIENT_LIGHT_COLOR = '_ambientLightColor';
     static S_CUR_LIGHT_COUNT_SRC = '_curLightCount';
     static S_NB_LIGHTS = '_NB_LIGHTS';
@@ -141,7 +149,14 @@ export default class ShaderSource {
         "Context.OutColor":{src:ShaderSource.S_OUT_COLOR, pattern:/Context.OutColor/, pattern2:/Context.OutColor[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutColor/g, tag:"_outColor", type:"out vec4"},
         "Context.Joints":{src:ShaderSource.S_JOINTS_SRC, pattern:/Context.Joints/, pattern2:/Context.Joints[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Joints/g, tag:ShaderSource.S_JOINTS_SRC, type:"vec4", utype:"uniform mat4", modifier:'[' + ShaderSource.S_MAX_BONE + ']'},
         "Context.VLightData":{src:ShaderSource.S_V_LIGHT_DATA_SRC, pattern:/Context.VLightData/, pattern2:/Context.VLightData[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLightData/g, tag:ShaderSource.S_V_LIGHT_DATA_SRC, type:"vec4", utype:"uniform vec4", modifier:'[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']'},
+        "Context.MultiId":{src:ShaderSource.S_MULTI_ID_SRC, pattern:/Context.MultiId/, pattern2:/Context.MultiId[\s+-;.,\*\\]{1,}/, tagPattern:/Context.MultiId/g, tag:ShaderSource.S_MULTI_ID_SRC, type:"int", utype:"uniform int"},
+        "Context.VLightData0":{src:ShaderSource.S_V_LIGHT_DATA0_SRC, pattern:/Context.VLightData0/, pattern2:/Context.VLightData0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLightData0/g, tag:ShaderSource.S_V_LIGHT_DATA0_SRC, type:"vec4", utype:"uniform vec4"},
+        "Context.VLightData1":{src:ShaderSource.S_V_LIGHT_DATA1_SRC, pattern:/Context.VLightData1/, pattern2:/Context.VLightData1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLightData1/g, tag:ShaderSource.S_V_LIGHT_DATA1_SRC, type:"vec4", utype:"uniform vec4"},
+        "Context.VLightData2":{src:ShaderSource.S_V_LIGHT_DATA2_SRC, pattern:/Context.VLightData2/, pattern2:/Context.VLightData2[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLightData2/g, tag:ShaderSource.S_V_LIGHT_DATA2_SRC, type:"vec4", utype:"uniform vec4"},
         "Context.WLightData":{src:ShaderSource.S_W_LIGHT_DATA_SRC, pattern:/Context.WLightData/, pattern2:/Context.WLightData[\s+-;.,\*\\]{1,}/, tagPattern:/Context.WLightData/g, tag:ShaderSource.S_W_LIGHT_DATA_SRC, type:"vec4", utype:"uniform vec4", modifier:'[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']'},
+        "Context.WLightData0":{src:ShaderSource.S_W_LIGHT_DATA0_SRC, pattern:/Context.WLightData0/, pattern2:/Context.WLightData0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.WLightData0/g, tag:ShaderSource.S_W_LIGHT_DATA0_SRC, type:"vec4", utype:"uniform vec4"},
+        "Context.WLightData1":{src:ShaderSource.S_W_LIGHT_DATA1_SRC, pattern:/Context.WLightData1/, pattern2:/Context.WLightData1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.WLightData1/g, tag:ShaderSource.S_W_LIGHT_DATA1_SRC, type:"vec4", utype:"uniform vec4"},
+        "Context.WLightData2":{src:ShaderSource.S_W_LIGHT_DATA2_SRC, pattern:/Context.WLightData2/, pattern2:/Context.WLightData2[\s+-;.,\*\\]{1,}/, tagPattern:/Context.WLightData2/g, tag:ShaderSource.S_W_LIGHT_DATA2_SRC, type:"vec4", utype:"uniform vec4"},
         "Context.AmbientLightColor":{src:ShaderSource.S_AMBIENT_LIGHT_COLOR, pattern:/Context.AmbientLightColor/, pattern2:/Context.AmbientLightColor[\s+-;.,\*\\]{1,}/, tagPattern:/Context.AmbientLightColor/g, tag:ShaderSource.S_AMBIENT_LIGHT_COLOR, type:"vec3", utype:"uniform vec3"},
         "Context.CurLightCount":{src:ShaderSource.S_CUR_LIGHT_COUNT_SRC, pattern:/Context.CurLightCount/, pattern2:/Context.CurLightCount[\s+-;.,\*\\]{1,}/, tagPattern:/Context.CurLightCount/g, tag:ShaderSource.S_CUR_LIGHT_COUNT_SRC, type:"int", utype:'uniform int'},
         "Context.CameraPosition":{src:ShaderSource.S_CAMERA_POSITION_SRC, pattern:/Context.CameraPosition/, pattern2:/Context.CameraPosition[\s+-;.,\*\\]{1,}/, tagPattern:/Context.CameraPosition/g, tag:ShaderSource.S_CAMERA_POSITION_SRC, def:'VIEW'},

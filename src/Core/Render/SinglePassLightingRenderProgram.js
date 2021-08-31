@@ -5,9 +5,10 @@ import TempVars from "../Util/TempVars.js";
 import Matrix44 from "../Math3d/Matrix44.js";
 
 /**
- * 在当个pass中批量处理多个灯光。<br/>
+ * 在单个pass中批量处理多个灯光。<br/>
  * @author Kkk
  * @date 2021年2月17日16点09分
+ * @update 2021年8月28日20点24分
  */
 export default class SinglePassLightingRenderProgram extends DefaultRenderProgram{
     static PROGRAM_TYPE = 'SinglePassLighting';

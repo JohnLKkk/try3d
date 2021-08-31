@@ -1,78 +1,27 @@
 import DefaultRenderProgram from "./DefaultRenderProgram.js";
 import RenderState from "../WebGL/RenderState.js";
-import DirectionalLight from "../Light/DirectionalLight.js";
-import TempVars from "../Util/TempVars.js";
-import Matrix44 from "../Math3d/Matrix44.js";
-import Log from "../Util/Log.js";
-import ShaderSource from "../WebGL/ShaderSource.js";
 
 /**
- * 在单个pass中批量处理多个灯光。<br/>
+ * 光照通过多个Pass累计着色，为了性能考虑，这里采用了光锥裁剪进行逐光源Shading。<br/>
  * @author Kkk
- * @date 2021年3月21日19点20分
- * @update 2021年8月28日21点44分
+ * @date 2021年8月31日21点49分
  */
-export default class SinglePassIBLLightingRenderProgram extends DefaultRenderProgram{
-    static PROGRAM_TYPE = 'SinglePassIBLLighting';
-    static S_CUR_LIGHT_COUNT = '_curLightCount';
+export default class MultiPassLightingRenderProgram extends DefaultRenderProgram{
+    static PROGRAM_TYPE = 'MultiPassLighting';
     static S_AMBIENT_LIGHT_COLOR = '_ambientLightColor';
-    static S_V_LIGHT_DATA = '_vLightData';
-    static S_W_LIGHT_DATA = '_wLightData';
-    static S_PREF_ENV_MAP_SRC = '_prefEnvMap';
-    static S_WGIPROBE_SRC = '_wGIProbe';
-    static S_SH_COEFFS_SRC = "_ShCoeffs";
+    static S_MULTI_ID_SRC = '_multiId';
+    static S_V_LIGHT_DATA0 = '_vLightData0';
+    static S_V_LIGHT_DATA1 = '_vLightData1';
+    static S_V_LIGHT_DATA2 = '_vLightData2';
+    static S_W_LIGHT_DATA0 = '_wLightData0';
+    static S_W_LIGHT_DATA1 = '_wLightData1';
+    static S_W_LIGHT_DATA2 = '_wLightData2';
     constructor(props) {
         super(props);
         this._m_AccumulationLights = new RenderState();
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[4], 'On');
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[1], 'Off');
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[5], ['SRC_ALPHA', 'ONE']);
-        this._m_m_LastSubShader = null;
-    }
-
-    /**
-     * 混合GI探头信息。<br/>
-     * 暂时仅仅只是提交单个探头信息。<br/>
-     * @param {WebGL}[gl]
-     * @param {Scene}[scene]
-     * @param {FrameContext}[frameContext]
-     * @private
-     */
-    _blendGIProbes(gl, scene, frameContext){
-        let conVars = frameContext.m_LastSubShader.getContextVars();
-        // 探头信息
-        let probeLoc = null;
-        if(conVars[SinglePassIBLLightingRenderProgram.S_WGIPROBE_SRC]){
-            if(this._m_m_LastSubShader != frameContext.m_LastSubShader){
-                // 提取相交的探头
-                // 并更新探头数据进行混合渲染(但这里未实现,先记录下)
-                // Log.log('提交探头!');
-                let giProbe = scene.getGIProbes()[0];
-                let giData = TempVars.S_TEMP_VEC4;
-                // 探头位置
-                giData.setToInXYZW(giProbe.getPosition()._m_X, giProbe.getPosition()._m_Y, giProbe.getPosition()._m_Z, 1.0 / giProbe.getRadius() + giProbe.getPrefilterMipmap());
-                gl.uniform4fv(conVars[SinglePassIBLLightingRenderProgram.S_WGIPROBE_SRC].loc, giData.getBufferData(), 0, 4);
-                // 球谐系数
-                giData = giProbe.getShCoeffsBufferData();
-                gl.uniform3fv(conVars[SinglePassIBLLightingRenderProgram.S_SH_COEFFS_SRC].loc, giData.getBufferData(), 0, 9 * 3);
-                // prefilterEnvMap
-                giProbe.getPrefilterEnvMap()._upload(gl, conVars[SinglePassIBLLightingRenderProgram.S_PREF_ENV_MAP_SRC].loc);
-                this._m_m_LastSubShader = frameContext.m_LastSubShader;
-            }
-            else{
-                // 说明提交过探头数据
-                // 这里,检测已经提交的探头数据,然后分析是否与之相交,否则关闭探头数据,避免错误的渲染和额外的渲染
-            }
-        }
-        else{
-            // 检测探头
-            let giProbes = scene.getGIProbes();
-            if(giProbes && giProbes.length > 0){
-                // 找出与之相交的探头
-                // 首次,更新材质定义
-                frameContext.m_LastMaterial.addDefine(ShaderSource.S_GIPROBES_SRC);
-            }
-        }
     }
 
     /**
@@ -91,36 +40,31 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
             // 提交合计的ambientColor(场景可能添加多个ambientLight)
             // 也可以设计为场景只能存在一个ambientColor
             let ambientLightColor = scene.AmbientLightColor;
-            gl.uniform3f(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+            gl.uniform3f(conVars[SinglePassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
         }
         else{
             // 开启累积缓存模式
             // 我们使用result = s * s_alpha + d * 1.0
             // 所以,渲染当前pass,s部分在当前混合下应该使用一个全黑的ambientLightColor(因为第一个pass已经计算了ambientLightColor)
-            gl.uniform3f(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, 0.0, 0.0, 0.0);
+            gl.uniform3f(conVars[SinglePassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, 0.0, 0.0, 0.0);
             scene.getRender()._checkRenderState(gl, this._m_AccumulationLights, frameContext.getRenderState());
         }
-        // 探头信息
-        this._blendGIProbes(gl, scene, frameContext);
-
-
-        // 灯光信息
         let lightSpaceLoc = null;
         let lightSpace = null;
-        if(conVars[SinglePassIBLLightingRenderProgram.S_V_LIGHT_DATA]){
+        if(conVars[SinglePassLightingRenderProgram.S_V_LIGHT_DATA]){
             lightSpace = 1;
-            lightSpaceLoc = conVars[SinglePassIBLLightingRenderProgram.S_V_LIGHT_DATA].loc;
+            lightSpaceLoc = conVars[SinglePassLightingRenderProgram.S_V_LIGHT_DATA].loc;
         }
         else{
             lightSpace = 0;
-            lightSpaceLoc = conVars[SinglePassIBLLightingRenderProgram.S_W_LIGHT_DATA].loc;
+            lightSpaceLoc = conVars[SinglePassLightingRenderProgram.S_W_LIGHT_DATA].loc;
         }
         // 计算实际需要上载的灯光
         let curLightCount = (batchSize + lastIndex) > lights.length ? (lights.length - lastIndex) : batchSize;
         let light = null;
         let lightColor = null;
         // 灯光数据
-        let lightData = TempVars.S_LIGHT_DATA_4;
+        let lightData = TempVars.S_LIGHT_DATA;
         let array = lightData.getArray();
         let tempVec4 = TempVars.S_TEMP_VEC4;
         let tempVec42 = TempVars.S_TEMP_VEC4_2;
@@ -198,39 +142,13 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         // 上载数据
         // gl[conVars[SinglePassLightingRenderProgram.S_LIGHT_DATA].fun]
         gl.uniform4fv(lightSpaceLoc, lightData.getBufferData(), 0, curLightCount * 12);
-        gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, curLightCount * 3);
+        gl.uniform1i(conVars[SinglePassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, curLightCount * 3);
         return curLightCount + lastIndex;
-    }
-    draw(gl, scene, frameContext, iDrawable, lights) {
-
-        // 如果灯光数量为0,则直接执行渲染
-        if(lights.length == 0){
-            this._blendGIProbes(gl, scene, frameContext);
-            iDrawable.draw(frameContext);
-            return;
-        }
-        // 计算灯光是否处于iDrawable可见范围
-
-        // 批量提交灯光
-        // 应该根据引擎获取每次提交的灯光批次数量
-        // 但是每个批次不应该超过4
-        let batchSize = scene.getRender().getBatchLightSize();
-        let lastIndex = 0;
-        frameContext.getRenderState().store();
-        while(lastIndex < lights.length){
-            // 更新灯光信息
-            lastIndex = this._uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex);
-            // 最后draw
-            iDrawable.draw(frameContext);
-        }
-        scene.getRender()._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
-        frameContext.BatchLightLastIndex = lastIndex;
     }
     drawArrays(gl, scene, frameContext, iDrawables, lights){
         // 如果灯光数量为0,则直接执行渲染
         if(lights.length == 0){
             iDrawables.forEach(iDrawable=>{
-                this._blendGIProbes(gl, scene, frameContext);
                 iDrawable.draw(frameContext);
             });
             return;
@@ -239,10 +157,24 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
 
         // 批量提交灯光
         // 应该根据引擎获取每次提交的灯光批次数量
-        // 但是每个批次不应该超过4
+        // 但是每个批次不应该超过batchSize
         let batchSize = scene.getRender().getBatchLightSize();
-        let lastIndex = 0;
         frameContext.getRenderState().store();
+        // 首先将dir light部分取出来
+        let dirLights = [];
+        let otherLights = [];
+        lights.forEach(light=>{
+            if(light.getType() == 'DirectionalLight'){
+                dirLights.push(light);
+            }
+            else{
+                otherLights.push(light);
+            }
+        });
+        // 在第一个pass中渲染dirLights
+
+
+        let lastIndex = 0;
         while(lastIndex < lights.length){
             // 更新灯光信息
             lastIndex = this._uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex);
@@ -255,5 +187,4 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         frameContext.BatchLightLastIndex = lastIndex;
 
     }
-
 }
