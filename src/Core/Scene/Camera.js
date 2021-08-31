@@ -21,6 +21,7 @@ export default class Camera extends Component{
     static S_TEMP_VEC3_2 = new Vector3();
     static S_TEMP_VEC3_3 = new Vector3();
     static S_TEMP_VEC3_4 = new Vector3();
+    static S_CAMERA_UPDATE_EVENT = 'camera_update_event';
 
     // 视锥包含标记
     // 相交
@@ -500,6 +501,7 @@ export default class Camera extends Component{
 
         // 更新视锥体(这里应该使用一个标记变量检测是否应该更新,但是现在暂时在每次_update()里调用更新Frustum)
         this._updateFrustum();
+        this.fire(Camera.S_CAMERA_UPDATE_EVENT, [this._m_ViewMatrix, this._m_ProjectMatrix, this._m_ProjectViewMatrix]);
     }
 
     /**

@@ -6,6 +6,14 @@
 export default class Vector3 {
     // 内部缓存
     static _S_TEMP_VEC3 = new Vector3();
+
+    // 单位向量
+    static S_UNIT_AXIS_X = new Vector3(1, 0, 0);
+    static S_UNIT_AXIS_Y = new Vector3(0, 1, 0);
+    static S_UNIT_AXIS_Z = new Vector3(0, 0, 1);
+    static S_UNIT_AXIS_NEGATIVE_X = new Vector3(-1, 0, 0);
+    static S_UNIT_AXIS_NEGATIVE_Y = new Vector3(0, -1, 0);
+    static S_UNIT_AXIS_NEGATIVE_Z = new Vector3(0, 0, -1);
     constructor(x,y,z) {
         this._m_X = x || 0;
         this._m_Y = y || 0;
@@ -23,11 +31,13 @@ export default class Vector3 {
         this._m_X = vec3._m_X;
         this._m_Y = vec3._m_Y;
         this._m_Z = vec3._m_Z;
+        return this;
     }
     setToInXYZ(x, y, z){
         this._m_X = x || 0;
         this._m_Y = y || 0;
         this._m_Z = z || 0;
+        return this;
     }
 
     /**
@@ -249,6 +259,9 @@ export default class Vector3 {
             this._m_X = this._m_Y = this._m_Z = 0;
         }
         return this;
+    }
+    negate(){
+        return new Vector3(-this._m_X, -this._m_Y, -this._m_Z);
     }
     length(){
         let d = this._m_X * this._m_X + this._m_Y * this._m_Y + this._m_Z * this._m_Z;

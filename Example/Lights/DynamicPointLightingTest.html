@@ -23,6 +23,7 @@
 </div>
 <script type="module">
 
+
     addInfos('DynamicPointLightingTest', '该案例演示了简单的运动点光源。');
 
 
@@ -38,10 +39,10 @@
     import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
     import GLTFLoader from "../../src/Supp/GLTFLoader.js";
     import Stats from "../stats.min.js";
+    import SceneBrowsingController from "../../src/Core/InputControl/SceneBrowsingController.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(40.97822191592547,31.087478106346822,40.33070739975541), new Vector3(40.30762527867237,30.644964182873373,39.7353238446945), new Vector3(0, 1, 0));
-    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
     let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
     basicLightingMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
@@ -55,6 +56,12 @@
     gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
     gltfLoader.load(scene, './../Assets/Models/GLTF/ShiNei.gltf', modelNode=>{
         rootNode.addChildren(modelNode);
+        let sceneBrowsingController = new SceneBrowsingController(scene, {id:'sceneBrowsing'});
+        sceneBrowsingController.lookScene(modelNode);
+        sceneBrowsingController.setTargetDistance(sceneBrowsingController.getMaxDistance());
+
+
+
         let aabb = modelNode.getAABBBoundingBox();
         let center = new Vector3();
         let min = new Vector3();

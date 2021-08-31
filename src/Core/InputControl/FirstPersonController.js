@@ -9,6 +9,7 @@
 import Component from "../Component.js";
 import Vector3 from "../Math3d/Vector3.js";
 import MoreMath from "../Math3d/MoreMath.js";
+import Camera from "../Scene/Camera.js";
 import Matrix44 from "../Math3d/Matrix44.js";
 import Input from "./Input.js";
 import TempVars from "../Util/TempVars.js";
@@ -30,16 +31,21 @@ export default class FirstPersonController extends Component{
     constructor(owner, cfg) {
         super(owner, cfg);
         this._m_LastExTime = 0;
+        this._m_Camera = null;
+        this._m_CameraList = (v, p, pv)=>{
+            this.refresh();
+        };
+        this.setCamera(cfg.camera || this._m_Scene.getMainCamera());
 
 
         // 相机的一些属性
         this._m_Position = new Vector3();
-        cfg.position = cfg.position || this._m_Scene.getMainCamera().getEye();
+        cfg.position = cfg.position || this._m_Camera.getEye();
         if(cfg.position){
             this._m_Position.setTo(cfg.position);
         }
         this._m_Front = new Vector3(0, 0, -1);
-        cfg.front = cfg.front || this._m_Scene.getMainCamera().getAt().subRetNew(cfg.position).normal();
+        cfg.front = cfg.front || this._m_Camera.getAt().subRetNew(cfg.position).normal();
         if(cfg.front){
             this._m_Front.setTo(cfg.front);
         }
@@ -115,7 +121,7 @@ export default class FirstPersonController extends Component{
             // 滚动部分
             if(offset){
                 this.processMouseScroll(offset);
-                this._m_Scene.getMainCamera().scroll(this._m_Zoom);
+                this._m_Camera.scroll(this._m_Zoom);
             }
         });
     }
@@ -140,9 +146,24 @@ export default class FirstPersonController extends Component{
      * 手动同步控制器与view的状态。<br/>
      */
     refresh(){
-        this._m_Position.setTo(this._m_Scene.getMainCamera().getEye());
-        this._m_Front.setTo(this._m_Scene.getMainCamera().getAt().subRetNew(this._m_Position).normal());
+        this._m_Position.setTo(this._m_Camera.getEye());
+        this._m_Front.setTo(this._m_Camera.getAt().subRetNew(this._m_Position).normal());
         this.synYawPitch();
+    }
+
+    /**
+     * 设置控制器关联的Camera。<br/>
+     * @param {Camera}[cam]
+     */
+    setCamera(cam){
+        if(cam != null && this._m_Camera != cam){
+            if(this._m_Camera){
+                // 移除事件
+                this._m_Camera.off(Camera.S_CAMERA_UPDATE_EVENT, this._m_CameraList);
+            }
+            this._m_Camera = cam;
+            this._m_Camera.on(Camera.S_CAMERA_UPDATE_EVENT, this._m_CameraList);
+        }
     }
 
     /**
@@ -289,6 +310,6 @@ export default class FirstPersonController extends Component{
         // 更新camera
         // 为了加速,尽量不使用直接setViewMatrix
         // this._m_Scene.getMainCamera().setViewMatrix(this._m_ViewMatrix);
-        this._m_Scene.getMainCamera().lookAt(this._m_Position, this._m_Position.add(this._m_Front, TempVars.S_TEMP_VEC3), this._m_Up);
+        this._m_Camera.lookAt(this._m_Position, this._m_Position.add(this._m_Front, TempVars.S_TEMP_VEC3), this._m_Up);
     }
 }

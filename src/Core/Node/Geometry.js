@@ -20,6 +20,7 @@ export default class Geometry extends Node{
         this._m_Mesh = null;
         this._m_ModelAABBBoundingBox = null;
         this._m_Material = null;
+        this._m_IsDrawable = true;
         this._m_Opaque = true;
     }
 
@@ -123,8 +124,21 @@ export default class Geometry extends Node{
      * 表示当前是否为可渲染实例
      */
     isDrawable(){
-        return true;
+        return this._m_IsDrawable;
     }
+
+    /**
+     * 设置当前是否为可渲染实例。<br/>
+     * @param isDrawable
+     */
+    setIsDrawable(isDrawable){
+        this._m_IsDrawable = isDrawable;
+    }
+
+    /**
+     * 表示当前是否为FramePicture。<br/>
+     * @return {boolean}
+     */
     isFramePicture(){
         return false;
     }
