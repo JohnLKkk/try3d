@@ -214,7 +214,7 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         // 应该根据引擎获取每次提交的灯光批次数量
         // 但是每个批次不应该超过4
         let batchSize = scene.getRender().getBatchLightSize();
-        let lastIndex = frameContext.getBatchLightLastIndex();
+        let lastIndex = 0;
         frameContext.getRenderState().store();
         while(lastIndex < lights.length){
             // 更新灯光信息
@@ -240,7 +240,7 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         // 应该根据引擎获取每次提交的灯光批次数量
         // 但是每个批次不应该超过4
         let batchSize = scene.getRender().getBatchLightSize();
-        let lastIndex = frameContext.getBatchLightLastIndex();
+        let lastIndex = 0;
         frameContext.getRenderState().store();
         while(lastIndex < lights.length){
             // 更新灯光信息

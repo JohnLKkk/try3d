@@ -157,7 +157,7 @@ export default class SinglePassLightingRenderProgram extends DefaultRenderProgra
         // 应该根据引擎获取每次提交的灯光批次数量
         // 但是每个批次不应该超过batchSize
         let batchSize = scene.getRender().getBatchLightSize();
-        let lastIndex = frameContext.getBatchLightLastIndex();
+        let lastIndex = 0;
         while(lastIndex < lights.length){
             // 更新灯光信息
             lastIndex = this._uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex);
@@ -181,7 +181,7 @@ export default class SinglePassLightingRenderProgram extends DefaultRenderProgra
         // 应该根据引擎获取每次提交的灯光批次数量
         // 但是每个批次不应该超过batchSize
         let batchSize = scene.getRender().getBatchLightSize();
-        let lastIndex = frameContext.getBatchLightLastIndex();
+        let lastIndex = 0;
         frameContext.getRenderState().store();
         while(lastIndex < lights.length){
             // 更新灯光信息

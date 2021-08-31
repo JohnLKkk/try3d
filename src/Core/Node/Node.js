@@ -459,6 +459,7 @@ export default class Node extends Component{
 
                 // 更新子节点
                 children._updateWorldMatrix();
+                this._updateBounding();
             }
             else{
                 let nextName = children.getName() + Tools.nextId();
@@ -471,6 +472,7 @@ export default class Node extends Component{
 
                     // 更新子节点
                     children._updateWorldMatrix();
+                    this._updateBounding();
                 }
                 else{
                     Log.warn(nextName + "已存在与父节点:" + children._m_Parent.getName());

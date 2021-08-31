@@ -10,6 +10,9 @@ const ppD = 1.0 / Math.PI;
  */
 export default class MoreMath {
     static S_HALF_PI = 0.5 * Math.PI;
+    static S_DEG_TO_RAD = 0.0174532925;
+    static S_RAD_TO_DEG = 57.295779513;
+    static S_TWO_PI = Math.PI * 2;
     constructor() {
     }
 
@@ -29,5 +32,47 @@ export default class MoreMath {
      */
     static toAngle(radians){
         return radians * pD * ppD;
+    }
+
+    /**
+     * 对单值进行线性插值。<br/>
+     * @param {Number}[scale 0-1插值阈值]
+     * @param {Number}[startValue 起始值]
+     * @param {Number}[endValue 结束值]
+     * @return {Number}[返回startValue~endValue之间的插值]
+     */
+    static interpolateLinear(scale, startValue, endValue) {
+        if (startValue == endValue) {
+            return startValue;
+        }
+        if (scale <= 0.0) {
+            return startValue;
+        }
+        if (scale >= 1.0) {
+            return endValue;
+        }
+        return ((1.0 - scale) * startValue) + (scale * endValue);
+    }
+
+    /**
+     * 对Vector3进行插值。<br/>
+     * @param {Number}[scale 0-1插值阈值]
+     * @param {Vector3}[startValue 起始值]
+     * @param {Vector3}[endValue 结束值]
+     * @return {Vector3}[返回startValue~endValue之间的插值]
+     */
+    static interpolateLinearVec3(scale, startValue, endValue) {
+        if (startValue == endValue) {
+            return startValue;
+        }
+        if (scale <= 0.0) {
+            return startValue;
+        }
+        if (scale >= 1.0) {
+            return endValue;
+        }
+        startValue.multLength(1.0 - scale);
+        startValue.add(endValue.mulReturn(scale));
+        return startValue;
     }
 }
