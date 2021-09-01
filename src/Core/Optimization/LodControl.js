@@ -61,7 +61,7 @@ export default class LodControl extends Component{
         }
     }
     _update(){
-        let bv = this._m_Owner.getAABBBoundingBox();
+        let bv = this._m_Owner.getBoundingVolume();
 
         let mainCamera = this._m_Scene.getMainCamera();
         let atanNH = Math.atan(mainCamera.getTop() * mainCamera.getNear());

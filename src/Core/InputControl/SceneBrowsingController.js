@@ -115,7 +115,7 @@ export default class SceneBrowsingController extends Component{
      */
     lookScene(scene){
         if(scene){
-            let aabb = scene.getAABBBoundingBox();
+            let aabb = scene.getBoundingVolume();
             let distanceX = aabb.getXHalf() * 2;
             let distanceY = aabb.getYHalf() * 2;
             let distanceZ = aabb.getZHalf() * 2;

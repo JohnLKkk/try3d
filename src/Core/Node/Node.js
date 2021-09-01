@@ -53,10 +53,10 @@ export default class Node extends Component{
         this._m_UpdateLocalMatrix = false;
         this._m_UpdateWorldMatrix = false;
 
-        // AABB包围盒(Node的包围盒由所有子节点合并得到)
-        this._m_AABBBoudingBox = null;
-        // 设置为true,确保第一次调用getAABBBoundingBox()时可以获得有效AABBBoundingBox
-        this._m_UpdateAABBBoundingBox = true;
+        // 包围盒(Node的包围盒由所有子节点合并得到)
+        this._m_BoudingVolume = null;
+        // 设置为true,确保第一次调用getBoundingVolume()时可以获得有效BoundingVolume
+        this._m_UpdateBoundingVolume = true;
 
         // 与视锥体的状态
         this._m_FrustumContain = Camera.S_FRUSTUM_INTERSECT_INTERSECTS;
@@ -138,40 +138,40 @@ export default class Node extends Component{
             // 跳过一些特殊对象
 
             // 执行视锥剔除
-            this._m_FrustumContain = camera.frustumContains(this.getAABBBoundingBox());
+            this._m_FrustumContain = camera.frustumContains(this.getBoundingVolume());
         }
 
         return this._m_FrustumContain != Camera.S_FRUSTUM_INTERSECT_OUTSIDE;
     }
 
     /**
-     * 返回AABBBoundingBox。<br/>
+     * 返回BoundingVolume。<br/>
      * 如果当前是Node节点，并且没有子节点或者子节点没有包围体，则返回null。<br/>
-     * @return {AABBBoundingBox}
+     * @return {BoundingVolume}
      */
-    getAABBBoundingBox(){
-        if(this._m_UpdateAABBBoundingBox){
+    getBoundingVolume(){
+        if(this._m_UpdateBoundingVolume){
             // 更新包围盒
             // 如果存在子节点,则合并子节点
             if(this._m_Children.length > 0){
                 let aabb = null;
                 // 清空包围体(避免保留上次结果)
                 this._m_Children.forEach(children=>{
-                    aabb = children.getAABBBoundingBox();
+                    aabb = children.getBoundingVolume();
                     if(aabb){
                         // 说明存在子节点包围盒
-                        if(!this._m_AABBBoudingBox){
+                        if(!this._m_BoudingVolume){
                             // 说明是初次获取,则创建该Node的包围盒
-                            this._m_AABBBoudingBox = new AABBBoundingBox();
+                            this._m_BoudingVolume = new AABBBoundingBox();
                         }
                         // 合并子节点包围体
-                        this._m_AABBBoudingBox.merge(aabb);
+                        this._m_BoudingVolume.merge(aabb);
                     }
                 });
             }
-            this._m_UpdateAABBBoundingBox = false;
+            this._m_UpdateBoundingVolume = false;
         }
-        return this._m_AABBBoudingBox;
+        return this._m_BoudingVolume;
     }
 
     /**
@@ -326,7 +326,7 @@ export default class Node extends Component{
      * @private
      */
     _updateBounding(){
-        this._m_UpdateAABBBoundingBox = true;
+        this._m_UpdateBoundingVolume = true;
     }
 
     /**

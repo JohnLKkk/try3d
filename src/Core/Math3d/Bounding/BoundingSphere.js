@@ -1,4 +1,5 @@
 import BoundingVolume from "./BoundingVolume.js";
+import Plane from "../Plane.js";
 
 /**
  * BoundingSphere。<br/>
@@ -33,5 +34,21 @@ export default class BoundingSphere extends BoundingVolume{
     getType() {
         return BoundingVolume.S_TYPE_SPHERE;
     }
+    /**
+     * 返回处于平面的哪一边。<br/>
+     * @param {Plane}[plane]
+     * @return {Number}[Plane.S_SIDE_POSITIVE/Plane.S_SIDE_NEGATIVE/Plane.NONE]
+     */
+    whichSide(plane){
+        let distance = plane.distance(this._m_Center);
+
+        if(distance > this._m_Radius){
+            return Plane.S_SIDE_POSITIVE;
+        }
+        else if(distance < -this._m_Radius){
+            return Plane.S_SIDE_NEGATIVE;
+        }
+        return Plane.S_SIDE_NONE;
+    };
 
 }

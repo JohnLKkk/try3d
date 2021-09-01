@@ -91,7 +91,7 @@ export default class OctCullingControl extends Component{
      */
     createOct(node, depth){
         // 获取AABB边界
-        let aabb = node.getAABBBoundingBox();
+        let aabb = node.getBoundingVolume();
         if(aabb){
             // 如果存在有效边界体,则进行构建,这意味着无效根节点不会为其创建八叉树
             // 标准八叉树
@@ -245,7 +245,7 @@ export default class OctCullingControl extends Component{
      * @return {Boolean}
      */
     distrOct(ref, oct){
-        let refAABB = ref.getAABBBoundingBox();
+        let refAABB = ref.getBoundingVolume();
         if(oct.getAABBBoundingBox().contains(refAABB)){
             // 递归leaf
             let leafs = oct.getLeafs();

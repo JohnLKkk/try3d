@@ -10,8 +10,12 @@ import Vector4 from "../Math3d/Vector4.js";
  */
 export default class TempVars {
     static S_TEMP_VEC3 = new Vector3();
+    static S_TEMP_VEC3_2 = new Vector3();
+    static S_TEMP_VEC3_3 = new Vector3();
+    static S_TEMP_VEC3_4 = new Vector3();
     static S_TEMP_VEC4 = new Vector4();
     static S_TEMP_VEC4_2 = new Vector4();
+    static S_TEMP_VEC4_3 = new Vector4();
     static S_TEMP_MAT4 = new Matrix44();
     static S_TEMP_MAT4_1 = new Matrix44();
     static S_TEMP_MAT4_2 = new Matrix44();

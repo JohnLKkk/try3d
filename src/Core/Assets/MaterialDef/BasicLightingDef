@@ -199,8 +199,8 @@ Def BasicLightingDef{
                 }
                 else{
                     // point和spot
-                    vec4 lightColor = Context.WLightData0;
-                    vec4 lightData1 = Context.WLightData1;
+                    vec4 lightColor = Context.WLight_Data_0;
+                    vec4 lightData1 = Context.WLight_Data_1;
                     ComputeLightDir(wPosition, lightColor.w, lightData1, lightDir, lightVec);
                     //lightBRDF.x = max( 0.0f, dot( normal, lightDir.xyz ) );
 
@@ -216,7 +216,7 @@ Def BasicLightingDef{
                     if( lightColor.w > 1.0f )
                     {
                         // 计算SpotLight的范围衰减
-                        spotFallOff = ComputeSpotFalloff( Context.WLightData2, lightDir.xyz );
+                        spotFallOff = ComputeSpotFalloff( Context.WLight_Data_2, lightDir.xyz );
                     }
 
                     // 如果存在法线纹理,则进一步计算lightDir
@@ -430,13 +430,14 @@ Def BasicLightingDef{
             }
         }
     }
-    Technology{
+    Technology SinglePass{
         Sub_Pass Forward{
             Pass SingleBlinnPhongLighting{
             }
         }
     }
-    Technology MultiPass{
+    // 默认选项为MultiPass
+    Technology{
         Sub_Pass Forward{
             Pass MultiPassBlinnPhongLighting{
             }

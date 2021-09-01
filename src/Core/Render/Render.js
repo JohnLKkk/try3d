@@ -18,6 +18,7 @@ import RenderQueue from "./RenderQueue.js";
 import TempVars from "../Util/TempVars.js";
 import Forward from "./Pipeline/Forward.js";
 import Deferred from "./Pipeline/Deferred.js";
+import MultiPassLightingRenderProgram from "./MultiPassLightingRenderProgram.js";
 
 export default class Render extends Component{
     // 渲染路径
@@ -151,6 +152,7 @@ export default class Render extends Component{
         // 加载可用渲染程序
         this._m_RenderPrograms[DefaultRenderProgram.PROGRAM_TYPE] = new DefaultRenderProgram();
         this._m_RenderPrograms[SinglePassLightingRenderProgram.PROGRAM_TYPE] = new SinglePassLightingRenderProgram();
+        this._m_RenderPrograms[MultiPassLightingRenderProgram.PROGRAM_TYPE] = new MultiPassLightingRenderProgram();
         this._m_RenderPrograms[SinglePassIBLLightingRenderProgram.PROGRAM_TYPE] = new SinglePassIBLLightingRenderProgram();
 
 
@@ -362,9 +364,9 @@ export default class Render extends Component{
         this.fire(Render.PRE_FRAME, [exTime]);
         this._resetFrameContext();
         this._checkRenderState(gl, this._m_FrameContext.getRenderState().reset(), this._m_FrameContext.getRenderState());
-        // 视锥剔除,遮挡查询
-        // 从所有可见drawable列表中,进行剔除,得到剔除后的列表
-        // 这里暂时还没实现剔除,所以直接就是全部的drawables
+        // m_VisDrawables包含了视锥体剔除的结果
+        // 在这里进行遮挡剔除
+        // 然后进行z-pre pass
         // 剔除的时候,需要先排除GUI元素
         let visDrawables = this._m_VisDrawables;
 
@@ -381,7 +383,7 @@ export default class Render extends Component{
         // 使用后置缓存?
         let useBackForwardFrameBuffer = false;
         // 灯光列表
-        let lights = this._m_Scene.getEnableLights();
+        let lights = this._m_Scene.getVisLights();
         // 不透明队列
         let opaqueBucket = {};
         // 半透明队列

@@ -66,7 +66,7 @@
 
         // 绘制AABB包围体
     }
-    let aabb = cubes.getAABBBoundingBox();
+    let aabb = cubes.getBoundingVolume();
     console.log("aabb:",aabb);
     // 再次将相机设置为一个最佳观测点(以便观察上面的视锥体)
     let mainCamera = scene.getComponent('mainCamera');

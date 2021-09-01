@@ -1,5 +1,6 @@
 import Light from "./Light.js";
 import Vector3 from "../Math3d/Vector3.js";
+import BoundingSphere from "../Math3d/Bounding/BoundingSphere.js";
 
 /**
  * 点光源。<br/>
@@ -31,6 +32,7 @@ export default class PointLight extends Light{
      */
     setPosition(pos){
         this._m_Position.setTo(pos);
+        this._updateBounding();
     }
 
     /**
@@ -49,6 +51,7 @@ export default class PointLight extends Light{
      */
     setPositionXYZ(x, y, z){
         this._m_Position.setToInXYZ(x, y, z);
+        this._updateBounding();
     }
 
     /**
@@ -59,6 +62,7 @@ export default class PointLight extends Light{
     setRadius(radius){
         this._m_Radius = radius;
         this._m_InvRadius = 1.0 / radius;
+        this._updateBounding();
     }
 
     /**
@@ -77,4 +81,16 @@ export default class PointLight extends Light{
         return this._m_InvRadius;
     }
 
+    getBoundingVolume(){
+        if(this._m_UpdateBoundingVolume){
+            if(!this._m_BoudingVolume){
+                // 对于PointLight,创建包围球
+                this._m_BoudingVolume = new BoundingSphere();
+            }
+            this._m_BoudingVolume.setCenter(this._m_Position);
+            this._m_BoudingVolume.setRaiuds(this._m_Radius);
+            this._m_UpdateBoundingVolume = false;
+        }
+        return this._m_BoudingVolume;
+    }
 }

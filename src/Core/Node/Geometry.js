@@ -86,27 +86,27 @@ export default class Geometry extends Node{
                 this._m_ModelAABBBoundingBox = new AABBBoundingBox();
                 // 这里假设每个Geometry只设置一次Mesh(后面应该改善这里的逻辑,每次修改Mesh后都应该重新调用fromPositions重建AABB)
                 this._m_ModelAABBBoundingBox.fromPositions(this._m_Mesh.getData(Mesh.S_POSITIONS));
-                if(!this._m_AABBBoudingBox){
-                    this._m_AABBBoudingBox = new AABBBoundingBox();
+                if(!this._m_BoudingVolume){
+                    this._m_BoudingVolume = new AABBBoundingBox();
                 }
-                this._m_AABBBoudingBox.setTo(this._m_ModelAABBBoundingBox);
+                this._m_BoudingVolume.setTo(this._m_ModelAABBBoundingBox);
             }
             this._m_Mesh.lod(this._m_CurrentLod);
         }
     }
-    getAABBBoundingBox(){
+    getBoundingVolume(){
         // Geometry不应该包含子节点(因为Geometry应该只是叶子节点)
         // 所以Geometry应该直接返回最新状态的AABBBoundingBox
         // 当Mesh数据没有发生变更时,AABB只与变换更新有关
         // 当Mesh数据发生变更时,将在fromPositions重建AABB
-        if(this._m_UpdateAABBBoundingBox){
+        if(this._m_UpdateBoundingVolume){
             // 更新AABBBoundingBox
             Matrix44.decomposeMat4(this.getWorldMatrix(), Node.S_TEMP_VEC3, Node.S_TEMP_Q, Node.S_TEMP_VEC3_2);
             // Log.log('Node.S_TEMP_VEC3_2:' + Node.S_TEMP_VEC3_2.toString());
-            this._m_ModelAABBBoundingBox.transform(Node.S_TEMP_VEC3_2, Node.S_TEMP_Q, Node.S_TEMP_VEC3, this._m_AABBBoudingBox);
-            this._m_UpdateAABBBoundingBox = false;
+            this._m_ModelAABBBoundingBox.transform(Node.S_TEMP_VEC3_2, Node.S_TEMP_Q, Node.S_TEMP_VEC3, this._m_BoudingVolume);
+            this._m_UpdateBoundingVolume = false;
         }
-        return this._m_AABBBoudingBox;
+        return this._m_BoudingVolume;
     }
 
     /**

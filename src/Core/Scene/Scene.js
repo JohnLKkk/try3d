@@ -48,6 +48,8 @@ export default class Scene extends Component{
         this._m_AmbientLightColor = new Vector3(1.0, 1.0, 1.0);
         // 激活灯光
         this._m_EnableLights = [];
+        // 可见光源
+        this._m_VisLights = [];
         // 灯光名称映射列表
         this._m_LightIds = {};
         // 激活灯光名称映射列表
@@ -123,6 +125,14 @@ export default class Scene extends Component{
                 this._m_EnableLights.splice(i, 1);
             }
         }
+    }
+
+    /**
+     * 返回可见光源。<br/>
+     * @return {Array}
+     */
+    getVisLights(){
+        return this._m_VisLights;
     }
 
     /**
@@ -247,7 +257,7 @@ export default class Scene extends Component{
      * @param {Sky}[sky]
      */
     setSky(sky){
-        if(sky == null || sky.getType() == 'SkyBox' || sky.getType() == 'SkyDome'){
+        if(sky == null || sky.getType() == 'SkyBox'){
             this._m_Render.setSky(sky);
         }
     }
@@ -398,6 +408,7 @@ export default class Scene extends Component{
     }
     render(exTime){
         // 更新visDrawables
+        // 这里严格来说，应该将visDrawables作为Scene的属性,而不是Render
         let visDrawables = this._m_Render.getVisDrawables();
         // 最快的清楚方式
         visDrawables.length = 0;
@@ -419,6 +430,29 @@ export default class Scene extends Component{
                 this._gatherVisDrawable(node, visDrawables);
             }
         });
+
+        // 更新visLights
+        this._m_VisLights.length = 0;
+        if(this._m_EnableLights.length > 0){
+            let restoreFrustumMask = this._m_FrustumCullingCamera.getFrustumMask();
+            // 从oct根节点开始
+            this._m_FrustumCullingCamera.setFrustumMask(0);
+            this._m_EnableLights.forEach(light=>{
+                if(light.getFilterFlag() == Node.S_DYNAMIC){
+                    // 光锥剔除
+                    // 尽管这里可以更加高效加速,但作为基础实现,仅在这里进行快速剔除
+                    if(light.inFrustum(this._m_FrustumCullingCamera)){
+                        this._m_VisLights.push(light);
+                    }
+                }
+                else if(light.getFilterFlag() == Node.S_NEVER){
+                    // 直接渲染
+                    this._m_VisLights.push(light);
+                }
+            });
+            // 恢复
+            this._m_FrustumCullingCamera.setFrustumMask(restoreFrustumMask);
+        }
 
         this._m_Render.render(exTime);
         // console.log("剔除:" + (this._m_Render._m_Drawables.length - visDrawables.length) + ";渲染:" + visDrawables.length);

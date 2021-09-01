@@ -42,7 +42,7 @@
     wireFrustum.setMesh(MeshFactor.createViewFrustumMeshFromCamera(testCamera));
     wireFrustum.setMaterial(new Material(scene, {id:'colorWireFrustum', materialDef:matDef}));
     wireFrustum.updateBound();
-    let frustumAABB = wireFrustum.getAABBBoundingBox();
+    let frustumAABB = wireFrustum.getBoundingVolume();
     console.log("frustumAABB:",frustumAABB);
 
     let rootNode = new Node(scene, {id:'rootNode'});
@@ -71,7 +71,7 @@
     box.setLocalRotationFromEuler(0, MoreMath.toRadians(30), 0);
     cubes.addChildren(box);
 
-    let aabb = cubes.getAABBBoundingBox();
+    let aabb = cubes.getBoundingVolume();
     console.log("aabb:",aabb);
 
     // 案例内容

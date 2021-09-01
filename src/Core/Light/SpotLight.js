@@ -1,6 +1,8 @@
 import Light from "./Light.js";
 import Vector3 from "../Math3d/Vector3.js";
 import MoreMath from "../Math3d/MoreMath.js";
+import BoundingSphere from "../Math3d/Bounding/BoundingSphere.js";
+import TempVars from "../Util/TempVars.js";
 
 /**
  * 聚光灯。<br/>
@@ -196,4 +198,27 @@ export default class SpotLight extends Light{
         return this._m_Direction;
     }
 
+    getBoundingVolume(){
+        // 因为这一阶段只是快速剔除，如果使用OBB计算光锥剔除，则显得有点浪费
+        // 对于无限远的聚光,直接渲染,无需剔除
+        if(this._m_SpotRange == 0)return null;
+        // 对于有限聚光灯,使用球体包围盒快速剔除
+        if(this._m_UpdateBoundingVolume){
+            if(!this._m_BoudingVolume){
+                // 对于PointLight,创建包围球
+                this._m_BoudingVolume = new BoundingSphere();
+            }
+
+            let lr = this._m_SpotRange * 0.5;
+            let center = TempVars.S_TEMP_VEC3_2;
+            this._m_Direction.multLength(this._m_SpotRange * 0.5, center).add(this._m_Position);
+
+            let lr2 = this._m_SpotRange * Math.tan(this._m_OuterCorner);
+
+            this._m_BoudingVolume.setCenter(center);
+            this._m_BoudingVolume.setRaiuds(Math.max(lr, lr2));
+            this._m_UpdateBoundingVolume = false;
+        }
+        return this._m_BoudingVolume;
+    }
 }

@@ -42,4 +42,13 @@ export default class DirectionalLight extends Light{
         this._m_Direction.normal();
     }
 
+    /**
+     * 返回DirectionalLight的AABBBoundary。<br/>
+     * 这里直接返回null,表示一直可见。<br/>
+     * @return {null}
+     */
+    getBoundingVolume(){
+        return null;
+    }
+
 }

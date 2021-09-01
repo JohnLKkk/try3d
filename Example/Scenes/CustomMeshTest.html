@@ -52,7 +52,7 @@
     geometry.setMaterial(basicLightingMat);
     geometry.updateBound();
     geometry.setLocalScaleXYZ(0.01, 0.01, 0.01);
-    console.log(geometry.getAABBBoundingBox());
+    console.log(geometry.getBoundingVolume());
 
 
     let rootNode = new Node(scene, {id:'rootNode'});
