@@ -535,6 +535,18 @@ export default class Camera extends Component{
     }
 
     /**
+     * 返回投影视图矩阵。<br/>
+     * @param {Boolean}[ref 由于ProjectViewMatrix根据渲染引擎自动计算，但有时并非用到，所以这里可以强制计算]
+     * @return {Matrix44}
+     */
+    getProjectViewMatrix(ref){
+        if(ref){
+            Matrix44.multiplyMM(this._m_ProjectViewMatrix, 0, this._m_ProjectMatrix, 0, this._m_ViewMatrix, 0);
+        }
+        return this._m_ProjectViewMatrix;
+    }
+
+    /**
      * 设置投影矩阵。<br/>
      * @param {Matrix44}[projectMatrix]
      */

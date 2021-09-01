@@ -3,12 +3,13 @@ import RenderState from "../WebGL/RenderState.js";
 import DirectionalLight from "../Light/DirectionalLight.js";
 import TempVars from "../Util/TempVars.js";
 import Matrix44 from "../Math3d/Matrix44.js";
+import Vector4 from "../Math3d/Vector4.js";
 
 /**
  * 光照通过多个Pass累计着色，为了性能考虑，这里采用了光锥裁剪进行逐光源Shading。<br/>
  * @author Kkk
  * @date 2021年8月31日21点49分
- * @update 2021年9月1日16点51分
+ * @update 2021年9月1日17点46分
  */
 export default class MultiPassLightingRenderProgram extends DefaultRenderProgram{
     static PROGRAM_TYPE = 'MultiPassLighting';
@@ -23,6 +24,14 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
     static S_W_LIGHT_DATA0 = '_wLight_Data_0';
     static S_W_LIGHT_DATA1 = '_wLight_Data_1';
     static S_W_LIGHT_DATA2 = '_wLight_Data_2';
+
+    // 临时变量
+    _m_PV = null;
+    _m_Temp_Vec4 = new Vector4();
+    _m_Temp_Vec4_2 = new Vector4();
+    _m_Temp_Vec4_3 = new Vector4();
+    _m_Cam_Up = new Vector4();
+    _m_Cam_Left = new Vector4();
     constructor(props) {
         super(props);
         this._m_AccumulationLights = new RenderState();
@@ -114,40 +123,6 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
                         array[offset + 10] = 0;
                         array[offset + 11] = 0;
                         break;
-                    case 'PointLight':
-                        if(lightSpace){
-                            // view空间
-                        }
-                        else{
-                            // 世界空间
-                            array[offset + 4] = light.getPosition()._m_X;
-                            array[offset + 5] = light.getPosition()._m_Y;
-                            array[offset + 6] = light.getPosition()._m_Z;
-                            array[offset + 7] = light.getInRadius();
-                        }
-                        // 第三个数据占位(不要假设默认为0,因为重复使用这个缓存,所以最好主动填充0)
-                        array[offset + 8] = 0;
-                        array[offset + 9] = 0;
-                        array[offset + 10] = 0;
-                        array[offset + 11] = 0;
-                        break;
-                    case 'SpotLight':
-                        if(lightSpace){
-
-                        }
-                        else{
-                            // 世界空间
-                            array[offset + 4] = light.getPosition()._m_X;
-                            array[offset + 5] = light.getPosition()._m_Y;
-                            array[offset + 6] = light.getPosition()._m_Z;
-                            array[offset + 7] = light.getInvSpotRange();
-                        }
-                        // 提交spotDir其他信息
-                        array[offset + 8] = light.getDirection()._m_X;
-                        array[offset + 9] = light.getDirection()._m_Y;
-                        array[offset + 10] = light.getDirection()._m_Z;
-                        array[offset + 11] = light.getPackedAngleCos();
-                        break;
                 }
             }
             // 上载数据
@@ -206,11 +181,39 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
                     break;
             }
             // 光锥裁剪
+            if(lastIndex > 0){
+                // 尽管这里会忽略第一个point或spot的优化
+                // 原因在于可能会将第一个point或spot作为ambientLight pass处理
+                // 但是如果将ambientLight pass作为一个独立subShader,则会增加渲染上下文以及状态机切换的开销
+                // 所以这里选择忽略第一个point或spot的优化
+                let pv = null;
+                if(lightIndex != lastIndex){
+                    if(lightIndex == 0){
+
+                    }
+                }
+                else{
+                    if(lightIndex == 1){
+                        // 开启光源裁剪
+                    }
+                }
+            }
             gl.uniform4f(lightSpaceLoc, tempVec4._m_X, tempVec4._m_Y, tempVec4._m_Z, tempVec4._m_W);
             gl.uniform4f(lightSpaceLoc1, tempVec42._m_X, tempVec42._m_Y, tempVec42._m_Z, tempVec42._m_W);
             gl.uniform4f(lightSpaceLoc2, tempVec43._m_X, tempVec43._m_Y, tempVec43._m_Z, tempVec43._m_W);
         }
         return 1;
+    }
+    lightClip(light){
+        let bounding = light.getBoundingVolume();
+        let r = bounding.getRadius();
+        let center = bounding.getCenter(this._m_Temp_Vec4);
+        let lightLeft = this._m_Cam_Left.multLength(r, this._m_Temp_Vec4_2).add(center);
+        let lightUp = this._m_Cam_Up.multLength(r, this._m_Temp_Vec4_3).add(center);
+
+        // 变换到NDC空间
+        // 为了稳妥点，进行CVV测试
+        // 计算光锥裁剪区
     }
     draw(gl, scene, frameContext, iDrawable, lights) {
 
