@@ -55,12 +55,6 @@
     let objLoader = new OBJLoader();
     objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/');
     objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/scene1.obj', modelNode=>{
-        modelNode.traverse((node)=>{
-            if(node.isDrawable()){
-                // 选择SinglePass模式的Forward渲染方式
-                node.getMaterial().selectTechnology('SinglePass');
-            }
-        });
         rootNode.addChildren(modelNode);
 
         let pointLights = [

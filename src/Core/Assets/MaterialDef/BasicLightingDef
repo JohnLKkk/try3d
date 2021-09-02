@@ -430,14 +430,14 @@ Def BasicLightingDef{
             }
         }
     }
-    Technology SinglePass{
+    // 默认为SinglePass
+    Technology {
         Sub_Pass Forward{
             Pass SingleBlinnPhongLighting{
             }
         }
     }
-    // 默认选项为MultiPass
-    Technology{
+    Technology MultiPass{
         Sub_Pass Forward{
             Pass MultiPassBlinnPhongLighting{
             }
