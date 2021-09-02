@@ -14,9 +14,10 @@ export default class RenderState {
         "ColorWrite",
         "DepthTest",
         "Blend",
-        "BlendFactor"
+        "BlendFactor",
+        "ScissorTest"
     ];
-    constructor() {
+    constructor(defaultState) {
         this._m_State = {
         };
         this._m_StoreState = {
@@ -31,7 +32,9 @@ export default class RenderState {
                 return this._state;
             }
         };
-        this._init();
+        if(defaultState){
+            this._init();
+        }
     }
     getState(){
         return this._m_State;
@@ -56,12 +59,14 @@ export default class RenderState {
         this._m_State[RenderState.S_STATES[2]] = 'On';
         this._m_State[RenderState.S_STATES[3]] = 'On';
         this._m_State[RenderState.S_STATES[4]] = 'Off';
+        this._m_State[RenderState.S_STATES[6]] = 'Off';
 
         this._m_ResetState._state[RenderState.S_STATES[0]] = RenderState.S_FACE_CULL_BACK;
         this._m_ResetState._state[RenderState.S_STATES[1]] = 'On';
         this._m_ResetState._state[RenderState.S_STATES[2]] = 'On';
         this._m_ResetState._state[RenderState.S_STATES[3]] = 'On';
         this._m_ResetState._state[RenderState.S_STATES[4]] = 'Off';
+        this._m_ResetState._state[RenderState.S_STATES[6]] = 'Off';
     }
     reset(){
         return this._m_ResetState;

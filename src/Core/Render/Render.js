@@ -339,6 +339,14 @@ export default class Render extends Component{
                             gl.blendFunc(sfactor, dfactor);
                         }
                         break;
+                    case RenderState.S_STATES[6]:
+                        if(state[k] == 'On'){
+                            gl.enable(gl.SCISSOR_TEST);
+                        }
+                        else if(state[k] == 'Off'){
+                            gl.disable(gl.SCISSOR_TEST);
+                        }
+                        break;
                 }
             }
         }

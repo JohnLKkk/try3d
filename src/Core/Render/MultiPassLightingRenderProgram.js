@@ -4,6 +4,7 @@ import DirectionalLight from "../Light/DirectionalLight.js";
 import TempVars from "../Util/TempVars.js";
 import Matrix44 from "../Math3d/Matrix44.js";
 import Vector4 from "../Math3d/Vector4.js";
+import Vector3 from "../Math3d/Vector3.js";
 
 /**
  * 光照通过多个Pass累计着色，为了性能考虑，这里采用了光锥裁剪进行逐光源Shading。<br/>
@@ -27,17 +28,27 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
 
     // 临时变量
     _m_PV = null;
+    _m_Temp_Vec3 = new Vector3();
     _m_Temp_Vec4 = new Vector4();
     _m_Temp_Vec4_2 = new Vector4();
     _m_Temp_Vec4_3 = new Vector4();
     _m_Cam_Up = new Vector4();
     _m_Cam_Left = new Vector4();
+    _m_LightCvv_LeftTop = new Vector4();
+    _m_LightCvv_RightBottom = new Vector4();
+    _m_Light_LeftTop = new Vector4();
+    _m_Light_RightBottom = new Vector4();
+    _m_ViewPortWidth = -1;
+    _m_ViewPortHeight = -1;
     constructor(props) {
         super(props);
         this._m_AccumulationLights = new RenderState();
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[4], 'On');
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[1], 'Off');
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[5], ['SRC_ALPHA', 'ONE']);
+
+        this._m_ClipLights = new RenderState();
+        this._m_ClipLights.setFlag(RenderState.S_STATES[6], 'On');
     }
 
     /**
@@ -55,20 +66,20 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
     _uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex, lightIndex, passId){
         let conVars = frameContext.m_LastSubShader.getContextVars();
         gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_MULTI_ID_SRC].loc, passId);
-        if(lastIndex == 0){
-            // 提交合计的ambientColor(场景可能添加多个ambientLight)
-            // 也可以设计为场景只能存在一个ambientColor
-            let ambientLightColor = scene.AmbientLightColor;
-            gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
-        }
-        else{
-            // 开启累积缓存模式
-            // 我们使用result = s * s_alpha + d * 1.0
-            // 所以,渲染当前pass,s部分在当前混合下应该使用一个全黑的ambientLightColor(因为第一个pass已经计算了ambientLightColor)
-            gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, 0.0, 0.0, 0.0);
-            scene.getRender()._checkRenderState(gl, this._m_AccumulationLights, frameContext.getRenderState());
-        }
         if(passId == 0){
+            if(lastIndex == 0){
+                // 提交合计的ambientColor(场景可能添加多个ambientLight)
+                // 也可以设计为场景只能存在一个ambientColor
+                let ambientLightColor = scene.AmbientLightColor;
+                gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+            }
+            else{
+                // 开启累积缓存模式
+                // 我们使用result = s * s_alpha + d * 1.0
+                // 所以,渲染当前pass,s部分在当前混合下应该使用一个全黑的ambientLightColor(因为第一个pass已经计算了ambientLightColor)
+                gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, 0.0, 0.0, 0.0);
+                scene.getRender()._checkRenderState(gl, this._m_AccumulationLights, frameContext.getRenderState());
+            }
             let lightSpaceLoc = null;
             let lightSpace = null;
             if(conVars[MultiPassLightingRenderProgram.S_V_LIGHT_DATA]){
@@ -132,6 +143,29 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
             return curLightCount + lastIndex;
         }
         else if(passId == 1){
+            let light = null;
+            let lightColor = null;
+            light = lights[lightIndex];
+            // 对于第一个pass我们不需要进行光锥裁剪
+            if(lastIndex > 0){
+                if(!this._lightClip(gl, light, true)){
+                    // 如果lastIndex<=0,表示lightIndex为0或至今还没有一个光源被着色，则返回-1，以便至少一个光源执行ambientColor pass
+                    return lastIndex <= 0 ? -1 : 0;
+                }
+            }
+            if(lastIndex <= 0){
+                // 提交合计的ambientColor(场景可能添加多个ambientLight)
+                // 也可以设计为场景只能存在一个ambientColor
+                let ambientLightColor = scene.AmbientLightColor;
+                gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+            }
+            else{
+                // 开启累积缓存模式
+                // 我们使用result = s * s_alpha + d * 1.0
+                // 所以,渲染当前pass,s部分在当前混合下应该使用一个全黑的ambientLightColor(因为第一个pass已经计算了ambientLightColor)
+                gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, 0.0, 0.0, 0.0);
+                scene.getRender()._checkRenderState(gl, this._m_AccumulationLights, frameContext.getRenderState());
+            }
             let lightSpaceLoc = null;
             let lightSpaceLoc1 = null;
             let lightSpaceLoc2 = null;
@@ -151,9 +185,6 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
                 lightSpaceLoc1 = conVars[MultiPassLightingRenderProgram.S_W_LIGHT_DATA1].loc;
                 lightSpaceLoc2 = conVars[MultiPassLightingRenderProgram.S_W_LIGHT_DATA2].loc;
             }
-            let light = null;
-            let lightColor = null;
-            light = lights[lightIndex];
             lightColor = light.getColor();
             tempVec4.setToInXYZW(lightColor._m_X, lightColor._m_Y, lightColor._m_Z, light.getTypeId());
             switch (light.getType()) {
@@ -181,39 +212,67 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
                     break;
             }
             // 光锥裁剪
-            if(lastIndex > 0){
-                // 尽管这里会忽略第一个point或spot的优化
-                // 原因在于可能会将第一个point或spot作为ambientLight pass处理
-                // 但是如果将ambientLight pass作为一个独立subShader,则会增加渲染上下文以及状态机切换的开销
-                // 所以这里选择忽略第一个point或spot的优化
-                let pv = null;
-                if(lightIndex != lastIndex){
-                    if(lightIndex == 0){
-
-                    }
-                }
-                else{
-                    if(lightIndex == 1){
-                        // 开启光源裁剪
-                    }
-                }
-            }
             gl.uniform4f(lightSpaceLoc, tempVec4._m_X, tempVec4._m_Y, tempVec4._m_Z, tempVec4._m_W);
             gl.uniform4f(lightSpaceLoc1, tempVec42._m_X, tempVec42._m_Y, tempVec42._m_Z, tempVec42._m_W);
             gl.uniform4f(lightSpaceLoc2, tempVec43._m_X, tempVec43._m_Y, tempVec43._m_Z, tempVec43._m_W);
+            // 返回1表示渲染当前场景
+            return 1;
         }
-        return 1;
+        return 0;
     }
-    lightClip(light){
-        let bounding = light.getBoundingVolume();
-        let r = bounding.getRadius();
-        let center = bounding.getCenter(this._m_Temp_Vec4);
-        let lightLeft = this._m_Cam_Left.multLength(r, this._m_Temp_Vec4_2).add(center);
-        let lightUp = this._m_Cam_Up.multLength(r, this._m_Temp_Vec4_3).add(center);
 
-        // 变换到NDC空间
-        // 为了稳妥点，进行CVV测试
-        // 计算光锥裁剪区
+    /**
+     * 光锥裁剪。<br/>
+     * @param {GLContext}[gl]
+     * @param {Light}[light 只能是PointLight或SpotLight]
+     * @param {Boolean}[lightCvvTest true进行光锥裁剪测试]
+     * @return {Boolean}[如果被剔除,则返回false]
+     */
+    _lightClip(gl, light, lightCvvTest){
+        let bounding = light.getBoundingVolume();
+        let r = bounding.getRadius() * light.getStepClip();
+        let center = bounding.getCenter(this._m_Temp_Vec3);
+        center = this._m_Temp_Vec4.setToInXYZW(center._m_X, center._m_Y, center._m_Z, 1.0);
+
+        let lightFrustumLeftTop = this._m_LightCvv_LeftTop.multLength(r, this._m_Temp_Vec4_2).add(center);
+        let lightFrustumRightBtm = this._m_LightCvv_RightBottom.multLength(r, this._m_Temp_Vec4_3).add(center);
+        Matrix44.multiplyMV(this._m_Light_LeftTop, lightFrustumLeftTop, this._m_PV);
+        Matrix44.multiplyMV(this._m_Light_RightBottom, lightFrustumRightBtm, this._m_PV);
+        if(!lightCvvTest || !this._lightCvvTest(this._m_Light_LeftTop._m_X, this._m_Light_LeftTop._m_Y, this._m_Light_LeftTop._m_W, this._m_Light_RightBottom._m_X, this._m_Light_RightBottom._m_Y, this._m_Light_RightBottom._m_W)){
+
+            this._m_Light_LeftTop._m_X /= this._m_Light_LeftTop._m_W;
+            this._m_Light_LeftTop._m_Y /= this._m_Light_LeftTop._m_W;
+            this._m_Light_RightBottom._m_X /= this._m_Light_RightBottom._m_W;
+            this._m_Light_RightBottom._m_Y /= this._m_Light_RightBottom._m_W;
+            this._m_Light_LeftTop._mX = this._m_ViewPortWidth * (1.0 + this._m_Light_LeftTop._m_X);
+            this._m_Light_RightBottom._mX = this._m_ViewPortWidth * (1.0 + this._m_Light_RightBottom._m_X);
+            this._m_Light_LeftTop._m_Y = this._m_ViewPortHeight * (1.0 - this._m_Light_LeftTop._m_Y);
+            this._m_Light_RightBottom._m_Y = this._m_ViewPortHeight * (1.0 - this._m_Light_RightBottom._m_Y);
+
+            // 计算光锥裁剪区
+            let lw = this._m_Light_RightBottom._mX - this._m_Light_LeftTop._m_X;
+            let lh = this._m_Light_RightBottom._m_Y - this._m_Light_LeftTop._m_Y;
+
+            gl.scissor(this._m_Light_LeftTop._m_X, this._m_ViewPortHeight * 2.0 - this._m_Light_RightBottom._m_Y, lw, lh);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 光锥测试。<br/>
+     * @param xl
+     * @param yl
+     * @param wl
+     * @param xb
+     * @param yb
+     * @param wb
+     * @return {boolean}
+     * @private
+     */
+    _lightCvvTest(xl, yl, wl, xb, yb, wb){
+        // 比较光锥而非点的CVV测试
+        return xb < -wb || xl > wl || yb > wb || yl < -wl;
     }
     draw(gl, scene, frameContext, iDrawable, lights) {
 
@@ -247,13 +306,29 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
             // 最后draw
             iDrawable.draw(frameContext);
         }
-        let index = 0;
         // 在第二个pass中渲染otherLights
+        let index = 0;
+        if(otherLights.length > 0){
+            scene.getRender()._checkRenderState(gl, this._m_ClipLights, frameContext.getRenderState());
+            this._m_ViewPortWidth = scene.getMainCamera().getWidth() * 0.5;
+            this._m_ViewPortHeight = scene.getMainCamera().getHeight() * 0.5;
+            gl.scissor(0, 0, this._m_ViewPortWidth * 2, this._m_ViewPortHeight * 2);
+            this._m_PV = scene.getMainCamera().getProjectViewMatrix(true);
+            let v = scene.getMainCamera().getViewMatrix();
+            this._m_Cam_Left.setToInXYZW(v.m[0], v.m[4], v.m[8], 1.0).multLength(-1);
+            this._m_Cam_Up.setToInXYZW(v.m[1], v.m[5], v.m[9], 1.0);
+            this._m_Cam_Left.add(this._m_Cam_Up, this._m_LightCvv_LeftTop).normal();
+            this._m_LightCvv_LeftTop.multLength(-1, this._m_LightCvv_RightBottom).normal();
+            // gl.enable(gl.SCISSOR_TEST);
+        }
         while(index < otherLights.length){
             // 更新灯光信息
-            index += this._uploadLights(gl, scene, frameContext, otherLights, batchSize, lastIndex > 0 ? lastIndex : index, index, 1);
+            lastIndex = this._uploadLights(gl, scene, frameContext, otherLights, batchSize, lastIndex != 0 ? lastIndex : index, index, 1);
+            index++;
             // 最后draw
-            iDrawable.draw(frameContext);
+            if(lastIndex == 1){
+                iDrawable.draw(frameContext);
+            }
         }
         scene.getRender()._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
         frameContext.BatchLightLastIndex = lastIndex;
@@ -293,17 +368,34 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
                 iDrawable.draw(frameContext);
             });
         }
-        let index = 0;
         // 在第二个pass中渲染otherLights
+        let index = 0;
+        if(otherLights.length > 0){
+            scene.getRender()._checkRenderState(gl, this._m_ClipLights, frameContext.getRenderState());
+            this._m_ViewPortWidth = scene.getMainCamera().getWidth() * 0.5;
+            this._m_ViewPortHeight = scene.getMainCamera().getHeight() * 0.5;
+            gl.scissor(0, 0, this._m_ViewPortWidth * 2, this._m_ViewPortHeight * 2);
+            this._m_PV = scene.getMainCamera().getProjectViewMatrix(true);
+            let v = scene.getMainCamera().getViewMatrix();
+            this._m_Cam_Left.setToInXYZW(v.m[0], v.m[4], v.m[8], 1.0).multLength(-1);
+            this._m_Cam_Up.setToInXYZW(v.m[1], v.m[5], v.m[9], 1.0);
+            this._m_Cam_Left.add(this._m_Cam_Up, this._m_LightCvv_LeftTop).normal();
+            this._m_LightCvv_LeftTop.multLength(-1, this._m_LightCvv_RightBottom).normal();
+            // gl.enable(gl.SCISSOR_TEST);
+        }
         while(index < otherLights.length){
             // 更新灯光信息
-            index += this._uploadLights(gl, scene, frameContext, otherLights, batchSize, lastIndex > 0 ? lastIndex : index, index, 1);
+            lastIndex = this._uploadLights(gl, scene, frameContext, otherLights, batchSize, lastIndex != 0 ? lastIndex : index, index, 1);
+            index++;
             // 最后draw
-            iDrawables.forEach(iDrawable=>{
-                iDrawable.draw(frameContext);
-            });
+            if(lastIndex == 1){
+                iDrawables.forEach(iDrawable=>{
+                    iDrawable.draw(frameContext);
+                });
+            }
         }
         scene.getRender()._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
+        // gl.disable(gl.SCISSOR_TEST);
         frameContext.BatchLightLastIndex = lastIndex;
 
     }

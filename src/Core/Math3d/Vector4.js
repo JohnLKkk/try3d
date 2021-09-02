@@ -17,12 +17,14 @@ export default class Vector4 {
         this._m_Y = vec4._m_Y;
         this._m_Z = vec4._m_Z;
         this._m_W = vec4._m_W;
+        return this;
     }
     setToInXYZW(x, y, z, w){
         this._m_X = x || 0;
         this._m_Y = y || 0;
         this._m_Z = z || 0;
         this._m_W = (w != null && w != undefined) ? w : 1;
+        return this;
     }
 
     /**

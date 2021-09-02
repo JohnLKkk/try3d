@@ -26,7 +26,7 @@ export default class FrameContext {
         // 保存已计算的当前需要的上下文变量
         this.m_CalcContexts = {};
         // 渲染状态
-        this.m_RenderState = new RenderState();
+        this.m_RenderState = new RenderState(true);
         // 渲染frameBuffer(key:id,value:fb}
         this.m_FrameBuffers = {};
         // 内存中所有的shader

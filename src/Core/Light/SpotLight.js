@@ -30,6 +30,8 @@ export default class SpotLight extends Light{
         this._m_OuterCorner = Math.cos(MoreMath.toRadians(45));
         // 最远能够照射多远(为0表示可以无限远)
         this._m_SpotRange = 100;
+        // 光源裁剪渐变范围
+        this._m_StepClip = 4.0;
         // 最远照射范围倒数(用于加速计算)
         this._m_InvSpotRange = 1.0 / this._m_SpotRange;
         // 内外角余弦差
@@ -37,6 +39,25 @@ export default class SpotLight extends Light{
         // 打包内外角到一个变量中
         this._m_PackedAngleCos = 0;
         this.computeAngleParameters();
+    }
+
+    /**
+     * 设置光源裁剪渐变范围。<br/>
+     * @param {Number}[stepClip]
+     */
+    setStepClip(stepClip){
+        if(stepClip < 0){
+            stepClip = 1.0;
+        }
+        this._m_StepClip = stepClip;
+    }
+
+    /**
+     * 返回光源裁剪渐变范围。<br/>
+     * @return {Number}
+     */
+    getStepClip(){
+        return this._m_StepClip;
     }
 
     /**

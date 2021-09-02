@@ -22,8 +22,29 @@ export default class PointLight extends Light{
         this._m_Position = new Vector3();
         // 灯光半径
         this._m_Radius = -1;
+        // 光源裁剪渐变范围
+        this._m_StepClip = 4.0;
         // 半径倒数(加速计算)
         this._m_InvRadius = 1.0 / this._m_Radius;
+    }
+
+    /**
+     * 设置光源裁剪渐变范围。<br/>
+     * @param {Number}[stepClip]
+     */
+    setStepClip(stepClip){
+        if(stepClip < 0){
+            stepClip = 1.0;
+        }
+        this._m_StepClip = stepClip;
+    }
+
+    /**
+     * 返回光源裁剪渐变范围。<br/>
+     * @return {Number}
+     */
+    getStepClip(){
+        return this._m_StepClip;
     }
 
     /**
