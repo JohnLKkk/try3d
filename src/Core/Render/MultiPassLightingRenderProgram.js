@@ -148,6 +148,8 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
             light = lights[lightIndex];
             // 对于第一个pass我们不需要进行光锥裁剪
             if(lastIndex > 0){
+                // 这里，另外一种光源裁剪方式是通过等效BoundingVolume来作为PointLight和SpotLight的Geometry进行一次绘制调用
+                // 或者，使用模板缓存测试来完成光源裁剪
                 if(!this._lightClip(gl, light, true)){
                     // 如果lastIndex<=0,表示lightIndex为0或至今还没有一个光源被着色，则返回-1，以便至少一个光源执行ambientColor pass
                     return lastIndex <= 0 ? -1 : 0;
@@ -211,7 +213,6 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
                     tempVec43.setToInXYZW(light.getDirection()._m_X, light.getDirection()._m_Y, light.getDirection()._m_Z, light.getPackedAngleCos());
                     break;
             }
-            // 光锥裁剪
             gl.uniform4f(lightSpaceLoc, tempVec4._m_X, tempVec4._m_Y, tempVec4._m_Z, tempVec4._m_W);
             gl.uniform4f(lightSpaceLoc1, tempVec42._m_X, tempVec42._m_Y, tempVec42._m_Z, tempVec42._m_W);
             gl.uniform4f(lightSpaceLoc2, tempVec43._m_X, tempVec43._m_Y, tempVec43._m_Z, tempVec43._m_W);

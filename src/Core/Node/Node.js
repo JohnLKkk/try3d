@@ -70,6 +70,13 @@ export default class Node extends Component{
     }
 
     /**
+     * 表示当前是否为可渲染实例
+     */
+    isDrawable(){
+        return false;
+    }
+
+    /**
      * 设置当前分支下所有渲染实例的细节层次。<br/>
      * @param {Number}[lod]
      */
@@ -499,6 +506,22 @@ export default class Node extends Component{
                 children._m_Parent = null;
             }
         }
+    }
+
+    /**
+     * 深度优先遍历场景图。<br/>
+     * @param {Function}[call]
+     */
+    traverse(call){
+        if(call){
+            call(this);
+        }
+        this._m_Children.forEach(children=>{
+            if(call){
+                call(children);
+            }
+            children.traverse(call);
+        });
     }
 
 }
