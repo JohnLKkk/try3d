@@ -22,6 +22,7 @@
     <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;" tabindex="0"></canvas>
 </div>
 <script type="module">
+
     addInfos('PointLightingTest', '该案例演示了基于SinglePass渲染模式下的20个点光源在4次pass中完成渲染，基于forward渲染路径，如果包括众多光源，将尝试进行多次pass完成光照，你也可以修改初始BatchLightSize为20，从而一次pass完成光照，值得注意的是，BatchLightSize最大值为50，这意味着超过50个光源将进行累计光照。');
 
 
@@ -37,26 +38,28 @@
     import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
     import OBJLoader from "../../src/Supp/OBJLoader.js";
     import Stats from "../stats.min.js";
+    import SceneBrowsingController from "../../src/Core/InputControl/SceneBrowsingController.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     // 必须在初始阶段预设batchLightSize值,默认为4
-    scene.getRender().setBatchLightSize(5);
+    scene.getRender().setBatchLightSize(4);
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(15, 15, 15), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
-    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
-    let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
-    // basicLightingMat.selectTechnology('MultiPass');
-    basicLightingMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
-    basicLightingMat.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
-    basicLightingMat.setParam('specularColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
-    basicLightingMat.setParam('shininess', new FloatVars().valueOf(32.0));
 
     let rootNode = new Node(scene, {id:'rootNode'});
 
     let objLoader = new OBJLoader();
     objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/');
-    objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/scene1.obj', modelNode=>{
+    objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/Destroyed/Damaged_Obj2.obj', modelNode=>{
         rootNode.addChildren(modelNode);
+        modelNode.traverse((node)=>{
+            if(node.isDrawable()){
+                // 选择SinglePass模式的Forward渲染方式
+                node.getMaterial().selectTechnology('SinglePass');
+            }
+        });
+        modelNode.setLocalScaleXYZ(0.1, 0.1, 0.1);
+        let sceneControl = new SceneBrowsingController(scene, {id:'sceneControl'});
+        sceneControl.lookScene(modelNode);
 
         let pointLights = [
             {
