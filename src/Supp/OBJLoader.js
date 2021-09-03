@@ -729,6 +729,7 @@ export default class OBJLoader {
             let isLine = (meshData.type === 'Line');
             let materialId = object.material.id;
             let material;
+            let unitType = null;
             if (meshData.positions.length === 0) {
                 // 跳过无位置几何属性的部分
                 continue;
@@ -737,6 +738,7 @@ export default class OBJLoader {
                 mo++;
 
                 let indices = new Array(meshData.positions.length / 3); // Triangle soup
+                unitType = indices.length > 65534 ? Mesh.S_INDICES_32 : Mesh.S_INDICES;
                 for (let idx = 0; idx < indices.length; idx++) {
                     indices[idx] = idx;
                 }
@@ -750,7 +752,7 @@ export default class OBJLoader {
                 if(meshData.uv.length > 0){
                     mesh.setData(Mesh.S_UV0, meshData.uv);
                 }
-                mesh.setData(Mesh.S_INDICES, indices);
+                mesh.setData(unitType, indices);
 
 
                 // 获取引用的材质实例
@@ -770,10 +772,11 @@ export default class OBJLoader {
                     }
 
                 }
-                mtlobjs[materialId] = {mesh, material};
+                mtlobjs[materialId] = {mesh, material, unitType};
             }
             else{
                 let mesh = mtlobjs[materialId].mesh;
+                let unitType = mtlobjs[materialId].mesh;
                 let meshPosition = mesh.getData(Mesh.S_POSITIONS);
                 let indices = new Array(meshData.positions.length / 3); // Triangle soup
                 for (let idx = 0, offset = meshPosition.length / 3; idx < indices.length; idx++) {
@@ -803,13 +806,13 @@ export default class OBJLoader {
                     }
                     mesh.setData(Mesh.S_UV0, meshUV);
                 }
-                let meshIndice = mesh.getData(Mesh.S_INDICES);
+                let meshIndice = mesh.getData(unitType);
                 if(meshIndice){
                     indices.forEach(i=>{
                         meshIndice.push(i);
                     });
                 }
-                mesh.setData(Mesh.S_INDICES, meshIndice);
+                mesh.setData(unitType, meshIndice);
             }
 
 
@@ -819,12 +822,13 @@ export default class OBJLoader {
             Log.debug("实体数量:" + mo);
             for(let mt in mtlobjs){
                 let material = mtlobjs[mt].material;
+                let unitType = mtlobjs[mt].unitType;
                 let mesh = mtlobjs[mt].mesh;
                 // 创建切线
                 let uv0s = mesh.getData(Mesh.S_UV0);
                 if(uv0s){
                     // 切线数据
-                    let tangents = Tools.generatorTangents2(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0), mesh.getData(Mesh.S_NORMALS));
+                    let tangents = Tools.generatorTangents2(mesh.getData(unitType), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0), mesh.getData(Mesh.S_NORMALS));
                     mesh.setData(Mesh.S_TANGENTS, tangents);
                 }
                 else{

@@ -179,7 +179,25 @@ export default class Material extends Component{
      * @param {String}[technologyName Technology名称]
      */
     selectTechnology(technologyName){
+        if(this._m_RenderTechnologys[technologyName] == this._m_CurrentTechnology)return;
+        let p = this._m_CurrentTechnology != null;
         this._m_CurrentTechnology = this._m_RenderTechnologys[technologyName];
+        // 如果是第一次创建Technology,则不需要进行参数定义重设
+        // 否则,在切换技术时,需要检测是否需要参数定义重设
+        // 另外，不需要保存每个technology是否重设过参数定义，因为AleadyDefinedParams随时可能发生变更，会导致已经定义的technology仍然可能缺少最新的参数定义，所以
+        // 只要切换technology，并且不是该Material的首个Technology，就执行一次参数定义重设检测
+        // 不必担心重复定义，因为subShader.addDefine()内部会进行剔除
+        if(p){
+            let subPass = null;
+            for(let paramName in this._m_AleadyDefinedParams){
+                for(let p in this._m_CurrentTechnology.getSubPassList()){
+                    subPass = this._m_CurrentTechnology.getSubPasss(p);
+                    subPass.getSubShaders().forEach(sb=>{
+                        sb.subShader.addDefine(paramName);
+                    });
+                }
+            }
+        }
     }
 
     /**

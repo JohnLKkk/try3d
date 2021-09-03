@@ -26,7 +26,8 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         this._m_AccumulationLights = new RenderState();
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[4], 'On');
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[1], 'Off');
-        this._m_AccumulationLights.setFlag(RenderState.S_STATES[5], ['SRC_ALPHA', 'ONE']);
+        // 不使用SRC_ALPHA，ONE的原因在于，如果第一个光源是point或spot，则会导致累计光源渲染一个DirLight时，对于材质半透明的物体会出现累加错误的情况，因为混合了alpha
+        this._m_AccumulationLights.setFlag(RenderState.S_STATES[5], ['ONE', 'ONE']);
         this._m_m_LastSubShader = null;
     }
 
@@ -95,7 +96,7 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         }
         else{
             // 开启累积缓存模式
-            // 我们使用result = s * s_alpha + d * 1.0
+            // 我们使用result = s * 1.0 + d * 1.0
             // 所以,渲染当前pass,s部分在当前混合下应该使用一个全黑的ambientLightColor(因为第一个pass已经计算了ambientLightColor)
             gl.uniform3f(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, 0.0, 0.0, 0.0);
             scene.getRender()._checkRenderState(gl, this._m_AccumulationLights, frameContext.getRenderState());

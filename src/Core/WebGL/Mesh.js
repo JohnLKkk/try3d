@@ -18,7 +18,7 @@ export default class Mesh {
     static S_NORMALS = "normals";
     // 索引属性
     static S_INDICES = "indices";
-    static S_INDICES_32 = "indices";
+    static S_INDICES_32 = "indices32";
     // 切线属性
     static S_TANGENTS = "tangents";
     // 最多支持4道uv(正常来说2道已经足够了)
@@ -40,6 +40,7 @@ export default class Mesh {
         "colors":"colors",
         "normals":"normals",
         "indices":"indices",
+        "indices32":"indices",
         "tangents":"tangents",
         "uv0":"uv0",
         "uv1":"uv1",
@@ -60,6 +61,7 @@ export default class Mesh {
         this._m_ElementCount = 0;
         this._m_Primitive = Mesh.S_PRIMITIVE_TRIANGLES;
         this._m_DrawPrimitive = null;
+        this._m_DrawType = null;
         this._m_CurrentLod = 0;
         this._m_DrawLod = 0;
         this._m_LodLevels = {};
@@ -172,6 +174,7 @@ export default class Mesh {
                         ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_TANGENT, 4, gl.FLOAT, 0, 0);
                         break;
                     case Mesh.S_INDICES:
+                        this._m_DrawType = gl.UNSIGNED_SHORT;
                         if(this._m_Datas[key].lod){
                             let datas = this._m_Datas[key].datas;
                             let data = new Uint16Array(this._m_Datas[key].count);
@@ -197,6 +200,7 @@ export default class Mesh {
                         }
                         break;
                     case Mesh.S_INDICES_32:
+                        this._m_DrawType = gl.UNSIGNED_INT;
                         if(this._m_Datas[key].lod){
                             let datas = this._m_Datas[key].datas;
                             let data = new Uint32Array(this._m_Datas[key].count);
@@ -266,7 +270,7 @@ export default class Mesh {
      */
     draw(gl){
         gl.bindVertexArray(this._m_VAO);
-        gl.drawElements(this._m_DrawPrimitive, this._m_ElementCount, gl.UNSIGNED_SHORT, this._m_DrawLod);
+        gl.drawElements(this._m_DrawPrimitive, this._m_ElementCount, this._m_DrawType, this._m_DrawLod);
     }
 
     /**

@@ -11,7 +11,9 @@ export default class Canvas extends Component{
         cfg.version = cfg.version || 'webgl2';
         this._m_Canvas = cfg.canvas;
         if(this._m_Canvas){
-            this._m_GL = this._m_Canvas.getContext(cfg.version, {antialias: true, depth:true});
+            // 默认不需要alpha缓冲区,这个缓冲区的作用详见：https://www.khronos.org/registry/webgl/specs/latest/1.0/index.html#2.4
+            // 关闭它可以在fragment中输出alpha<1时正确的不透明渲染,而不是混合html页面背景
+            this._m_GL = this._m_Canvas.getContext(cfg.version, {antialias: !!cfg.antialias || true, depth:true, powerPreference:!!cfg.powerPreference || 'high-performance', alpha:!!cfg.alpha || false});
             if(!this._m_GL){
                 Log.error("浏览器不支持" + cfg.version + "!");
             }
@@ -60,6 +62,7 @@ export default class Canvas extends Component{
         gl.clearColor(.3, .3, .3, 1.0);
         gl.enable(gl.DEPTH_TEST);
         gl.enable(gl.CULL_FACE);
+        gl.disable(gl.BLEND);
         gl.cullFace(gl.BACK);
         // <=
         gl.depthFunc(gl.LEQUAL);

@@ -24,7 +24,7 @@ export default class SceneBrowsingController extends Component{
     _m_PreviousTargetRotation = 0.0;
     _m_TargetRotation = this._m_Rotation;
     _m_TargetVRotation = this._m_VRotation;
-    _m_RotationSpeed = 0.001;
+    _m_RotationSpeed = 0.3;
     _m_ZoomSensitivity = 2.0;
     _m_ZoomSpeed = 1.0;
     _m_VeryCloseRotation = true;
@@ -78,6 +78,22 @@ export default class SceneBrowsingController extends Component{
     }
 
     /**
+     * 设置旋转速率。<br/>
+     * @param {Number}[rotateSpeed]
+     */
+    setRotationSpeed(rotateSpeed){
+        this._m_RotationSpeed = rotateSpeed;
+    }
+
+    /**
+     * 返回旋转速率。<br/>
+     * @return {Number}
+     */
+    getRotationSpeed(){
+        return this._m_RotationSpeed;
+    }
+
+    /**
      * 设置聚焦速率。<br/>
      * @param {Number}[zoomSpeed]
      */
@@ -123,11 +139,11 @@ export default class SceneBrowsingController extends Component{
             let far = diagonal * 5; // 5是一个被猜测的常数，应该与最大缩小因子一致
             let near = far / 5000;
             let d = (far - near);
-            let maxDistance = Math.max(distanceX,distanceY,distanceZ);
+            let maxDistance = Math.max(distanceX,distanceY,distanceZ) * 2;
             this.setTargetDistance((maxDistance - near) * 0.5 + near);
             this.setMaxDistance(maxDistance);
             this.setMinDistance(near);
-            this.setZoomSpeed(d * 0.001);
+            this.setZoomSpeed(d * 0.2);
             let v = new Vector3();
             aabb.getCenter(v);
             this.setTarget(v);
@@ -446,21 +462,21 @@ export default class SceneBrowsingController extends Component{
      */
     analog(name, val, tpf){
         if (name == CameraIps.CHASECAM_MOVELEFT) {
-            this._rotate1(-val);
+            this._rotate1(-val * tpf);
         } else if (name == CameraIps.CHASECAM_MOVERIGHT) {
-            this._rotate1(val);
+            this._rotate1(val * tpf);
         } else if (name == CameraIps.CHASECAM_UP) {
-            this._rotate2(val);
+            this._rotate2(val * tpf);
         } else if (name == CameraIps.CHASECAM_DOWN) {
-            this._rotate2(-val);
+            this._rotate2(-val * tpf);
         } else if (name == CameraIps.CHASECAM_ZOOMIN) {
-            this._zoomCamera(-val);
+            this._zoomCamera(-val * tpf);
             if (this._m_Zoomin == false) {
                 this._m_DistanceLerpFactor = 0;
             }
             this._m_Zoomin = true;
         } else if (name == CameraIps.CHASECAM_ZOOMOUT) {
-            this._zoomCamera(+val);
+            this._zoomCamera(+val * tpf);
             if (this._m_Zoomin == true) {
                 this._m_DistanceLerpFactor = 0;
             }

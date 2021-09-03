@@ -2,20 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PointLightingTest</title>
-    <style>
-        #baseColor input{
-            width: 50px;
-        }
-        #baseColor2 input{
-            width: 50px;
-        }
-        #specular input{
-            width: 50px;
-        }
-    </style>
-    <link rel="stylesheet" type="text/css" href="../Assets/Htmls/Css/Base.css"/>
-    <script src="../Assets/Htmls/Js/Infos.js"></script>
+    <title>MultiPassPointLightingTest</title>
 </head>
 <body>
 <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
@@ -23,153 +10,81 @@
 </div>
 <script type="module">
 
-    addInfos('PointLightingTest', '该案例演示了基于SinglePass渲染模式下的20个点光源在4次pass中完成渲染，基于forward渲染路径，如果包括众多光源，将尝试进行多次pass完成光照，你也可以修改初始BatchLightSize为20，从而一次pass完成光照，值得注意的是，BatchLightSize最大值为50，这意味着超过50个光源将进行累计光照。');
 
+    import Ext from "../Ext.js";
 
+    let ext = new Ext();
+    ext.show('  这个案例演示了使用BasicLighting材质时，如何切换到MultiPass方式进行渲染。', {lineheight:50});
     import Scene from "../../src/Core/Scene/Scene.js";
     import RenderEngine from "../../src/Core/RenderEngine.js";
     import Node from "../../src/Core/Node/Node.js";
-    import Material from "../../src/Core/Material/Material.js";
     import Vector3 from "../../src/Core/Math3d/Vector3.js";
-    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
     import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
-    import PointLight from "../../src/Core/Light/PointLight.js";
-    import Vec4Vars from "../../src/Core/WebGL/Vars/Vec4Vars.js";
-    import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
     import OBJLoader from "../../src/Supp/OBJLoader.js";
     import Stats from "../stats.min.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
     import SceneBrowsingController from "../../src/Core/InputControl/SceneBrowsingController.js";
+    import SkyBox from "../../src/Core/Node/Sky/SkyBox.js";
+    import BoolVars from "../../src/Core/WebGL/Vars/BoolVars.js";
+    import Texture2DVars from "../../src/Core/WebGL/Vars/Texture2DVars.js";
+    import Vector4 from "../../src/Core/Math3d/Vector4.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
-    // 必须在初始阶段预设batchLightSize值,默认为4
-    scene.getRender().setBatchLightSize(4);
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(15, 15, 15), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(-2.0130101626984027,1.4987197477240914,0.7460067572438586), new Vector3(-1.811941996922763,1.488869448795806,-0.2335209678985405), new Vector3(0, 1, 0));
 
     let rootNode = new Node(scene, {id:'rootNode'});
 
+    // 创建一个sky
+    let sky = new SkyBox(scene, {id:'sky'});
+    // 设置等距全景图作为sky纹理
+    sky.getMaterial().setParam('useEnvMap', new BoolVars().valueOf(true));
+    // 激活hdr通道
+    sky.getMaterial().setParam('useHDR', new BoolVars().valueOf(true));
+    let envMap = new Texture2DVars(scene);
+    envMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
+    envMap.setImageSrc(scene, '../Assets/Textures/hdr/env4.hdr', {rgbe:true});
+    envMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+    envMap.setFilter(scene, Texture2DVars.S_FILTERS.S_LINEAR, Texture2DVars.S_FILTERS.S_LINEAR);
+    sky.getMaterial().setParam('envMap', envMap);
+    scene.setSky(sky);
     let objLoader = new OBJLoader();
     objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/');
-    objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/Destroyed/Damaged_Obj2.obj', modelNode=>{
+    objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/Reaktor/reaktor.obj', modelNode=>{
         rootNode.addChildren(modelNode);
         modelNode.traverse((node)=>{
             if(node.isDrawable()){
                 // 选择SinglePass模式的Forward渲染方式
-                node.getMaterial().selectTechnology('SinglePass');
+                node.getMaterial().selectTechnology('MultiPass');
             }
         });
-        modelNode.setLocalScaleXYZ(0.1, 0.1, 0.1);
+        //-1.3694835892086443,1.467691306099992,-2.4281013411524075
+        //-2.1469332738881945,1.8119345975815795,-2.9544743496374464
+        // modelNode.setLocalScaleXYZ(0.1, 0.1, 0.1);
         let sceneControl = new SceneBrowsingController(scene, {id:'sceneControl'});
         sceneControl.lookScene(modelNode);
+        sceneControl.setTarget(new Vector3(-1.3694835892086443,1.707691306099992,-2.4281013411524075));
+        sceneControl.setMaxDistance(1);
+        sceneControl.setMinDistance(1);
+        sceneControl.setTargetDistance(1);
+        // let firstPersonController = new FirstPersonController(scene, {id:'firstControl'});
+        scene.setAmbientLightColor(0.3, 0.3, 0.3);
 
-        let pointLights = [
-            {
-                pos:[7.7023416, 3.6099787, 7.3349466],
-                color:[1.0, 0.0, 0.0, 1.0],
-                r:5.0
-            },
-            {
-                pos:[3.4538236, 3.6099787, 7.3349466],
-                color:[0.3, 0.5, 0.0, 1.0],
-                r:5.0
-            },
-            {
-                pos:[0.01142323, 3.6099787, 7.3349466],
-                color:[0.3, 0.5, 0.5, 1.0],
-                r:5.0
-            },
-            {
-                pos:[-4.152158, 3.6099787, 7.3349466],
-                color:[0.3, 0.0, 0.5, 1.0],
-                r:5.0
-            },
-            {
-                pos:[-8.148325, 3.6099787, 7.3349466],
-                color:[0.0, 0.0, 1.0, 1.0],
-                r:5.0
-            },{
-                pos:[7.7023416, 3.6099787, 2.3349466],
-                color:[0.3, 0.0, 1.0, 1.0],
-                r:5.0
-            },
-            {
-                pos:[3.4538236, 3.6099787, 2.3349466],
-                color:[0.0, 0.5, 0.0, 1.0],
-                r:5.0
-            },
-            {
-                pos:[0.01142323, 3.6099787, 2.3349466],
-                color:[0.7, 0.5, 0.0, 1.0],
-                r:5.0
-            },
-            {
-                pos:[-4.152158, 3.6099787, 2.3349466],
-                color:[0.1, 0.5, 0.0, 1.0],
-                r:5.0
-            },
-            {
-                pos:[-8.148325, 3.6099787, 2.3349466],
-                color:[0.5, 0.0, 1.0, 1.0],
-                r:5.0
-            },{
-                pos:[7.7023416, 3.6099787, -2.3349466],
-                color:[1.0, 0.0, 0.0, 1.0],
-                r:5.0
-            },
-            {
-                pos:[3.4538236, 3.6099787, -2.3349466],
-                color:[0.3, 0.5, 0.0, 1.0],
-                r:5.0
-            },
-            {
-                pos:[0.01142323, 3.6099787, -2.3349466],
-                color:[0.3, 0.5, 0.5, 1.0],
-                r:5.0
-            },
-            {
-                pos:[-4.152158, 3.6099787, -2.3349466],
-                color:[0.3, 0.0, 0.5, 1.0],
-                r:5.0
-            },
-            {
-                pos:[-8.148325, 3.6099787, -2.3349466],
-                color:[0.0, 0.0, 1.0, 1.0],
-                r:5.0
-            },{
-                pos:[7.7023416, 3.6099787, -7.3349466],
-                color:[0.3, 0.0, 1.0, 1.0],
-                r:5.0
-            },
-            {
-                pos:[3.4538236, 3.6099787, -7.3349466],
-                color:[0.0, 0.5, 0.0, 1.0],
-                r:5.0
-            },
-            {
-                pos:[0.01142323, 3.6099787, -7.3349466],
-                color:[0.7, 0.5, 0.0, 1.0],
-                r:5.0
-            },
-            {
-                pos:[-4.152158, 3.6099787, -7.3349466],
-                color:[0.1, 0.5, 0.0, 1.0],
-                r:5.0
-            },
-            {
-                pos:[-8.148325, 3.6099787, -7.3349466],
-                color:[0.5, 0.0, 1.0, 1.0],
-                r:5.0
-            },
-        ];
+        let dirLight = new DirectionalLight(scene, {id:'dirLight'});
+        dirLight.setDirectionXYZ(0, -1, -1);
+        dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+        rootNode.addChildren(dirLight);
 
-        let i = 0;
-        console.log('pointLights.lenght:' + pointLights.length);
-        pointLights.forEach(p=>{
-            let pointLight = new PointLight(scene, {id:'pointLight' + i++});
-            pointLight.setRadius(p.r);
-            pointLight.setColorRGBA(p.color[0], p.color[1], p.color[2], p.color[3]);
-            pointLight.setPositionXYZ(p.pos[0], p.pos[1], p.pos[2]);
-            rootNode.addChildren(pointLight);
-        });
+        // let ros = 0;
+        // let rotate = new Quaternion();
+        // let rotateDir = new Vector3();
+        // scene.on('update', (exTime)=>{
+        //     // 旋转
+        //     ros += Math.PI * 0.01 * exTime;
+        //     if(ros >= Math.PI * 0.05)ros = 0;
+        //     rotate.fromEuler(0, ros, 0);
+        //     rotate.multVec3(dirLight.getDirection(), rotateDir);
+        //     dirLight.setDirection(rotateDir);
+        // });
     });
 
     let renderEngine = new RenderEngine();

@@ -45,6 +45,7 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
         this._m_AccumulationLights = new RenderState();
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[4], 'On');
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[1], 'Off');
+        // 使用SRC_ALPHA，ONE的原因在于，第一个pass总是dir
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[5], ['SRC_ALPHA', 'ONE']);
 
         this._m_ClipLights = new RenderState();
@@ -279,6 +280,13 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
 
         // 如果灯光数量为0,则直接执行渲染
         if(lights.length == 0){
+            let conVars = frameContext.m_LastSubShader.getContextVars();
+            gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_MULTI_ID_SRC].loc, 0);
+            // 提交合计的ambientColor(场景可能添加多个ambientLight)
+            // 也可以设计为场景只能存在一个ambientColor
+            let ambientLightColor = scene.AmbientLightColor;
+            gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+            gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, 0);
             iDrawable.draw(frameContext);
             return;
         }
@@ -337,6 +345,13 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
     drawArrays(gl, scene, frameContext, iDrawables, lights){
         // 如果灯光数量为0,则直接执行渲染
         if(lights.length == 0){
+            let conVars = frameContext.m_LastSubShader.getContextVars();
+            gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_MULTI_ID_SRC].loc, 0);
+            // 提交合计的ambientColor(场景可能添加多个ambientLight)
+            // 也可以设计为场景只能存在一个ambientColor
+            let ambientLightColor = scene.AmbientLightColor;
+            gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+            gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, 0);
             iDrawables.forEach(iDrawable=>{
                 iDrawable.draw(frameContext);
             });
