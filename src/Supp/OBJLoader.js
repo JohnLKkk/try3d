@@ -776,7 +776,7 @@ export default class OBJLoader {
             }
             else{
                 let mesh = mtlobjs[materialId].mesh;
-                let unitType = mtlobjs[materialId].mesh;
+                let unitType = mtlobjs[materialId].unitType;
                 let meshPosition = mesh.getData(Mesh.S_POSITIONS);
                 let indices = new Array(meshData.positions.length / 3); // Triangle soup
                 for (let idx = 0, offset = meshPosition.length / 3; idx < indices.length; idx++) {

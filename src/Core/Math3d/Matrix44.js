@@ -91,7 +91,7 @@ export default class Matrix44 {
      * @returns {Matrix44}[viewMatrix]
      */
     static lookAt(eye, at, up, result){
-        // ndc是右手系
+        // ndc是左手系
         let t = eye.subRetNew(at).normal();
         let r = up.crossRetNew(t).normal();
         let u = t.crossRetNew(r).normal();

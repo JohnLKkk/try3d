@@ -1,0 +1,110 @@
+// 默认的延迟光照材质定义
+Def DeferredLightingDef{
+    Params{
+        sampler2D diffuseMap;
+        sampler2D normalMap;
+        sampler2D specularMap;
+        sampler2D normalMap;
+        vec4 ambientColor;
+        vec4 diffuseColor;
+        vec4 specularColor;
+        float shininess;
+        // 完全透明剔除因子(0-1),低于该值的透明片段被完全剔除而不进行混合
+        float alphaDiscard;
+    }
+    SubTechnology GBufferPass{
+        Vars{
+            vec3 wNormal;
+            vec4 wTangent;
+            vec3 wPosition;
+            vec2 wUv0;
+            // 三种成分用于调和光照,可来自材质颜色的定义,也可以来自vertex_light
+            vec3 ambientSumAdjust;
+            vec4 diffuseSumAdjust;
+            vec3 specularSumAdjust;
+        }
+        Vs_Shader{
+            void main(){
+                #ifdef Context.Skins
+                    mat4 skinMat =
+                            Context.InWeight0.x * Context.Joints[int(Context.InJoint0.x)] +
+                            Context.InWeight0.y * Context.Joints[int(Context.InJoint0.y)] +
+                            Context.InWeight0.z * Context.Joints[int(Context.InJoint0.z)] +
+                            Context.InWeight0.w * Context.Joints[int(Context.InJoint0.w)];
+                    // vec4 pos = Context.ModelMatrix * skinMat * vec4(Context.InPosition, 1.0f);
+                    vec4 pos = skinMat * vec4(Context.InPosition, 1.0f);
+                #else
+                    vec4 pos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                #endif
+
+
+                wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;
+                mat3 nMat = mat3(transpose(inverse(Context.ModelMatrix)));
+                vec3 norm = normalize(nMat * Context.InNormal);
+                wTangent = vec4(normalize(nMat * Context.InTangent.xyz), Context.InTangent.w);
+                //t = normalize(t - dot(t, norm) * norm);
+                //vec3 b = cross(norm, t);
+                //tbnMat = mat3(t, b, norm);
+                wNormal = norm;
+                wUv0 = Context.InUv0;
+
+
+                // 如果是顶点光照,则在这里将光源变化到切线空间
+                ambientSumAdjust = Params.ambientColor.rgb * Context.AmbientLightColor;
+                diffuseSumAdjust = vec4(1.0f);
+                specularSumAdjust = vec3(1.0f);
+                Context.OutPosition = Context.ProjectViewMatrix * pos;
+            }
+        }
+        Fs_Shader{
+            void main(){
+
+                vec4 _diffuseColor = vec4(1.0f);
+                vec4 _specularColor = vec4(1.0f);
+
+                #ifdef Params.diffuseColor
+                    _diffuseColor = Params.diffuseColor;
+                #endif
+                #ifdef Params.diffuseMap
+                    _diffuseColor = _diffuseColor * texture(Params.diffuseMap, wUv0);
+                    #ifdef Params.alphaDiscard
+                        // discard性能比较差,建议还是使用半透明渲染比较合适s
+                        if(_diffuseColor.a < Params.alphaDiscard){
+                            discard;
+                        }
+                    #endif
+                #endif
+
+                #ifdef Params.specularColor
+                    _specularColor = Params.specularColor;
+                #endif
+                #ifdef Params.specularMap
+                    _specularColor = _specularColor * texture(Params.specularMap, wUv0);
+                #endif
+
+                vec3 normal = normalize( wNormal );
+                #ifdef Params.normalMap
+                    vec3 normalHeight = texture(Params.normalMap, wUv0).xyz;
+                    vec3 tangent = normalize(wTangent.xyz);
+                    mat3 tbnMat = mat3(tangent, wTangent.w * cross(normal, tangent), normal);
+                    normal = normalize(tbnMat * ( normalHeight * 2.0f - 1.0f ));
+                #endif
+
+                float _shininess = 32.0;
+                #ifdef Params.shininess
+                    _shininess = Params.shininess;
+                #endif
+
+
+
+
+                // webGL不支持texture作为depth,所以只能使用标准做法打包信息
+                Context.OutGBuffer0.xyz = wPosition;
+                Context.OutGBuffer0.w   = _shininess;
+                Context.OutGBuffer1.xyz = normal.xyz;
+                Context.OutGBuffer2.rgb = _diffuseColor.rgb * diffuseSumAdjust.rgb;
+                Context.OutGBuffer2.a = diffuseSumAdjust.a * _diffuseColor.a;
+            }
+        }
+    }
+}

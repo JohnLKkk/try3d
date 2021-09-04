@@ -3,6 +3,9 @@ import RenderState from "../../WebGL/RenderState.js";
 import Render from "../Render.js";
 
 export default class Deferred extends Base{
+    static S_DEFERRED_SHADING_G_BUFFER_PASS = "GBufferPass";
+    static S_DEFERRED_SHADING_DEFERRED_SHADING_PASS = "DeferredShadingPass";
+    static S_DEFERRED_SHADING_PASS_GROUP = [Deferred.S_DEFERRED_SHADING_G_BUFFER_PASS, Deferred.S_DEFERRED_SHADING_DEFERRED_SHADING_PASS];
     constructor(props) {
         super(props);
 
@@ -32,7 +35,7 @@ export default class Deferred extends Base{
                     subShaders = deferredShadingSubPasss.getSubShaderMaps();
                     // 获取GBuffPass
                     // 检测是否需要切换FrameBuffer
-                    subShader = Render.DEFERRED_SHADING_PASS_GROUP[0];
+                    subShader = Deferred.S_DEFERRED_SHADING_PASS_GROUP[0];
                     if(!renderInDeferredShading){
                         renderInDeferredShading = true;
                         // 获取deferredShadingSubPasss使用的延迟frameBuffer
@@ -54,7 +57,7 @@ export default class Deferred extends Base{
                     mat._selectSubShader(subShaders[subShader].subShader);
                     geo.draw(frameContext);
                     // deferredShadingPass
-                    subShader = Render.DEFERRED_SHADING_PASS_GROUP[1];
+                    subShader = Deferred.S_DEFERRED_SHADING_PASS_GROUP[1];
                     deferredShadingPass = subShaders[subShader];
                 }
                 if(stateChange){

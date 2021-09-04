@@ -158,6 +158,11 @@ Def BasicLightingDef{
                     normal = normalize(tbnMat * ( normalHeight * 2.0f - 1.0f ));
                 #endif
 
+                float _shininess = 32.0;
+                #ifdef Params.shininess
+                    _shininess = Params.shininess;
+                #endif
+
 
                 Context.OutColor.rgb = _diffuseColor.rgb * ambientSumAdjust;
 
@@ -189,7 +194,7 @@ Def BasicLightingDef{
                         // 如果存在法线纹理,则进一步计算lightDir
 
                         // 计算反射率
-                        ComputeLighting(normal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, Params.shininess, lightBRDF);
+                        ComputeLighting(normal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, _shininess, lightBRDF);
 
                         // 最终光照值
                         //Context.OutColor.rgb += lightColor.rgb * (vec3(lightBRDF.x) * _diffuseColor.rgb * diffuseSumAdjust.rgb + vec3(lightBRDF.y) * _specularColor.rgb * specularSumAdjust.rgb);
@@ -222,7 +227,7 @@ Def BasicLightingDef{
                     // 如果存在法线纹理,则进一步计算lightDir
 
                     // 计算反射率
-                    ComputeLighting(normal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, Params.shininess, lightBRDF);
+                    ComputeLighting(normal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, _shininess, lightBRDF);
 
                     // 最终光照值
                     //Context.OutColor.rgb += lightColor.rgb * (vec3(lightBRDF.x) * _diffuseColor.rgb * diffuseSumAdjust.rgb + vec3(lightBRDF.y) * _specularColor.rgb * specularSumAdjust.rgb);
@@ -379,6 +384,11 @@ Def BasicLightingDef{
                     normal = normalize(tbnMat * ( normalHeight * 2.0f - 1.0f ));
                 #endif
 
+                float _shininess = 32.0;
+                #ifdef Params.shininess
+                    _shininess = Params.shininess;
+                #endif
+
 
                 Context.OutColor.rgb = _diffuseColor.rgb * ambientSumAdjust;
                 for( int i = 0;i < Context.CurLightCount;i+=3 ){
@@ -406,7 +416,7 @@ Def BasicLightingDef{
                     // 如果存在法线纹理,则进一步计算lightDir
 
                     // 计算反射率
-                    ComputeLighting(normal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, Params.shininess, lightBRDF);
+                    ComputeLighting(normal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, _shininess, lightBRDF);
 
                     // 最终光照值
                     //Context.OutColor.rgb += lightColor.rgb * (vec3(lightBRDF.x) * _diffuseColor.rgb * diffuseSumAdjust.rgb + vec3(lightBRDF.y) * _specularColor.rgb * specularSumAdjust.rgb);
