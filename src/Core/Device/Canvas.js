@@ -18,6 +18,27 @@ export default class Canvas extends Component{
                 Log.error("浏览器不支持" + cfg.version + "!");
             }
             else{
+                this._m_GL.getExtension("OES_texture_float_linear");
+
+                if (cfg.version == 'webgl2') {
+                    this._m_GL.getExtension("EXT_color_buffer_float");
+                } else {
+                    this._m_GL.getExtension("OES_texture_float");
+                    this._m_GL.getExtension("OES_texture_half_float");
+                    this._m_GL.getExtension("OES_texture_half_float_linear");
+                    if (cfg.mobile) {
+                        this._m_GL.getExtension("WEBGL_color_buffer_float");
+                    }
+                    let extDepth = this._m_GL.getExtension("WEBGL_depth_texture");
+
+                    if (!extDepth) {
+                        console.log("Extension Depth texture is not working");
+                        alert(
+                            ":( Sorry, Your browser doesn't support depth texture extension. Please browse to webglreport.com to see more information."
+                        );
+                        return;
+                    }
+                }
                 this._init();
             }
             this._sizeCanvas(this._m_Canvas.parentNode, this._m_Canvas);

@@ -24,9 +24,7 @@ export default class Render extends Component{
     // 渲染路径
     static FORWARD = 'Forward';
     static DEFERRED_SHADING = 'DeferredShading';
-    static DEFERRED_SHADING_G_BUFFER_PASS = "GBufferPass";
-    static DEFERRED_SHADING_DEFERRED_SHADING_PASS = "DeferredShadingPass";
-    static DEFERRED_SHADING_PASS_GROUP = [Render.DEFERRED_SHADING_G_BUFFER_PASS, Render.DEFERRED_SHADING_DEFERRED_SHADING_PASS];
+
 
     // 默认延迟着色渲染路径frameBuffer
     static DEFAULT_DEFERRED_SHADING_FRAMEBUFFER = 'DefaultDeferredShadingFrameBuffer';
@@ -62,6 +60,8 @@ export default class Render extends Component{
         // 渲染模式
         // 默认下,0为forward,1为deferred
         this._m_Pipeline = {};
+        // renderProgram优先技术
+        this._m_PriorityTechnology = '';
 
         // 帧上下文
         this._m_FrameContext = new FrameContext();
@@ -83,6 +83,22 @@ export default class Render extends Component{
         // 一些杂项
         // singlePass batchLightSize 默认为4
         this._m_BatchLightSize = 4;
+    }
+
+    /**
+     * 设置渲染优先技术。<br/>
+     * @param technology
+     */
+    setPriorityTechnology(technology){
+        this._m_PriorityTechnology = technology;
+    }
+
+    /**
+     * 返回渲染优先技术。<br/>
+     * @return {string}
+     */
+    getPriorityTechnology(){
+        return this._m_PriorityTechnology;
     }
 
     /**
@@ -120,17 +136,18 @@ export default class Render extends Component{
         let h = this._m_Scene.getCanvas().getHeight();
         let dfb = new FrameBuffer(gl, Render.DEFAULT_DEFERRED_SHADING_FRAMEBUFFER, w, h);
         this._m_FrameContext.addFrameBuffer(Render.DEFAULT_DEFERRED_SHADING_FRAMEBUFFER, dfb);
+        // 这里为了统一性，一致使用RGBA16F，而不是编码法线或其他压缩，确保可以在shader使用float存储更多的信息
         // G-buffer0
-        dfb.addTexture(gl, ShaderSource.S_G_BUFFER0_SRC, gl.RGBA, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT0, true);
+        dfb.addTexture(gl, ShaderSource.S_G_BUFFER0_SRC, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT0, true);
         // G-buffer1
-        dfb.addTexture(gl, ShaderSource.S_G_BUFFER1_SRC, gl.RGBA, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT1, true);
+        dfb.addTexture(gl, ShaderSource.S_G_BUFFER1_SRC, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT1, true);
         // G-buffer2
-        dfb.addTexture(gl, ShaderSource.S_G_BUFFER2_SRC, gl.RGBA, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT2, true);
+        dfb.addTexture(gl, ShaderSource.S_G_BUFFER2_SRC, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT2, true);
         // 创建depth附件(使用renderBuffer来提供)
         // 渲染缓存是一种特殊缓冲区,不需要在shader中写数据,而是可以作为提供类似深度缓冲区这种类型的缓存来使用
         // webGL2.0不支持将深度写入纹理,https://www.it1352.com/1705357.html
-        dfb.addBuffer(gl, ShaderSource.S_G_DEPTH_RENDER_BUFFER_SRC, gl.DEPTH24_STENCIL8, gl.DEPTH_STENCIL_ATTACHMENT);
-        // dfb.addTexture(gl, ShaderSource.S_G_DEPTH_SRC, gl.DEPTH_COMPONENT16 , 0, gl.DEPTH_COMPONENT16, gl.UNSIGNED_BYTE, gl.DEPTH_ATTACHMENT, false);
+        // dfb.addBuffer(gl, ShaderSource.S_G_DEPTH_RENDER_BUFFER_SRC, gl.DEPTH24_STENCIL8, gl.DEPTH_STENCIL_ATTACHMENT);
+        dfb.addTexture(gl, ShaderSource.S_G_DEPTH_SRC, gl.DEPTH_COMPONENT24 , 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, gl.DEPTH_ATTACHMENT, false);
         // 但由于webGL不完全兼容gl.blitFramebuffer,所以这里使用纹理附件写入的方式进行
         // 而由于webGL不支持将深度附件作为纹理使用,所以需要同时创建一个depthRenderBuffer和一个depthTexture
         // dfb.addTexture(gl, ShaderSource.S_G_DEPTH_SRC, gl.RGBA, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT3, true);
@@ -143,7 +160,8 @@ export default class Render extends Component{
         // ffb.addBuffer(gl, 'outColor', gl.RGBA4, gl.COLOR_ATTACHMENT0);
         ffb.addTexture(gl, ShaderSource.S_FORWARD_COLOR_MAP_SRC, gl.RGBA, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT0, false);
         // ffb.addTexture(gl, 'outColor', gl.RGB, 0, gl.RGB, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT0, false);
-        ffb.addBuffer(gl, 'depth', gl.DEPTH24_STENCIL8, gl.DEPTH_STENCIL_ATTACHMENT);
+        // ffb.addBuffer(gl, 'depth', gl.DEPTH24_STENCIL8, gl.DEPTH_STENCIL_ATTACHMENT);
+        ffb.addBuffer(gl, 'depth', gl.DEPTH_COMPONENT24, gl.DEPTH_ATTACHMENT);
         ffb.finish(gl, this._m_Scene, true);
         let forwardMat = new Material(this._m_Scene, {id:'for_m', frameContext:this.getFrameContext(), materialDef:MaterialDef.parse(Internal.S_DEFAULT_OUT_COLOR_DEF_DATA)});
         ffb.getFramePicture().setMaterial(forwardMat);

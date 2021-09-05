@@ -17,6 +17,7 @@ import Texture2DVars from "../Core/WebGL/Vars/Texture2DVars.js";
  * @date 2021年2月28日13点34分
  */
 export default class OBJLoader {
+    _m_CustomMatDef = 'BasicLightingDef';
     /**
      * 加载一个OBJ模型。<br/>
      * @param {Scene}[scene]
@@ -35,17 +36,21 @@ export default class OBJLoader {
     }
 
     /**
-     * 设置Assets路径。<br/>
+     * 设置Assets路径和自定义要加载的材质定义。<br/>
      * @param {String}[assetsPath]
+     * @param {String}[customMatDef]
      */
-    setAssetsPath(assetsPath){
+    setAssetsPath(assetsPath, customMatDef){
         this._m_AssetsPath = assetsPath;
+        if(customMatDef){
+            this._m_CustomMatDef = customMatDef;
+        }
     }
     _load(modelNode, src, callback) {
         // 解析OBJ数据块
         this.loadOBJ(modelNode, src, (state)=>{
             if(!this._m_DefaultMatDef){
-                this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "BasicLightingDef");
+                this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + this._m_CustomMatDef);
             }
             // 加载完实例材质后再创建obj实体
             this.loadMTLs(modelNode, state, ()=>{

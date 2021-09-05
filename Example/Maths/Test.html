@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test</title>
+</head>
+<body>
+<!--center: (3) [0, 3, 0]-->
+<!--lightsetup.js:32 eye: (3) [-0.999999995, 3.0000999999998332, 1.2246467930241192e-16]-->
+<!--lightsetup.js:40 camUp: Float32Array(3) [9.99999905104687e-9, 0.00009999999747378752, -1]-->
+<!--lightsetup.js:41 camLeft: Float32Array(3) [9.99999905104687e-9, 0.00009999999747378752, -1]-->
+<!--view: Float32Array(16) [1.2246468525851679e-16, 0.00009999999747378752, -1, 0, -0, 1, 0.00009999999747378752, 0, 1, -1.2246467937777962e-20, 1.2246468525851679e-16, 0, -0, -3, -1.0003000497817993, 1]-->
+<!--[1.4354149872927415e-16, 0.000241421366808936, 1.0000666379928589, 1, 0, 2.4142136573791504, -0.00010000666225096211, -0.00009999999747378752, 1.1721051931381226, -2.956559028588182e-20, -1.224728511855239e-16, -1.2246468525851679e-16, 0, -7.242640972137451, 0.8003600239753723, 1.0003000497817993]-->
+
+<!--view: Float32Array(16) [1.2246468525851679e-16, 0.00009999999747378752, -1, 0, -0, 1, 0.00009999999747378752, 0, 1, -1.2246467937777962e-20, 1.2246468525851679e-16, 0, -0, -3, -1.0003000497817993, 1]-->
+<!--lightsetup.js:217 persp: Float32Array(16) [1.1721051931381226, 0, 0, 0, 0, 2.4142136573791504, 0, 0, 0, 0, -1.0000666379928589, -1, 0, 0, -0.2000066637992859, 0]-->
+<!--lightsetup.js:218 pv: Float32Array(16) [1.4354149872927415e-16, 0.000241421366808936, 1.0000666379928589, 1, 0, 2.4142136573791504, -0.00010000666225096211, -0.00009999999747378752, 1.1721051931381226, -2.956559028588182e-20, -1.224728511855239e-16, -1.2246468525851679e-16, 0, -7.242640972137451, 0.8003600239753723, 1.0003000497817993]-->
+    <script type="module">
+        import Matrix44 from "../../src/Core/Math3d/Matrix44.js";
+        import Vector3 from "../../src/Core/Math3d/Vector3.js";
+        import Vector4 from "../../src/Core/Math3d/Vector4.js";
+
+        let viewMatrix = new Matrix44();
+        let eye = new Vector3(-0.999999995, 3.0000999999998332, 1.2246467930241192e-16);
+        let at = new Vector3(0, 3, 0);
+        viewMatrix.lookAt(eye, at, new Vector3(0, 1, 0));
+        let camUp = new Vector3(viewMatrix.m[4], viewMatrix.m[5], viewMatrix.m[6]).normal();
+        console.log('view:',viewMatrix.toString());
+        console.log('camUp:' + camUp.toString());
+
+
+        let viewPort = new Matrix44();
+        viewPort.setArray([672.5, 0, 0, 0, 0, 326.5, 0, 0, 0, 0, 0.5, 0, 672.5, 326.5, 0.5, 1]);
+        let center = new Vector4(1.663220763206482,1.2185765504837036,1.0309944152832031,1);
+        let r = new Vector4();
+        Matrix44.multiplyMV(r, center, viewPort);
+        console.log('r:'+r.toString());
+
+
+        let pmatrix = new Matrix44();
+        Matrix44.perspectiveM(pmatrix.m, 0, 45.0, 2.0597243491577335, 0.1, 3000.0);
+        console.log('pmatrix:' + pmatrix.toString());
+
+        let pv = new Matrix44();
+        Matrix44.multiplyMM(pv, 0, pmatrix, 0, viewMatrix, 0);
+        console.log('pv:' + pv.toString());
+        //0,1,2,3
+        //4,5,6,7
+        //8,9,10,11
+        //12,13,14,15
+    </script>
+</body>
+</html>

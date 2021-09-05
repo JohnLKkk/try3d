@@ -23,9 +23,12 @@ export default class PointLight extends Light{
         // 灯光半径
         this._m_Radius = -1;
         // 光源裁剪渐变范围
-        this._m_StepClip = 4.0;
+        this._m_StepClip = 0.2;
         // 半径倒数(加速计算)
         this._m_InvRadius = 1.0 / this._m_Radius;
+        // 与其在裁剪范围进行扩大，不如直接减少半径，但是这可能带来一个问题是SpotLight和PointLight半径范围变小
+        // 因为使用了1.0/r,所以会与光锥裁剪时的r有误差,只能在这里进行误差缩小
+        this._m_InvRadius2 = 1.0 / (this._m_Radius - this._m_StepClip);
     }
 
     /**
@@ -37,6 +40,7 @@ export default class PointLight extends Light{
             stepClip = 1.0;
         }
         this._m_StepClip = stepClip;
+        this._m_InvRadius2 = 1.0 / (this._m_Radius - this._m_StepClip);
     }
 
     /**
@@ -100,6 +104,14 @@ export default class PointLight extends Light{
      */
     getInRadius(){
         return this._m_InvRadius;
+    }
+
+    /**
+     * 返回光源裁剪后的半径的倒数。<br/>
+     * @return {number|*}
+     */
+    getInRadius2(){
+        return this._m_InvRadius2;
     }
 
     getBoundingVolume(){

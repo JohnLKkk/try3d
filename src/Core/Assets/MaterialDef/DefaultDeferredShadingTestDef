@@ -35,8 +35,8 @@ Def DefaultDeferredShadingTestDef{
         Fs_Shader{
             void main(){
                 Context.OutGBuffer0.xyz = fragPos;
-                Context.OutGBuffer1 = vec4(1.0f, 0.2f, 0.2f, 0.0);
-                Context.OutGBuffer2.rgb = vec3(1.0f, 0.0f, 0.0f);
+                Context.OutGBuffer1 = vec4(1.0f, 0.2f, 0.2f, 1.0);
+                Context.OutGBuffer2.rgb = vec3(1.0f, 1.0f, 1.0f);
                 Context.OutGBuffer2.a = 1.0f;
             }
         }
@@ -45,18 +45,31 @@ Def DefaultDeferredShadingTestDef{
         Vars{
             vec4 wordPosition;
             vec2 uv0;
+            mat4 pvInverse;
         }
         Vs_Shader{
             void main(){
                 Context.OutPosition = vec4(Context.InPosition, 1.0f);
                 wordPosition = Context.OutPosition;
                 uv0 = Context.InUv0;
+                pvInverse = inverse(Context.ProjectViewMatrix);
             }
         }
         Fs_Shader{
+            vec3 getPosition(in float depth, in vec2 newTexCoord){
+
+                vec4 pos;
+                pos.xy = (newTexCoord * vec2(2.0)) - vec2(1.0);
+                pos.z  = depth * 2.0 - 1.0;
+                pos.w  = 1.0;
+                pos    = pvInverse * pos;
+                pos.xyz /= pos.w;
+                return pos.xyz;
+            }
             void main(){
                 vec3 pos = texture(Context.InGBuffer0, uv0).rgb;
-                Context.OutColor = vec4(pos, 1.0f);
+                vec3 pos2 = getPosition(texture(Context.InGDepth, uv0).r, uv0);
+                Context.OutColor = vec4(pos2, 1.0f);
                 //Context.OutColor = vec4(gl_FragDepth, gl_FragDepth, gl_FragDepth, 1.0f);
                 //Context.OutColor = vec4(vec3(1.0f, 0, 0), 1.0f);
                 //Context.OutColor = texture(Context.InGAlbedoSpec, uv0).rgba;

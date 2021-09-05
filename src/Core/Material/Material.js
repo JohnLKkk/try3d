@@ -92,7 +92,7 @@ export default class Material extends Component{
                 }
             }
             // 设置默认技术
-            this.selectTechnology("");
+            this.selectTechnology(this._m_Scene.getRender().getPriorityTechnology());
         }
         else{
             // 错误
@@ -179,9 +179,13 @@ export default class Material extends Component{
      * @param {String}[technologyName Technology名称]
      */
     selectTechnology(technologyName){
-        if(this._m_RenderTechnologys[technologyName] == this._m_CurrentTechnology)return;
+        if(this._m_CurrentTechnology != null && this._m_RenderTechnologys[technologyName] == this._m_CurrentTechnology)return;
+        let lastTechnology = this._m_CurrentTechnology;
         let p = this._m_CurrentTechnology != null;
         this._m_CurrentTechnology = this._m_RenderTechnologys[technologyName];
+        if(this._m_CurrentTechnology == null){
+            this._m_CurrentTechnology = lastTechnology != null ? lastTechnology : this._m_RenderTechnologys[''];
+        }
         // 如果是第一次创建Technology,则不需要进行参数定义重设
         // 否则,在切换技术时,需要检测是否需要参数定义重设
         // 另外，不需要保存每个technology是否重设过参数定义，因为AleadyDefinedParams随时可能发生变更，会导致已经定义的technology仍然可能缺少最新的参数定义，所以

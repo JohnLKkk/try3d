@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TestDeferredShading</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script type="module">
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+    import Box from "../../src/Core/Node/Shape/Box.js";
+    import Vec4Vars from "../../src/Core/WebGL/Vars/Vec4Vars.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import Texture2DVars from "../../src/Core/WebGL/Vars/Texture2DVars.js";
+    import Vector4 from "../../src/Core/Math3d/Vector4.js";
+    import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import SceneBrowsingController from "../../src/Core/InputControl/SceneBrowsingController.js";
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    // 加载一个材质定义
+    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/DeferredLightingDef");
+
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    let rootNode = new Node(scene, {id:'rootNode'});
+
+    let diffuseMap = null;
+    let normalMap = null;
+    // wall
+    let wallMat = new Material(scene, {id:"wallMat", materialDef});
+    wallMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
+    wallMat.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
+    wallMat.setParam('specularColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
+    wallMat.setParam('shininess', new FloatVars().valueOf(32.0));
+    diffuseMap = new Texture2DVars(scene);
+    diffuseMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+    diffuseMap.setImageSrc(scene, './../Assets/Textures/brickwall.jpg');
+    wallMat.setParam('diffuseMap', diffuseMap);
+    normalMap = new Texture2DVars(scene);
+    normalMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+    normalMap.setImageSrc(scene, './../Assets/Textures/brickwall_normal.jpg');
+    wallMat.setParam('normalMap', normalMap);
+    let wall = new Box(scene, {id:'wall'});
+    wall.setLocalTranslationXYZ(0, 0, 0);
+    wall.setMaterial(wallMat);
+    rootNode.addChildren(wall);
+    let sceneControl = new SceneBrowsingController(scene, {id:'sceneControl'});
+    sceneControl.lookScene(rootNode);
+    sceneControl.setTargetDistance(3);
+
+
+    let dirLight = new DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(-1, -1, -1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dirLight);
+    let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+</script>
+</body>
+</html>

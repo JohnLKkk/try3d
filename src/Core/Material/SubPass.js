@@ -14,6 +14,7 @@ export default class SubPass {
         this._m_SubShaderMaps = {};
         // 当前SubPass使用的FrameBuffer(每个SubPass都可以使用自己的FrameBuffer,为null时使用默认的FrameBuffer)
         this._m_FBId = null;
+        this._m_PassId = 0;
     }
 
     /**
@@ -47,6 +48,7 @@ export default class SubPass {
     addSubShader(subShader){
         this._m_SubShaders.push(subShader);
         this._m_SubShaderMaps[subShader.subShader.getName()] = subShader;
+        this._m_SubShaderMaps[this._m_PassId++] = subShader;
     }
 
     /**

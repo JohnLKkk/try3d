@@ -6,6 +6,7 @@ export default class Deferred extends Base{
     static S_DEFERRED_SHADING_G_BUFFER_PASS = "GBufferPass";
     static S_DEFERRED_SHADING_DEFERRED_SHADING_PASS = "DeferredShadingPass";
     static S_DEFERRED_SHADING_PASS_GROUP = [Deferred.S_DEFERRED_SHADING_G_BUFFER_PASS, Deferred.S_DEFERRED_SHADING_DEFERRED_SHADING_PASS];
+    static S_DEFERRED_SHADING_PASS_GROUP_2 = [0, 1];
     constructor(props) {
         super(props);
 
@@ -36,6 +37,9 @@ export default class Deferred extends Base{
                     // 获取GBuffPass
                     // 检测是否需要切换FrameBuffer
                     subShader = Deferred.S_DEFERRED_SHADING_PASS_GROUP[0];
+                    if(subShaders[subShader] == null){
+                        subShader = Deferred.S_DEFERRED_SHADING_PASS_GROUP_2[0];
+                    }
                     if(!renderInDeferredShading){
                         renderInDeferredShading = true;
                         // 获取deferredShadingSubPasss使用的延迟frameBuffer
@@ -58,7 +62,7 @@ export default class Deferred extends Base{
                     geo.draw(frameContext);
                     // deferredShadingPass
                     subShader = Deferred.S_DEFERRED_SHADING_PASS_GROUP[1];
-                    deferredShadingPass = subShaders[subShader];
+                    deferredShadingPass = subShaders[subShader] ? subShaders[subShader] : subShaders[Deferred.S_DEFERRED_SHADING_PASS_GROUP_2[1]];
                 }
                 if(stateChange){
                     this._checkRenderState(gl, frameContext.restore(), frameContext.getRenderState());

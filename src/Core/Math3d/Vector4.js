@@ -170,6 +170,15 @@ export default class Vector4 {
         }
         return this;
     }
+    distanceSq(v){
+        let dx = this._m_X - v._m_X;
+        let dy = this._m_Y - v._m_Y;
+        let dz = this._m_Z - v._m_Z;
+        return dx * dx + dy * dy + dz * dz;
+    }
+    distance(v){
+        return Math.sqrt(this.distanceSq(v));
+    }
     length(){
         let d = this._m_X * this._m_X + this._m_Y * this._m_Y + this._m_Z * this._m_Z;
         d = Math.sqrt(d);
