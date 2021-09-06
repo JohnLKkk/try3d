@@ -81,19 +81,19 @@ Def DeferredLightingDef{
 
                 #ifdef Params.baseColor
                     #ifdef Params.baseColorMap
-                        vec4 albedo = texture(Params.baseColorMap, wUv0) * Params.baseColor * vec4(Context.AmbientLightColor, 1.0);
+                        vec4 albedo = texture(Params.baseColorMap, wUv0) * Params.baseColor;
                     #else
-                        vec4 albedo = Params.baseColor * vec4(Context.AmbientLightColor, 1.0);
+                        vec4 albedo = Params.baseColor;
                     #endif
                 #else
                     #ifdef Params.baseColorMap
-                        vec4 albedo = texture(Params.baseColorMap, wUv0) * vec4(Context.AmbientLightColor, 1.0);
+                        vec4 albedo = texture(Params.baseColorMap, wUv0);
                     #else
-                        vec4 albedo = vec4(1.0f) * vec4(Context.AmbientLightColor, 1.0);
+                        vec4 albedo = vec4(1.0f);
                     #endif
                 #endif
                 // 记住我们在线性空间计算材质,这里的一个优化是在载入纹理时处理而不是在着色阶段
-                albedo.rgb = pow(albedo.rgb, vec3(GAMMA));
+                //albedo.rgb = pow(albedo.rgb, vec3(GAMMA));
 
                 #ifdef Params.alphaDiscard
                     if(albedo.a < Params.alphaDiscard){
@@ -219,7 +219,7 @@ Def DeferredLightingDef{
 
                 Context.OutGBuffer0.xyz = _diffuseColor.rgb * 10.0f + ao * 0.1f;
                 Context.OutGBuffer0.w   = albedo.a;
-                Context.OutGBuffer1.xyz = normal.xyz;
+                Context.OutGBuffer1.xyz = normal.xyz * 10.0f + wNormal * 0.1f;
                 Context.OutGBuffer2.rgb = _specularColor.rgb * 10.0f + fZero * 0.1f;
                 Context.OutGBuffer2.a = _roughness * 10.0f + _metallic * 0.1f;
             }
@@ -402,12 +402,14 @@ Def DeferredLightingDef{
                 vec3 wPosition = getPosition(depth, uv0);
                 vec4 buff0 = texture(Context.InGBuffer0, uv0);
                 vec4 buff2 = texture(Context.InGBuffer2, uv0);
-                vec3 _diffuseColor = floor(buff0.rgb) * 0.1f;
+                vec3 _diffuseColor = pow(floor(buff0.rgb) * 0.1f, vec3(GAMMA)) * Context.AmbientLightColor;
                 vec3 _specularColor = floor(buff2.rgb) * 0.1f;
                 vec3 ao = min(fract(buff0.rgb) * 10.0f, vec3(1.0f));
                 vec3 fZero = min(fract(buff2.rgb) * 10.0f, vec3(0.5f));
                 float _roughness = floor(buff2.w) * 0.1f;
-                vec3 normal = texture(Context.InGBuffer1, uv0).xyz;
+                vec3 n = texture(Context.InGBuffer1, uv0).xyz;
+                vec3 normal = floor(n) * 0.1;
+                vec3 wNormal = fract(n) * 10.0f;
                 // 计算光照
                 vec4 lightColor;
                 vec4 lightData1;
@@ -436,7 +438,7 @@ Def DeferredLightingDef{
                 }
 
                 if(Context.BlendGiProbes){
-                    #ifdef Context.GIProbes
+                    //#ifdef Context.GIProbes
                         // 作为webGL项目,暂时不实现探针混合(但作为可拓展,仍然加结尾s命名)
 
                         // 计算反射视线
@@ -459,7 +461,7 @@ Def DeferredLightingDef{
 
                         Context.OutColor.rgb += giLighting * step( 0.0f, Context.WGIProbe.w );
                         // Context.OutColor.rgb = textureLod(Context.InPrefEnvMap, normal.xyz, 0.0f).rgb;
-                    #endif
+                    //#endif
                 }
 
                 Context.OutColor.a = buff0.a;

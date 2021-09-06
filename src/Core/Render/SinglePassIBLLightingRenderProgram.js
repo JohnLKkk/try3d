@@ -236,7 +236,7 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         frameContext.getRenderState().store();
         while(lastIndex < lights.length){
             // 更新灯光信息
-            lastIndex = this._uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex);
+            lastIndex = this._uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex, lastIndex == 0);
             // 最后draw
             iDrawable.draw(frameContext);
         }
