@@ -42,6 +42,7 @@ export default class GLTFLoader {
         10497:Texture2DVars.S_WRAPS.S_REPEAT,
         33071:Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE
     };
+    _m_CustomMatDef = "PrincipledLightingDef";
 
     /**
      * 加载一个GLTF模型。<br/>
@@ -86,11 +87,14 @@ export default class GLTFLoader {
     }
 
     /**
-     * 设置Assets路径。<br/>
+     * 设置Assets路径和自定义材质定义。<br/>
      * @param {String}[assetsPath]
+     * @param {String}[customMatDef]
      */
-    setAssetsPath(assetsPath){
+    setAssetsPath(assetsPath, customMatDef){
         this._m_AssetsPath = assetsPath;
+        if(customMatDef)
+            this._m_CustomMatDef = customMatDef;
     }
     _loadBIN(gltf, buffers, i, length, ok){
         if(length > 0){
@@ -454,7 +458,7 @@ export default class GLTFLoader {
                 // 后续完善时,这里单独到一个函数中进行,因为解析PBR材质参数最好独立到一个解析函数中
 
                 if(!this._m_PrincipledMatDef){
-                    this._m_PrincipledMatDef = MaterialDef.load(this._m_AssetsPath + "PrincipledLightingDef");
+                    this._m_PrincipledMatDef = MaterialDef.load(this._m_AssetsPath + this._m_CustomMatDef);
                 }
                 matId = this._getName(gltf.materials[_primitive.material].name);
                 let material = null;

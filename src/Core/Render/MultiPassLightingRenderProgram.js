@@ -67,28 +67,32 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
      */
     _uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex, lightIndex, passId){
         let conVars = frameContext.m_LastSubShader.getContextVars();
-        gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_MULTI_ID_SRC].loc, passId);
+        if(conVars[MultiPassLightingRenderProgram.S_MULTI_ID_SRC] != undefined){
+            gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_MULTI_ID_SRC].loc, passId);
+        }
         if(passId == 0){
-            if(lastIndex == 0){
-                // 提交合计的ambientColor(场景可能添加多个ambientLight)
-                // 也可以设计为场景只能存在一个ambientColor
-                let ambientLightColor = scene.AmbientLightColor;
-                gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
-            }
-            else{
-                // 开启累积缓存模式
-                // 我们使用result = s * s_alpha + d * 1.0
-                // 所以,渲染当前pass,s部分在当前混合下应该使用一个全黑的ambientLightColor(因为第一个pass已经计算了ambientLightColor)
-                gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, 0.0, 0.0, 0.0);
-                scene.getRender()._checkRenderState(gl, this._m_AccumulationLights, frameContext.getRenderState());
+            if(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != undefined){
+                if(lastIndex == 0){
+                    // 提交合计的ambientColor(场景可能添加多个ambientLight)
+                    // 也可以设计为场景只能存在一个ambientColor
+                    let ambientLightColor = scene.AmbientLightColor;
+                    gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+                }
+                else{
+                    // 开启累积缓存模式
+                    // 我们使用result = s * s_alpha + d * 1.0
+                    // 所以,渲染当前pass,s部分在当前混合下应该使用一个全黑的ambientLightColor(因为第一个pass已经计算了ambientLightColor)
+                    gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, 0.0, 0.0, 0.0);
+                    scene.getRender()._checkRenderState(gl, this._m_AccumulationLights, frameContext.getRenderState());
+                }
             }
             let lightSpaceLoc = null;
             let lightSpace = null;
-            if(conVars[MultiPassLightingRenderProgram.S_V_LIGHT_DATA]){
+            if(conVars[MultiPassLightingRenderProgram.S_V_LIGHT_DATA] != undefined){
                 lightSpace = 1;
                 lightSpaceLoc = conVars[MultiPassLightingRenderProgram.S_V_LIGHT_DATA].loc;
             }
-            else{
+            else if(conVars[MultiPassLightingRenderProgram.S_W_LIGHT_DATA] != undefined){
                 lightSpace = 0;
                 lightSpaceLoc = conVars[MultiPassLightingRenderProgram.S_W_LIGHT_DATA].loc;
             }
@@ -96,6 +100,7 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
             let curLightCount = (batchSize + lastIndex) > lights.length ? (lights.length - lastIndex) : batchSize;
             let light = null;
             let lightColor = null;
+            if(lightSpaceLoc == null)return curLightCount + lastIndex;
             // 灯光数据
             let lightData = TempVars.S_LIGHT_DATA;
             let array = lightData.getArray();
@@ -141,7 +146,9 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
             // 上载数据
             // gl[conVars[MultiPassLightingRenderProgram.S_LIGHT_DATA].fun]
             gl.uniform4fv(lightSpaceLoc, lightData.getBufferData(), 0, curLightCount * 12);
-            gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, curLightCount * 3);
+            if(conVars[MultiPassLightingRenderProgram.S_CUR_LIGHT_COUNT] != undefined){
+                gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, curLightCount * 3);
+            }
             return curLightCount + lastIndex;
         }
         else if(passId == 1){
@@ -157,18 +164,20 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
                     return lastIndex <= 0 ? -1 : 0;
                 }
             }
-            if(lastIndex <= 0){
-                // 提交合计的ambientColor(场景可能添加多个ambientLight)
-                // 也可以设计为场景只能存在一个ambientColor
-                let ambientLightColor = scene.AmbientLightColor;
-                gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
-            }
-            else{
-                // 开启累积缓存模式
-                // 我们使用result = s * s_alpha + d * 1.0
-                // 所以,渲染当前pass,s部分在当前混合下应该使用一个全黑的ambientLightColor(因为第一个pass已经计算了ambientLightColor)
-                gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, 0.0, 0.0, 0.0);
-                scene.getRender()._checkRenderState(gl, this._m_AccumulationLights, frameContext.getRenderState());
+            if(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != undefined){
+                if(lastIndex <= 0){
+                    // 提交合计的ambientColor(场景可能添加多个ambientLight)
+                    // 也可以设计为场景只能存在一个ambientColor
+                    let ambientLightColor = scene.AmbientLightColor;
+                    gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+                }
+                else{
+                    // 开启累积缓存模式
+                    // 我们使用result = s * s_alpha + d * 1.0
+                    // 所以,渲染当前pass,s部分在当前混合下应该使用一个全黑的ambientLightColor(因为第一个pass已经计算了ambientLightColor)
+                    gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, 0.0, 0.0, 0.0);
+                    scene.getRender()._checkRenderState(gl, this._m_AccumulationLights, frameContext.getRenderState());
+                }
             }
             let lightSpaceLoc = null;
             let lightSpaceLoc1 = null;
@@ -177,18 +186,19 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
             let tempVec4 = TempVars.S_TEMP_VEC4;
             let tempVec42 = TempVars.S_TEMP_VEC4_2;
             let tempVec43 = TempVars.S_TEMP_VEC4_3;
-            if(conVars[MultiPassLightingRenderProgram.S_V_LIGHT_DATA0]){
+            if(conVars[MultiPassLightingRenderProgram.S_V_LIGHT_DATA0] != undefined){
                 lightSpace = 1;
                 lightSpaceLoc = conVars[MultiPassLightingRenderProgram.S_V_LIGHT_DATA0].loc;
                 lightSpaceLoc1 = conVars[MultiPassLightingRenderProgram.S_V_LIGHT_DATA1].loc;
                 lightSpaceLoc2 = conVars[MultiPassLightingRenderProgram.S_V_LIGHT_DATA2].loc;
             }
-            else{
+            else if(conVars[MultiPassLightingRenderProgram.S_W_LIGHT_DATA0] != undefined){
                 lightSpace = 0;
                 lightSpaceLoc = conVars[MultiPassLightingRenderProgram.S_W_LIGHT_DATA0].loc;
                 lightSpaceLoc1 = conVars[MultiPassLightingRenderProgram.S_W_LIGHT_DATA1].loc;
                 lightSpaceLoc2 = conVars[MultiPassLightingRenderProgram.S_W_LIGHT_DATA2].loc;
             }
+            if(lightSpace == null)return 1;
             lightColor = light.getColor();
             tempVec4.setToInXYZW(lightColor._m_X, lightColor._m_Y, lightColor._m_Z, light.getTypeId());
             switch (light.getType()) {
@@ -215,9 +225,15 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
                     tempVec43.setToInXYZW(light.getDirection()._m_X, light.getDirection()._m_Y, light.getDirection()._m_Z, light.getPackedAngleCos());
                     break;
             }
-            gl.uniform4f(lightSpaceLoc, tempVec4._m_X, tempVec4._m_Y, tempVec4._m_Z, tempVec4._m_W);
-            gl.uniform4f(lightSpaceLoc1, tempVec42._m_X, tempVec42._m_Y, tempVec42._m_Z, tempVec42._m_W);
-            gl.uniform4f(lightSpaceLoc2, tempVec43._m_X, tempVec43._m_Y, tempVec43._m_Z, tempVec43._m_W);
+            if(lightSpaceLoc != null){
+                gl.uniform4f(lightSpaceLoc, tempVec4._m_X, tempVec4._m_Y, tempVec4._m_Z, tempVec4._m_W);
+            }
+            if(lightSpaceLoc1 != null){
+                gl.uniform4f(lightSpaceLoc1, tempVec42._m_X, tempVec42._m_Y, tempVec42._m_Z, tempVec42._m_W);
+            }
+            if(lightSpaceLoc2 != null){
+                gl.uniform4f(lightSpaceLoc2, tempVec43._m_X, tempVec43._m_Y, tempVec43._m_Z, tempVec43._m_W);
+            }
             // 返回1表示渲染当前场景
             return 1;
         }
@@ -319,12 +335,16 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
         // 如果灯光数量为0,则直接执行渲染
         if(lights.length == 0){
             let conVars = frameContext.m_LastSubShader.getContextVars();
-            gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_MULTI_ID_SRC].loc, 0);
+            if(conVars[MultiPassLightingRenderProgram.S_MULTI_ID_SRC] != null)
+                gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_MULTI_ID_SRC].loc, 0);
             // 提交合计的ambientColor(场景可能添加多个ambientLight)
             // 也可以设计为场景只能存在一个ambientColor
-            let ambientLightColor = scene.AmbientLightColor;
-            gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
-            gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, 0);
+            if(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
+                let ambientLightColor = scene.AmbientLightColor;
+                gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+            }
+            if(conVars[MultiPassLightingRenderProgram.S_CUR_LIGHT_COUNT] != null)
+                gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, 0);
             iDrawable.draw(frameContext);
             return;
         }
@@ -385,12 +405,16 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
         // 如果灯光数量为0,则直接执行渲染
         if(lights.length == 0){
             let conVars = frameContext.m_LastSubShader.getContextVars();
-            gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_MULTI_ID_SRC].loc, 0);
+            if(conVars[MultiPassLightingRenderProgram.S_MULTI_ID_SRC] != null)
+                gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_MULTI_ID_SRC].loc, 0);
             // 提交合计的ambientColor(场景可能添加多个ambientLight)
             // 也可以设计为场景只能存在一个ambientColor
-            let ambientLightColor = scene.AmbientLightColor;
-            gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
-            gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, 0);
+            if(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
+                let ambientLightColor = scene.AmbientLightColor;
+                gl.uniform3f(conVars[MultiPassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+            }
+            if(conVars[MultiPassLightingRenderProgram.S_CUR_LIGHT_COUNT] != null)
+                gl.uniform1i(conVars[MultiPassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, 0);
             iDrawables.forEach(iDrawable=>{
                 iDrawable.draw(frameContext);
             });

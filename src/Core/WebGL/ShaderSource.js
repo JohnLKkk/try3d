@@ -58,6 +58,7 @@ export default class ShaderSource {
     static S_W_LIGHT_DATA_SRC = '_wLightData';
     // multi pass 下每个光源的三个信息
     static S_MULTI_ID_SRC = '_multiId';
+    static S_BLEND_GI_PROBES = '_blend_gi_probes';
     static S_V_LIGHT_DATA0_SRC = '_vLight_Data_0';
     static S_V_LIGHT_DATA1_SRC = '_vLight_Data_1';
     static S_V_LIGHT_DATA2_SRC = '_vLight_Data_2';
@@ -150,6 +151,7 @@ export default class ShaderSource {
         "Context.Joints":{src:ShaderSource.S_JOINTS_SRC, pattern:/Context.Joints/, pattern2:/Context.Joints[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Joints/g, tag:ShaderSource.S_JOINTS_SRC, type:"vec4", utype:"uniform mat4", modifier:'[' + ShaderSource.S_MAX_BONE + ']'},
         "Context.VLightData":{src:ShaderSource.S_V_LIGHT_DATA_SRC, pattern:/Context.VLightData/, pattern2:/Context.VLightData[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLightData/g, tag:ShaderSource.S_V_LIGHT_DATA_SRC, type:"vec4", utype:"uniform vec4", modifier:'[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']'},
         "Context.MultiId":{src:ShaderSource.S_MULTI_ID_SRC, pattern:/Context.MultiId/, pattern2:/Context.MultiId[\s+-;.,\*\\]{1,}/, tagPattern:/Context.MultiId/g, tag:ShaderSource.S_MULTI_ID_SRC, type:"int", utype:"uniform int"},
+        "Context.BlendGiProbes":{src:ShaderSource.S_BLEND_GI_PROBES, pattern:/Context.BlendGiProbes/, pattern2:/Context.BlendGiProbes[\s+-;.,\*\\]{1,}/, tagPattern:/Context.BlendGiProbes/g, tag:ShaderSource.S_BLEND_GI_PROBES, type:"bool", utype:"uniform bool"},
         "Context.VLight_Data_0":{src:ShaderSource.S_V_LIGHT_DATA0_SRC, pattern:/Context.VLight_Data_0/, pattern2:/Context.VLight_Data_0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLight_Data_0/g, tag:ShaderSource.S_V_LIGHT_DATA0_SRC, type:"vec4", utype:"uniform vec4"},
         "Context.VLight_Data_1":{src:ShaderSource.S_V_LIGHT_DATA1_SRC, pattern:/Context.VLight_Data_1/, pattern2:/Context.VLight_Data_1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLight_Data_1/g, tag:ShaderSource.S_V_LIGHT_DATA1_SRC, type:"vec4", utype:"uniform vec4"},
         "Context.VLight_Data_2":{src:ShaderSource.S_V_LIGHT_DATA2_SRC, pattern:/Context.VLight_Data_2/, pattern2:/Context.VLight_Data_2[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLight_Data_2/g, tag:ShaderSource.S_V_LIGHT_DATA2_SRC, type:"vec4", utype:"uniform vec4"},

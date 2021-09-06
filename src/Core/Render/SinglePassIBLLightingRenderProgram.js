@@ -16,6 +16,7 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
     static PROGRAM_TYPE = 'SinglePassIBLLighting';
     static S_CUR_LIGHT_COUNT = '_curLightCount';
     static S_AMBIENT_LIGHT_COLOR = '_ambientLightColor';
+    static S_BLEND_GI_PROBES = '_blend_gi_probes';
     static S_V_LIGHT_DATA = '_vLightData';
     static S_W_LIGHT_DATA = '_wLightData';
     static S_PREF_ENV_MAP_SRC = '_prefEnvMap';
@@ -43,7 +44,7 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         let conVars = frameContext.m_LastSubShader.getContextVars();
         // 探头信息
         let probeLoc = null;
-        if(conVars[SinglePassIBLLightingRenderProgram.S_WGIPROBE_SRC]){
+        if(conVars[SinglePassIBLLightingRenderProgram.S_WGIPROBE_SRC] != null){
             if(this._m_m_LastSubShader != frameContext.m_LastSubShader){
                 // 提取相交的探头
                 // 并更新探头数据进行混合渲染(但这里未实现,先记录下)
@@ -55,9 +56,11 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
                 gl.uniform4fv(conVars[SinglePassIBLLightingRenderProgram.S_WGIPROBE_SRC].loc, giData.getBufferData(), 0, 4);
                 // 球谐系数
                 giData = giProbe.getShCoeffsBufferData();
-                gl.uniform3fv(conVars[SinglePassIBLLightingRenderProgram.S_SH_COEFFS_SRC].loc, giData.getBufferData(), 0, 9 * 3);
+                if(conVars[SinglePassIBLLightingRenderProgram.S_SH_COEFFS_SRC] != null)
+                    gl.uniform3fv(conVars[SinglePassIBLLightingRenderProgram.S_SH_COEFFS_SRC].loc, giData.getBufferData(), 0, 9 * 3);
                 // prefilterEnvMap
-                giProbe.getPrefilterEnvMap()._upload(gl, conVars[SinglePassIBLLightingRenderProgram.S_PREF_ENV_MAP_SRC].loc);
+                if(conVars[SinglePassIBLLightingRenderProgram.S_PREF_ENV_MAP_SRC] != null)
+                    giProbe.getPrefilterEnvMap()._upload(gl, conVars[SinglePassIBLLightingRenderProgram.S_PREF_ENV_MAP_SRC].loc);
                 this._m_m_LastSubShader = frameContext.m_LastSubShader;
             }
             else{
@@ -86,20 +89,25 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
      * @param lastIndex
      * @private
      */
-    _uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex){
+    _uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex, blendGiProbes){
         let conVars = frameContext.m_LastSubShader.getContextVars();
-        if(lastIndex == 0){
-            // 提交合计的ambientColor(场景可能添加多个ambientLight)
-            // 也可以设计为场景只能存在一个ambientColor
-            let ambientLightColor = scene.AmbientLightColor;
-            gl.uniform3f(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+        if(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
+            gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, blendGiProbes);
         }
-        else{
-            // 开启累积缓存模式
-            // 我们使用result = s * 1.0 + d * 1.0
-            // 所以,渲染当前pass,s部分在当前混合下应该使用一个全黑的ambientLightColor(因为第一个pass已经计算了ambientLightColor)
-            gl.uniform3f(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, 0.0, 0.0, 0.0);
-            scene.getRender()._checkRenderState(gl, this._m_AccumulationLights, frameContext.getRenderState());
+        if(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
+            if(lastIndex == 0){
+                // 提交合计的ambientColor(场景可能添加多个ambientLight)
+                // 也可以设计为场景只能存在一个ambientColor
+                let ambientLightColor = scene.AmbientLightColor;
+                gl.uniform3f(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+            }
+            else{
+                // 开启累积缓存模式
+                // 我们使用result = s * 1.0 + d * 1.0
+                // 所以,渲染当前pass,s部分在当前混合下应该使用一个全黑的ambientLightColor(因为第一个pass已经计算了ambientLightColor)
+                gl.uniform3f(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, 0.0, 0.0, 0.0);
+                scene.getRender()._checkRenderState(gl, this._m_AccumulationLights, frameContext.getRenderState());
+            }
         }
         // 探头信息
         this._blendGIProbes(gl, scene, frameContext);
@@ -108,16 +116,19 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         // 灯光信息
         let lightSpaceLoc = null;
         let lightSpace = null;
-        if(conVars[SinglePassIBLLightingRenderProgram.S_V_LIGHT_DATA]){
+        if(conVars[SinglePassIBLLightingRenderProgram.S_V_LIGHT_DATA] != null){
             lightSpace = 1;
             lightSpaceLoc = conVars[SinglePassIBLLightingRenderProgram.S_V_LIGHT_DATA].loc;
         }
-        else{
+        else if(conVars[SinglePassIBLLightingRenderProgram.S_W_LIGHT_DATA] != null){
             lightSpace = 0;
             lightSpaceLoc = conVars[SinglePassIBLLightingRenderProgram.S_W_LIGHT_DATA].loc;
         }
         // 计算实际需要上载的灯光
         let curLightCount = (batchSize + lastIndex) > lights.length ? (lights.length - lastIndex) : batchSize;
+        if(lightSpaceLoc == null){
+            return curLightCount + lastIndex;
+        }
         let light = null;
         let lightColor = null;
         // 灯光数据
@@ -199,7 +210,8 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         // 上载数据
         // gl[conVars[SinglePassLightingRenderProgram.S_LIGHT_DATA].fun]
         gl.uniform4fv(lightSpaceLoc, lightData.getBufferData(), 0, curLightCount * 12);
-        gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, curLightCount * 3);
+        if(conVars[SinglePassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT] != null)
+            gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, curLightCount * 3);
         return curLightCount + lastIndex;
     }
     draw(gl, scene, frameContext, iDrawable, lights) {
@@ -207,6 +219,10 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         // 如果灯光数量为0,则直接执行渲染
         if(lights.length == 0){
             this._blendGIProbes(gl, scene, frameContext);
+            let conVars = frameContext.m_LastSubShader.getContextVars();
+            if(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
+                gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, true);
+            }
             iDrawable.draw(frameContext);
             return;
         }
@@ -232,6 +248,10 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         if(lights.length == 0){
             iDrawables.forEach(iDrawable=>{
                 this._blendGIProbes(gl, scene, frameContext);
+                let conVars = frameContext.m_LastSubShader.getContextVars();
+                if(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
+                    gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, true);
+                }
                 iDrawable.draw(frameContext);
             });
             return;
@@ -246,7 +266,7 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         frameContext.getRenderState().store();
         while(lastIndex < lights.length){
             // 更新灯光信息
-            lastIndex = this._uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex);
+            lastIndex = this._uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex, lastIndex == 0);
             // 最后draw
             iDrawables.forEach(iDrawable=>{
                 iDrawable.draw(frameContext);
