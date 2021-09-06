@@ -146,7 +146,7 @@ export default class FrameBuffer {
      * @private
      */
     _rData(type, cfg){
-        if(this._m_RData){
+        if(!this._m_RData[type]){
             this._m_RData[type] = {
                 keys:{},
                 values:[]

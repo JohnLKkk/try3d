@@ -102,7 +102,6 @@
         let gui = new dat.GUI();
         var settings = {
             render_mode: 'SinglePass',
-            stepClip: 4.0,
             directionalLight: true,
             pointLights: true,
             pointLightRotate: true
@@ -119,6 +118,7 @@
                 rotate.fromEuler(0, ros, 0);
                 rotate.multVec3(pointLights[i].dir, rotateDir);
                 pLights[i].setPosition(rotateDir.add(pointLights[i].pos, nextPos));
+                pLights[i].updateBounding();
             }
         });
         gui.add(settings, 'render_mode', ['SinglePass', 'MultiPass']).name('渲染模式').onChange(function(value) {
@@ -127,11 +127,6 @@
                     // SinglePass是默认技术，所以传递""即可
                     node.getMaterial().selectTechnology(value == 'SinglePass' ? "" : value);
                 }
-            });
-        });
-        gui.add(settings, 'stepClip').name('光锥范围').onChange(stepClip=>{
-            pLights.forEach(p=>{
-                p.setStepClip(stepClip);
             });
         });
         gui.add(settings, 'directionalLight').onChange(swi=>{

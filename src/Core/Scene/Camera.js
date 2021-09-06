@@ -274,6 +274,15 @@ export default class Camera extends Component{
     }
 
     /**
+     * 返回指定的视锥体平面。<br/>
+     * @param {Number}[planeId 参考Camera的常量]
+     * @return {*}
+     */
+    getFrustumPlane(planeId){
+        return this._m_FrustumPlane[planeId];
+    }
+
+    /**
      * 返回视锥体掩码。<br/>
      * @return {Number}
      */

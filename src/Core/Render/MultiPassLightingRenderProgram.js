@@ -29,23 +29,18 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
     // 临时变量
     _m_PV = null;
     _m_Temp_Vec3 = new Vector3();
-    _m_Temp_Vec3_2 = new Vector3();
-    _m_Temp_Vec3_3 = new Vector3();
     _m_Temp_Vec4 = new Vector4();
     _m_Temp_Vec4_2 = new Vector4();
     _m_Temp_Vec4_3 = new Vector4();
     _m_Cam_Up = new Vector4();
     _m_Cam_Left = new Vector4();
-    _m_Cam_Eye = new Vector3();
-    _m_LightCvv_LeftTop = new Vector4();
-    _m_LightCvv_RightBottom = new Vector4();
-    _m_Light_LeftTop = new Vector4();
-    _m_Light_RightBottom = new Vector4();
     _m_Light_Left = new Vector4();
     _m_Light_Up = new Vector4();
     _m_Light_Center = new Vector4();
     _m_ViewPortWidth = -1;
     _m_ViewPortHeight = -1;
+    _m_CamLeftCoeff = -1;
+    _m_CamTopCoeff = -1;
     constructor(props) {
         super(props);
         this._m_AccumulationLights = new RenderState();
@@ -239,6 +234,8 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
     _lightClip(gl, light, lightCvvTest){
         let bounding = light.getBoundingVolume();
         let r = bounding.getRadius();
+        let lr = r * this._m_CamLeftCoeff;
+        let tr = r * this._m_CamTopCoeff;
         let center = bounding.getCenter(this._m_Temp_Vec3);
         center = this._m_Temp_Vec4.setToInXYZW(center._m_X, center._m_Y, center._m_Z, 1.0);
         this._m_Temp_Vec4._m_W = 1.0;
@@ -268,20 +265,17 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
         //     gl.scissor(this._m_Light_LeftTop._m_X, this._m_ViewPortHeight * 2.0 - this._m_Light_RightBottom._m_Y, lw, lh);
         //     return true;
         // }
-        let lightFrustumLeft = this._m_Cam_Left.multLength(r, this._m_Temp_Vec4_2).add(center);
-        let lightFrustumUp = this._m_Cam_Up.multLength(r, this._m_Temp_Vec4_3).add(center);
+        let lightFrustumLeft = this._m_Cam_Left.multLength(lr, this._m_Temp_Vec4_2).add(center);
+        let lightFrustumUp = this._m_Cam_Up.multLength(tr, this._m_Temp_Vec4_3).add(center);
         Matrix44.multiplyMV(this._m_Light_Left, lightFrustumLeft, this._m_PV);
         Matrix44.multiplyMV(this._m_Light_Up, lightFrustumUp, this._m_PV);
         Matrix44.multiplyMV(this._m_Light_Center, center, this._m_PV);
         this._m_Light_Left._m_X /= this._m_Light_Left._m_W;
         this._m_Light_Left._m_Y /= this._m_Light_Left._m_W;
-        // this._m_Light_Left._m_Z /= this._m_Light_Left._m_W;
         this._m_Light_Up._m_X /= this._m_Light_Up._m_W;
         this._m_Light_Up._m_Y /= this._m_Light_Up._m_W;
-        // this._m_Light_Up._m_Z /= this._m_Light_Up._m_W;
         this._m_Light_Center._m_X /= this._m_Light_Center._m_W;
         this._m_Light_Center._m_Y /= this._m_Light_Center._m_W;
-        // this._m_Light_Center._m_Z /= this._m_Light_Center._m_W;
         this._m_Light_Left._m_X = this._m_ViewPortWidth * (1.0 + this._m_Light_Left._m_X);
         this._m_Light_Up._m_X = this._m_ViewPortWidth * (1.0 + this._m_Light_Up._m_X);
         this._m_Light_Center._m_X = this._m_ViewPortWidth * (1.0 + this._m_Light_Center._m_X);
@@ -302,64 +296,6 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
             btm = this._m_Light_Center._m_Y + lh;
         }
         gl.scissor(left, this._m_ViewPortHeight * 2.0 - btm, lw * 2, lh * 2);
-        // let viewport = new Matrix44();
-        // viewport.setArray([
-        //     this._m_ViewPortWidth,
-        //     0,
-        //     0,
-        //     0,
-        //     0,
-        //     this._m_ViewPortHeight,
-        //     0,
-        //     0,
-        //     0,
-        //     0,
-        //     1 / 2.0,
-        //     0,
-        //     this._m_ViewPortWidth,
-        //     this._m_ViewPortHeight,
-        //     1 / 2.0,
-        //     1
-        // ]);
-        // lightFrustumLeft.setTo(this._m_Light_Left);
-        // lightFrustumUp.setTo(this._m_Light_Up);
-        // center.setTo(this._m_Light_Center);
-        // if(isNaN(this._m_Light_Left._m_X)){
-        //     console.log('sss')
-        // }
-        // // console.log(this._m_Light_Left)
-        // Matrix44.multiplyMV(this._m_Light_Left, lightFrustumLeft, viewport);
-        // Matrix44.multiplyMV(this._m_Light_Up, lightFrustumUp, viewport);
-        // Matrix44.multiplyMV(this._m_Light_Center, center, viewport);
-        // let lw = this._m_Light_Left.distance(this._m_Light_Center);
-        // let lh = this._m_Light_Up.distance(this._m_Light_Center);
-        // let leftx = this._m_Light_Center._m_X - lw;
-        // let bottomy = this._m_Light_Center._m_Y - lh;
-        // let rightx = this._m_Light_Center._m_X + lw;
-        // let topy = this._m_Light_Center._m_Y + lh;
-        // gl.scissor(leftx, bottomy, rightx - leftx, topy - bottomy);
-
-
-        // this._m_Light_Left._m_X = this._m_ViewPortWidth * (1.0 + this._m_Light_Left._m_X);
-        // this._m_Light_Up._m_X = this._m_ViewPortWidth * (1.0 + this._m_Light_Up._m_X);
-        // this._m_Light_Center._m_X = this._m_ViewPortWidth * (1.0 + this._m_Light_Center._m_X);
-        // this._m_Light_Left._m_Y = this._m_ViewPortHeight * (1.0 + this._m_Light_Left._m_Y);
-        // this._m_Light_Up._m_Y = this._m_ViewPortHeight * (1.0 + this._m_Light_Up._m_Y);
-        // this._m_Light_Center._m_Y = this._m_ViewPortHeight * (1.0 + this._m_Light_Center._m_Y);
-        // this._m_Light_Left._m_Z = 0.5 * (0.5 + this._m_Light_Left._m_Z);
-        // this._m_Light_Up._m_Z = 0.5 * (0.5 + this._m_Light_Up._m_Z);
-        // this._m_Light_Center._m_Z = 0.5 * (0.5 + this._m_Light_Center._m_Z);
-        // let viewport = new Matrix44();
-        // Matrix44.multiplyMV(this._m_Light_Left, lightFrustumLeft, this._m_PV);
-        // Matrix44.multiplyMV(this._m_Light_Up, lightFrustumUp, this._m_PV);
-        // Matrix44.multiplyMV(this._m_Light_Center, center, this._m_PV);
-        // let lw = this._m_Light_Left.distance(this._m_Light_Center);
-        // let lh = this._m_Light_Up.distance(this._m_Light_Center);
-        // let leftx = this._m_Light_Center._m_X - lw;
-        // let bottomy = this._m_Light_Center._m_Y - lh;
-        // let rightx = this._m_Light_Center._m_X + lw;
-        // let topy = this._m_Light_Center._m_Y + lh;
-        // gl.scissor(leftx, bottomy, rightx - leftx, topy - bottomy);
         return true;
     }
 
@@ -426,11 +362,12 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
             gl.scissor(0, 0, this._m_ViewPortWidth * 2, this._m_ViewPortHeight * 2);
             this._m_PV = scene.getMainCamera().getProjectViewMatrix(true);
             let v = scene.getMainCamera().getViewMatrix();
+            this._m_Temp_Vec3.setToInXYZ(v.m[0], v.m[4], v.m[8]);
+            this._m_CamLeftCoeff = 1.0 / scene.getMainCamera().getFrustumPlane(1).getNormal().dot(this._m_Temp_Vec3);
+            this._m_Temp_Vec3.setToInXYZ(v.m[1], v.m[5], v.m[9]);
+            this._m_CamTopCoeff = 1.0 / scene.getMainCamera().getFrustumPlane(2).getNormal().dot(this._m_Temp_Vec3);
             this._m_Cam_Left.setToInXYZW(v.m[0], v.m[4], v.m[8], 1.0).multLength(-1);
             this._m_Cam_Up.setToInXYZW(v.m[1], v.m[5], v.m[9], 1.0);
-            // this._m_Cam_Left.add(this._m_Cam_Up, this._m_LightCvv_LeftTop).normal();
-            // this._m_LightCvv_LeftTop.multLength(-1, this._m_LightCvv_RightBottom).normal();
-            // gl.enable(gl.SCISSOR_TEST);
         }
         while(index < otherLights.length){
             // 更新灯光信息
@@ -495,20 +432,12 @@ export default class MultiPassLightingRenderProgram extends DefaultRenderProgram
             gl.scissor(0, 0, this._m_ViewPortWidth * 2, this._m_ViewPortHeight * 2);
             this._m_PV = scene.getMainCamera().getProjectViewMatrix(true);
             let v = scene.getMainCamera().getViewMatrix();
-            this._m_Cam_Left.setToInXYZW(v.m[0], v.m[4], v.m[8], 1.0).multLength(-1).normal();
-            this._m_Cam_Up.setToInXYZW(v.m[1], v.m[5], v.m[9], 1.0).normal();
-            // let up = scene.getMainCamera().getUp();
-            // let dir = scene.getMainCamera().getAt().sub(scene.getMainCamera().getEye(), this._m_Temp_Vec3).normal();
-            // this._m_Temp_Vec4.setToInXYZW(dir._m_X, dir._m_Y, dir._m_Z, 1.0).normal();
-            // this._m_Cam_Up.cross(this._m_Temp_Vec4, this._m_Cam_Left).normal();
-            // this._m_Cam_Up.setTo(this._m_Cam_Left);
-            // this._m_Cam_Up.setToInXYZW(v.m[4], v.m[5], v.m[6], 1.0).normal();
-            // dir.cross(up);
-            // this._m_Cam_Left.setToInXYZW(dir._m_X, dir._m_Y, dir._m_Z, 1.0).normal();
-            // this._m_Cam_Up.setToInXYZW(up._m_X, up._m_Y, up._m_Z, 1.0).normal();
-            // this._m_Cam_Left.add(this._m_Cam_Up, this._m_LightCvv_LeftTop).normal();
-            // this._m_LightCvv_LeftTop.multLength(-1, this._m_LightCvv_RightBottom).normal();
-            // gl.enable(gl.SCISSOR_TEST);
+            this._m_Temp_Vec3.setToInXYZ(v.m[0], v.m[4], v.m[8]);
+            this._m_CamLeftCoeff = 1.0 / scene.getMainCamera().getFrustumPlane(1).getNormal().dot(this._m_Temp_Vec3);
+            this._m_Temp_Vec3.setToInXYZ(v.m[1], v.m[5], v.m[9]);
+            this._m_CamTopCoeff = 1.0 / scene.getMainCamera().getFrustumPlane(2).getNormal().dot(this._m_Temp_Vec3);
+            this._m_Cam_Left.setToInXYZW(v.m[0], v.m[4], v.m[8], 1.0).multLength(-1);
+            this._m_Cam_Up.setToInXYZW(v.m[1], v.m[5], v.m[9], 1.0);
         }
         while(index < otherLights.length){
             // 更新灯光信息

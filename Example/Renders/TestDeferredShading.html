@@ -8,6 +8,7 @@
 <div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
     <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
 </div>
+<script src="./../dat.gui.min.js"></script>
 <script type="module">
     import Scene from "../../src/Core/Scene/Scene.js";
     import RenderEngine from "../../src/Core/RenderEngine.js";
@@ -23,42 +24,137 @@
     import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
     import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
     import SceneBrowsingController from "../../src/Core/InputControl/SceneBrowsingController.js";
+    import OBJLoader from "../../src/Supp/OBJLoader.js";
+    import PointLight from "../../src/Core/Light/PointLight.js";
+    import Stats from "../stats.min.js";
+
+    // 案例内容
+    import Ext from "../Ext.js";
+
+    let ext = new Ext();
+    ext.show('  这个案例演示了Teort中的基于Deferred Pipeline策略的光照，该场景包含1000个动态点光源和一个定向光，默认下，DeferredLightingDef材质使用SinglePass方案，这个案例演示了优先启用MultiPassDeferred Technology，该技术使用MultiPass渲染模式，你可以切换这两种渲染模式，以查看性能区别。', {lineheight:50});
+
+
     let scene = new Scene({cavnas:document.getElementById('canvas')});
-    // 加载一个材质定义
-    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/DeferredLightingDef");
+    scene.setAmbientLightColor(0.1, 0.1, 0.1, 1.0);
+    // 设置默认启用的技术方案为MultiPassDeferred
+    scene.getRender().setPriorityTechnology('MultiPassDeferred');
 
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let rootNode = new Node(scene, {id:'rootNode'});
 
-    let diffuseMap = null;
-    let normalMap = null;
-    // wall
-    let wallMat = new Material(scene, {id:"wallMat", materialDef});
-    wallMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
-    wallMat.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
-    wallMat.setParam('specularColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
-    wallMat.setParam('shininess', new FloatVars().valueOf(32.0));
-    diffuseMap = new Texture2DVars(scene);
-    diffuseMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
-    diffuseMap.setImageSrc(scene, './../Assets/Textures/brickwall.jpg');
-    wallMat.setParam('diffuseMap', diffuseMap);
-    normalMap = new Texture2DVars(scene);
-    normalMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
-    normalMap.setImageSrc(scene, './../Assets/Textures/brickwall_normal.jpg');
-    wallMat.setParam('normalMap', normalMap);
-    let wall = new Box(scene, {id:'wall'});
-    wall.setLocalTranslationXYZ(0, 0, 0);
-    wall.setMaterial(wallMat);
-    rootNode.addChildren(wall);
-    let sceneControl = new SceneBrowsingController(scene, {id:'sceneControl'});
-    sceneControl.lookScene(rootNode);
-    sceneControl.setTargetDistance(3);
+    let objLoader = new OBJLoader();
+    // 设置默认加载的材质定义为DeferredLightingDef
+    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/', 'DeferredLightingDef');
+    objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/Sponza/sponza.obj', modelNode=>{
+        console.log("实体:" + modelNode.getChildren().length);
+        // 使用OctCullingControl来管理静态场景
+        rootNode.addChildren(modelNode);
+        let sceneControl = new SceneBrowsingController(scene, {id:'sceneControl'});
+        sceneControl.lookScene(rootNode);
+        sceneControl.setTargetDistance(1);
+
+        let aabb = modelNode.getBoundingVolume();
+        let dx = aabb.getXHalf() * 2;
+        let dy = aabb.getYHalf() * 2;
+        let dz = aabb.getZHalf() * 2;
+        let center = aabb.getCenter();
+        let lx = center._m_X - dx * 0.5;
+        let ly = center._m_Y - dy * 0.5;
+        let lz = center._m_Z - dz * 0.5;
+        let ps = [];
+        for(let i = 0;i < 1000;i++){
+            let pointLight = new PointLight(scene, {id:'pointLight' + i});
+            pointLight.setRadius(2);
+            pointLight.setColorRGBA(Math.random() * 1.0, Math.random() * 1.0, Math.random() * 1.0, 1.0);
+            pointLight.setPositionXYZ(Math.random() * dx + lx, Math.random() * dy + ly, Math.random() * dz + lz);
+            pointLight.dx = 1.0;
+            pointLight.dy = 1.0;
+            pointLight.dz = 1.0;
+            rootNode.addChildren(pointLight);
+            ps.push(pointLight);
+        }
+
+        // 使用dat gui
+        let gui = new dat.GUI();
+        var settings = {
+            renderTechnology: 'MultiPassDeferred',
+            directionalLight: true,
+            pointLights: true,
+            pointLightAnim: true
+        };
+        gui.add(settings, 'renderTechnology', ['MultiPassDeferred', 'Default']).name('渲染技术').onChange(function(value) {
+            modelNode.traverse((node)=>{
+                if(node.isDrawable()){
+                    // SinglePass是默认技术，所以传递""即可
+                    node.getMaterial().selectTechnology(value == 'Default' ? "" : value);
+                }
+            });
+        });
+        gui.add(settings, 'directionalLight').onChange(swi=>{
+            if(swi){
+                dirLight.enable();
+            }
+            else{
+                dirLight.disable();
+            }
+        });
+        gui.add(settings, 'pointLights').onChange(swi=>{
+            ps.forEach(p=>{
+                if(swi){
+                    p.enable();
+                }
+                else{
+                    p.disable();
+                }
+            });
+        });
+        gui.add(settings, 'pointLightAnim');
+        gui.width = 300;
+        gui.open();
 
 
-    let dirLight = new DirectionalLight(scene, {id:'dirLight'});
+        // 使用stats.js统计fps
+        let stats = new Stats();
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.left = '0px';
+        stats.domElement.style.top = '0px';
+        document.body.appendChild(stats.domElement);
+        scene.on('update', (exTime)=>{
+            stats.update();
+            if(settings.pointLightAnim){
+                ps.forEach(p=>{
+                    let pos = p.getPosition();
+                    pos.addInXYZ(p.dx * exTime, 0, 0);
+                    if(pos._m_X >= dx && p.dx > 0.0){
+                        p.dx *= -1.0;
+                    }
+                    else if(pos._m_X <= lx && p.dx < 0.0){
+                        p.dx *= -1.0;
+                    }
+                    if(pos._m_Y >= dy && p.dy > 0.0){
+                        p.dy *= -1.0;
+                    }
+                    else if(pos._m_Y <= ly && p.dy < 0.0){
+                        p.dy *= -1.0;
+                    }
+                    if(pos._m_Z >= dz && p.dz > 0.0){
+                        p.dz *= -1.0;
+                    }
+                    else if(pos._m_Z <= lz && p.dz < 0.0){
+                        p.dz *= -1.0;
+                    }
+                    p.updateBounding();
+                });
+            }
+        });
+    });
+
+
+    var dirLight = new DirectionalLight(scene, {id:'dirLight'});
     dirLight.setDirectionXYZ(-1, -1, -1);
-    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    dirLight.setColorRGBA(0.2, 0.2, 0.2, 1.0);
     rootNode.addChildren(dirLight);
     let renderEngine = new RenderEngine();
     scene.addSceneNode(rootNode);

@@ -75,4 +75,11 @@ export default class Light extends Node{
         this._m_Color.setToInXYZW(r, g, b, a);
     }
 
+    /**
+     * 强制更新包围体。<br/>
+     */
+    updateBounding(){
+        this._updateBounding();
+    }
+
 }

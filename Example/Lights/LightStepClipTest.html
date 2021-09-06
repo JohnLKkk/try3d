@@ -27,8 +27,7 @@
     import Mesh from "../../src/Core/WebGL/Mesh.js";
     import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
-    // 必须在初始阶段预设batchLightSize值,默认为4
-    scene.getRender().setBatchLightSize(5);
+    // 启用MultiPass
     scene.getRender().setPriorityTechnology('MultiPass');
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(15, 15, 15), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -159,12 +158,12 @@
             pointLight.setPositionXYZ(p.pos[0], p.pos[1], p.pos[2]);
             rootNode.addChildren(pointLight);
 
-            // let sphere = new Sphere(scene, {id:'sphere:' + i, radius:p.r});
-            // sphere.setLocalTranslation(pointLight.getPosition());
-            // sphere.setMaterial(colorMat);
-            // sphere.getMesh().setPrimitive(Mesh.S_PRIMITIVE_LINES);
-            // sphere.updateBound();
-            // rootNode.addChildren(sphere);
+            let sphere = new Sphere(scene, {id:'sphere:' + i, radius:p.r});
+            sphere.setLocalTranslation(pointLight.getPosition());
+            sphere.setMaterial(colorMat);
+            sphere.getMesh().setPrimitive(Mesh.S_PRIMITIVE_LINES);
+            sphere.updateBound();
+            rootNode.addChildren(sphere);
         });
         let dirLight = new DirectionalLight(scene, {id:'dirLight'});
         dirLight.setDirectionXYZ(-1, -1, -1);
