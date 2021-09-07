@@ -153,6 +153,14 @@ export default class Scene extends Component{
     }
 
     /**
+     * 返回是否有激活的GIProbe，由于目前未实现混合GIProbe，因此只检测第一个是否激活。<br/>
+     * @return {boolean|Boolean}
+     */
+    enableGIProbes(){
+        return this._m_GIProbes.length > 0 && this._m_GIProbes[0].isEnable();
+    }
+
+    /**
      * 返回指定GIProbe。<br/>
      * @param {Object}[giProbeId]
      * @return {GIProbe}
@@ -438,6 +446,8 @@ export default class Scene extends Component{
             // 从oct根节点开始
             this._m_FrustumCullingCamera.setFrustumMask(0);
             this._m_EnableLights.forEach(light=>{
+                // GIProbe和RefProbe单独处理
+                if(light.getType() == 'GIProbe' || light.getType() == 'RefProbe')return;
                 if(light.getFilterFlag() == Node.S_DYNAMIC){
                     // 光锥剔除
                     // 尽管这里可以更加高效加速,但作为基础实现,仅在这里进行快速剔除

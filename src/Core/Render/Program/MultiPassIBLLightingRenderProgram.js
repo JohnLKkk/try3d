@@ -195,11 +195,12 @@ export default class MultiPassIBLLightingRenderProgram extends DefaultRenderProg
      */
     _uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex, lightIndex, passId, blendGiProbes){
         let conVars = frameContext.m_LastSubShader.getContextVars();
+        let enableGI = scene.enableGIProbes();
         if(conVars[MultiPassIBLLightingRenderProgram.S_MULTI_ID_SRC] != undefined){
             gl.uniform1i(conVars[MultiPassIBLLightingRenderProgram.S_MULTI_ID_SRC].loc, passId);
         }
         if(conVars[MultiPassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
-            gl.uniform1i(conVars[MultiPassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, blendGiProbes);
+            gl.uniform1i(conVars[MultiPassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, blendGiProbes && enableGI);
         }
         if(passId == 0){
             if(conVars[MultiPassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
@@ -218,7 +219,8 @@ export default class MultiPassIBLLightingRenderProgram extends DefaultRenderProg
                 }
             }
             // 探头信息
-            this._blendGIProbes(gl, scene, frameContext);
+            if(enableGI)
+                this._blendGIProbes(gl, scene, frameContext);
 
 
             // 灯光信息
@@ -317,7 +319,8 @@ export default class MultiPassIBLLightingRenderProgram extends DefaultRenderProg
                 }
             }
             // 探头信息
-            this._blendGIProbes(gl, scene, frameContext);
+            if(enableGI)
+                this._blendGIProbes(gl, scene, frameContext);
 
             let lightSpaceLoc = null;
             let lightSpaceLoc1 = null;
@@ -383,12 +386,18 @@ export default class MultiPassIBLLightingRenderProgram extends DefaultRenderProg
 
         // 如果灯光数量为0,则直接执行渲染
         if(lights.length == 0){
-            this._blendGIProbes(gl, scene, frameContext);
             let conVars = frameContext.m_LastSubShader.getContextVars();
+            let enableGI = scene.enableGIProbes();
+            if(enableGI)
+                this._blendGIProbes(gl, scene, frameContext);
+            if(conVars[MultiPassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
+                gl.uniform1i(conVars[MultiPassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, enableGI);
+            }
             if(conVars[MultiPassIBLLightingRenderProgram.S_MULTI_ID_SRC] != null)
                 gl.uniform1i(conVars[MultiPassIBLLightingRenderProgram.S_MULTI_ID_SRC].loc, 0);
-            if(conVars[MultiPassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
-                gl.uniform1i(conVars[MultiPassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, true);
+            if(conVars[MultiPassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
+                let ambientLightColor = scene.AmbientLightColor;
+                gl.uniform3f(conVars[MultiPassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
             }
             if(conVars[MultiPassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT] != null)
                 gl.uniform1i(conVars[MultiPassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, 0);
@@ -454,12 +463,18 @@ export default class MultiPassIBLLightingRenderProgram extends DefaultRenderProg
     drawArrays(gl, scene, frameContext, iDrawables, lights){
         // 如果灯光数量为0,则直接执行渲染
         if(lights.length == 0){
-            this._blendGIProbes(gl, scene, frameContext);
             let conVars = frameContext.m_LastSubShader.getContextVars();
+            let enableGI = scene.enableGIProbes();
+            if(enableGI)
+                this._blendGIProbes(gl, scene, frameContext);
+            if(conVars[MultiPassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
+                gl.uniform1i(conVars[MultiPassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, enableGI);
+            }
             if(conVars[MultiPassIBLLightingRenderProgram.S_MULTI_ID_SRC] != null)
                 gl.uniform1i(conVars[MultiPassIBLLightingRenderProgram.S_MULTI_ID_SRC].loc, 0);
-            if(conVars[MultiPassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
-                gl.uniform1i(conVars[MultiPassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, true);
+            if(conVars[MultiPassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
+                let ambientLightColor = scene.AmbientLightColor;
+                gl.uniform3f(conVars[MultiPassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
             }
             if(conVars[MultiPassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT] != null)
                 gl.uniform1i(conVars[MultiPassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, 0);

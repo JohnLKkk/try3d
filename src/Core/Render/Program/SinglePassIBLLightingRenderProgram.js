@@ -91,8 +91,9 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
      */
     _uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex, blendGiProbes){
         let conVars = frameContext.m_LastSubShader.getContextVars();
+        let enableGI = scene.enableGIProbes();
         if(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
-            gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, blendGiProbes);
+            gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, blendGiProbes && enableGI);
         }
         if(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
             if(lastIndex == 0){
@@ -110,7 +111,8 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
             }
         }
         // 探头信息
-        this._blendGIProbes(gl, scene, frameContext);
+        if(enableGI)
+            this._blendGIProbes(gl, scene, frameContext);
 
 
         // 灯光信息
@@ -218,10 +220,16 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
 
         // 如果灯光数量为0,则直接执行渲染
         if(lights.length == 0){
-            this._blendGIProbes(gl, scene, frameContext);
             let conVars = frameContext.m_LastSubShader.getContextVars();
+            let enableGI = scene.enableGIProbes();
+            if(enableGI)
+                this._blendGIProbes(gl, scene, frameContext);
             if(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
-                gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, true);
+                gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, enableGI);
+            }
+            if(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
+                let ambientLightColor = scene.AmbientLightColor;
+                gl.uniform3f(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
             }
             iDrawable.draw(frameContext);
             return;
@@ -246,12 +254,18 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
     drawArrays(gl, scene, frameContext, iDrawables, lights){
         // 如果灯光数量为0,则直接执行渲染
         if(lights.length == 0){
-            iDrawables.forEach(iDrawable=>{
+            let conVars = frameContext.m_LastSubShader.getContextVars();
+            let enableGI = scene.enableGIProbes();
+            if(enableGI)
                 this._blendGIProbes(gl, scene, frameContext);
-                let conVars = frameContext.m_LastSubShader.getContextVars();
-                if(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
-                    gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, true);
-                }
+            if(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
+                gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, enableGI);
+            }
+            if(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
+                let ambientLightColor = scene.AmbientLightColor;
+                gl.uniform3f(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+            }
+            iDrawables.forEach(iDrawable=>{
                 iDrawable.draw(frameContext);
             });
             return;
