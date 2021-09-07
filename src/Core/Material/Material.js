@@ -358,8 +358,9 @@ export default class Material extends Component{
     /**
      * 添加一个定义。<br/>
      * @param {String}[name]
+     * @param {Boolean}[globalRefresh]
      */
-    addDefine(name){
+    addDefine(name, globalRefresh){
         let update = false;
         if(!this._m_AleadyDefinedParams[name]){
             update = true;
@@ -373,7 +374,7 @@ export default class Material extends Component{
                 for(let p in this._m_CurrentTechnology.getSubPassList()){
                     subPass = this._m_CurrentTechnology.getSubPasss(p);
                     subPass.getSubShaders().forEach(sb=>{
-                        sb.subShader.addDefine(paramName, name == paramName && ShaderSource.Context_Data[name] != null);
+                        sb.subShader.addDefine(paramName, name == paramName && ShaderSource.Context_Data[name] != null, globalRefresh);
                     });
                 }
             }

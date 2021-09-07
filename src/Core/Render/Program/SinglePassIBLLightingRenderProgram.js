@@ -74,7 +74,7 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
             if(giProbes && giProbes.length > 0){
                 // 找出与之相交的探头
                 // 首次,更新材质定义
-                frameContext.m_LastMaterial.addDefine(ShaderSource.S_GIPROBES_SRC);
+                frameContext.m_LastMaterial.addDefine(ShaderSource.S_GIPROBES_SRC, true);
             }
         }
     }

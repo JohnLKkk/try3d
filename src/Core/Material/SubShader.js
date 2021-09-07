@@ -309,8 +309,9 @@ export default class SubShader {
      * 添加参数定义。<br/>
      * @param {String}[dparam 参数名]
      * @param {Boolean}[isContextDefine 表明是否为上下文定义]
+     * @param {Boolean}[globalRefresh 表明刷新同类subShader]
      */
-    addDefine(dparam, isContextDefine){
+    addDefine(dparam, isContextDefine, globalRefresh){
         let _new = false;
         if(!this._m_AleadyDefinedParams[dparam]){
             if(this._m_CanDefineParams[dparam] || isContextDefine){
@@ -377,7 +378,7 @@ export default class SubShader {
                     this._m_KeyDefs += param + ",";
                 }
             }
-            if(this._m_Defines != null){
+            if(this._m_Defines != null && globalRefresh){
                 let holds = this._m_ShaderProgram._m_Holds;
                 for(let objId in holds){
                     if(holds[objId] != this){
