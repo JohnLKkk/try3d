@@ -19,6 +19,7 @@ import TempVars from "../Util/TempVars.js";
 import Forward from "./Pipeline/Forward.js";
 import Deferred from "./Pipeline/Deferred.js";
 import MultiPassLightingRenderProgram from "./Program/MultiPassLightingRenderProgram.js";
+import MultiPassIBLLightingRenderProgram from "./Program/MultiPassIBLLightingRenderProgram.js";
 
 export default class Render extends Component{
     // 渲染路径
@@ -172,6 +173,7 @@ export default class Render extends Component{
         this._m_RenderPrograms[SinglePassLightingRenderProgram.PROGRAM_TYPE] = new SinglePassLightingRenderProgram();
         this._m_RenderPrograms[MultiPassLightingRenderProgram.PROGRAM_TYPE] = new MultiPassLightingRenderProgram();
         this._m_RenderPrograms[SinglePassIBLLightingRenderProgram.PROGRAM_TYPE] = new SinglePassIBLLightingRenderProgram();
+        this._m_RenderPrograms[MultiPassIBLLightingRenderProgram.PROGRAM_TYPE] = new MultiPassIBLLightingRenderProgram();
 
 
         // pipeline

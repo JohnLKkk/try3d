@@ -399,8 +399,8 @@ Def DeferredLightingDef{
                 }
                 else{
                     // point和spot
-                    vec4 lightColor = Context.WLight_Data_0;
-                    vec4 lightData1 = Context.WLight_Data_1;
+                    lightColor = Context.WLight_Data_0;
+                    lightData1 = Context.WLight_Data_1;
                     ComputeLightDir(wPosition, lightColor.w, lightData1, lightDir, lightVec);
                     //lightBRDF.x = max( 0.0f, dot( normal, lightDir.xyz ) );
 

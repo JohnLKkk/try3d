@@ -38,13 +38,13 @@
     import ProbeTools from "../../src/Core/Util/ProbeTools.js";
 
     let ext = new Ext();
-    ext.show('  这个案例演示了Teort中的基于Deferred Pipeline策略的光照，该场景包含1000个动态点光源和一个定向光，默认下，DeferredLightingDef材质使用SinglePass方案，这个案例演示了优先启用MultiPassDeferred Technology，该技术使用MultiPass渲染模式，你可以切换这两种渲染模式，以查看性能区别。', {lineheight:50});
+    ext.show('  这个案例演示了Teort中的基于Deferred Pipeline策略的PBR光照，该场景包含1000个动态点光源和一个定向光，以及一个全局GIProbe，默认下，PrincipledDeferredLightingDef材质使用SinglePass方案，这个案例演示了优先启用MultiPassDeferred Technology，该技术使用MultiPass渲染模式，你可以切换这两种渲染模式，以查看性能区别。', {lineheight:50});
 
 
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     scene.setAmbientLightColor(1.0, 1.0, 1.0, 1.0);
     // 设置默认启用的技术方案为MultiPassDeferred
-    // scene.getRender().setPriorityTechnology('MultiPassDeferred');
+    scene.getRender().setPriorityTechnology('MultiPassDeferred');
 
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -84,9 +84,9 @@
             let ly = center._m_Y - dy * 0.5;
             let lz = center._m_Z - dz * 0.5;
             let ps = [];
-            for(let i = 0;i < 250;i++){
+            for(let i = 0;i < 1000;i++){
                 let pointLight = new PointLight(scene, {id:'pointLight' + i});
-                pointLight.setRadius(3);
+                pointLight.setRadius(1);
                 pointLight.setColorRGBA(Math.random() * 1.0, Math.random() * 1.0, Math.random() * 1.0, 1.0);
                 pointLight.setPositionXYZ(Math.random() * dx + lx, Math.random() * dy + ly, Math.random() * dz + lz);
                 pointLight.dx = 1.0;
@@ -176,6 +176,7 @@
         dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
         rootNode.addChildren(dirLight);
 
+        // 全局GIProbe
         let giProbe = new GIProbe(scene, {id:'giProbe'});
         giProbe.setRadius(20);
         giProbe.setPositionFromXYZ(0, 5, 0);
