@@ -9,16 +9,16 @@ import FrameBuffer from "../WebGL/FrameBuffer.js";
 import ShaderSource from "../WebGL/ShaderSource.js";
 import Material from "../Material/Material.js";
 import MaterialDef from "../Material/MaterialDef.js";
-import DefaultRenderProgram from "./DefaultRenderProgram.js";
-import SinglePassLightingRenderProgram from "./SinglePassLightingRenderProgram.js";
-import SinglePassIBLLightingRenderProgram from "./SinglePassIBLLightingRenderProgram.js";
+import DefaultRenderProgram from "./Program/DefaultRenderProgram.js";
+import SinglePassLightingRenderProgram from "./Program/SinglePassLightingRenderProgram.js";
+import SinglePassIBLLightingRenderProgram from "./Program/SinglePassIBLLightingRenderProgram.js";
 import Log from "../Util/Log.js";
 import Internal from "./Internal.js";
 import RenderQueue from "./RenderQueue.js";
 import TempVars from "../Util/TempVars.js";
 import Forward from "./Pipeline/Forward.js";
 import Deferred from "./Pipeline/Deferred.js";
-import MultiPassLightingRenderProgram from "./MultiPassLightingRenderProgram.js";
+import MultiPassLightingRenderProgram from "./Program/MultiPassLightingRenderProgram.js";
 
 export default class Render extends Component{
     // 渲染路径

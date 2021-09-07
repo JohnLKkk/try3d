@@ -1,10 +1,10 @@
 import DefaultRenderProgram from "./DefaultRenderProgram.js";
-import RenderState from "../WebGL/RenderState.js";
-import DirectionalLight from "../Light/DirectionalLight.js";
-import TempVars from "../Util/TempVars.js";
-import Matrix44 from "../Math3d/Matrix44.js";
-import Vector4 from "../Math3d/Vector4.js";
-import Vector3 from "../Math3d/Vector3.js";
+import RenderState from "../../WebGL/RenderState.js";
+import DirectionalLight from "../../Light/DirectionalLight.js";
+import TempVars from "../../Util/TempVars.js";
+import Matrix44 from "../../Math3d/Matrix44.js";
+import Vector4 from "../../Math3d/Vector4.js";
+import Vector3 from "../../Math3d/Vector3.js";
 
 /**
  * 光照通过多个Pass累计着色，为了性能考虑，这里采用了光锥裁剪进行逐光源Shading。<br/>

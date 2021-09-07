@@ -14,6 +14,7 @@ export default class ShaderProgram {
         this._m_vsDefines = defines ? defines[ShaderSource.VERTEX_SHADER] : null;
         this._m_fsDefines = defines ? defines[ShaderSource.FRAGMENT_SHADER] : null;
         this._m_Hold = 0;
+        this._m_Holds = {};
         if(delayCompile){
             // this._compile();
             this._m_needCompile = true;
@@ -48,15 +49,17 @@ export default class ShaderProgram {
     /**
      * 增加一个句柄。<br/>
      */
-    addHold(){
+    addHold(hold){
         this._m_Hold++;
+        this._m_Holds[hold._m_ObjId] = hold;
     }
 
     /**
      * 删除一个句柄。<br/>
      */
-    deleteHold(){
+    deleteHold(hold){
         this._m_Hold--;
+        this._m_Holds[hold._m_ObjId] = null;
     }
 
     /**

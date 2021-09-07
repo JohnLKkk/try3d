@@ -12,6 +12,8 @@ import Log from "../Util/Log.js";
 export default class SubShader {
     constructor(gl, frameContext, subShaderDef) {
         this._m_Def = subShaderDef;
+        // SubShader对象Id
+        this._m_ObjId = Tools.nextId();
         // 根据shader本身创建编码id
         // 以便所有同种类型的shader只被切换使用一次
         this._m_DefId = subShaderDef.getDefId();
@@ -375,6 +377,17 @@ export default class SubShader {
                     this._m_KeyDefs += param + ",";
                 }
             }
+            if(this._m_Defines != null){
+                let holds = this._m_ShaderProgram._m_Holds;
+                for(let objId in holds){
+                    if(holds[objId] != this){
+                        // 其他所有引用同一个shaderProgram的subShader都应该添加这个defines
+                        // 不必担心重复编译,因为一旦其中一个被编译过,其他subShader都会自动引用
+                        holds[objId]._m_KeyDefs = this._m_KeyDefs;
+                        holds[objId]._m_Defines = this._m_Defines;
+                    }
+                }
+            }
         }
     }
 
@@ -393,7 +406,7 @@ export default class SubShader {
         }
         if(!frameContext.m_Shaders[this._m_DefId]){
             if(this._m_ShaderProgram){
-                this._m_ShaderProgram.deleteHold();
+                this._m_ShaderProgram.deleteHold(this);
                 if(this._m_ShaderProgram.canDestroy()){
                     // 删除
                     this._m_ShaderProgram.destroy(gl, frameContext);
@@ -401,20 +414,20 @@ export default class SubShader {
             }
             this._m_ShaderProgram = new ShaderProgram(gl, this._m_DefId, this._m_Def.getShaderSource(), this._m_Defines, true);
             frameContext.m_Shaders[this._m_DefId] = this._m_ShaderProgram;
-            this._m_ShaderProgram.addHold();
+            this._m_ShaderProgram.addHold(this);
             // 清空
             this._m_Defines = null;
         }
         else{
             if(this._m_ShaderProgram){
-                this._m_ShaderProgram.deleteHold();
+                this._m_ShaderProgram.deleteHold(this);
                 if(this._m_ShaderProgram.canDestroy()){
                     // 删除
                     this._m_ShaderProgram.destroy(gl, frameContext);
                 }
             }
             this._m_ShaderProgram = frameContext.m_Shaders[this._m_DefId];
-            this._m_ShaderProgram.addHold();
+            this._m_ShaderProgram.addHold(this);
             // 清空
             this._m_Defines = null;
         }

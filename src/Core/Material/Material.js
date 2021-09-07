@@ -239,6 +239,7 @@ export default class Material extends Component{
      * @param {SubShader}[subShader]
      */
     _selectSubShader(subShader){
+        let change = false;
         this._m_CurrentSubShader = subShader;
         let gl = this._m_Scene.getCanvas().getGLContext();
         let frameContext = this._m_Scene.getRender().getFrameContext();
@@ -253,6 +254,7 @@ export default class Material extends Component{
             frameContext.m_LastSubShaderId = subShader.getDefId();
             frameContext.m_LastMaterial = this;
             frameContext.m_SM++;
+            change = true;
         }
         // 2.检测是否需要更新参数到subShader中(同种类型subShaderId,但存在不同具体实力化subShader对象,所以参数不同需要更新)
         if(frameContext.m_LastSubShader != subShader){
@@ -288,6 +290,7 @@ export default class Material extends Component{
             });
             this._m_ChangeParams.length = 0;
         }
+        return change;
     }
 
     /**

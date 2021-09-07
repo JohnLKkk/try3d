@@ -84,7 +84,7 @@
             let ly = center._m_Y - dy * 0.5;
             let lz = center._m_Z - dz * 0.5;
             let ps = [];
-            for(let i = 0;i < 0;i++){
+            for(let i = 0;i < 250;i++){
                 let pointLight = new PointLight(scene, {id:'pointLight' + i});
                 pointLight.setRadius(3);
                 pointLight.setColorRGBA(Math.random() * 1.0, Math.random() * 1.0, Math.random() * 1.0, 1.0);
@@ -143,31 +143,31 @@
             document.body.appendChild(stats.domElement);
             scene.on('update', (exTime)=>{
                 stats.update();
-                // if(settings.pointLightAnim){
-                //     ps.forEach(p=>{
-                //         let pos = p.getPosition();
-                //         pos.addInXYZ(p.dx * exTime, 0, 0);
-                //         if(pos._m_X >= dx && p.dx > 0.0){
-                //             p.dx *= -1.0;
-                //         }
-                //         else if(pos._m_X <= lx && p.dx < 0.0){
-                //             p.dx *= -1.0;
-                //         }
-                //         if(pos._m_Y >= dy && p.dy > 0.0){
-                //             p.dy *= -1.0;
-                //         }
-                //         else if(pos._m_Y <= ly && p.dy < 0.0){
-                //             p.dy *= -1.0;
-                //         }
-                //         if(pos._m_Z >= dz && p.dz > 0.0){
-                //             p.dz *= -1.0;
-                //         }
-                //         else if(pos._m_Z <= lz && p.dz < 0.0){
-                //             p.dz *= -1.0;
-                //         }
-                //         p.updateBounding();
-                //     });
-                // }
+                if(settings.pointLightAnim){
+                    ps.forEach(p=>{
+                        let pos = p.getPosition();
+                        pos.addInXYZ(p.dx * exTime, 0, 0);
+                        if(pos._m_X >= dx && p.dx > 0.0){
+                            p.dx *= -1.0;
+                        }
+                        else if(pos._m_X <= lx && p.dx < 0.0){
+                            p.dx *= -1.0;
+                        }
+                        if(pos._m_Y >= dy && p.dy > 0.0){
+                            p.dy *= -1.0;
+                        }
+                        else if(pos._m_Y <= ly && p.dy < 0.0){
+                            p.dy *= -1.0;
+                        }
+                        if(pos._m_Z >= dz && p.dz > 0.0){
+                            p.dz *= -1.0;
+                        }
+                        else if(pos._m_Z <= lz && p.dz < 0.0){
+                            p.dz *= -1.0;
+                        }
+                        p.updateBounding();
+                    });
+                }
             });
         }, {batch:true});
 
