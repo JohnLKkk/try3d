@@ -25,6 +25,7 @@ export default class Render extends Component{
     // 渲染路径
     static FORWARD = 'Forward';
     static DEFERRED_SHADING = 'DeferredShading';
+    static TILE_DEFERRED_SHADING = 'TileDeferredShading';
 
 
     // 默认延迟着色渲染路径frameBuffer

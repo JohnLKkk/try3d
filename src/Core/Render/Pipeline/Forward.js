@@ -1,6 +1,11 @@
 import Base from "./Base.js";
 import Render from "../Render.js";
 
+/**
+ * Forward Pipeline。<br/>
+ * @author Kkk
+ * @update 2021年9月7日20点26分
+ */
 export default class Forward extends Base{
     constructor(props) {
         super(props);

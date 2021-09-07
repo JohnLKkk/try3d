@@ -2,6 +2,11 @@ import Base from "./Base.js";
 import RenderState from "../../WebGL/RenderState.js";
 import Render from "../Render.js";
 
+/**
+ * DeferredShading。<br/>
+ * @author Kkk
+ * @update 2021年9月7日20点25分
+ */
 export default class Deferred extends Base{
     static S_DEFERRED_SHADING_G_BUFFER_PASS = "GBufferPass";
     static S_DEFERRED_SHADING_DEFERRED_SHADING_PASS = "DeferredShadingPass";
