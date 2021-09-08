@@ -14,6 +14,9 @@ export default class TileDeferred extends Deferred{
     static S_TILE_DEFERRED_SHADING_PASS_GROUP_2 = [0, 1, 2];
     constructor(props) {
         super(props);
+        this._init();
+    }
+    _init(){
 
     }
     render(cfg) {

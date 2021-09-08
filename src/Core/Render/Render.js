@@ -85,6 +85,22 @@ export default class Render extends Component{
         // 一些杂项
         // singlePass batchLightSize 默认为4
         this._m_BatchLightSize = 4;
+
+        // Tile
+        this._m_TileInfo = {
+            tileSize:32,
+            tileWidth:0,
+            tileHeight:0,
+            tileNum:0
+        };
+    }
+
+    /**
+     * 返回TileInfo。<br/>
+     * @return {{}|*}
+     */
+    getTileInfo(){
+        return this._m_TileInfo;
     }
 
     /**

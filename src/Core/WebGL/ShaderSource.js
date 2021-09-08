@@ -98,6 +98,19 @@ export default class ShaderSource {
 
     static S_FORWARD_COLOR_MAP_SRC = "_forwardColorMap";
 
+    // Tile
+    static S_LIGHT_NUM_SRC = "_lightNum";
+    // Tile中ppx编码的光源检索
+    static S_TILE_LIGHT_GRID_SRC = "_tileLightGrid";
+    // Tile中ppx编码的光源id
+    static S_TILE_LIGHT_INDEX_SRC = "_tileLightIndex";
+    // Tile中光源编码信息0
+    static S_TILE_LIGHT_DATA_0 = "_tileLightData0";
+    // Tile中光源编码信息1
+    static S_TILE_LIGHT_DATA_1 = "_tileLightData1";
+    // Tile中光源编码信息2
+    static S_TILE_LIGHT_DATA_2 = "_tileLightData2";
+
     // 预过滤环境光照辐射
     static S_PREF_ENV_MAP_SRC = "_prefEnvMap";
     // 光探头数据
