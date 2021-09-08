@@ -105,11 +105,14 @@ export default class ShaderSource {
     // Tile中ppx编码的光源id
     static S_TILE_LIGHT_INDEX_SRC = "_tileLightIndex";
     // Tile中光源编码信息0
-    static S_TILE_LIGHT_DATA_0 = "_tileLightData0";
+    static S_TILE_W_LIGHT_DATA_0 = "_tileWLightData0";
+    static S_TILE_V_LIGHT_DATA_0 = "_tileVLightData0";
     // Tile中光源编码信息1
-    static S_TILE_LIGHT_DATA_1 = "_tileLightData1";
+    static S_TILE_W_LIGHT_DATA_1 = "_tileWLightData1";
+    static S_TILE_V_LIGHT_DATA_1 = "_tileVLightData1";
     // Tile中光源编码信息2
-    static S_TILE_LIGHT_DATA_2 = "_tileLightData2";
+    static S_TILE_W_LIGHT_DATA_2 = "_tileWLightData2";
+    static S_TILE_V_LIGHT_DATA_2 = "_tileVLightData2";
 
     // 预过滤环境光照辐射
     static S_PREF_ENV_MAP_SRC = "_prefEnvMap";

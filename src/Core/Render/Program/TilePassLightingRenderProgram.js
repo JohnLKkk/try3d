@@ -7,13 +7,59 @@ import Matrix44 from "../../Math3d/Matrix44.js";
  * @date 2021年9月8日16点43分
  */
 export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
+    // Tile
+    static S_LIGHT_NUM_SRC = "_lightNum";
+    // Tile中ppx编码的光源检索
+    static S_TILE_LIGHT_GRID_SRC = "_tileLightGrid";
+    // Tile中ppx编码的光源id
+    static S_TILE_LIGHT_INDEX_SRC = "_tileLightIndex";
+    // Tile中光源编码信息0
+    static S_TILE_W_LIGHT_DATA_0 = "_tileWLightData0";
+    static S_TILE_V_LIGHT_DATA_0 = "_tileVLightData0";
+    // Tile中光源编码信息1
+    static S_TILE_W_LIGHT_DATA_1 = "_tileWLightData1";
+    static S_TILE_V_LIGHT_DATA_1 = "_tileVLightData1";
+    // Tile中光源编码信息2
+    static S_TILE_W_LIGHT_DATA_2 = "_tileWLightData2";
+    static S_TILE_V_LIGHT_DATA_2 = "_tileVLightData2";
+
+
+
     // 分块信息
     _m_Tiles = [];
     // 光源索引
     _m_LightsIndex = [];
     // 光源编码数据
     _m_LightsDecode = [];
-    _reset(tileNum){
+    // 光源编码数据纹理(rgb)
+    _m_LightsDecodeData = null;
+    // 光源索引数据纹理(后续改为rgba,rgb存储光源spotLight第三部分信息)
+    _m_LightsIndexData = null;
+    _m_LightsData0 = null;
+    _m_LightsData1 = null;
+    _m_LightsData2 = null;
+    _m_LightsData0Array = [];
+    _m_LightsData1Array = [];
+    _m_LightsData2Array = [];
+    _reset(gl, tileNum){
+        if(!this._m_LightsIndexData){
+            this._m_LightsIndexData = gl.createTexture();
+        }
+        if(!this._m_LightsDecodeData){
+            this._m_LightsDecodeData = gl.createTexture();
+        }
+        if(!this._m_LightsData0){
+            this._m_LightsData0 = gl.createTexture();
+        }
+        this._m_LightsData0Array.length = 0;
+        if(!this._m_LightsData1){
+            this._m_LightsData1 = gl.createTexture();
+        }
+        this._m_LightsData1Array.length = 0;
+        if(!this._m_LightsData2){
+            this._m_LightsData2 = gl.createTexture();
+        }
+        this._m_LightsData2Array.length = 0;
         // 每个tile保存对应的光源信息
         for(let i in tileNum){
             this._m_Tiles[i] = [];
@@ -112,7 +158,7 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
             }
         }
     }
-    _tileLightDecode(tileNum, tiles){
+    _tileLightDecode(gl, frameContext, tileNum, tiles, lights){
         let len = -1;
         for(let i = 0, offset = 0, tile = null;i < tileNum;i++){
             tile = tiles[i];
@@ -134,6 +180,103 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
         for(let i = 0,len = lightIndexWidth * lightIndexWidth;i < len;i++){
             this._m_LightsIndex.push(-1);
         }
+
+        // uv一维化
+        for(let i = 0,len = this._m_LightsDecode.length;i < len;i+=3){
+            // g分量存储v偏移
+            this._m_LightsDecode[i + 2] = this._m_LightsDecode[i] / lightIndexWidth;
+            // r分量存储u偏移
+            this._m_LightsDecode[i] %= lightIndexWidth;
+        }
+
+        // 编码光源信息
+        let conVars = frameContext.m_LastSubShader.getContextVars();
+        // lightIndexData
+        let lightIndexDataVec3 = [];
+        for(let i = 0,len = this._m_LightsIndexData.length;i < len;i++){
+            lightIndexDataVec3[i * 3] = this._m_LightsIndexData[i];
+            lightIndexDataVec3[i * 3 + 1] = 0;
+            lightIndexDataVec3[i * 3 + 2] = 0;
+        }
+        this._m_LightsIndexData = lightIndexDataVec3;
+        // lightsData0,1,2
+        let lightSpace = null;
+        let light = null;
+        let lightColor = null;
+        len = lights.length;
+        if(conVars[TilePassLightingRenderProgram.S_LIGHT_NUM_SRC] != undefined){
+            gl.uniform1i(conVars[TilePassLightingRenderProgram.S_LIGHT_NUM_SRC].loc, len);
+        }
+        if(conVars[TilePassLightingRenderProgram.S_TILE_V_LIGHT_DATA_0] != undefined){
+            lightSpace = 1;
+        }
+        else if(conVars[TilePassLightingRenderProgram.S_TILE_W_LIGHT_DATA_0] != undefined){
+            lightSpace = 0;
+        }
+        else{
+            // 返回0表示不需要渲染
+            return 0;
+        }
+        for(let i = 0;i < len;i++){
+            light = lights[i];
+            lightColor = light.getColor();
+            this._m_LightsData0Array.push(lightColor._m_X);
+            this._m_LightsData0Array.push(lightColor._m_Y);
+            this._m_LightsData0Array.push(lightColor._m_Z);
+            this._m_LightsData0Array.push(light.getTypeId());
+            switch (light.getType()) {
+                case 'PointLight':
+                    if(lightSpace){
+
+                    }
+                    else{
+                        this._m_LightsData1Array.push(light.getPosition()._m_X);
+                        this._m_LightsData1Array.push(light.getPosition()._m_Y);
+                        this._m_LightsData1Array.push(light.getPosition()._m_Z);
+                        this._m_LightsData1Array.push(light.getInRadius());
+                    }
+                    this._m_LightsData2Array.push(0.0);
+                    this._m_LightsData2Array.push(0.0);
+                    this._m_LightsData2Array.push(0.0);
+                    this._m_LightsData2Array.push(0.0);
+                    break;
+                case 'SpotLight':
+                    if(lightSpace){
+
+                    }
+                    else{
+                        this._m_LightsData1Array.push(light.getPosition()._m_X);
+                        this._m_LightsData1Array.push(light.getPosition()._m_Y);
+                        this._m_LightsData1Array.push(light.getPosition()._m_Z);
+                        this._m_LightsData1Array.push(light.getInvSpotRange());
+                    }
+                    this._m_LightsData2Array.push(light.getDirection()._m_X);
+                    this._m_LightsData2Array.push(light.getDirection()._m_Y);
+                    this._m_LightsData2Array.push(light.getDirection()._m_Z);
+                    this._m_LightsData2Array.push(light.getPackedAngleCos());
+                    break;
+            }
+        }
+        if(conVars[TilePassLightingRenderProgram.S_TILE_W_LIGHT_DATA_0] != undefined){
+            // 上载lightData0
+        }
+        // 返回1表示渲染
+        return 1;
+    }
+    _uploadDecodeTexture(gl, tex, loc, internalformat, w, h, format, type, data){
+        gl.activeTexture(gl.TEXTURE0 + loc);
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            internalformat,
+            w,
+            h,
+            0,
+            format,
+            type,
+            data
+        );
     }
     drawArrays(gl, scene, frameContext, iDrawables, lights, pass){
         if(lights.length == 0){
@@ -163,7 +306,7 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
                 }
             }
 
-            // 上载光源信息
+            // 编码光源信息
         }
     }
 }
