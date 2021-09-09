@@ -64,6 +64,7 @@ export default class Render extends Component{
         // 渲染模式
         // 默认下,0为forward,1为deferred
         this._m_Pipeline = {};
+        this._m_PipelineConfig = {};
         // renderProgram优先技术
         this._m_PriorityTechnology = '';
 
@@ -221,15 +222,39 @@ export default class Render extends Component{
 
 
         // pipeline
-        this._m_Pipeline[0] = new Forward({render:this});
-        this._m_Pipeline[1] = new Deferred({render:this});
-        this._m_Pipeline[1] = new TileDeferred({render:this});
+        this._m_PipelineConfig[Render.FORWARD] = new Forward({render:this});
+        this._m_PipelineConfig[Render.DEFERRED_SHADING] = new Deferred({render:this});
+        this._m_PipelineConfig[Render.TILE_DEFERRED_SHADING] = new TileDeferred({render:this});
+        this.enablePipeline(Render.FORWARD);
+        this.enablePipeline(Render.DEFERRED_SHADING);
 
         // 监听canvas的基本事件
         this._m_Scene.getCanvas().on('resize', (w, h)=>{
             this._m_FrameContext.resize(gl, w, h);
             this._m_FrameContext._m_DefaultFrameBuffer = this._m_FrameContext.getFrameBuffer(Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER).getFrameBuffer();
         });
+    }
+
+    /**
+     * 激活指定的pipeline。<br/>
+     * @param {String}[pipeline Render的枚举值]
+     */
+    enablePipeline(pipeline){
+        let pipelineId = -1;
+        switch (pipeline) {
+            case Render.FORWARD:
+                pipelineId = 0;
+                break;
+            case Render.DEFERRED_SHADING:
+            case Render.TILE_DEFERRED_SHADING:
+                pipelineId = 1;
+                break;
+        }
+        if(pipelineId >= 0)
+            this._m_Pipeline[pipelineId] = this._m_PipelineConfig[pipeline];
+        else{
+            Log.warn('无效pipeline!');
+        }
     }
 
     /**

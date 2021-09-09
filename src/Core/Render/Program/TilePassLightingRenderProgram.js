@@ -336,6 +336,7 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
     _uploadDecodeTexture(gl, tex, loc, internalformat, w, h, format, type, data){
         gl.activeTexture(gl.TEXTURE0 + loc);
         gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
         gl.texImage2D(
             gl.TEXTURE_2D,
             0,
