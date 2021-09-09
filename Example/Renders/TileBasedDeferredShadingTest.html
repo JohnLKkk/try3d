@@ -22,11 +22,13 @@
     import Texture2DVars from "../../src/Core/WebGL/Vars/Texture2DVars.js";
     import Vector4 from "../../src/Core/Math3d/Vector4.js";
     import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
+    import Mesh from "../../src/Core/WebGL/Mesh.js";
     import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
     import SceneBrowsingController from "../../src/Core/InputControl/SceneBrowsingController.js";
     import OBJLoader from "../../src/Supp/OBJLoader.js";
     import PointLight from "../../src/Core/Light/PointLight.js";
     import Stats from "../stats.min.js";
+    import Sphere from "../../src/Core/Node/Shape/Sphere.js";
 
     // 案例内容
     import Ext from "../Ext.js";
@@ -64,91 +66,101 @@
         let ly = center._m_Y - dy * 0.5;
         let lz = center._m_Z - dz * 0.5;
         let ps = [];
-        for(let i = 0;i < 1000;i++){
+        let colorMat = new Material(scene, {id:'colorMat', materialDef:MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef")});
+        colorMat.setParam('color', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
+        for(let i = 0;i < 1;i++){
             let pointLight = new PointLight(scene, {id:'pointLight' + i});
             pointLight.setRadius(2);
             pointLight.setColorRGBA(Math.random() * 1.0, Math.random() * 1.0, Math.random() * 1.0, 1.0);
-            pointLight.setPositionXYZ(Math.random() * dx + lx, Math.random() * dy + ly, Math.random() * dz + lz);
+            // pointLight.setPositionXYZ(Math.random() * dx + lx, Math.random() * dy + ly, Math.random() * dz + lz);
+            pointLight.setPositionXYZ(lx + dx * 0.4, center._m_Y, lz + dz * 0.4);
             pointLight.dx = 1.0;
             pointLight.dy = 1.0;
             pointLight.dz = 1.0;
             rootNode.addChildren(pointLight);
             ps.push(pointLight);
+
+            let sphere = new Sphere(scene, {id:'sphere:' + i, radius:pointLight.getRadius()});
+            sphere.setLocalTranslation(pointLight.getPosition());
+            sphere.setMaterial(colorMat);
+            sphere.getMesh().setPrimitive(Mesh.S_PRIMITIVE_LINES);
+            sphere.updateBound();
+            rootNode.addChildren(sphere);
         }
 
-        // 使用dat gui
-        let gui = new dat.GUI();
-        var settings = {
-            renderTechnology: 'MultiPassDeferred',
-            directionalLight: true,
-            pointLights: true,
-            pointLightAnim: true
-        };
-        gui.add(settings, 'renderTechnology', ['MultiPassDeferred', 'Default']).name('渲染技术').onChange(function(value) {
-            modelNode.traverse((node)=>{
-                if(node.isDrawable()){
-                    // SinglePass是默认技术，所以传递""即可
-                    node.getMaterial().selectTechnology(value == 'Default' ? "" : value);
-                }
-            });
-        });
-        gui.add(settings, 'directionalLight').onChange(swi=>{
-            if(swi){
-                dirLight.enable();
-            }
-            else{
-                dirLight.disable();
-            }
-        });
-        gui.add(settings, 'pointLights').onChange(swi=>{
-            ps.forEach(p=>{
-                if(swi){
-                    p.enable();
-                }
-                else{
-                    p.disable();
-                }
-            });
-        });
-        gui.add(settings, 'pointLightAnim');
-        gui.width = 300;
-        gui.open();
-
-
-        // 使用stats.js统计fps
-        let stats = new Stats();
-        stats.domElement.style.position = 'absolute';
-        stats.domElement.style.left = '0px';
-        stats.domElement.style.top = '0px';
-        document.body.appendChild(stats.domElement);
-        scene.on('update', (exTime)=>{
-            stats.update();
-            if(settings.pointLightAnim){
-                ps.forEach(p=>{
-                    let pos = p.getPosition();
-                    pos.addInXYZ(p.dx * exTime, 0, 0);
-                    if(pos._m_X >= dx && p.dx > 0.0){
-                        p.dx *= -1.0;
-                    }
-                    else if(pos._m_X <= lx && p.dx < 0.0){
-                        p.dx *= -1.0;
-                    }
-                    if(pos._m_Y >= dy && p.dy > 0.0){
-                        p.dy *= -1.0;
-                    }
-                    else if(pos._m_Y <= ly && p.dy < 0.0){
-                        p.dy *= -1.0;
-                    }
-                    if(pos._m_Z >= dz && p.dz > 0.0){
-                        p.dz *= -1.0;
-                    }
-                    else if(pos._m_Z <= lz && p.dz < 0.0){
-                        p.dz *= -1.0;
-                    }
-                    p.updateBounding();
-                });
-            }
-        });
+        // // 使用dat gui
+        // let gui = new dat.GUI();
+        // var settings = {
+        //     renderTechnology: 'MultiPassDeferred',
+        //     directionalLight: true,
+        //     pointLights: true,
+        //     pointLightAnim: true
+        // };
+        // gui.add(settings, 'renderTechnology', ['MultiPassDeferred', 'Default']).name('渲染技术').onChange(function(value) {
+        //     modelNode.traverse((node)=>{
+        //         if(node.isDrawable()){
+        //             // SinglePass是默认技术，所以传递""即可
+        //             node.getMaterial().selectTechnology(value == 'Default' ? "" : value);
+        //         }
+        //     });
+        // });
+        // gui.add(settings, 'directionalLight').onChange(swi=>{
+        //     if(swi){
+        //         dirLight.enable();
+        //     }
+        //     else{
+        //         dirLight.disable();
+        //     }
+        // });
+        // gui.add(settings, 'pointLights').onChange(swi=>{
+        //     ps.forEach(p=>{
+        //         if(swi){
+        //             p.enable();
+        //         }
+        //         else{
+        //             p.disable();
+        //         }
+        //     });
+        // });
+        // gui.add(settings, 'pointLightAnim');
+        // gui.width = 300;
+        // gui.open();
+        //
+        //
+        // // 使用stats.js统计fps
+        // let stats = new Stats();
+        // stats.domElement.style.position = 'absolute';
+        // stats.domElement.style.left = '0px';
+        // stats.domElement.style.top = '0px';
+        // document.body.appendChild(stats.domElement);
+        // scene.on('update', (exTime)=>{
+        //     stats.update();
+        //     if(settings.pointLightAnim){
+        //         // ps.forEach(p=>{
+        //         //     let pos = p.getPosition();
+        //         //     pos.addInXYZ(p.dx * exTime, 0, 0);
+        //         //     if(pos._m_X >= dx && p.dx > 0.0){
+        //         //         p.dx *= -1.0;
+        //         //     }
+        //         //     else if(pos._m_X <= lx && p.dx < 0.0){
+        //         //         p.dx *= -1.0;
+        //         //     }
+        //         //     if(pos._m_Y >= dy && p.dy > 0.0){
+        //         //         p.dy *= -1.0;
+        //         //     }
+        //         //     else if(pos._m_Y <= ly && p.dy < 0.0){
+        //         //         p.dy *= -1.0;
+        //         //     }
+        //         //     if(pos._m_Z >= dz && p.dz > 0.0){
+        //         //         p.dz *= -1.0;
+        //         //     }
+        //         //     else if(pos._m_Z <= lz && p.dz < 0.0){
+        //         //         p.dz *= -1.0;
+        //         //     }
+        //         //     p.updateBounding();
+        //         // });
+        //     }
+        // });
     });
 
 

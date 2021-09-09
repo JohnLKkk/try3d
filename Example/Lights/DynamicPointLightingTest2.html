@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DynamicPointLightingTest</title>
+    <style>
+        #baseColor input{
+            width: 50px;
+        }
+        #baseColor2 input{
+            width: 50px;
+        }
+        #specular input{
+            width: 50px;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="../Assets/Htmls/Css/Base.css"/>
+    <script src="../Assets/Htmls/Js/Infos.js"></script>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
+    <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;" tabindex="0"></canvas>
+</div>
+<script type="module">
+
+
+
+    addInfos('DynamicPointLightingTest', '该案例演示了简单的运动点光源。');
+
+
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import OBJLoader from "../../src/Supp/OBJLoader.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
+    import PointLight from "../../src/Core/Light/PointLight.js";
+    import Vec4Vars from "../../src/Core/WebGL/Vars/Vec4Vars.js";
+    import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
+    import GLTFLoader from "../../src/Supp/GLTFLoader.js";
+    import Stats from "../stats.min.js";
+    import SceneBrowsingController from "../../src/Core/InputControl/SceneBrowsingController.js";
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    scene.getRender().setPriorityTechnology('TileDeferred');
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Vector3(40.97822191592547,31.087478106346822,40.33070739975541), new Vector3(40.30762527867237,30.644964182873373,39.7353238446945), new Vector3(0, 1, 0));
+    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
+    let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
+    basicLightingMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
+    basicLightingMat.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
+    basicLightingMat.setParam('specularColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
+    basicLightingMat.setParam('shininess', new FloatVars().valueOf(32.0));
+
+    let rootNode = new Node(scene, {id:'rootNode'});
+
+    let objLoader = new OBJLoader();
+    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/', 'DeferredLightingDef');
+    objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/ShiNei.obj', modelNode=>{
+        rootNode.addChildren(modelNode);
+        let sceneBrowsingController = new SceneBrowsingController(scene, {id:'sceneBrowsing'});
+        sceneBrowsingController.lookScene(modelNode);
+        sceneBrowsingController.setTargetDistance(sceneBrowsingController.getMaxDistance());
+
+
+
+        let aabb = modelNode.getBoundingVolume();
+        let center = new Vector3();
+        let min = new Vector3();
+        let max = new Vector3();
+        aabb.getMin(min);
+        aabb.getMax(max);
+        let d = 5;
+        min._m_X += d;
+        min._m_Z += d;
+        max._m_X -= d;
+        max._m_Z -= d;
+        aabb.getCenter(center);
+        let dx = aabb.getXHalf() * 2;
+        let dz = aabb.getZHalf() * 2;
+
+        let pointLights = [
+            {
+                pos:[1.4731557120785297, 6.622223124838668, -15.999148216290234],
+                color:[1.0, 0.0, 0.0, 1.0],
+                r:13.0
+            },
+            {
+                pos:[center._m_X, center._m_Y, center._m_Z],
+                color:[0.3, 0.5, 0.0, 1.0],
+                r:15.0
+            }
+        ];
+
+        let i = 0;
+        console.log('pointLights.lenght:' + pointLights.length);
+        let pointLightData = [];
+        pointLights.forEach(p=>{
+            let pointLight = new PointLight(scene, {id:'pointLight' + i++});
+            pointLightData.push(pointLight);
+            pointLight.setRadius(p.r);
+            pointLight.setColorRGBA(p.color[0], p.color[1], p.color[2], p.color[3]);
+            pointLight.setPositionXYZ(p.pos[0], p.pos[1], p.pos[2]);
+            rootNode.addChildren(pointLight);
+        });
+
+
+        // 使用stats.js统计fps
+        let stats = new Stats();
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.left = '0px';
+        stats.domElement.style.top = '0px';
+        let bx = 0;
+        let bxx = 0.3;
+        let bz = 0;
+        let bzz = 0.3;
+        document.body.appendChild(stats.domElement);
+        scene.on('update', (exTime)=>{
+            stats.update();
+            pointLightData[0].getPosition().addInXYZ(bz += bzz * exTime, 0, bx+=bxx * exTime);
+            if(pointLightData[0].getPosition()._m_Z >= max._m_Z && bx > 0){
+                bx = 0;
+                bxx *= -1;
+            }
+            else if(pointLightData[0].getPosition()._m_Z <= min._m_Z && bx < 0){
+                bx = 0;
+                bxx *= -1;
+            }
+            if(pointLightData[0].getPosition()._m_X >= max._m_X && bz > 0){
+                bz = 0;
+                bzz *= -1;
+            }
+            else if(pointLightData[0].getPosition()._m_X <= min._m_X && bz < 0){
+                bz = 0;
+                bzz *= -1;
+            }
+            pointLightData[0].updateBounding();
+        });
+    });
+
+    let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+
+</script>
+</body>
+</html>

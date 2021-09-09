@@ -90,11 +90,35 @@ export default class Render extends Component{
 
         // Tile
         this._m_TileInfo = {
-            tileSize:32,
+            tileSize:0,
             tileWidth:0,
             tileHeight:0,
             tileNum:0
         };
+        this.setTileSize(32);
+    }
+
+    /**
+     * 更新tileInfo。<br/>
+     * @param {Number}[w 视口宽度]
+     * @param {Number}[h 视口高度]
+     */
+    updateTileInfo(w, h){
+        let tileSize = this._m_TileInfo.tileSize;
+        this._m_TileInfo.tileWidth = Math.floor(w / tileSize);
+        this._m_TileInfo.tileHeight = Math.floor(h / tileSize);
+        this._m_TileInfo.tileNum = this._m_TileInfo.tileWidth * this._m_TileInfo.tileHeight;
+    }
+
+    /**
+     * 设置TileSize。<br/>
+     * @param {Number}[tileSize]
+     */
+    setTileSize(tileSize){
+        if(tileSize != this._m_TileInfo.tileSize){
+            this._m_TileInfo.tileSize = tileSize;
+            this.updateTileInfo(this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight());
+        }
     }
 
     /**

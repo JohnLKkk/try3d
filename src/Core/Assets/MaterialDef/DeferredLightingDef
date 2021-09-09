@@ -752,6 +752,7 @@ Def DeferredLightingDef{
                         // 最终光照值
                         //Context.OutColor.rgb += lightColor.rgb * (vec3(lightBRDF.x) * _diffuseColor.rgb + vec3(lightBRDF.y) * _specularColor.rgb);
                         Context.OutColor.rgb += lightColor.rgb * ( _diffuseColor.rgb * vec3( lightBRDF.x ) + _specularColor.rgb * vec3( lightBRDF.y ));
+                        Context.OutColor.rgb = vec3(1.0, 0, 0);
                     }
                 }
                 Context.OutColor.a = alpha;

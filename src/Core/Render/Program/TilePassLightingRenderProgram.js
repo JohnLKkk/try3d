@@ -77,28 +77,38 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
         // 不使用SRC_ALPHA，ONE的原因在于，如果第一个光源是point或spot，则会导致累计光源渲染一个DirLight时，对于材质半透明的物体会出现累加错误的情况，因为混合了alpha
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[5], ['ONE', 'ONE']);
     }
+    _createTexture(gl){
+        let tex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+        return tex;
+    }
 
     _reset(gl, tileNum){
         if(!this._m_LightsIndexData){
-            this._m_LightsIndexData = gl.createTexture();
+            this._m_LightsIndexData = this._createTexture(gl);
         }
         if(!this._m_LightsDecodeData){
-            this._m_LightsDecodeData = gl.createTexture();
+            this._m_LightsDecodeData = this._createTexture(gl);
         }
         if(!this._m_LightsData0){
-            this._m_LightsData0 = gl.createTexture();
+            this._m_LightsData0 = this._createTexture(gl);
         }
         this._m_LightsData0Array.length = 0;
         if(!this._m_LightsData1){
-            this._m_LightsData1 = gl.createTexture();
+            this._m_LightsData1 = this._createTexture(gl);
         }
         this._m_LightsData1Array.length = 0;
         if(!this._m_LightsData2){
-            this._m_LightsData2 = gl.createTexture();
+            this._m_LightsData2 = this._createTexture(gl);
         }
         this._m_LightsData2Array.length = 0;
         // 每个tile保存对应的光源信息
-        for(let i in tileNum){
+        for(let i = 0;i < tileNum;i++){
             this._m_Tiles[i] = [];
         }
         this._m_LightsDecode.length = 0;
@@ -264,6 +274,7 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
         let light = null;
         let lightColor = null;
 
+        len = lights.length;
         for(let i = 0;i < len;i++){
             light = lights[i];
             lightColor = light.getColor();
@@ -307,17 +318,17 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
         let data = conVars[TilePassLightingRenderProgram.S_TILE_W_LIGHT_DATA_0] ? conVars[TilePassLightingRenderProgram.S_TILE_W_LIGHT_DATA_0] : conVars[TilePassLightingRenderProgram.S_TILE_V_LIGHT_DATA_0];
         if(data){
             // 上载lightData0
-            this._uploadDecodeTexture(gl, this._m_LightsData0, data.loc, gl.RGBA32F, this._m_LightsData0.length / 4, 1, gl.RGBA, gl.FLOAT, new Float32Array(this._m_LightsData0Array));
+            this._uploadDecodeTexture(gl, this._m_LightsData0, data.loc, gl.RGBA32F, this._m_LightsData0Array.length / 4, 1, gl.RGBA, gl.FLOAT, new Float32Array(this._m_LightsData0Array));
         }
         data = conVars[TilePassLightingRenderProgram.S_TILE_W_LIGHT_DATA_1] ? conVars[TilePassLightingRenderProgram.S_TILE_W_LIGHT_DATA_1] : conVars[TilePassLightingRenderProgram.S_TILE_V_LIGHT_DATA_1];
         if(data){
             // 上载lightData1
-            this._uploadDecodeTexture(gl, this._m_LightsData1, data.loc, gl.RGBA32F, this._m_LightsData1.length / 4, 1, gl.RGBA, gl.FLOAT, new Float32Array(this._m_LightsData1Array));
+            this._uploadDecodeTexture(gl, this._m_LightsData1, data.loc, gl.RGBA32F, this._m_LightsData1Array.length / 4, 1, gl.RGBA, gl.FLOAT, new Float32Array(this._m_LightsData1Array));
         }
         data = conVars[TilePassLightingRenderProgram.S_TILE_W_LIGHT_DATA_2] ? conVars[TilePassLightingRenderProgram.S_TILE_W_LIGHT_DATA_2] : conVars[TilePassLightingRenderProgram.S_TILE_V_LIGHT_DATA_2];
         if(data){
             // 上载lightData2
-            this._uploadDecodeTexture(gl, this._m_LightsData2, data.loc, gl.RGBA32F, this._m_LightsData2.length / 4, 1, gl.RGBA, gl.FLOAT, new Float32Array(this._m_LightsData2Array));
+            this._uploadDecodeTexture(gl, this._m_LightsData2, data.loc, gl.RGBA32F, this._m_LightsData2Array.length / 4, 1, gl.RGBA, gl.FLOAT, new Float32Array(this._m_LightsData2Array));
         }
         // 返回1表示渲染
         return 1;
@@ -462,7 +473,7 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
             // 如果灯光数量为0,则直接执行渲染
             if(lights.length == 0){
                 // 直接绘制即可
-                iDrawable.draw(frameContext);
+                // iDrawable.draw(frameContext);
                 return;
             }
 
@@ -538,9 +549,9 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
             // 如果灯光数量为0,则直接执行渲染
             if(lights.length == 0){
                 // 直接绘制即可
-                iDrawables.forEach(iDrawable=>{
-                    iDrawable.draw(frameContext);
-                });
+                // iDrawables.forEach(iDrawable=>{
+                //     iDrawable.draw(frameContext);
+                // });
                 return;
             }
 
