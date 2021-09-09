@@ -101,9 +101,11 @@ export default class ShaderSource {
     // Tile
     static S_LIGHT_NUM_SRC = "_lightNum";
     // Tile中ppx编码的光源检索
-    static S_TILE_LIGHT_GRID_SRC = "_tileLightGrid";
+    static S_TILE_LIGHT_DECODE_SRC = "_tileLightDecode";
     // Tile中ppx编码的光源id
     static S_TILE_LIGHT_INDEX_SRC = "_tileLightIndex";
+    // Tile中采样偏移大小
+    static S_TILE_LIGHT_OFFSET_SIZE = "_tileLightOffsetSize";
     // Tile中光源编码信息0
     static S_TILE_W_LIGHT_DATA_0 = "_tileWLightData0";
     static S_TILE_V_LIGHT_DATA_0 = "_tileVLightData0";
@@ -167,6 +169,8 @@ export default class ShaderSource {
         "Context.Joints":{src:ShaderSource.S_JOINTS_SRC, pattern:/Context.Joints/, pattern2:/Context.Joints[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Joints/g, tag:ShaderSource.S_JOINTS_SRC, type:"vec4", utype:"uniform mat4", modifier:'[' + ShaderSource.S_MAX_BONE + ']'},
         "Context.VLightData":{src:ShaderSource.S_V_LIGHT_DATA_SRC, pattern:/Context.VLightData/, pattern2:/Context.VLightData[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLightData/g, tag:ShaderSource.S_V_LIGHT_DATA_SRC, type:"vec4", utype:"uniform vec4", modifier:'[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']'},
         "Context.MultiId":{src:ShaderSource.S_MULTI_ID_SRC, pattern:/Context.MultiId/, pattern2:/Context.MultiId[\s+-;.,\*\\]{1,}/, tagPattern:/Context.MultiId/g, tag:ShaderSource.S_MULTI_ID_SRC, type:"int", utype:"uniform int"},
+        "Context.TileLightNum":{src:ShaderSource.S_LIGHT_NUM_SRC, pattern:/Context.TileLightNum/, pattern2:/Context.TileLightNum[\s+-;.,\*\\]{1,}/, tagPattern:/Context.TileLightNum/g, tag:ShaderSource.S_LIGHT_NUM_SRC, type:"int", utype:"uniform int"},
+        "Context.TileLightOffsetSize":{src:ShaderSource.S_TILE_LIGHT_OFFSET_SIZE, pattern:/Context.TileLightOffsetSize/, pattern2:/Context.TileLightOffsetSize[\s+-;.,\*\\]{1,}/, tagPattern:/Context.TileLightOffsetSize/g, tag:ShaderSource.S_TILE_LIGHT_OFFSET_SIZE, type:"float", utype:"uniform float"},
         "Context.BlendGiProbes":{src:ShaderSource.S_BLEND_GI_PROBES, pattern:/Context.BlendGiProbes/, pattern2:/Context.BlendGiProbes[\s+-;.,\*\\]{1,}/, tagPattern:/Context.BlendGiProbes/g, tag:ShaderSource.S_BLEND_GI_PROBES, type:"bool", utype:"uniform bool"},
         "Context.VLight_Data_0":{src:ShaderSource.S_V_LIGHT_DATA0_SRC, pattern:/Context.VLight_Data_0/, pattern2:/Context.VLight_Data_0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLight_Data_0/g, tag:ShaderSource.S_V_LIGHT_DATA0_SRC, type:"vec4", utype:"uniform vec4"},
         "Context.VLight_Data_1":{src:ShaderSource.S_V_LIGHT_DATA1_SRC, pattern:/Context.VLight_Data_1/, pattern2:/Context.VLight_Data_1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLight_Data_1/g, tag:ShaderSource.S_V_LIGHT_DATA1_SRC, type:"vec4", utype:"uniform vec4"},
@@ -189,6 +193,14 @@ export default class ShaderSource {
         "Context.InScreen":{src:ShaderSource.S_FORWARD_COLOR_MAP_SRC, pattern:/Context.InScreen/, pattern2:/Context.InScreen[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InScreen/g, tag:ShaderSource.S_FORWARD_COLOR_MAP_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InForwardColorMap":{src:ShaderSource.S_FORWARD_COLOR_MAP_SRC, pattern:/Context.InForwardColorMap/, pattern2:/Context.InForwardColorMap[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InForwardColorMap/g, tag:ShaderSource.S_FORWARD_COLOR_MAP_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InPrefEnvMap":{src:ShaderSource.S_PREF_ENV_MAP_SRC, pattern:/Context.InPrefEnvMap/, pattern2:/Context.InPrefEnvMap[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InPrefEnvMap/g, tag:ShaderSource.S_PREF_ENV_MAP_SRC, type:"samplerCube", utype:"uniform samplerCube"},
+        "Context.InTileLightDecode":{src:ShaderSource.S_TILE_LIGHT_DECODE_SRC, pattern:/Context.InTileLightDecode/, pattern2:/Context.InTileLightDecode[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InTileLightDecode/g, tag:ShaderSource.S_TILE_LIGHT_DECODE_SRC, type:"sampler2D", utype:"uniform sampler2D"},
+        "Context.InTileLightIndex":{src:ShaderSource.S_TILE_LIGHT_INDEX_SRC, pattern:/Context.InTileLightIndex/, pattern2:/Context.InTileLightIndex[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InTileLightIndex/g, tag:ShaderSource.S_TILE_LIGHT_INDEX_SRC, type:"sampler2D", utype:"uniform sampler2D"},
+        "Context.InTileWLightData0":{src:ShaderSource.S_TILE_W_LIGHT_DATA_0, pattern:/Context.InTileWLightData0/, pattern2:/Context.InTileWLightData0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InTileWLightData0/g, tag:ShaderSource.S_TILE_W_LIGHT_DATA_0, type:"sampler2D", utype:"uniform sampler2D"},
+        "Context.InTileVLightData0":{src:ShaderSource.S_TILE_V_LIGHT_DATA_0, pattern:/Context.InTileVLightData0/, pattern2:/Context.InTileVLightData0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InTileVLightData0/g, tag:ShaderSource.S_TILE_V_LIGHT_DATA_0, type:"sampler2D", utype:"uniform sampler2D"},
+        "Context.InTileWLightData1":{src:ShaderSource.S_TILE_W_LIGHT_DATA_1, pattern:/Context.InTileWLightData1/, pattern2:/Context.InTileWLightData1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InTileWLightData1/g, tag:ShaderSource.S_TILE_W_LIGHT_DATA_1, type:"sampler2D", utype:"uniform sampler2D"},
+        "Context.InTileVLightData1":{src:ShaderSource.S_TILE_V_LIGHT_DATA_1, pattern:/Context.InTileVLightData1/, pattern2:/Context.InTileVLightData1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InTileVLightData1/g, tag:ShaderSource.S_TILE_V_LIGHT_DATA_1, type:"sampler2D", utype:"uniform sampler2D"},
+        "Context.InTileWLightData2":{src:ShaderSource.S_TILE_W_LIGHT_DATA_2, pattern:/Context.InTileWLightData2/, pattern2:/Context.InTileWLightData2[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InTileWLightData2/g, tag:ShaderSource.S_TILE_W_LIGHT_DATA_2, type:"sampler2D", utype:"uniform sampler2D"},
+        "Context.InTileVLightData2":{src:ShaderSource.S_TILE_V_LIGHT_DATA_2, pattern:/Context.InTileVLightData2/, pattern2:/Context.InTileVLightData2[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InTileVLightData2/g, tag:ShaderSource.S_TILE_V_LIGHT_DATA_2, type:"sampler2D", utype:"uniform sampler2D"},
         // 输出类型缓存
         "Context.OutGBuffer0":{src:ShaderSource.S_G_BUFFER0_SRC, loc:ShaderSource.S_G_BUFFER0, pattern:/Context.OutGBuffer0/, pattern2:/Context.OutGBuffer0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutGBuffer0/g, tag:ShaderSource.S_G_BUFFER0_SRC, type:"vec4"},
         "Context.OutGBuffer1":{src:ShaderSource.S_G_BUFFER1_SRC, loc:ShaderSource.S_G_BUFFER1, pattern:/Context.OutGBuffer1/, pattern2:/Context.OutGBuffer1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutGBuffer1/g, tag:ShaderSource.S_G_BUFFER1_SRC, type:"vec4"},

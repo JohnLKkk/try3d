@@ -1,5 +1,6 @@
 import Render from "../Render.js";
 import RenderState from "../../WebGL/RenderState.js";
+import Deferred from "./Deferred.js";
 
 /**
  * Tile Based Deferred。<br/>
@@ -71,10 +72,10 @@ export default class TileDeferred extends Deferred{
                     geo.draw(frameContext);
                     // globalPass
                     subShader = TileDeferred.S_TILE_DEFERRED_SHADING_PASS_GROUP[1];
-                    globalPass = subShaders[subShader] ? subShaders[subShader] : subShaders[TileDeferred.S_TILE_DEFERRED_SHADING_PASS_GROUP[1]];
+                    globalPass = subShaders[subShader] ? subShaders[subShader] : subShaders[TileDeferred.S_TILE_DEFERRED_SHADING_PASS_GROUP_2[1]];
                     // tilePass
                     subShader = TileDeferred.S_TILE_DEFERRED_SHADING_PASS_GROUP[2];
-                    tilePass = subShaders[subShader] ? subShaders[subShader] : subShaders[TileDeferred.S_TILE_DEFERRED_SHADING_PASS_GROUP[2]];
+                    tilePass = subShaders[subShader] ? subShaders[subShader] : subShaders[TileDeferred.S_TILE_DEFERRED_SHADING_PASS_GROUP_2[2]];
                 }
                 if(stateChange){
                     this._checkRenderState(gl, frameContext.restore(), frameContext.getRenderState());
@@ -93,6 +94,20 @@ export default class TileDeferred extends Deferred{
                 gl.disable(gl.DEPTH_TEST);
                 // gl.depthMask(false);
             }
+
+            // 首先将dir light部分取出来
+            let dirLights = [];
+            let otherLights = [];
+            let type = null;
+            lights.forEach(light=>{
+                type = light.getType();
+                if(type == 'DirectionalLight'){
+                    dirLights.push(light);
+                }
+                else if(type == 'PointLight' || type == 'SpotLight'){
+                    otherLights.push(light);
+                }
+            });
 
             // Global Pass
             // 1.先检测是否需要切换subShader(根据shader种类)(这里检测可能与理论不一样，打印出id来调试...)
@@ -123,12 +138,12 @@ export default class TileDeferred extends Deferred{
                 gl.bindTexture(gl.TEXTURE_2D, frameContext.getFrameBuffer(renderDatas[k].refId).getTexture(renderDatas[k].dataId).getLoc());
             }
 
-            this.draw(gl, scene, frameContext, dfbFramePicture, lights);
+            this._m_Render._m_RenderPrograms[globalPass.subShader.getRenderProgramType()].draw(gl, scene, frameContext, dfbFramePicture, dirLights, 0);
 
 
             // Tile Pass
             // 1.先检测是否需要切换subShader(根据shader种类)(这里检测可能与理论不一样，打印出id来调试...)
-            if(frameContext.m_LastSubShaderId != globalPass.subShader.getDefId()){
+            if(frameContext.m_LastSubShaderId != tilePass.subShader.getDefId()){
                 // 此时可能未编译,所以需要检测
                 // 检测是否需要重新编译subShader
                 if(tilePass.subShader.needCompile()){
@@ -153,7 +168,7 @@ export default class TileDeferred extends Deferred{
                 gl.bindTexture(gl.TEXTURE_2D, frameContext.getFrameBuffer(renderDatas[k].refId).getTexture(renderDatas[k].dataId).getLoc());
             }
 
-            this.draw(gl, scene, frameContext, dfbFramePicture, lights);
+            this._m_Render._m_RenderPrograms[tilePass.subShader.getRenderProgramType()].draw(gl, scene, frameContext, dfbFramePicture, otherLights, 1);
             // dfbFramePicture.draw(this._m_FrameContext);
             if(frameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){
                 gl.enable(gl.DEPTH_TEST);
@@ -172,9 +187,6 @@ export default class TileDeferred extends Deferred{
             gl.bindFramebuffer(gl.FRAMEBUFFER, frameContext._m_DefaultFrameBuffer);
         }
         return useBackForwardFrameBuffer;
-    }
-    draw(gl, scene, frameContext, dfbFramePicture, lights){
-
     }
 
 }
