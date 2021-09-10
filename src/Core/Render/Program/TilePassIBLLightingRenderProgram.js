@@ -1,18 +1,19 @@
 import DefaultRenderProgram from "./DefaultRenderProgram.js";
 import Matrix44 from "../../Math3d/Matrix44.js";
 import RenderState from "../../WebGL/RenderState.js";
+import ShaderSource from "../../WebGL/ShaderSource.js";
 import TempVars from "../../Util/TempVars.js";
 import Vector3 from "../../Math3d/Vector3.js";
 import Vector4 from "../../Math3d/Vector4.js";
 import Texture2DVars from "../../WebGL/Vars/Texture2DVars.js";
 
 /**
- * TilePassLightingRenderProgram。<br/>
+ * TilePassIBLLightingRenderProgram。<br/>
  * @author Kkk
- * @date 2021年9月8日16点43分
+ * @date 2021年9月10日10点14分
  */
-export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
-    static PROGRAM_TYPE = 'TilePassLighting';
+export default class TilePassIBLLightingRenderProgram extends DefaultRenderProgram{
+    static PROGRAM_TYPE = 'TilePassIBLLighting';
     // Global
     static S_CUR_LIGHT_COUNT = '_curLightCount';
     static S_AMBIENT_LIGHT_COLOR = '_ambientLightColor';
@@ -35,6 +36,11 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
     // Tile中光源编码信息2
     static S_TILE_W_LIGHT_DATA_2 = "_tileWLightData2";
     static S_TILE_V_LIGHT_DATA_2 = "_tileVLightData2";
+    // IBL
+    static S_PREF_ENV_MAP_SRC = '_prefEnvMap';
+    static S_WGIPROBE_SRC = '_wGIProbe';
+    static S_SH_COEFFS_SRC = "_ShCoeffs";
+    static S_BLEND_GI_PROBES = '_blend_gi_probes';
 
 
 
@@ -77,6 +83,52 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[1], 'Off');
         // 不使用SRC_ALPHA，ONE的原因在于，如果第一个光源是point或spot，则会导致累计光源渲染一个DirLight时，对于材质半透明的物体会出现累加错误的情况，因为混合了alpha
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[5], ['ONE', 'ONE']);
+    }
+    /**
+     * 混合GI探头信息。<br/>
+     * 暂时仅仅只是提交单个探头信息。<br/>
+     * @param {WebGL}[gl]
+     * @param {Scene}[scene]
+     * @param {FrameContext}[frameContext]
+     * @private
+     */
+    _blendGIProbes(gl, scene, frameContext){
+        let conVars = frameContext.m_LastSubShader.getContextVars();
+        // 探头信息
+        let probeLoc = null;
+        if(conVars[TilePassIBLLightingRenderProgram.S_WGIPROBE_SRC] != null){
+            if(this._m_m_LastSubShader != frameContext.m_LastSubShader){
+                // 提取相交的探头
+                // 并更新探头数据进行混合渲染(但这里未实现,先记录下)
+                // Log.log('提交探头!');
+                let giProbe = scene.getGIProbes()[0];
+                let giData = TempVars.S_TEMP_VEC4;
+                // 探头位置
+                giData.setToInXYZW(giProbe.getPosition()._m_X, giProbe.getPosition()._m_Y, giProbe.getPosition()._m_Z, 1.0 / giProbe.getRadius() + giProbe.getPrefilterMipmap());
+                gl.uniform4fv(conVars[TilePassIBLLightingRenderProgram.S_WGIPROBE_SRC].loc, giData.getBufferData(), 0, 4);
+                // 球谐系数
+                giData = giProbe.getShCoeffsBufferData();
+                if(conVars[TilePassIBLLightingRenderProgram.S_SH_COEFFS_SRC] != null)
+                    gl.uniform3fv(conVars[TilePassIBLLightingRenderProgram.S_SH_COEFFS_SRC].loc, giData.getBufferData(), 0, 9 * 3);
+                // prefilterEnvMap
+                if(conVars[TilePassIBLLightingRenderProgram.S_PREF_ENV_MAP_SRC] != null)
+                    giProbe.getPrefilterEnvMap()._upload(gl, conVars[TilePassIBLLightingRenderProgram.S_PREF_ENV_MAP_SRC].loc);
+                this._m_m_LastSubShader = frameContext.m_LastSubShader;
+            }
+            else{
+                // 说明提交过探头数据
+                // 这里,检测已经提交的探头数据,然后分析是否与之相交,否则关闭探头数据,避免错误的渲染和额外的渲染
+            }
+        }
+        else{
+            // 检测探头
+            let giProbes = scene.getGIProbes();
+            if(giProbes && giProbes.length > 0){
+                // 找出与之相交的探头
+                // 首次,更新材质定义
+                frameContext.m_LastMaterial.addDefine(ShaderSource.S_GIPROBES_SRC, true);
+            }
+        }
     }
 
     /**
@@ -217,18 +269,31 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
             }
         }
     }
+
+    /**
+     * 上载tile信息。<br/>
+     * @param gl
+     * @param frameContext
+     * @param tileNum
+     * @param tiles
+     * @param tileWidth
+     * @param tileHeight
+     * @param lights
+     * @return {number}
+     * @private
+     */
     _tileLightDecode(gl, frameContext, tileNum, tiles, tileWidth, tileHeight, lights){
         let conVars = frameContext.m_LastSubShader.getContextVars();
         let len = -1;
         len = lights.length;
         let lightSpace = null;
-        if(conVars[TilePassLightingRenderProgram.S_LIGHT_NUM_SRC] != undefined){
-            gl.uniform1i(conVars[TilePassLightingRenderProgram.S_LIGHT_NUM_SRC].loc, len);
+        if(conVars[TilePassIBLLightingRenderProgram.S_LIGHT_NUM_SRC] != undefined){
+            gl.uniform1i(conVars[TilePassIBLLightingRenderProgram.S_LIGHT_NUM_SRC].loc, len);
         }
-        if(conVars[TilePassLightingRenderProgram.S_TILE_V_LIGHT_DATA_0] != undefined){
+        if(conVars[TilePassIBLLightingRenderProgram.S_TILE_V_LIGHT_DATA_0] != undefined){
             lightSpace = 1;
         }
-        else if(conVars[TilePassLightingRenderProgram.S_TILE_W_LIGHT_DATA_0] != undefined){
+        else if(conVars[TilePassIBLLightingRenderProgram.S_TILE_W_LIGHT_DATA_0] != undefined){
             lightSpace = 0;
         }
         else{
@@ -253,8 +318,8 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
         }
         // 计算光源采样尺寸
         let lightIndexWidth = Math.ceil(Math.sqrt(this._m_LightsIndex.length / 3));
-        if(conVars[TilePassLightingRenderProgram.S_TILE_LIGHT_OFFSET_SIZE] != undefined){
-            gl.uniform1f(conVars[TilePassLightingRenderProgram.S_TILE_LIGHT_OFFSET_SIZE].loc, lightIndexWidth);
+        if(conVars[TilePassIBLLightingRenderProgram.S_TILE_LIGHT_OFFSET_SIZE] != undefined){
+            gl.uniform1f(conVars[TilePassIBLLightingRenderProgram.S_TILE_LIGHT_OFFSET_SIZE].loc, lightIndexWidth);
         }
         // 填充占位
         for(let i = this._m_LightsIndex.length,len = lightIndexWidth * lightIndexWidth * 3;i < len;i++){
@@ -278,11 +343,11 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
         //     lightIndexDataVec3[i * 3 + 2] = 0;
         // }
         // this._m_LightsIndex = lightIndexDataVec3;
-        if(conVars[TilePassLightingRenderProgram.S_TILE_LIGHT_DECODE_SRC] != undefined){
-            this._m_LightsDecodeData.uploadArrayData(conVars[TilePassLightingRenderProgram.S_TILE_LIGHT_DECODE_SRC].loc, tileWidth, tileHeight, new Float32Array(this._m_LightsDecode));
+        if(conVars[TilePassIBLLightingRenderProgram.S_TILE_LIGHT_DECODE_SRC] != undefined){
+            this._m_LightsDecodeData.uploadArrayData(conVars[TilePassIBLLightingRenderProgram.S_TILE_LIGHT_DECODE_SRC].loc, tileWidth, tileHeight, new Float32Array(this._m_LightsDecode));
         }
-        if(conVars[TilePassLightingRenderProgram.S_TILE_LIGHT_INDEX_SRC] != undefined){
-            this._m_LightsIndexData.uploadArrayData(conVars[TilePassLightingRenderProgram.S_TILE_LIGHT_INDEX_SRC].loc, lightIndexWidth, lightIndexWidth, new Float32Array(this._m_LightsIndex));
+        if(conVars[TilePassIBLLightingRenderProgram.S_TILE_LIGHT_INDEX_SRC] != undefined){
+            this._m_LightsIndexData.uploadArrayData(conVars[TilePassIBLLightingRenderProgram.S_TILE_LIGHT_INDEX_SRC].loc, lightIndexWidth, lightIndexWidth, new Float32Array(this._m_LightsIndex));
         }
         // lightsData0,1,2
         let light = null;
@@ -329,17 +394,17 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
                     break;
             }
         }
-        let data = conVars[TilePassLightingRenderProgram.S_TILE_W_LIGHT_DATA_0] ? conVars[TilePassLightingRenderProgram.S_TILE_W_LIGHT_DATA_0] : conVars[TilePassLightingRenderProgram.S_TILE_V_LIGHT_DATA_0];
+        let data = conVars[TilePassIBLLightingRenderProgram.S_TILE_W_LIGHT_DATA_0] ? conVars[TilePassIBLLightingRenderProgram.S_TILE_W_LIGHT_DATA_0] : conVars[TilePassIBLLightingRenderProgram.S_TILE_V_LIGHT_DATA_0];
         if(data){
             // 上载lightData0
             this._m_LightsData0.uploadArrayData(data.loc, this._m_LightsData0Array.length / 4, 1, new Float32Array(this._m_LightsData0Array));
         }
-        data = conVars[TilePassLightingRenderProgram.S_TILE_W_LIGHT_DATA_1] ? conVars[TilePassLightingRenderProgram.S_TILE_W_LIGHT_DATA_1] : conVars[TilePassLightingRenderProgram.S_TILE_V_LIGHT_DATA_1];
+        data = conVars[TilePassIBLLightingRenderProgram.S_TILE_W_LIGHT_DATA_1] ? conVars[TilePassIBLLightingRenderProgram.S_TILE_W_LIGHT_DATA_1] : conVars[TilePassIBLLightingRenderProgram.S_TILE_V_LIGHT_DATA_1];
         if(data){
             // 上载lightData1
             this._m_LightsData1.uploadArrayData(data.loc, this._m_LightsData1Array.length / 4, 1, new Float32Array(this._m_LightsData1Array));
         }
-        data = conVars[TilePassLightingRenderProgram.S_TILE_W_LIGHT_DATA_2] ? conVars[TilePassLightingRenderProgram.S_TILE_W_LIGHT_DATA_2] : conVars[TilePassLightingRenderProgram.S_TILE_V_LIGHT_DATA_2];
+        data = conVars[TilePassIBLLightingRenderProgram.S_TILE_W_LIGHT_DATA_2] ? conVars[TilePassIBLLightingRenderProgram.S_TILE_W_LIGHT_DATA_2] : conVars[TilePassIBLLightingRenderProgram.S_TILE_V_LIGHT_DATA_2];
         if(data){
             // 上载lightData2
             this._m_LightsData2.uploadArrayData(data.loc, this._m_LightsData2Array.length / 4, 1, new Float32Array(this._m_LightsData2Array));
@@ -357,32 +422,42 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
      * @param lastIndex
      * @private
      */
-    _uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex){
+    _uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex, blendGiProbes){
         let conVars = frameContext.m_LastSubShader.getContextVars();
-        if(conVars[TilePassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
+        let enableGI = scene.enableGIProbes();
+        if(conVars[TilePassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
+            gl.uniform1i(conVars[TilePassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, blendGiProbes && enableGI);
+        }
+        if(conVars[TilePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
             if(lastIndex == 0){
                 // 提交合计的ambientColor(场景可能添加多个ambientLight)
                 // 也可以设计为场景只能存在一个ambientColor
                 let ambientLightColor = scene.AmbientLightColor;
-                gl.uniform3f(conVars[TilePassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+                gl.uniform3f(conVars[TilePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
             }
             else{
                 // 开启累积缓存模式
                 // 我们使用result = s * 1.0 + d * 1.0
                 // 所以,渲染当前pass,s部分在当前混合下应该使用一个全黑的ambientLightColor(因为第一个pass已经计算了ambientLightColor)
-                gl.uniform3f(conVars[TilePassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, 0.0, 0.0, 0.0);
+                gl.uniform3f(conVars[TilePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, 0.0, 0.0, 0.0);
                 scene.getRender()._checkRenderState(gl, this._m_AccumulationLights, frameContext.getRenderState());
             }
         }
+        // 探头信息
+        if(enableGI)
+            this._blendGIProbes(gl, scene, frameContext);
+
+
+        // 灯光信息
         let lightSpaceLoc = null;
         let lightSpace = null;
-        if(conVars[TilePassLightingRenderProgram.S_V_LIGHT_DATA] != null){
+        if(conVars[TilePassIBLLightingRenderProgram.S_V_LIGHT_DATA] != null){
             lightSpace = 1;
-            lightSpaceLoc = conVars[TilePassLightingRenderProgram.S_V_LIGHT_DATA].loc;
+            lightSpaceLoc = conVars[TilePassIBLLightingRenderProgram.S_V_LIGHT_DATA].loc;
         }
-        else if(conVars[TilePassLightingRenderProgram.S_W_LIGHT_DATA] != null){
+        else if(conVars[TilePassIBLLightingRenderProgram.S_W_LIGHT_DATA] != null){
             lightSpace = 0;
-            lightSpaceLoc = conVars[TilePassLightingRenderProgram.S_W_LIGHT_DATA].loc;
+            lightSpaceLoc = conVars[TilePassIBLLightingRenderProgram.S_W_LIGHT_DATA].loc;
         }
         // 计算实际需要上载的灯光
         let curLightCount = (batchSize + lastIndex) > lights.length ? (lights.length - lastIndex) : batchSize;
@@ -392,7 +467,7 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
         let light = null;
         let lightColor = null;
         // 灯光数据
-        let lightData = TempVars.S_LIGHT_DATA;
+        let lightData = TempVars.S_LIGHT_DATA_4;
         let array = lightData.getArray();
         let tempVec4 = TempVars.S_TEMP_VEC4;
         let tempVec42 = TempVars.S_TEMP_VEC4_2;
@@ -434,10 +509,10 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
             }
         }
         // 上载数据
-        // gl[conVars[TilePassLightingRenderProgram.S_LIGHT_DATA].fun]
+        // gl[conVars[TilePassIBLLightingRenderProgram.S_LIGHT_DATA].fun]
         gl.uniform4fv(lightSpaceLoc, lightData.getBufferData(), 0, curLightCount * 12);
-        if(conVars[TilePassLightingRenderProgram.S_CUR_LIGHT_COUNT] != null)
-            gl.uniform1i(conVars[TilePassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, curLightCount * 3);
+        if(conVars[TilePassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT] != null)
+            gl.uniform1i(conVars[TilePassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, curLightCount * 3);
         return curLightCount + lastIndex;
     }
     draw(gl, scene, frameContext, iDrawable, lights, pass){
@@ -447,12 +522,18 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
             // 如果灯光数量为0,则直接执行渲染
             if(lights.length == 0){
                 let conVars = frameContext.m_LastSubShader.getContextVars();
-                if(conVars[TilePassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
-                    let ambientLightColor = scene.AmbientLightColor;
-                    gl.uniform3f(conVars[TilePassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+                let enableGI = scene.enableGIProbes();
+                if(enableGI)
+                    this._blendGIProbes(gl, scene, frameContext);
+                if(conVars[TilePassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
+                    gl.uniform1i(conVars[TilePassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, enableGI);
                 }
-                if(conVars[TilePassLightingRenderProgram.S_CUR_LIGHT_COUNT] != null)
-                    gl.uniform1i(conVars[TilePassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, 0);
+                if(conVars[TilePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
+                    let ambientLightColor = scene.AmbientLightColor;
+                    gl.uniform3f(conVars[TilePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+                }
+                if(conVars[TilePassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT] != null)
+                    gl.uniform1i(conVars[TilePassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, 0);
                 iDrawable.draw(frameContext);
                 return;
             }
@@ -461,7 +542,7 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
             let lastIndex = 0;
             while(lastIndex < lights.length){
                 // 更新灯光信息
-                lastIndex = this._uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex);
+                lastIndex = this._uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex, lastIndex == 0);
                 // 最后draw
                 iDrawable.draw(frameContext);
             }
@@ -521,12 +602,18 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
             // 如果灯光数量为0,则直接执行渲染
             if(lights.length == 0){
                 let conVars = frameContext.m_LastSubShader.getContextVars();
-                if(conVars[TilePassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
-                    let ambientLightColor = scene.AmbientLightColor;
-                    gl.uniform3f(conVars[TilePassLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+                let enableGI = scene.enableGIProbes();
+                if(enableGI)
+                    this._blendGIProbes(gl, scene, frameContext);
+                if(conVars[TilePassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
+                    gl.uniform1i(conVars[TilePassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, enableGI);
                 }
-                if(conVars[TilePassLightingRenderProgram.S_CUR_LIGHT_COUNT] != null)
-                    gl.uniform1i(conVars[TilePassLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, 0);
+                if(conVars[TilePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
+                    let ambientLightColor = scene.AmbientLightColor;
+                    gl.uniform3f(conVars[TilePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+                }
+                if(conVars[TilePassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT] != null)
+                    gl.uniform1i(conVars[TilePassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, 0);
                 iDrawables.forEach(iDrawable=>{
                     iDrawable.draw(frameContext);
                 });
@@ -537,7 +624,7 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
             let lastIndex = 0;
             while(lastIndex < lights.length){
                 // 更新灯光信息
-                lastIndex = this._uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex);
+                lastIndex = this._uploadLights(gl, scene, frameContext, lights, batchSize, lastIndex, lastIndex == 0);
                 // 最后draw
                 iDrawables.forEach(iDrawable=>{
                     iDrawable.draw(frameContext);

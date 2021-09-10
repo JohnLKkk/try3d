@@ -22,6 +22,7 @@ import MultiPassLightingRenderProgram from "./Program/MultiPassLightingRenderPro
 import MultiPassIBLLightingRenderProgram from "./Program/MultiPassIBLLightingRenderProgram.js";
 import TilePassLightingRenderProgram from "./Program/TilePassLightingRenderProgram.js";
 import TileDeferred from "./Pipeline/TileDeferred.js";
+import TilePassIBLLightingRenderProgram from "./Program/TilePassIBLLightingRenderProgram.js";
 
 export default class Render extends Component{
     // 渲染路径
@@ -96,6 +97,9 @@ export default class Render extends Component{
             tileHeight:0,
             tileNum:0
         };
+        this._m_Scene.getCanvas().on('resize', (w, h)=>{
+            this.updateTileInfo(w, h);
+        });
         this.setTileSize(32);
     }
 
@@ -219,6 +223,7 @@ export default class Render extends Component{
         this._m_RenderPrograms[SinglePassIBLLightingRenderProgram.PROGRAM_TYPE] = new SinglePassIBLLightingRenderProgram();
         this._m_RenderPrograms[MultiPassIBLLightingRenderProgram.PROGRAM_TYPE] = new MultiPassIBLLightingRenderProgram();
         this._m_RenderPrograms[TilePassLightingRenderProgram.PROGRAM_TYPE] = new TilePassLightingRenderProgram();
+        this._m_RenderPrograms[TilePassIBLLightingRenderProgram.PROGRAM_TYPE] = new TilePassIBLLightingRenderProgram();
 
 
         // pipeline

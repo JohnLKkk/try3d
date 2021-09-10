@@ -738,6 +738,507 @@ Def DeferredLightingDef{
             }
         }
     }
+    SubTechnology GlobalPass{
+        Vars{
+            vec4 wordPosition;
+            vec2 uv0;
+            mat4 pvInverse;
+        }
+        Advanced{
+            RenderProgram TilePassIBLLighting;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = vec4(Context.InPosition, 1.0f);
+                wordPosition = Context.OutPosition;
+                uv0 = Context.InUv0;
+                pvInverse = inverse(Context.ProjectViewMatrix);
+            }
+        }
+        Fs_Shader{
+            vec3 getPosition(in float depth, in vec2 newTexCoord){
+
+                vec4 pos;
+                pos.xy = (newTexCoord * vec2(2.0)) - vec2(1.0);
+                pos.z  = depth * 2.0 - 1.0;
+                pos.w  = 1.0;
+                pos    = pvInverse * pos;
+                pos.xyz /= pos.w;
+                return pos.xyz;
+            }
+            // 计算光照方向
+            // 对于DirLight,PointLight以及SpotLight,lightType依次为0.0,1.0,2.0
+            // 输出光照方向
+            // lightDir.w存储衰减率(对于DirLight,衰减值一直为1,对于Point或Spot,衰减值随着半径而变小,衰减值越小,表示衰减度越大)
+            void ComputeLightDir(in vec3 worldPos, in float lightType, in vec4 position, out vec4 lightDir, out vec3 lightVec){
+                // 只有lightType = 0.0时,posLight为0.0,否则posLight为1.0
+                float posLight = step(0.5f, lightType);
+
+                // 计算光照位置
+                // 对于DirLight,lightVec = position.xyz * sign(-0.5f) = position.xyz * -1.0f;其中position代表DirLight的方向
+                // 对于PointLight和SpotLight,lightVec = position.xyz * sign(1.0f - 0.5f) - (worldPos * 1.0f) = positions.xyz * 1.0f - worldPos;其中position代表Light的位置
+                lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);
+                float dist = length(lightVec);
+
+                #ifdef Context.Srgb
+                    lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
+                    lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
+                #else
+                    // 对于DirLight,lightDir.w = 1.0f
+                    lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
+                #endif
+
+                // 归一化
+                lightDir.xyz = lightVec / vec3(dist);
+            }
+            #define PI 3.14159265358979323846264
+            // 镜面反射菲涅尔计算
+            vec3 F_Shlick(float vh,	vec3 F0){
+                float fresnelFact = pow(2.0f, (-5.55473f * vh - 6.98316f) * vh);
+                return mix(F0, vec3(1.0f, 1.0f, 1.0f), fresnelFact);
+            }
+            vec3 F_Schlick2(float cosTheta, vec3 F0)
+            {
+                return F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
+            }
+            // 计算直接光照
+            void ComputeDirectLighting(in vec3 normal, in vec3 viewDir, in vec3 lightDir, in vec3 lightColor, in vec3 diffuseColor, in vec3 fZero, in float roughness, in float ndotv, out vec3 directLighting){
+                vec3 h = normalize(lightDir + viewDir);
+                float ndotl = max( dot( normal, lightDir ), 0.0f );
+                float ndoth = max( dot( normal, h), 0.0f );
+                float hdotv = max( dot( h, viewDir ), 0.0f );
+
+                // 这里,不使用c/Π计算diffuse fr(x, wi, wo)
+                // 而假设恒定
+                vec3 diffuse = vec3( ndotl ) * lightColor * diffuseColor;
+
+                // cook-torrence,BRDF : http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
+                float alpha = roughness * roughness;
+
+                // D, GGX 法线分布函数
+                float alpha2 = alpha * alpha;
+                float sum = (( ndoth * ndoth ) * ( alpha2 - 1.0f ) + 1.0f);
+                float denom = PI * sum * sum;
+                float D = alpha2 / denom;
+
+                // F, 菲涅尔项
+                vec3 F = F_Shlick( hdotv, fZero );
+
+                // G, 几何遮挡项
+                float k = alpha * 0.5f;
+                float G_V = ndotv + sqrt( ( ndotv - ndotv * k ) * ndotv + k );
+                float G_L = ndotl + sqrt( ( ndotl - ndotl * k ) * ndotl + k );
+                float G = 1.0f / max( G_V * G_L ,0.01f );
+
+                // specularBRDF
+                float t = D * G * ndotl;
+                vec3 specular =  vec3( t ) * F * lightColor;
+
+                directLighting = diffuse + specular;
+            }
+            // 返回Spot范围衰减
+            float ComputeSpotFalloff(in vec4 spotDirection, in vec3 lightDir){
+                float curAngleCos = dot(lightDir, -spotDirection.xyz);
+                float innerAngleCos = floor(spotDirection.w) * 0.001f;
+                float outerAngleCos = fract(spotDirection.w);
+                float innerMinusOuter = innerAngleCos - outerAngleCos;
+                float falloff = clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f);
+                //if(curAngleCos > innerMinusOuter)
+                //    falloff = 1.0f;
+                //else
+                //    falloff = 0.0f;
+
+                #ifdef Context.Srgb
+                    // 使用二次衰减（请注意^ 4）
+                    return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f), 4.0f);
+                #else
+                    // 线性空间衰减
+                    return falloff;
+                #endif
+            }
+            // 球谐函数
+            vec3 sphericalHarmonics( const in vec3 normal, const vec3 sph[9] ){
+                float x = normal.x;
+                float y = normal.y;
+                float z = normal.z;
+
+                vec3 result = (
+                    sph[0] +
+
+                    sph[1] * y +
+                    sph[2] * z +
+                    sph[3] * x +
+
+                    sph[4] * y * x +
+                    sph[5] * y * z +
+                    sph[6] * (3.0f * z * z - 1.0f) +
+                    sph[7] * (z * x) +
+                    sph[8] * (x*x - y*y)
+                );
+
+                return max(result, vec3(0.0f));
+            }
+            // 镜面反射趋势朝向
+            vec3 getSpecularDominantDir(const in vec3 N, const in vec3 R, const in float realRoughness){
+
+                float smoothness = 1.0f - realRoughness;
+                float lerpFactor = smoothness * (sqrt(smoothness) + realRoughness);
+                // 当我们在立方体贴图中获取时，结果未规范化
+                vec3 dominant = mix(N, R, lerpFactor);
+
+                return dominant;
+            }
+            // 拟合方程
+            // 关于镜面部分，有很多优化地方，除了常见的优化，还有很多可以替代方案，几乎可以在保证画质的前提下，在移动端35帧率提升到60帧率，详细可参考我的笔记:https://www.cnblogs.com/JhonKkk/p/14313882.html
+            vec3 integrateBRDFApprox( const in vec3 specular, in float roughness, in float NoV ){
+                const vec4 c0 = vec4( -1.0f, -0.0275f, -0.572f, 0.022f );
+                const vec4 c1 = vec4( 1.0f, 0.0425f, 1.04f, -0.04f );
+                vec4 r = roughness * c0 + c1;
+                float a004 = min( r.x * r.x, exp2( -9.28f * NoV ) ) * r.x + r.y;
+                vec2 ab = vec2( -1.04f, 1.04f ) * a004 + r.zw;
+                return specular * ab.x + ab.y;
+            }
+            // 近似镜面IBL多项式
+            vec3 approximateSpecularIBLPolynomial(in samplerCube envMap, in vec3 specularColor , in float roughness, in float ndotv, in vec3 refVec, in float mipMaps){
+                float lod = sqrt( roughness ) * (mipMaps - 1.0f);
+                vec3 prefilteredColor = textureLod(envMap, refVec.xyz, lod).rgb;
+                return prefilteredColor * integrateBRDFApprox(specularColor, roughness, ndotv);
+            }
+            #define GAMMA 2.2f
+            #define GAMMA_T 1.0f / GAMMA
+            void main(){
+                float depth = texture(Context.InGDepth, uv0).r;
+                if(depth >= 1.0){
+                    Context.OutColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+                    return;
+                }
+                vec3 wPosition = getPosition(depth, uv0);
+                vec4 buff0 = texture(Context.InGBuffer0, uv0);
+                vec4 buff2 = texture(Context.InGBuffer2, uv0);
+                vec3 _diffuseColor = floor(buff0.rgb) * 0.01f * Context.AmbientLightColor;
+                vec3 _specularColor = floor(buff2.rgb) * 0.1f;
+                vec3 ao = min(fract(buff0.rgb) * 10.0f, vec3(1.0f));
+                vec3 fZero = min(fract(buff2.rgb) * 10.0f, vec3(0.5f));
+                float _roughness = floor(buff2.w) * 0.1f;
+                vec3 n = texture(Context.InGBuffer1, uv0).xyz;
+                vec3 normal = floor(n) * 0.001;
+                vec3 wNormal = fract(n) * 1000.0f;
+                // 计算光照
+                vec4 lightColor;
+                vec4 lightData1;
+                vec4 lightDir = vec4(0.0f);
+                vec3 lightVec = vec3(0.0f);
+                vec3 directLighting = vec3(0.0f);
+                vec3 viewDir = normalize(Context.CameraPosition.xyz - wPosition.xyz);
+
+                float ndotv = max( dot( normal, viewDir ), 0.0f );
+                for( int i = 0;i < Context.CurLightCount;i+=3 ){
+                    lightColor = Context.WLightData[i];
+                    lightData1 = Context.WLightData[i + 1];
+                    ComputeLightDir(wPosition, lightColor.w, lightData1, lightDir, lightVec);
+
+                    // 计算PointLight的衰减
+                    float spotFallOff = 1.0 * lightDir.w;
+                    // 计算SpotLight的衰减
+                    if( lightColor.w > 1.0f )
+                    {
+                        // 计算SpotLight的范围衰减
+                        spotFallOff = ComputeSpotFalloff( Context.WLightData[i + 2], lightDir.xyz );
+                    }
+
+                    ComputeDirectLighting(normal, viewDir, lightDir.xyz, lightColor.rgb, _diffuseColor.rgb, fZero, _roughness, ndotv, directLighting);
+                    Context.OutColor.rgb += directLighting * spotFallOff;
+                }
+
+                if(Context.BlendGiProbes){
+                    #ifdef Context.GIProbes
+                        // 作为webGL项目,暂时不实现探针混合(但作为可拓展,仍然加结尾s命名)
+
+                        // 计算反射视线
+                        vec3 _rv = reflect( -viewDir.xyz, normal.xyz );
+                        float _r = fract( Context.WGIProbe.w );
+                        float _mipMaps = Context.WGIProbe.w - _r;
+                        _rv = _r * ( wPosition.xyz - Context.WGIProbe.xyz ) + _rv;
+
+                        // 使用球谐计算diffuse( 避免Irr采样 )
+                        vec3 giLighting = sphericalHarmonics(normal.xyz, Context.ShCoeffs) * _diffuseColor.rgb;
+
+                        float horiz = dot(_rv, wNormal);
+                        float horizFadePower = 1.0f - _roughness;
+                        horiz = clamp( 1.0f + horizFadePower * horiz, 0.0f, 1.0f );
+                        horiz *= horiz;
+
+                        vec3 _dominantR = getSpecularDominantDir( normal, _rv.xyz, _roughness * _roughness );
+                        giLighting += approximateSpecularIBLPolynomial(Context.InPrefEnvMap, _specularColor.rgb, _roughness, ndotv, _dominantR, _mipMaps) * vec3( horiz );
+                        giLighting *= ao;
+
+                        Context.OutColor.rgb += giLighting * step( 0.0f, Context.WGIProbe.w );
+                        // Context.OutColor.rgb = textureLod(Context.InPrefEnvMap, normal.xyz, 0.0f).rgb;
+                    #endif
+                }
+                Context.OutColor.a = buff0.a;
+                // 色调映射(后续在后处理统一处理),理论上可以不需要
+                // Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));
+                // 伽马矫正(后续在后处理统一处理)
+                Context.OutColor.rgb = pow(Context.OutColor.rgb, vec3(GAMMA_T));
+            }
+        }
+    }
+    SubTechnology TilePass{
+        Vars{
+            vec4 wordPosition;
+            vec2 uv0;
+            mat4 pvInverse;
+        }
+        Advanced{
+            RenderProgram TilePassIBLLighting;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = vec4(Context.InPosition, 1.0f);
+                wordPosition = Context.OutPosition;
+                uv0 = Context.InUv0;
+                pvInverse = inverse(Context.ProjectViewMatrix);
+            }
+        }
+        Fs_Shader{
+            vec3 getPosition(in float depth, in vec2 newTexCoord){
+
+                vec4 pos;
+                pos.xy = (newTexCoord * vec2(2.0)) - vec2(1.0);
+                pos.z  = depth * 2.0 - 1.0;
+                pos.w  = 1.0;
+                pos    = pvInverse * pos;
+                pos.xyz /= pos.w;
+                return pos.xyz;
+            }
+            // 计算光照方向
+            // 对于DirLight,PointLight以及SpotLight,lightType依次为0.0,1.0,2.0
+            // 输出光照方向
+            // lightDir.w存储衰减率(对于DirLight,衰减值一直为1,对于Point或Spot,衰减值随着半径而变小,衰减值越小,表示衰减度越大)
+            void ComputeLightDir(in vec3 worldPos, in float lightType, in vec4 position, out vec4 lightDir, out vec3 lightVec){
+                // 只有lightType = 0.0时,posLight为0.0,否则posLight为1.0
+                float posLight = step(0.5f, lightType);
+
+                // 计算光照位置
+                // 对于DirLight,lightVec = position.xyz * sign(-0.5f) = position.xyz * -1.0f;其中position代表DirLight的方向
+                // 对于PointLight和SpotLight,lightVec = position.xyz * sign(1.0f - 0.5f) - (worldPos * 1.0f) = positions.xyz * 1.0f - worldPos;其中position代表Light的位置
+                lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);
+                float dist = length(lightVec);
+
+                #ifdef Context.Srgb
+                    lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
+                    lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
+                #else
+                    // 对于DirLight,lightDir.w = 1.0f
+                    lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
+                #endif
+
+                // 归一化
+                lightDir.xyz = lightVec / vec3(dist);
+            }
+            #define PI 3.14159265358979323846264
+            // 镜面反射菲涅尔计算
+            vec3 F_Shlick(float vh,	vec3 F0){
+                float fresnelFact = pow(2.0f, (-5.55473f * vh - 6.98316f) * vh);
+                return mix(F0, vec3(1.0f, 1.0f, 1.0f), fresnelFact);
+            }
+            vec3 F_Schlick2(float cosTheta, vec3 F0)
+            {
+                return F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
+            }
+            // 计算直接光照
+            void ComputeDirectLighting(in vec3 normal, in vec3 viewDir, in vec3 lightDir, in vec3 lightColor, in vec3 diffuseColor, in vec3 fZero, in float roughness, in float ndotv, out vec3 directLighting){
+                vec3 h = normalize(lightDir + viewDir);
+                float ndotl = max( dot( normal, lightDir ), 0.0f );
+                float ndoth = max( dot( normal, h), 0.0f );
+                float hdotv = max( dot( h, viewDir ), 0.0f );
+
+                // 这里,不使用c/Π计算diffuse fr(x, wi, wo)
+                // 而假设恒定
+                vec3 diffuse = vec3( ndotl ) * lightColor * diffuseColor;
+
+                // cook-torrence,BRDF : http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
+                float alpha = roughness * roughness;
+
+                // D, GGX 法线分布函数
+                float alpha2 = alpha * alpha;
+                float sum = (( ndoth * ndoth ) * ( alpha2 - 1.0f ) + 1.0f);
+                float denom = PI * sum * sum;
+                float D = alpha2 / denom;
+
+                // F, 菲涅尔项
+                vec3 F = F_Shlick( hdotv, fZero );
+
+                // G, 几何遮挡项
+                float k = alpha * 0.5f;
+                float G_V = ndotv + sqrt( ( ndotv - ndotv * k ) * ndotv + k );
+                float G_L = ndotl + sqrt( ( ndotl - ndotl * k ) * ndotl + k );
+                float G = 1.0f / max( G_V * G_L ,0.01f );
+
+                // specularBRDF
+                float t = D * G * ndotl;
+                vec3 specular =  vec3( t ) * F * lightColor;
+
+                directLighting = diffuse + specular;
+            }
+            // 返回Spot范围衰减
+            float ComputeSpotFalloff(in vec4 spotDirection, in vec3 lightDir){
+                float curAngleCos = dot(lightDir, -spotDirection.xyz);
+                float innerAngleCos = floor(spotDirection.w) * 0.001f;
+                float outerAngleCos = fract(spotDirection.w);
+                float innerMinusOuter = innerAngleCos - outerAngleCos;
+                float falloff = clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f);
+                //if(curAngleCos > innerMinusOuter)
+                //    falloff = 1.0f;
+                //else
+                //    falloff = 0.0f;
+
+                #ifdef Context.Srgb
+                    // 使用二次衰减（请注意^ 4）
+                    return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f), 4.0f);
+                #else
+                    // 线性空间衰减
+                    return falloff;
+                #endif
+            }
+            // 球谐函数
+            vec3 sphericalHarmonics( const in vec3 normal, const vec3 sph[9] ){
+                float x = normal.x;
+                float y = normal.y;
+                float z = normal.z;
+
+                vec3 result = (
+                    sph[0] +
+
+                    sph[1] * y +
+                    sph[2] * z +
+                    sph[3] * x +
+
+                    sph[4] * y * x +
+                    sph[5] * y * z +
+                    sph[6] * (3.0f * z * z - 1.0f) +
+                    sph[7] * (z * x) +
+                    sph[8] * (x*x - y*y)
+                );
+
+                return max(result, vec3(0.0f));
+            }
+            // 镜面反射趋势朝向
+            vec3 getSpecularDominantDir(const in vec3 N, const in vec3 R, const in float realRoughness){
+
+                float smoothness = 1.0f - realRoughness;
+                float lerpFactor = smoothness * (sqrt(smoothness) + realRoughness);
+                // 当我们在立方体贴图中获取时，结果未规范化
+                vec3 dominant = mix(N, R, lerpFactor);
+
+                return dominant;
+            }
+            // 拟合方程
+            // 关于镜面部分，有很多优化地方，除了常见的优化，还有很多可以替代方案，几乎可以在保证画质的前提下，在移动端35帧率提升到60帧率，详细可参考我的笔记:https://www.cnblogs.com/JhonKkk/p/14313882.html
+            vec3 integrateBRDFApprox( const in vec3 specular, in float roughness, in float NoV ){
+                const vec4 c0 = vec4( -1.0f, -0.0275f, -0.572f, 0.022f );
+                const vec4 c1 = vec4( 1.0f, 0.0425f, 1.04f, -0.04f );
+                vec4 r = roughness * c0 + c1;
+                float a004 = min( r.x * r.x, exp2( -9.28f * NoV ) ) * r.x + r.y;
+                vec2 ab = vec2( -1.04f, 1.04f ) * a004 + r.zw;
+                return specular * ab.x + ab.y;
+            }
+            // 近似镜面IBL多项式
+            vec3 approximateSpecularIBLPolynomial(in samplerCube envMap, in vec3 specularColor , in float roughness, in float ndotv, in vec3 refVec, in float mipMaps){
+                float lod = sqrt( roughness ) * (mipMaps - 1.0f);
+                vec3 prefilteredColor = textureLod(envMap, refVec.xyz, lod).rgb;
+                return prefilteredColor * integrateBRDFApprox(specularColor, roughness, ndotv);
+            }
+            #define GAMMA 2.2f
+            #define GAMMA_T 1.0f / GAMMA
+            void main(){
+                float depth = texture(Context.InGDepth, uv0).r;
+                if(depth >= 1.0){
+                    Context.OutColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+                    return;
+                }
+                vec3 wPosition = getPosition(depth, uv0);
+                vec4 buff0 = texture(Context.InGBuffer0, uv0);
+                vec4 buff2 = texture(Context.InGBuffer2, uv0);
+                vec3 _diffuseColor = floor(buff0.rgb) * 0.01f * Context.AmbientLightColor;
+                vec3 _specularColor = floor(buff2.rgb) * 0.1f;
+                vec3 ao = min(fract(buff0.rgb) * 10.0f, vec3(1.0f));
+                vec3 fZero = min(fract(buff2.rgb) * 10.0f, vec3(0.5f));
+                float _roughness = floor(buff2.w) * 0.1f;
+                vec3 n = texture(Context.InGBuffer1, uv0).xyz;
+                vec3 normal = floor(n) * 0.001;
+                vec3 wNormal = fract(n) * 1000.0f;
+                // 计算光照
+                vec4 lightColor;
+                vec4 lightData1;
+                vec4 lightDir = vec4(0.0f);
+                vec3 lightVec = vec3(0.0f);
+                vec3 directLighting = vec3(0.0f);
+                vec3 viewDir = normalize(Context.CameraPosition.xyz - wPosition.xyz);
+
+                Context.OutColor.rgb = vec3(0.0f);
+                // Tile Based Shading
+                // 获取tile信息
+                vec3 tile = texture(Context.InTileLightDecode, uv0).xyz;
+                int uoffset = int(tile.x);
+                int voffset = int(tile.z);
+                int count = int(tile.y);
+                if(count > 0){
+                    int lightId;
+                    float temp;
+                    int offset;
+                    // lightIndex采样范围规范化单位
+                    float uvSize = 1.0f / (Context.TileLightOffsetSize - 1.0f);
+                    vec2 lightUV;
+                    // lightData采样范围规范单位
+                    float lightUVSize = 1.0f / (float(Context.TileLightNum) - 1.0f);
+                    vec2 lightDataUV;
+                    for(int i = 0;i < count;i++){
+                        temp = float(uoffset + i);
+                        offset = 0;
+
+                        if(temp >= Context.TileLightOffsetSize){
+                            temp -= Context.TileLightOffsetSize;
+                            offset++;
+                        }
+                        if(temp == Context.TileLightOffsetSize){
+                            temp = 0.0f;
+                        }
+
+                        // lightIndexUV
+                        lightUV = vec2(temp * uvSize, float(voffset + offset) * uvSize);
+                        lightId = int(texture(Context.InTileLightIndex, lightUV).x);
+
+                        // 光源信息
+                        lightDataUV = vec2(float(lightId) * lightUVSize);
+                        lightColor = texture(Context.InTileWLightData0, lightDataUV);
+                        lightData1 = texture(Context.InTileWLightData1, lightDataUV);
+
+                        float ndotv = max( dot( normal, viewDir ), 0.0f );
+                        ComputeLightDir(wPosition, lightColor.w, lightData1, lightDir, lightVec);
+
+                        // 计算PointLight的衰减
+                        float spotFallOff = 1.0 * lightDir.w;
+                        // 计算SpotLight的衰减
+                        if( lightColor.w > 1.0f )
+                        {
+                            // 计算SpotLight的范围衰减
+                            spotFallOff = ComputeSpotFalloff( texture(Context.InTileWLightData2, lightDataUV), lightDir.xyz );
+                        }
+
+                        ComputeDirectLighting(normal, viewDir, lightDir.xyz, lightColor.rgb, _diffuseColor.rgb, fZero, _roughness, ndotv, directLighting);
+                        Context.OutColor.rgb += directLighting * spotFallOff;
+                    }
+                }
+                Context.OutColor.a = buff0.a;
+                // 色调映射(后续在后处理统一处理),理论上可以不需要
+                // Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));
+                // 伽马矫正(后续在后处理统一处理)
+                Context.OutColor.rgb = pow(Context.OutColor.rgb, vec3(GAMMA_T));
+            }
+        }
+    }
     Technology{
         Sub_Pass DeferredShading{
             Pass GBufferPass{
@@ -751,6 +1252,16 @@ Def DeferredLightingDef{
             Pass GBufferPass{
             }
             Pass DeferredShadingPass2{
+            }
+        }
+    }
+    Technology TileDeferred{
+        Sub_Pass TileDeferredShading{
+            Pass GBufferPass{
+            }
+            Pass GlobalPass{
+            }
+            Pass TilePass{
             }
         }
     }
