@@ -228,6 +228,8 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
             len = tile.length;
             for(let l = 0;l < len;l++){
                 this._m_LightsIndex.push(tile[l]);
+                this._m_LightsIndex.push(0);
+                this._m_LightsIndex.push(0);
             }
             // u偏移
             this._m_LightsDecode.push(offset);
@@ -238,12 +240,12 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
             offset += len;
         }
         // 计算光源采样尺寸
-        let lightIndexWidth = Math.ceil(Math.sqrt(this._m_LightsIndex.length));
+        let lightIndexWidth = Math.ceil(Math.sqrt(this._m_LightsIndex.length / 3));
         if(conVars[TilePassLightingRenderProgram.S_TILE_LIGHT_OFFSET_SIZE] != undefined){
             gl.uniform1f(conVars[TilePassLightingRenderProgram.S_TILE_LIGHT_OFFSET_SIZE].loc, lightIndexWidth);
         }
         // 填充占位
-        for(let i = 0,len = lightIndexWidth * lightIndexWidth;i < len;i++){
+        for(let i = this._m_LightsIndex.length,len = lightIndexWidth * lightIndexWidth * 3;i < len;i++){
             this._m_LightsIndex.push(-1);
         }
 
@@ -257,13 +259,13 @@ export default class TilePassLightingRenderProgram extends DefaultRenderProgram{
 
         // 编码光源信息
         // lightIndexData
-        let lightIndexDataVec3 = [];
-        for(let i = 0,len = this._m_LightsIndex.length;i < len;i++){
-            lightIndexDataVec3[i * 3] = this._m_LightsIndex[i];
-            lightIndexDataVec3[i * 3 + 1] = 0;
-            lightIndexDataVec3[i * 3 + 2] = 0;
-        }
-        this._m_LightsIndex = lightIndexDataVec3;
+        // let lightIndexDataVec3 = [];
+        // for(let i = 0,len = this._m_LightsIndex.length;i < len;i++){
+        //     lightIndexDataVec3[i * 3] = this._m_LightsIndex[i];
+        //     lightIndexDataVec3[i * 3 + 1] = 0;
+        //     lightIndexDataVec3[i * 3 + 2] = 0;
+        // }
+        // this._m_LightsIndex = lightIndexDataVec3;
         if(conVars[TilePassLightingRenderProgram.S_TILE_LIGHT_DECODE_SRC] != undefined){
             this._uploadDecodeTexture(gl, this._m_LightsDecodeData, conVars[TilePassLightingRenderProgram.S_TILE_LIGHT_DECODE_SRC].loc, gl.RGB32F, tileWidth, tileHeight, gl.RGB, gl.FLOAT, new Float32Array(this._m_LightsDecode));
         }
