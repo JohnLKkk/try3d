@@ -381,7 +381,7 @@ export default class SubShader {
             if(this._m_Defines != null && globalRefresh){
                 let holds = this._m_ShaderProgram._m_Holds;
                 for(let objId in holds){
-                    if(holds[objId] != this){
+                    if(holds[objId] != this && holds[objId]){
                         // 其他所有引用同一个shaderProgram的subShader都应该添加这个defines
                         // 不必担心重复编译,因为一旦其中一个被编译过,其他subShader都会自动引用
                         holds[objId]._m_KeyDefs = this._m_KeyDefs;

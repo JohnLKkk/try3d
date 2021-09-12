@@ -13,7 +13,7 @@ import RadianceLoader from "../../../Supp/RadianceLoader.js";
 export default class Texture2DVars extends Vars{
     static _S_TEMP_COLOR = new UniformBufferI(4);
     // 纹理滤波常量
-    static S_FILTERS = {S_NEAREST:0x001, S_LINEAR:0x002, S_LINEAR_MIPMAP_NEAREST:0x003};
+    static S_FILTERS = {S_NEAREST:0x001, S_LINEAR:0x002, S_LINEAR_MIPMAP_NEAREST:0x003, S_NEAREST_MIPMAP_LINEAR:0x004, S_LINEAR_MIPMAP_LINEAR:0x005, S_NEAREST_MIPMAP_NEAREST:0x006};
     // 纹理参数常量
     static S_WRAPS = {S_REPEAT:0x001, S_CLAMP:0X002, S_CLAMP_TO_EDGE:0x003, S_CLAMP_TO_BORDER:0x004};
     // 纹理格式
@@ -22,6 +22,23 @@ export default class Texture2DVars extends Vars{
         super(scene);
         this._m_Scene = scene;
         const gl = scene.getCanvas().getGLContext();
+        Texture2DVars.S_TEXTURE_FORMAT = {
+            S_RGB:gl.RGB,
+            S_RGBA:gl.RGBA,
+            S_RGB16F:gl.RGB16F,
+            S_RGB32F:gl.RGB32F,
+            S_RGBA16F:gl.RGBA16F,
+            S_RGBA32F:gl.RGBA32F,
+            S_RGBE5:gl.RGB9_E5,
+            S_SRGB:gl.SRGB,
+            S_SRGB8:gl.SRGB8,
+            S_SRGBA:gl.SRGB8_ALPHA8,
+            S_SHORT:gl.SHORT,
+            S_INT:gl.INT,
+            S_BYTE:gl.BYTE,
+            S_UNSIGNED_BYTE:gl.UNSIGNED_BYTE,
+            S_FLOAT:gl.FLOAT
+        };
         // 创建纹理目标
         this._m_Texture = gl.createTexture();
         // 设置默认纹理滤波
@@ -170,6 +187,12 @@ export default class Texture2DVars extends Vars{
                 return gl.NEAREST;
             case Texture2DVars.S_FILTERS.S_LINEAR_MIPMAP_NEAREST:
                 return gl.LINEAR_MIPMAP_NEAREST;
+            case Texture2DVars.S_FILTERS.S_LINEAR_MIPMAP_LINEAR:
+                return gl.LINEAR_MIPMAP_LINEAR;
+            case Texture2DVars.S_FILTERS.S_NEAREST_MIPMAP_LINEAR:
+                return gl.NEAREST_MIPMAP_LINEAR;
+            case Texture2DVars.S_FILTERS.S_NEAREST_MIPMAP_NEAREST:
+                return gl.NEAREST_MIPMAP_NEAREST;
         }
         return null;
     }
@@ -264,6 +287,7 @@ export default class Texture2DVars extends Vars{
      * 设置纹理图素路径。<br/>
      * @param {Scene}[scene]
      * @param {String}[src]
+     * @param {Boolean}[options.linearFloat 表示rgbe数据的辐射度纹理为线性空间]
      * @param {Boolean}[options.rgbe 表示rgbe数据的辐射度纹理]
      */
     setImageSrc(scene, src, options){
@@ -272,14 +296,14 @@ export default class Texture2DVars extends Vars{
         image.onload = ()=>{
             // 某些图形驱动api规范仅支持2的幂次方
             // image = Tools.ensureImageSizePowerOfTwo(image, scene.getCanvas());
-            this._m_Image = (options && options.rgbe) ? image.dataRGBE : image;
+            this._m_Image = (options && options.rgbe) ? (options.linearFloat ? image.dataFloat : image.dataRGBE) : image;
             if(options && options.rgbe){
                 this._m_Rgbe = true;
             }
             this._m_Width = image.width;
             this._m_Height = image.height;
             this._m_UpdateImage = true;
-            // //self._image = image; // For faster WebGL context restore - memory inefficient?
+            // //self._image = image; // 为了更快的 WebGL 上下文恢复 - 内存效率低下
             // this.setImage(scene, image);
             // // 为该image生成硬件mipmap
             // this.genMipmap(scene);
@@ -300,11 +324,12 @@ export default class Texture2DVars extends Vars{
      * @param {Scene}[scene]
      * @param {BufferData}[imgData]
      * @param {Boolean}[options.rgbe 表示rgbe数据的辐射度纹理]
+     * @param {Boolean}[options.linearFloat 表示rgbe数据的辐射度纹理为线性空间]
      * @param {Number}[options.width 当imgData是二进制数据数组时,需要单独设置纹理宽度]
      * @param {Number}[options.height 当imgData是二进制数据数组时,需要单独设置纹理高度]
      */
     setImage(scene, imgData, options){
-        this._m_Image = (options && options.rgbe) ? imgData.dataRGBE : imgData;
+        this._m_Image = (options && options.rgbe) ? (options.linearFloat ? imgData.dataFloat : imgData.dataRGBE) : imgData;
         if(options && options.rgbe){
             this._m_Rgbe = true;
         }

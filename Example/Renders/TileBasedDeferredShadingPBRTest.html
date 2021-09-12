@@ -62,7 +62,8 @@
         envMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
         envMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
         envMap.setFilter(scene, Texture2DVars.S_FILTERS.S_LINEAR, Texture2DVars.S_FILTERS.S_LINEAR);
-        envMap.setImage(scene, imageData, {rgbe:true});
+        envMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_RGB16F, Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
+        envMap.setImage(scene, imageData, {rgbe:true, linearFloat:true});
         sky.getMaterial().setParam('envMap', envMap);
         sky.getMaterial().setParam('useEnvMap', new BoolVars().valueOf(true));
         sky.getMaterial().setParam('useHDR', new BoolVars().valueOf(true));
@@ -86,7 +87,7 @@
             let ly = center._m_Y - dy * 0.5;
             let lz = center._m_Z - dz * 0.5;
             let ps = [];
-            for(let i = 0;i < 1000;i++){
+            for(let i = 0;i < 100;i++){
                 let pointLight = new PointLight(scene, {id:'pointLight' + i});
                 pointLight.setRadius(1);
                 pointLight.setColorRGBA(Math.random() * 1.0, Math.random() * 1.0, Math.random() * 1.0, 1.0);

@@ -23,6 +23,7 @@ import MultiPassIBLLightingRenderProgram from "./Program/MultiPassIBLLightingRen
 import TilePassLightingRenderProgram from "./Program/TilePassLightingRenderProgram.js";
 import TileDeferred from "./Pipeline/TileDeferred.js";
 import TilePassIBLLightingRenderProgram from "./Program/TilePassIBLLightingRenderProgram.js";
+import FloatVars from "../WebGL/Vars/FloatVars.js";
 
 export default class Render extends Component{
     // 渲染路径
@@ -89,6 +90,10 @@ export default class Render extends Component{
         // 一些杂项
         // singlePass batchLightSize 默认为4
         this._m_BatchLightSize = 4;
+        // gamma矫正
+        this._m_GammaCorrection = true;
+        // gamma编码因子
+        this._m_GammaFactor = 0.45;
 
         // Tile
         this._m_TileInfo = {
@@ -207,12 +212,14 @@ export default class Render extends Component{
         let ffb = new FrameBuffer(gl, Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER, w, h);
         this._m_FrameContext.addFrameBuffer(Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER, ffb);
         // ffb.addBuffer(gl, 'outColor', gl.RGBA4, gl.COLOR_ATTACHMENT0);
-        ffb.addTexture(gl, ShaderSource.S_FORWARD_COLOR_MAP_SRC, gl.RGBA, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT0, false);
+        // 为了支持HDR和gamma矫正,使用一个RGBA16F ffb
+        ffb.addTexture(gl, ShaderSource.S_FORWARD_COLOR_MAP_SRC, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT0, false);
         // ffb.addTexture(gl, 'outColor', gl.RGB, 0, gl.RGB, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT0, false);
         // ffb.addBuffer(gl, 'depth', gl.DEPTH24_STENCIL8, gl.DEPTH_STENCIL_ATTACHMENT);
         ffb.addBuffer(gl, 'depth', gl.DEPTH_COMPONENT24, gl.DEPTH_ATTACHMENT);
         ffb.finish(gl, this._m_Scene, true);
         let forwardMat = new Material(this._m_Scene, {id:'for_m', frameContext:this.getFrameContext(), materialDef:MaterialDef.parse(Internal.S_DEFAULT_OUT_COLOR_DEF_DATA)});
+        forwardMat.setParam('gammaFactor', new FloatVars().valueOf(this._m_GammaFactor));
         ffb.getFramePicture().setMaterial(forwardMat);
         this._m_FrameContext._m_DefaultFrameBuffer = ffb.getFrameBuffer();
 
@@ -525,7 +532,7 @@ export default class Render extends Component{
         if(!useBackForwardFrameBuffer){
             // 检测filters
             let mainCamera = this._m_Scene.getMainCamera();
-            if(mainCamera.demandFilter()){
+            if(this._m_GammaCorrection || mainCamera.demandFilter()){
                 useBackForwardFrameBuffer = true;
                 gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
                 this._m_FrameContext.m_LastFrameBuffer = this._m_FrameContext._m_DefaultFrameBuffer;
@@ -551,6 +558,8 @@ export default class Render extends Component{
             translucentBucket = RenderQueue.sortTranslucentBucket(this._m_Scene.getMainCamera(), translucentBucket);
             this._m_Pipeline[0].render({gl, scene:this._m_Scene, frameContext:this._m_FrameContext, lights:lights, translucent:true, bucket:translucentBucket});
         }
+        // 一帧结束后
+        this.fire(Render.POST_FRAME, [exTime]);
 
         // 检测是否启用了自定义forwardFrameBuffer
         if(useBackForwardFrameBuffer){
@@ -577,8 +586,6 @@ export default class Render extends Component{
             }
             this._m_FrameContext.m_LastFrameBuffer = null;
         }
-        // 一帧结束后
-        this.fire(Render.POST_FRAME, [exTime]);
     }
 
     /**
@@ -695,6 +702,26 @@ export default class Render extends Component{
                     // geo.draw(this._m_FrameContext);
                 }
             }
+        }
+    }
+
+    /**
+     * 启用或关闭gamma矫正。<br/>
+     * @param enable
+     */
+    enableGammaCorrection(enable){
+        // 现在忽略这个参数
+        this._m_GammaCorrection = enable;
+    }
+
+    /**
+     * 设置gamma编码因子。<br/>
+     * @param {Number}[gammaFactor 默认为0.45]
+     */
+    setGammaFactor(gammaFactor){
+        if(gammaFactor != this._m_GammaFactor){
+            this._m_GammaFactor = gammaFactor;
+            this._m_FrameContext.getFrameBuffer(Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER).getFramePicture().getMaterial().setParam('gammaFactor', new FloatVars().valueOf(this._m_GammaFactor));
         }
     }
 

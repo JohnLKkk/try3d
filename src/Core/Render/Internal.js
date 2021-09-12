@@ -1,6 +1,45 @@
 export default class Internal {
+    static S_GAMMA_CORRECTION_DEF_DATA = "// gamma矫正\n" +
+        "// 由于webGL不支持硬件gamma矫正,只能通过后处理进行\n" +
+        "Def GammaCorrectionFilterDef{\n" +
+        "    Params{\n" +
+        "        float gamma;\n" +
+        "    }\n" +
+        "    SubTechnology GammaCorrectionFilter{\n" +
+        "        Vars{\n" +
+        "            vec2 uv0;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" +
+        "                uv0 = Context.InUv0;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            void main(){\n" +
+        "                vec4 color = texture(Context.InScreen, uv0);\n" +
+        "                #ifdef Params.gamma\n" +
+        "                    Context.OutColor.rgb = pow(color.rgb, vec3(Params.gamma));\n" +
+        "                #else\n" +
+        "                    Context.OutColor.rgb = pow(color.rgb, vec3(1.0/2.2f));\n" +
+        "                #endif\n" +
+        "                Context.OutColor.a = color.a;\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology{\n" +
+        "        Sub_Pass PostFilter{\n" +
+        "            Pass GammaCorrectionFilter{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "}\n";
     static S_DEFAULT_OUT_COLOR_DEF_DATA = "// 输出颜色缓冲材质\n" +
         "Def DefaultOutColorDef{\n" +
+        "    Params{\n" +
+        "        float gammaFactor;\n" +
+        "        bool toneMapping;\n" +
+        "    }\n" +
         "    SubTechnology DefaultOutColor{\n" +
         "        Vars{\n" +
         "            vec2 uv0;\n" +
@@ -14,6 +53,12 @@ export default class Internal {
         "        Fs_Shader{\n" +
         "            void main(){\n" +
         "                Context.OutColor = texture(Context.InForwardColorMap, uv0);\n" +
+        "                #ifdef Params.toneMapping\n" +
+        "                    Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));\n" +
+        "                #endif\n" +
+        "                #ifdef Params.gammaFactor\n" +
+        "                    Context.OutColor.rgb = pow(Context.OutColor.rgb, vec3(Params.gammaFactor));\n" +
+        "                #endif\n" +
         "            }\n" +
         "        }\n" +
         "    }\n" +
@@ -23,7 +68,7 @@ export default class Internal {
         "            }\n" +
         "        }\n" +
         "    }\n" +
-        "}";
+        "}\n";
     static S_DEFAULT_SKY_BOX_DEF = "// 天空盒材质定义\n" +
         "Def SkyBoxDef{\n" +
         "    Params{\n" +
@@ -85,11 +130,11 @@ export default class Internal {
         "                        #ifdef Params.useHDR\n" +
         "                            // 解码hdr数据,也可以使用硬件RGB9_E5\n" +
         "                            vec4 rgbe = texture( Params.envMap, uv );\n" +
-        "                            rgbe.rgb *= pow(2.0f,rgbe.a*255.0f-128.0f);\n" +
+        "                            //rgbe.rgb *= pow(2.0f,rgbe.a*255.0f-128.0f);\n" +
         "                            // 色调映射(后续在后处理统一进行)\n" +
-        "                            rgbe.rgb = rgbe.rgb / (rgbe.rgb + vec3(1.0f));\n" +
+        "                            //rgbe.rgb = rgbe.rgb / (rgbe.rgb + vec3(1.0f));\n" +
         "                            // 伽马(后续在后处理统一进行)\n" +
-        "                            rgbe.rgb = pow(rgbe.rgb, vec3(1.0f / 2.2f));\n" +
+        "                            //rgbe.rgb = pow(rgbe.rgb, vec3(1.0f / 2.2f));\n" +
         "                            Context.OutColor.rgb = rgbe.rgb;\n" +
         "                            Context.OutColor.a = 1.0f;\n" +
         "                        #else\n" +

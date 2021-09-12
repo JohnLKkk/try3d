@@ -1,5 +1,6 @@
 import Vars from "./Vars.js";
 import UniformBufferI from "../UniformBufferI.js";
+import UniformBuffer from "../UniformBuffer.js";
 
 /**
  * TextureCubeVars。<br/>
@@ -9,6 +10,7 @@ import UniformBufferI from "../UniformBufferI.js";
  */
 export default class TextureCubeVars extends Vars{
     static _S_TEMP_COLOR = new UniformBufferI(4);
+    static _S_TEMP_COLORF = new UniformBuffer(4);
     /**
      * 面标记，如下:<br/>
      * 1    --  Positive X (+x)<br/>
@@ -31,16 +33,41 @@ export default class TextureCubeVars extends Vars{
     static S_FILTERS = {S_NEAREST:0x001, S_LINEAR:0x002, S_LINEAR_MIPMAP_NEAREST:0x003};
     // 纹理参数常量
     static S_WRAPS = {S_REPEAT:0x001, S_CLAMP:0X002, S_CLAMP_TO_EDGE:0x003, S_CLAMP_TO_BORDER:0x004};
+    // 纹理格式
+    static S_TEXTURE_FORMAT = {};
 
     constructor(scene) {
         super(scene);
         this._m_Scene = scene;
         const gl = scene.getCanvas().getGLContext();
+        TextureCubeVars.S_TEXTURE_FORMAT = {
+            S_RGB:gl.RGB,
+            S_RGBA:gl.RGBA,
+            S_RGB16F:gl.RGB16F,
+            S_RGB32F:gl.RGB32F,
+            S_RGBA16F:gl.RGBA16F,
+            S_RGBA32F:gl.RGBA32F,
+            S_RGBE5:gl.RGB9_E5,
+            S_SHORT:gl.SHORT,
+            S_SRGB:gl.SRGB,
+            S_SRGB8:gl.SRGB8,
+            S_SRGBA:gl.SRGB8_ALPHA8,
+            S_INT:gl.INT,
+            S_BYTE:gl.BYTE,
+            S_UNSIGNED_BYTE:gl.UNSIGNED_BYTE,
+            S_FLOAT:gl.FLOAT
+        };
         // 创建纹理目标
         this._m_Texture = gl.createTexture();
         // 设置默认纹理滤波
         this._setFilter(scene, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         this._setFilter(scene, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        // 内部格式（默认为RGBA）
+        this._m_Internalformat = gl.RGBA;
+        // 外部格式（默认为RGBA）
+        this._m_Format = gl.RGBA;
+        // 数据类型
+        this._m_Type = gl.UNSIGNED_BYTE;
         // 数据
         this._m_CubeMaps = {};
         this._m_UpdateImage = false;
@@ -51,6 +78,17 @@ export default class TextureCubeVars extends Vars{
         this._m_WrapR = null;
         this._m_MinFilter = TextureCubeVars.S_FILTERS.S_LINEAR;
         this._m_MagFilter = TextureCubeVars.S_FILTERS.S_LINEAR;
+    }
+    /**
+     * 设置纹理格式。<br/>
+     * @param {Number}[internalFormat]
+     * @param {Number}[format]
+     * @param {Number}[type]
+     */
+    setTextureFormat(internalFormat, format, type){
+        this._m_Internalformat = internalFormat;
+        this._m_Format = format;
+        this._m_Type = type;
     }
 
     /**
@@ -170,7 +208,8 @@ export default class TextureCubeVars extends Vars{
      * @param {Vector4}[value]
      */
     setPreloadColor(scene, value){
-        let color = TextureCubeVars._S_TEMP_COLOR.getArray();
+        let date = this._m_Type != TextureCubeVars.S_TEXTURE_FORMAT.S_FLOAT ? TextureCubeVars._S_TEMP_COLOR : TextureCubeVars._S_TEMP_COLORF;
+        let color = date.getArray();
         if (!value) {
             color[0] = 0;
             color[1] = 0;
@@ -185,7 +224,7 @@ export default class TextureCubeVars extends Vars{
         const gl = scene.getCanvas().getGLContext();
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, this._m_Texture);
         for(let i = 0;i < 6;i++){
-            gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, TextureCubeVars._S_TEMP_COLOR.getBufferData());
+            gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, this._m_Internalformat, 1, 1, 0, this._m_Format, this._m_Type, date.getBufferData());
         }
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
     }
@@ -269,7 +308,7 @@ export default class TextureCubeVars extends Vars{
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, this._m_Texture);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this._m_FlipY);
         if(image.rgbe){
-            gl.texImage2D(this._parseFace(gl, face), image.mipmapLevel, gl.RGBA, image.width, image.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image.imgData);
+            gl.texImage2D(this._parseFace(gl, face), image.mipmapLevel, this._m_Internalformat, image.width, image.height, 0, this._m_Format, this._m_Type, image.imgData);
         }
         else{
             if(Array.isArray(image)){
@@ -278,11 +317,11 @@ export default class TextureCubeVars extends Vars{
                 let img = null;
                 for(let i = 0;i < image.length;i++){
                     img = image[i];
-                    gl.texImage2D(this._parseFace(gl, face), img.mipmapLevel, gl.RGBA, img.width, img.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, img.imgData);
+                    gl.texImage2D(this._parseFace(gl, face), img.mipmapLevel, this._m_Internalformat, img.width, img.height, 0, this._m_Format, this._m_Type, img.imgData);
                 }
             }
             else{
-                gl.texImage2D(this._parseFace(gl, face), image.mipmapLevel, gl.RGBA, image.width, image.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image.imgData);
+                gl.texImage2D(this._parseFace(gl, face), image.mipmapLevel, this._m_Internalformat, image.width, image.height, 0, this._m_Format, this._m_Type, image.imgData);
             }
         }
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);

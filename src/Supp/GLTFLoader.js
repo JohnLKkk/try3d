@@ -27,6 +27,9 @@ import Matrix44 from "../Core/Math3d/Matrix44.js";
 /**
  * GLTFLoader。<br/>
  * 提供GLTF模型加载支持,支持二进制glb,gltf+bin,嵌入式gltf。<br/>
+ * 参考官方wiki:https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md。<br/>
+ * 我实现了很大整个gltf的一个子集，这个子集基本上涵盖了通用的部分内容，但是部分枚举我并没有全部引入。<br/>
+ * 有需要请自寻拓展这个加载器或使用第三方加载器。<br/>
  * @author Kkk
  * @date 2021年3月5日13点43分
  */
@@ -36,7 +39,10 @@ export default class GLTFLoader {
     static FILTERS = {
         9729:Texture2DVars.S_FILTERS.S_LINEAR,
         9728:Texture2DVars.S_FILTERS.S_NEAREST,
-        9987:Texture2DVars.S_FILTERS.S_LINEAR_MIPMAP_NEAREST
+        9987:Texture2DVars.S_FILTERS.S_LINEAR_MIPMAP_LINEAR,
+        9986:Texture2DVars.S_FILTERS.S_NEAREST_MIPMAP_LINEAR,
+        9985:Texture2DVars.S_FILTERS.S_LINEAR_MIPMAP_NEAREST,
+        9984:Texture2DVars.S_FILTERS.S_NEAREST_MIPMAP_NEAREST
     };
     static WRAPS = {
         10497:Texture2DVars.S_WRAPS.S_REPEAT,
@@ -539,7 +545,7 @@ export default class GLTFLoader {
                 else{
                     // 生成切线数据
                     if(mesh.getData(Mesh.S_UV0)){
-                        let tangents = Tools.generatorTangents2(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0), mesh.getData(Mesh.S_NORMALS));
+                        let tangents = Tools.generatorTangents2(mesh.getData(Mesh.S_INDICES) ? mesh.getData(Mesh.S_INDICES) : mesh.getData(Mesh.S_INDICES_32), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0), mesh.getData(Mesh.S_NORMALS));
                         let t = [];
                         for(let i = 0;i < tangents.length;i++){
                             t.push(tangents[i]);
@@ -548,7 +554,7 @@ export default class GLTFLoader {
                     }
                     else{
                         // 为了内存对齐
-                        let tangents = Tools.generatorFillTangents2(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
+                        let tangents = Tools.generatorFillTangents2(mesh.getData(Mesh.S_INDICES) ? mesh.getData(Mesh.S_INDICES) : mesh.getData(Mesh.S_INDICES_32), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
                         for(let i = 0;i < tangents.length;i++){
                             t.push(tangents[i]);
                         }
@@ -727,7 +733,7 @@ export default class GLTFLoader {
                 // 生成切线数据
                 if(mesh.getData(Mesh.S_UV0)){
                     console.log('生成切线数据');
-                    let tangents = Tools.generatorTangents2(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0), mesh.getData(Mesh.S_NORMALS));
+                    let tangents = Tools.generatorTangents2(mesh.getData(Mesh.S_INDICES) ? mesh.getData(Mesh.S_INDICES) : mesh.getData(Mesh.S_INDICES_32), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0), mesh.getData(Mesh.S_NORMALS));
                     mesh.setData(Mesh.S_TANGENTS, tangents);
                 }
                 else{
@@ -785,10 +791,12 @@ export default class GLTFLoader {
             }
         }
     }
-    _samplerMap(gltf, i){
+    _samplerMap(gltf, i, srgb){
         let map = gltf.textures[i];
         let img = gltf.images[map.source];
         let texture = new Texture2DVars(this._m_Scene);
+        if(srgb)
+            texture.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
         texture.setImageSrc(this._m_Scene, this._m_BasePath + img.uri);
         if(Tools.checkIsNull(map.sampler)){
             let sampler = gltf.samplers[map.sampler];
@@ -814,7 +822,7 @@ export default class GLTFLoader {
         if(_material['pbrMetallicRoughness']){
             let pbrMetallicRoughness = _material['pbrMetallicRoughness'];
             let baseColorFactor = pbrMetallicRoughness.baseColorFactor;
-            if(baseColorFactor){
+            if(Tools.checkIsNull(baseColorFactor)){
                 material.setParam('baseColor', new Vec4Vars().valueFromXYZW(baseColorFactor[0], baseColorFactor[1], baseColorFactor[2], baseColorFactor[3]));
             }
             let roughnessFactor = pbrMetallicRoughness.roughnessFactor;
@@ -827,7 +835,7 @@ export default class GLTFLoader {
             }
             let baseColorTexture = pbrMetallicRoughness.baseColorTexture;
             if(Tools.checkIsNull(baseColorTexture)){
-                material.setParam('baseColorMap', this._samplerMap(gltf, baseColorTexture.index));
+                material.setParam('baseColorMap', this._samplerMap(gltf, baseColorTexture.index, true));
             }
             let metallicRoughnessTexture = pbrMetallicRoughness.metallicRoughnessTexture;
             if(Tools.checkIsNull(metallicRoughnessTexture)){
@@ -840,11 +848,11 @@ export default class GLTFLoader {
             material.setParam('useSpecGloss', new BoolVars().valueOf(true));
             let diffuseTexture = KHR_materials_pbrSpecularGlossiness.diffuseTexture;
             if(Tools.checkIsNull(diffuseTexture)){
-                material.setParam('baseColorMap', this._samplerMap(gltf, diffuseTexture.index));
+                material.setParam('baseColorMap', this._samplerMap(gltf, diffuseTexture.index, true));
             }
             let specularGlossinessTexture = KHR_materials_pbrSpecularGlossiness.specularGlossinessTexture;
             if(Tools.checkIsNull(specularGlossinessTexture)){
-                material.setParam('specularGlossinessMap', this._samplerMap(gltf, specularGlossinessTexture.index));
+                material.setParam('specularGlossinessMap', this._samplerMap(gltf, specularGlossinessTexture.index, true));
             }
         }
         let normalTexture = _material.normalTexture;
@@ -855,7 +863,7 @@ export default class GLTFLoader {
         let occlusionTexture = _material.occlusionTexture;
         if(Tools.checkIsNull(occlusionTexture)){
             let texCoord = occlusionTexture.texCoord;
-            material.setParam('lightMap', this._samplerMap(gltf, occlusionTexture.index));
+            material.setParam('lightMap', this._samplerMap(gltf, occlusionTexture.index, true));
             if(texCoord != null && texCoord != 0){
                 // 激活独立通道纹理
             }
@@ -863,8 +871,13 @@ export default class GLTFLoader {
                 material.setParam('aoMap', new BoolVars().valueOf(true));
             }
         }
-        if(_material.emissiveFactor){
-
+        let emissiveFactor = _material.emissiveFactor;
+        if(Tools.checkIsNull(emissiveFactor)){
+            material.setParam('emissive', new Vec4Vars().valueFromXYZW(emissiveFactor[0], emissiveFactor[1], emissiveFactor[2], 1.0));
+        }
+        let emissiveTexture = _material.emissiveTexture;
+        if(Tools.checkIsNull(emissiveTexture)){
+            material.setParam('emissiveMap', this._samplerMap(gltf, emissiveTexture.index, true));
         }
         let renderState = {};
         if(_material.alphaMode){

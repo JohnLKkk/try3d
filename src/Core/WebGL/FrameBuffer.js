@@ -55,17 +55,21 @@ export default class FrameBuffer {
         // 根据类型读取转换
         switch (format) {
             case gl.RGBA16F:
-                pixelType = Uint16Array;
+                pixelType = Float32Array;
+                pixelUnit = 4;
+                break;
             case gl.RGBA8:
             case gl.RGBA:
-                pixelType = Uint8Array;
+                pixelType = type != gl.FLOAT ? Uint8Array : Float32Array;
                 pixelUnit = 4;
                 break;
             case gl.RGB16F:
-                pixelType = Uint16Array;
+                pixelType = Float32Array;
+                pixelUnit = 3;
+                break;
             case gl.RGB8:
             case gl.RGB:
-                pixelType = Uint8Array;
+                pixelType = type != gl.FLOAT ? Uint8Array : Float32Array;
                 pixelUnit = 3;
                 break;
         }

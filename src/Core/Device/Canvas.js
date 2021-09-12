@@ -39,6 +39,15 @@ export default class Canvas extends Component{
                         return;
                     }
                 }
+                let extAni = this._m_GL.getExtension('EXT_texture_filter_anisotropic');
+                if(!extAni){
+                    console.log('不支持各向异性拓展!');
+                }
+                if(extAni){
+                    let maxAnisotropy = this._m_GL.getParameter(extAni.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+                    console.log('maxAnisotropy:' + maxAnisotropy);
+                    // this._m_GL.texParameterf(this._m_GL.TEXTURE_2D, extAni.TEXTURE_MAX_ANISOTROPY_EXT, 4);
+                }
                 this._init();
             }
             this._sizeCanvas(this._m_Canvas.parentNode, this._m_Canvas);

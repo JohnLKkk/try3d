@@ -42,7 +42,8 @@
     sky.getMaterial().setParam('useHDR', new BoolVars().valueOf(true));
     let envMap = new Texture2DVars(scene);
     envMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
-    envMap.setImageSrc(scene, '../Assets/Textures/hdr/env4.hdr', {rgbe:true});
+    envMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_RGB16F, Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
+    envMap.setImageSrc(scene, '../Assets/Textures/hdr/env4.hdr', {rgbe:true, linearFloat:true});
     envMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
     envMap.setFilter(scene, Texture2DVars.S_FILTERS.S_LINEAR, Texture2DVars.S_FILTERS.S_LINEAR);
     sky.getMaterial().setParam('envMap', envMap);
@@ -69,10 +70,10 @@
         // let firstPersonController = new FirstPersonController(scene, {id:'firstControl'});
         scene.setAmbientLightColor(0.3, 0.3, 0.3);
 
-        let dirLight = new DirectionalLight(scene, {id:'dirLight'});
-        dirLight.setDirectionXYZ(0, -1, -1);
-        dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
-        rootNode.addChildren(dirLight);
+        // let dirLight = new DirectionalLight(scene, {id:'dirLight'});
+        // dirLight.setDirectionXYZ(0, -1, -1);
+        // dirLight.setColorRGBA(0.5, 0.5, 0.5, 1.0);
+        // rootNode.addChildren(dirLight);
 
         // let ros = 0;
         // let rotate = new Quaternion();

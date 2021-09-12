@@ -1,0 +1,35 @@
+// gamma矫正
+// 由于webGL不支持硬件gamma矫正,只能通过后处理进行
+Def GammaCorrectionFilterDef{
+    Params{
+        float gamma;
+    }
+    SubTechnology GammaCorrectionFilter{
+        Vars{
+            vec2 uv0;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = vec4(Context.InPosition, 1.0f);
+                uv0 = Context.InUv0;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                vec4 color = texture(Context.InScreen, uv0);
+                #ifdef Params.gamma
+                    Context.OutColor.rgb = pow(color.rgb, vec3(Params.gamma));
+                #else
+                    Context.OutColor.rgb = pow(color.rgb, vec3(1.0/2.2f));
+                #endif
+                Context.OutColor.a = color.a;
+            }
+        }
+    }
+    Technology{
+        Sub_Pass PostFilter{
+            Pass GammaCorrectionFilter{
+            }
+        }
+    }
+}

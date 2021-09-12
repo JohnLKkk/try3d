@@ -22,38 +22,49 @@
         // console.log("s1匹配t1:" + (t1.match(s1) == t1));
         // console.log("s2匹配t1:" + (t1.match(s2) == t1));
 
-        import Tools from "../src/Core/Util/Tools.js";
+        // import Tools from "../src/Core/Util/Tools.js";
+        //
+        // let src = "test Params.colorMap * Params.diffuseMap;";
+        // let p1 = /Params.color/;
+        // let p2 = /Params.colorMap/;
+        // let p3 = /Params.diffuseMap/;
+        //
+        // let i = Tools.find2(src, p1);
+        // console.log("i:" + i);
+        // i = Tools.find2(src, p2);
+        // console.log("i:" + i);
+        // i = Tools.find2(src, p3);
+        // console.log("i:" + i);
+        // let arr = [];
+        // arr[1] = 2;
+        // arr[0] = 3;
+        // console.log('arr:',arr);
+        // let arr2 = [];
+        // arr2[0] = [5, 'ttt'];
+        // arr2[1] = [2, 'ggg'];
+        // arr2.sort((a, b)=>{return a[0] - b[0];});
+        // console.log("arr2:",arr2);
+        //
+        // let s = 'vec4 albedo = texture(Params.baseColorMap, wUv0) * Params.baseColor;';
+        // let i0 = Tools.find2(s, /Params.baseColor/);
+        // console.log('i0 = ' , s.search(/Params.baseColor/g));
+        // let i1 = Tools.find2(s, /Params.baseColorMap/);
+        //
+        //
+        // let ii = /Params.baseColor[\s+-;.,\*\\]{1,}/;
+        // let ii2 = /Params.baseColor/;
+        // console.log('结果:' + s.search(ii));
+        import Scene from "../src/Core/Scene/Scene.js";
+        import Vector3 from "../src/Core/Math3d/Vector3.js";
+        import ProbeTools from "../src/Core/Util/ProbeTools.js";
 
-        let src = "test Params.colorMap * Params.diffuseMap;";
-        let p1 = /Params.color/;
-        let p2 = /Params.colorMap/;
-        let p3 = /Params.diffuseMap/;
-
-        let i = Tools.find2(src, p1);
-        console.log("i:" + i);
-        i = Tools.find2(src, p2);
-        console.log("i:" + i);
-        i = Tools.find2(src, p3);
-        console.log("i:" + i);
-        let arr = [];
-        arr[1] = 2;
-        arr[0] = 3;
-        console.log('arr:',arr);
-        let arr2 = [];
-        arr2[0] = [5, 'ttt'];
-        arr2[1] = [2, 'ggg'];
-        arr2.sort((a, b)=>{return a[0] - b[0];});
-        console.log("arr2:",arr2);
-
-        let s = 'vec4 albedo = texture(Params.baseColorMap, wUv0) * Params.baseColor;';
-        let i0 = Tools.find2(s, /Params.baseColor/);
-        console.log('i0 = ' , s.search(/Params.baseColor/g));
-        let i1 = Tools.find2(s, /Params.baseColorMap/);
-
-
-        let ii = /Params.baseColor[\s+-;.,\*\\]{1,}/;
-        let ii2 = /Params.baseColor/;
-        console.log('结果:' + s.search(ii));
+        console.log('0.5 ^ 2.2 = ' + Math.pow(0.534, 2.2));
+        let texelVect = new Vector3();
+        let weight = ProbeTools.getSAAV(120, 125, 128, 3, texelVect, ProbeTools._S_FIX_SEAMS_METHOD.Wrap);
+        console.log('weight:' + weight + ";texelVect:" + texelVect.toString());
+        let shDir = [];
+        ProbeTools.evalShBasis(texelVect, shDir);
+        console.log('shDir:' , shDir);
     </script>
     <!--<script>-->
         <!--function findSrc(str, reg){-->

@@ -12,6 +12,7 @@ Def PrincipledLightingDef{
         bool lightMapTexCoord;
 
         // 自发光
+        sampler2D emissiveMap;
         vec4 emissive;
         float emissivePower;
         float emissiveIntensity;
@@ -241,8 +242,6 @@ Def PrincipledLightingDef{
                         vec4 albedo = vec4(1.0f) * vec4(Context.AmbientLightColor, 1.0);
                     #endif
                 #endif
-                // 记住我们在线性空间计算材质,这里的一个优化是在载入纹理时处理而不是在着色阶段
-                albedo.rgb = pow(albedo.rgb, vec3(GAMMA));
 
                 #ifdef Params.alphaDiscard
                     if(albedo.a < Params.alphaDiscard){
@@ -409,11 +408,37 @@ Def PrincipledLightingDef{
                     #endif
                 }
 
+                #ifdef Params.emissive
+                    float _emissivePower = 3.0f;
+                    #ifdef Params.emissivePower
+                        _emissivePower = Params.emissivePower;
+                    #endif
+                    float _emissiveIntensity = 2.0f;
+                    #ifdef Params.emissiveIntensity
+                        _emissiveIntensity = Params.emissiveIntensity;
+                    #endif
+                    #ifdef Params.emissiveMap
+                        vec4 eMap = texture(Params.emissiveMap, wUv0);
+                        Context.OutColor.rgb += Params.emissive.rgb * eMap.rgb * pow(Params.emissive.a * eMap.a, _emissivePower) * _emissiveIntensity;
+                    #else
+                        Context.OutColor.rgb += Params.emissive.rgb * pow(Params.emissive.a, _emissivePower) * _emissiveIntensity;
+                    #endif
+                #else
+                    #ifdef Params.emissiveMap
+                        float _emissivePower = 3.0f;
+                        #ifdef Params.emissivePower
+                            _emissivePower = Params.emissivePower;
+                        #endif
+                        float _emissiveIntensity = 2.0f;
+                        #ifdef Params.emissiveIntensity
+                            _emisiveIntensity = Params.emissiveIntensity;
+                        #endif
+                        vec4 eMap = texture(Params.emissiveMap, wUv0);
+                        Context.OutColor.rgb += eMap.rgb * pow(eMap.a, _emissivePower) * _emissiveIntensity;
+                    #endif
+                #endif
+
                 Context.OutColor.a = albedo.a;
-                // 色调映射(后续在后处理统一处理),理论上可以不需要
-                // Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));
-                // 伽马矫正(后续在后处理统一处理)
-                Context.OutColor.rgb = pow(Context.OutColor.rgb, vec3(GAMMA_T));
 
             }
         }

@@ -56,6 +56,7 @@ class EnvCapture {
         this._m_CaptureCameres = [];
         this._m_CaptureFrames = [];
         this._m_CaptureResult = new TextureCubeVars(scene);
+        this._m_CaptureResult.setTextureFormat(TextureCubeVars.S_TEXTURE_FORMAT.S_RGBA16F, TextureCubeVars.S_TEXTURE_FORMAT.S_RGBA, TextureCubeVars.S_TEXTURE_FORMAT.S_FLOAT);
         this._m_CapturePixels = [];
         this._m_Position = new Vector3();
         if(position){
@@ -69,6 +70,7 @@ class EnvCapture {
         this._m_PrefilterSky.getMaterial().setParam('resolution', new FloatVars().valueOf(resolute));
         this._m_PrefilterSky.getMaterial().setParam('envMap', this._m_CaptureResult);
         this._m_PrefilterMap = new TextureCubeVars(scene);
+        this._m_PrefilterMap.setTextureFormat(TextureCubeVars.S_TEXTURE_FORMAT.S_RGBA16F, TextureCubeVars.S_TEXTURE_FORMAT.S_RGBA, TextureCubeVars.S_TEXTURE_FORMAT.S_FLOAT);
         this._m_PrefilterMap.setFilter(scene, TextureCubeVars.S_FILTERS.S_LINEAR_MIPMAP_NEAREST, TextureCubeVars.S_FILTERS.S_LINEAR);
         this._m_PrefilterMipmap = 0;
         let height = resolute;
@@ -101,7 +103,7 @@ class EnvCapture {
             EnvCapture._S_CAPTURE_CONFIG[i].dir.add(this._m_Position, at);
             this._m_CaptureCameres[i].lookAt(this._m_Position, at, EnvCapture._S_CAPTURE_CONFIG[i].up);
             this._m_CaptureFrames[i] = new FrameBuffer(gl, 'capture_frame_' + i + "_" + Tools.nextId(), this._m_Resolute, this._m_Resolute);
-            this._m_CaptureFrames[i].addTexture(gl, 'capture_texture_' + i, gl.RGBA, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT0, false, this._m_MipMap);
+            this._m_CaptureFrames[i].addTexture(gl, 'capture_texture_' + i, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT0, false, this._m_MipMap);
             this._m_CaptureFrames[i].addBuffer(gl, 'capture_depth_' + i, gl.DEPTH24_STENCIL8, gl.DEPTH_STENCIL_ATTACHMENT);
             this._m_CaptureFrames[i].finish(gl, this._m_Scene, false);
         }
@@ -146,7 +148,7 @@ class EnvCapture {
             // 目前仅支持捕捉环境（后续完善对场景的捕捉）
             this._m_Scene.getRender()._drawEnv(gl);
 
-            pixels = this._m_CaptureFrames[i].readPixels(gl, '', gl.RGBA, gl.UNSIGNED_BYTE);
+            pixels = this._m_CaptureFrames[i].readPixels(gl, '', gl.RGBA, gl.FLOAT);
             this._m_CapturePixels[i] = pixels;
             // Log.log('pixels:',pixels);
             // 将像素数据设置到结果纹理中
@@ -188,7 +190,7 @@ class EnvCapture {
                 // 目前仅支持捕捉环境（后续完善对场景的捕捉）
                 this._m_Scene.getRender()._drawEnv(gl);
 
-                pixels = this._m_CaptureFrames[i].readPixels(gl, '', gl.RGBA, gl.UNSIGNED_BYTE);
+                pixels = this._m_CaptureFrames[i].readPixels(gl, '', gl.RGBA, gl.FLOAT);
                 // 将像素数据设置到结果纹理中
                 this._m_PrefilterMap.setImage(this._m_Scene, EnvCapture._S_CAPTURE_FACE[i], pixels, {width:mipWidth, height:mipHeight, mipmapLevel:mip});
             }
@@ -293,6 +295,15 @@ export default class ProbeTools {
         Log.time('shCoeffs');
         let shCoeffs = ProbeTools.getShCoeffs(resolute, resolute, envCapture.getCapturePixels(), ProbeTools._S_FIX_SEAMS_METHOD.Wrap);
         ProbeTools.prepareShCoefs(shCoeffs);
+        // shCoeffs[0].setToInXYZ(0.37123486, 0.28240448, 0.2381286);
+        // shCoeffs[1].setToInXYZ(-0.11429441, -0.024181858, 0.036112532);
+        // shCoeffs[2].setToInXYZ(-0.17223172, -0.09823992, -0.057545196);
+        // shCoeffs[3].setToInXYZ(0.029801141, 0.0883107, 0.13856964);
+        // shCoeffs[4].setToInXYZ(0.03002505, 0.02395944, 0.032721985);
+        // shCoeffs[5].setToInXYZ(0.13808998, 0.054031435, 0.0057469863);
+        // shCoeffs[6].setToInXYZ(-0.0028244117, -0.017800365, -0.02938147);
+        // shCoeffs[7].setToInXYZ(0.02475643, -0.025586102, -0.06279054);
+        // shCoeffs[8].setToInXYZ(0.03176331, 0.07265141, 0.10513105);
         giProbe.setShCoeffs(shCoeffs);
         Log.timeEnd('shCoeffs');
 
@@ -509,12 +520,13 @@ export default class ProbeTools {
         let coef7 = coef5;
         let coef8 = sqrt15Pi / 4.0;
 
+        // 不知为何，这里有个地方算得有问题，暂时只能通过*-1来修复
         shCoefs[0].multLength(coef0).multLength(ProbeTools._S_SH_BAND_FACTOR[0]);
         shCoefs[1].multLength(coef1).multLength(ProbeTools._S_SH_BAND_FACTOR[1]);
-        shCoefs[2].multLength(coef2).multLength(ProbeTools._S_SH_BAND_FACTOR[2]);
-        shCoefs[3].multLength(coef3).multLength(ProbeTools._S_SH_BAND_FACTOR[3]);
-        shCoefs[4].multLength(coef4).multLength(ProbeTools._S_SH_BAND_FACTOR[4]);
-        shCoefs[5].multLength(coef5).multLength(ProbeTools._S_SH_BAND_FACTOR[5]);
+        shCoefs[2].multLength(-coef2).multLength(ProbeTools._S_SH_BAND_FACTOR[2]);
+        shCoefs[3].multLength(-coef3).multLength(ProbeTools._S_SH_BAND_FACTOR[3]);
+        shCoefs[4].multLength(-coef4).multLength(ProbeTools._S_SH_BAND_FACTOR[4]);
+        shCoefs[5].multLength(-coef5).multLength(ProbeTools._S_SH_BAND_FACTOR[5]);
         shCoefs[6].multLength(coef6).multLength(ProbeTools._S_SH_BAND_FACTOR[6]);
         shCoefs[7].multLength(coef7).multLength(ProbeTools._S_SH_BAND_FACTOR[7]);
         shCoefs[8].multLength(coef8).multLength(ProbeTools._S_SH_BAND_FACTOR[8]);
@@ -576,10 +588,11 @@ export default class ProbeTools {
      * @private
      */
     static _getPixelColor(x, y, width, height, pixels, store){
-        store._m_X = pixels[y * width * 4 + x] / 255.0;
-        store._m_Y = pixels[y * width * 4 + x + 1] / 255.0;
-        store._m_Z = pixels[y * width * 4 + x + 2] / 255.0;
-        store._m_W = pixels[y * width * 4 + x + 3] / 255.0;
+        x *= 4;
+        store._m_X = pixels[y * width * 4 + x];
+        store._m_Y = pixels[y * width * 4 + x + 1];
+        store._m_Z = pixels[y * width * 4 + x + 2];
+        store._m_W = pixels[y * width * 4 + x + 3];
     }
 
     /**

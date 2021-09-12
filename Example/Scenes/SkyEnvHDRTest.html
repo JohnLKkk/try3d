@@ -20,11 +20,10 @@
     import Vector4 from "../../src/Core/Math3d/Vector4.js";
     import OBJLoader from "../../src/Supp/OBJLoader.js";
     import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import SceneBrowsingController from "../../src/Core/InputControl/SceneBrowsingController.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(5, 5, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
-    firstPersonController.setMovementSpeed(10);
 
     // 创建一个sky
     let sky = new SkyBox(scene, {id:'sky'});
@@ -34,7 +33,8 @@
     sky.getMaterial().setParam('useHDR', new BoolVars().valueOf(true));
     let envMap = new Texture2DVars(scene);
     envMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
-    envMap.setImageSrc(scene, '../Assets/Textures/hdr/newport_loft.hdr', {rgbe:true});
+    envMap.setImageSrc(scene, '../Assets/Textures/hdr/newport_loft.hdr', {rgbe:true, rgbe5:true});
+    // envMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_RGBE5, Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
     envMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
     envMap.setFilter(scene, Texture2DVars.S_FILTERS.S_LINEAR, Texture2DVars.S_FILTERS.S_LINEAR);
     sky.getMaterial().setParam('envMap', envMap);
@@ -46,6 +46,8 @@
     let objLoader = new OBJLoader();
     objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/');
     objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/testScene.obj', modelNode=>{
+        let sceneController = new SceneBrowsingController(scene, {id:'control'});
+        sceneController.lookScene(modelNode);
         rootNode.addChildren(modelNode);
     });
     let dir = new DirectionalLight(scene, {id:'dirLight0'});

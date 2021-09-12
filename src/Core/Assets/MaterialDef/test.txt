@@ -1,54 +1,104 @@
 #version 300 es
+#define baseColorMap baseColorMap
+#define metallicRoughnessMap metallicRoughnessMap
+#define normalMap normalMap
+#define lightMap lightMap
+#define aoMap aoMap
+#define emissive emissive
+#define emissiveMap emissiveMap
+
 precision mediump float;
 
-uniform sampler2D _gDepth;
+uniform vec3 _ambientLightColor;
+uniform int _curLightCount;
+uniform vec4 _wLightData[12];
 out vec4 _outColor;
-uniform sampler2D _gBuffer0;
-uniform sampler2D _gBuffer2;
-uniform sampler2D _gBuffer1;
-uniform sampler2D _tileLightDecode;
-uniform float _tileLightOffsetSize;
-uniform int _lightNum;
-uniform sampler2D _tileLightIndex;
-uniform sampler2D _tileWLightData0;
-uniform sampler2D _tileWLightData1;
-uniform sampler2D _tileWLightData2;
+uniform bool _blend_gi_probes;
+uniform vec4 _wGIProbe;
+uniform vec3 _ShCoeffs[9];
+uniform samplerCube _prefEnvMap;
 layout (std140) uniform VIEW
 {
 vec3 _cameraPosition;
 };
 
-in mat4 pvInverse;
-in vec2 uv0;
-vec3 getPosition(in float depth, in vec2 newTexCoord){
+in vec3 wPosition;
+in vec2 wUv0;
+in vec3 wNormal;
+in vec4 wTangent;
+in vec2 wUv1;
 
-vec4 pos;
-pos.xy = (newTexCoord * vec2(2.0)) - vec2(1.0);
-pos.z  = depth * 2.0 - 1.0;
-pos.w  = 1.0;
-pos    = pvInverse * pos;
-pos.xyz /= pos.w;
-return pos.xyz;
-}
+uniform vec4 baseColor;
+uniform sampler2D baseColorMap;
+uniform float alphaDiscard;
+uniform sampler2D normalMap;
+uniform sampler2D metallicRoughnessMap;
+uniform float metallic;
+uniform float roughness;
+uniform sampler2D roughnessMap;
+uniform sampler2D metallicMap;
+uniform bool useSpecGloss;
+uniform sampler2D specularGlossinessMap;
+uniform vec4 specular;
+uniform float glossiness;
+uniform sampler2D specularMap;
+uniform sampler2D glossinessMap;
+uniform sampler2D lightMap;
+uniform bool lightMapTexCoord;
+uniform bool aoMap;
+uniform vec4 emissive;
+uniform float emissivePower;
+uniform sampler2D emissiveMap;
 void ComputeLightDir(in vec3 worldPos, in float lightType, in vec4 position, out vec4 lightDir, out vec3 lightVec){
 float posLight = step(0.5f, lightType);
 
 lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);
 float dist = length(lightVec);
 
+#ifdef _C_SRGB
+lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
+lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
+#else
 lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
-
+#endif
 
 lightDir.xyz = lightVec / vec3(dist);
 }
-void ComputeLighting(in vec3 normal, in vec3 viewDir, in vec3 lightDir, in float attenuation, in float shininess, out vec2 brdf){
-float diffuseBRDF = max(0.0f, dot(normal, lightDir));
-vec3 H = normalize(viewDir + lightDir);
-float HdotN = max(0.0f, dot(H, normal));
-float specularBRDF = pow( HdotN, shininess );
+#define PI 3.14159265358979323846264
+vec3 F_Shlick(float vh,	vec3 F0){
+float fresnelFact = pow(2.0f, (-5.55473f * vh - 6.98316f) * vh);
+return mix(F0, vec3(1.0f, 1.0f, 1.0f), fresnelFact);
+}
+vec3 F_Schlick2(float cosTheta, vec3 F0)
+{
+return F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
+}
+void ComputeDirectLighting(in vec3 normal, in vec3 viewDir, in vec3 lightDir, in vec3 lightColor, in vec3 diffuseColor, in vec3 fZero, in float roughness, in float ndotv, out vec3 directLighting){
+vec3 h = normalize(lightDir + viewDir);
+float ndotl = max( dot( normal, lightDir ), 0.0f );
+float ndoth = max( dot( normal, h), 0.0f );
+float hdotv = max( dot( h, viewDir ), 0.0f );
 
-brdf.x = diffuseBRDF * attenuation;
-brdf.y = specularBRDF * attenuation;
+vec3 diffuse = vec3( ndotl ) * lightColor * diffuseColor;
+
+float alpha = roughness * roughness;
+
+float alpha2 = alpha * alpha;
+float sum = (( ndoth * ndoth ) * ( alpha2 - 1.0f ) + 1.0f);
+float denom = PI * sum * sum;
+float D = alpha2 / denom;
+
+vec3 F = F_Shlick( hdotv, fZero );
+
+float k = alpha * 0.5f;
+float G_V = ndotv + sqrt( ( ndotv - ndotv * k ) * ndotv + k );
+float G_L = ndotl + sqrt( ( ndotl - ndotl * k ) * ndotl + k );
+float G = 1.0f / max( G_V * G_L ,0.01f );
+
+float t = D * G * ndotl;
+vec3 specular =  vec3( t ) * F * lightColor;
+
+directLighting = diffuse + specular;
 }
 float ComputeSpotFalloff(in vec4 spotDirection, in vec3 lightDir){
 float curAngleCos = dot(lightDir, -spotDirection.xyz);
@@ -57,79 +107,266 @@ float outerAngleCos = fract(spotDirection.w);
 float innerMinusOuter = innerAngleCos - outerAngleCos;
 float falloff = clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f);
 
-#ifdef SRGB
-return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0, 1.0), 4.0);
+#ifdef _C_SRGB
+return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f), 4.0f);
 #else
 return falloff;
 #endif
 }
-void main(){
-float depth = texture(_gDepth, uv0).r;
-if(depth >= 1.0){
-_outColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
-return;
+vec3 sphericalHarmonics( const in vec3 normal, const vec3 sph[9] ){
+float x = normal.x;
+float y = normal.y;
+float z = normal.z;
+
+vec3 result = (
+sph[0] +
+
+sph[1] * y +
+sph[2] * z +
+sph[3] * x +
+
+sph[4] * y * x +
+sph[5] * y * z +
+sph[6] * (3.0f * z * z - 1.0f) +
+sph[7] * (z * x) +
+sph[8] * (x*x - y*y)
+);
+
+return max(result, vec3(0.0f));
 }
-vec3 wPosition = getPosition(depth, uv0);
-vec4 _diffuseColor = texture(_gBuffer0, uv0);
-vec4 _specularColorDecode = texture(_gBuffer2, uv0);
-vec3 _specularColor = floor(_specularColorDecode.rgb) * 0.1f;
-vec3 _ambientColor = min(fract(_specularColorDecode.rgb) * 10.0f, vec3(1.0f));
-float _shininess = floor(_diffuseColor.w);
-float alpha     = min(fract(_diffuseColor.w) * 10.0f, 1.0f);
-vec3 normal = texture(_gBuffer1, uv0).xyz;
+vec3 getSpecularDominantDir(const in vec3 N, const in vec3 R, const in float realRoughness){
+
+float smoothness = 1.0f - realRoughness;
+float lerpFactor = smoothness * (sqrt(smoothness) + realRoughness);
+vec3 dominant = mix(N, R, lerpFactor);
+
+return dominant;
+}
+vec3 integrateBRDFApprox( const in vec3 specular, in float roughness, in float NoV ){
+const vec4 c0 = vec4( -1.0f, -0.0275f, -0.572f, 0.022f );
+const vec4 c1 = vec4( 1.0f, 0.0425f, 1.04f, -0.04f );
+vec4 r = roughness * c0 + c1;
+float a004 = min( r.x * r.x, exp2( -9.28f * NoV ) ) * r.x + r.y;
+vec2 ab = vec2( -1.04f, 1.04f ) * a004 + r.zw;
+return specular * ab.x + ab.y;
+}
+vec3 approximateSpecularIBLPolynomial(in samplerCube envMap, in vec3 specularColor , in float roughness, in float ndotv, in vec3 refVec, in float mipMaps){
+float lod = sqrt( roughness ) * (mipMaps - 1.0f);
+vec3 prefilteredColor = textureLod(envMap, refVec.xyz, lod).rgb;
+return prefilteredColor * integrateBRDFApprox(specularColor, roughness, ndotv);
+}
+#define GAMMA 2.2f
+#define GAMMA_T 1.0f / GAMMA
+void main(){
 vec4 lightColor;
 vec4 lightData1;
 vec4 lightDir = vec4(0.0f);
 vec3 lightVec = vec3(0.0f);
-vec2 lightBRDF = vec2(0.0f);
+vec3 directLighting = vec3(0.0f);
 vec3 viewDir = normalize(_cameraPosition.xyz - wPosition.xyz);
 
-_outColor.rgb = vec3(0.0f);
-vec3 tile = texture(_tileLightDecode, uv0).xyz;
-int uoffset = int(tile.x);
-int voffset = int(tile.z);
-int count = int(tile.y);
-if(count > 0){
-int lightId;
-float temp;
-int offset;
-float uvSize = 1.0f / (_tileLightOffsetSize - 1.0f);
-vec2 lightUV;
-float lightUVSize = 1.0f / (float(_lightNum) - 1.0f);
-float lightUVFloat = 0.0f;
-for(int i = 0;i < count;i++){
-temp = float(uoffset + i);
-offset = 0;
+#ifdef baseColor
+#ifdef baseColorMap
+vec4 albedo = texture(baseColorMap, wUv0) * baseColor * vec4(_ambientLightColor, 1.0);
+#else
+vec4 albedo = baseColor * vec4(_ambientLightColor, 1.0);
+#endif
+#else
+#ifdef baseColorMap
+vec4 albedo = texture(baseColorMap, wUv0) * vec4(_ambientLightColor, 1.0);
+#else
+vec4 albedo = vec4(1.0f) * vec4(_ambientLightColor, 1.0);
+#endif
+#endif
 
-if(temp >= _tileLightOffsetSize){
-temp -= _tileLightOffsetSize;
-offset++;
+#ifdef alphaDiscard
+if(albedo.a < alphaDiscard){
+discard;
 }
-if(temp == _tileLightOffsetSize){
-temp = 0.0f;
-}
+#endif
 
-lightUV = vec2(temp * uvSize, float(voffset + offset) * uvSize);
-lightId = int(texture(_tileLightIndex, lightUV).x);
+vec3 normal = wNormal;
+#ifdef normalMap
+vec3 normalHeight = texture(normalMap, wUv0).xyz;
+vec3 tangent = normalize(wTangent.xyz);
+mat3 tbnMat = mat3(tangent, wTangent.w * cross(normal, tangent), normal);
+normal = normalize(tbnMat * ( normalHeight * 2.0f - 1.0f ));
+#endif
 
-lightUVFloat = float(lightId) * lightUVSize;
-lightColor = texture(_tileWLightData0, vec2(lightUVFloat));
-lightData1 = texture(_tileWLightData1, vec2(lightUVFloat));
+#ifdef metallicRoughnessMap
+vec2 rm = texture(metallicRoughnessMap, wUv0).gb;
+#ifdef roughness
+float _roughness = rm.x * max(roughness, 1e-4);
+#else
+float _roughness = rm.x;
+#endif
+#ifdef metallic
+float _metallic = rm.y * max(metallic, 0.0f);
+#else
+float _metallic = rm.y;
+#endif
+#else
+#ifdef roughnessMap
+#ifdef roughness
+float _roughness = texture(roughnessMap, wUv0).r * max(roughness, 1e-4);
+#else
+float _roughness = texture(roughnessMap, wUv0).r;
+#endif
+#else
+#ifdef roughness
+float _roughness = max(roughness, 1e-4);
+#else
+float _roughness = 1.0f;
+#endif
+#endif
+#ifdef metallicMap
+#ifdef metallic
+float _metallic = texture(metallicMap, wUv0).r * max(metallic, 0.0f);
+#else
+float _metallic = texture(metallicMap, wUv0).r;
+#endif
+#else
+#ifdef metallic
+float _metallic = max(metallic, 0.0f);
+#else
+float _metallic = 1.0f;
+#endif
+#endif
+#endif
 
+#ifdef useSpecGloss
+#ifdef specularGlossinessMap
+vec4 _specularColor = texture(specularGlossinessMap, wUv0);
+#ifdef glossiness
+float _glossiness = _specularColor.a * glossiness;
+#else
+float _glossiness = _specularColor.a;
+#endif
+#ifdef specular
+_specularColor *= specular;
+#endif
+#else
+#ifdef specularMap
+vec4 _specularColor = texture(specularMap, wUv0);
+#else
+vec4 _specularColor = vec4(1.0f);
+#endif
+#ifdef specular
+_specularColor *= specular;
+#endif
+#ifdef glossinessMap
+#ifdef glossiness
+float _glossiness = texture(glossinessMap, wUv0).r * glossiness;
+#else
+float _glossiness = texture(glossinessMap, wUv0).r;
+#endif
+#else
+#ifdef glossiness
+float _glossiness = glossiness;
+#else
+float _glossiness = 1.0f;
+#endif
+#endif
+#endif
+vec4 _diffuseColor = albedo;
+_roughness = 1.0f - _glossiness;
+vec3 fZero = _specularColor.rgb;
+#else
+float nonMetalSpec = 0.04f;
+vec4 _specularColor = (nonMetalSpec - nonMetalSpec * _metallic) + albedo * _metallic;
+vec4 _diffuseColor = albedo - albedo * _metallic;
+vec3 fZero = vec3( 0.5f );
+#endif
+
+#ifdef lightMap
+vec3 _lightMapColor;
+#ifdef lightMapTexCoord
+_lightMapColor = texture(lightMap, wUv1).rgb;
+#else
+_lightMapColor = texture(lightMap, wUv0).rgb;
+#endif
+#ifdef aoMap
+_lightMapColor.gb = _lightMapColor.rr;
+vec3 ao = _lightMapColor;
+#else
+_specularColor.rgb *= _lightMapColor;
+_diffuseColor.rgb  *= _lightMapColor;
+vec3 ao = vec3(1.0f);
+#endif
+#else
+vec3 ao = vec3(1.0f);
+#endif
+
+float ndotv = max( dot( normal, viewDir ), 0.0f );
+for( int i = 0;i < _curLightCount;i+=3 ){
+lightColor = _wLightData[i];
+lightData1 = _wLightData[i + 1];
 ComputeLightDir(wPosition, lightColor.w, lightData1, lightDir, lightVec);
 
-
-float spotFallOff = 1.0;
+float spotFallOff = 1.0 * lightDir.w;
 if( lightColor.w > 1.0f )
 {
-spotFallOff = ComputeSpotFalloff( texture(_tileWLightData2, vec2(lightId * lightUVSize)), lightDir.xyz );
+spotFallOff = ComputeSpotFalloff( _wLightData[i + 2], lightDir.xyz );
 }
 
-
-ComputeLighting(normal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, _shininess, lightBRDF);
-
-_outColor.rgb += lightColor.rgb * ( _diffuseColor.rgb * vec3( lightBRDF.x ) + _specularColor.rgb * vec3( lightBRDF.y ));
+ComputeDirectLighting(normal, viewDir, lightDir.xyz, lightColor.rgb, _diffuseColor.rgb, fZero, _roughness, ndotv, directLighting);
+_outColor.rgb += directLighting * spotFallOff;
 }
+
+if(_blend_gi_probes){
+#ifdef _C_GIPROBES
+
+vec3 _rv = reflect( -viewDir.xyz, normal.xyz );
+float _r = fract( _wGIProbe.w );
+float _mipMaps = _wGIProbe.w - _r;
+_rv = _r * ( wPosition.xyz - _wGIProbe.xyz ) + _rv;
+
+vec3 giLighting = sphericalHarmonics(normal.xyz, _ShCoeffs) * _diffuseColor.rgb;
+
+float horiz = dot(_rv, wNormal);
+float horizFadePower = 1.0f - _roughness;
+horiz = clamp( 1.0f + horizFadePower * horiz, 0.0f, 1.0f );
+horiz *= horiz;
+
+vec3 _dominantR = getSpecularDominantDir( normal, _rv.xyz, _roughness * _roughness );
+giLighting += approximateSpecularIBLPolynomial(_prefEnvMap, _specularColor.rgb, _roughness, ndotv, _dominantR, _mipMaps) * vec3( horiz );
+giLighting *= ao;
+
+_outColor.rgb += giLighting * step( 0.0f, _wGIProbe.w );
+#endif
 }
-_outColor.a = alpha;
+
+#ifdef emissive
+float _emissivePower = 3.0f;
+#ifdef emissivePower
+_emissivePower = emissivePower;
+#endif
+float _emisiveIntensity = 2.0f;
+#ifdef Params.emisiveIntensity
+_emisiveIntensity = Params.emisiveIntensity;
+#endif
+#ifdef emissiveMap
+vec4 eMap = texture(emissiveMap, wUv0);
+_outColor.rgb += emissive.rgb * eMap.rgb * pow(emissive.a * eMap.a, _emissivePower) * _emisiveIntensity;
+#else
+_outColor.rgb += emissive.rgb * pow(emissive.a, _emissivePower) * _emisiveIntensity;
+#endif
+#else
+#ifdef emissiveMap
+float _emissivePower = 3.0f;
+#ifdef emissivePower
+_emissivePower = emissivePower;
+#endif
+float _emisiveIntensity = 2.0f;
+#ifdef Params.emisiveIntensity
+_emisiveIntensity = Params.emisiveIntensity;
+#endif
+vec4 eMap = texture(emissiveMap, wUv0);
+_outColor.rgb += eMap.rgb * pow(eMap.a, _emissivePower) * _emisiveIntensity;
+#endif
+#endif
+
+_outColor.a = albedo.a;
+_outColor.rgb = pow(_outColor.rgb, vec3(GAMMA_T));
+
 }

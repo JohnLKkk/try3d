@@ -577,6 +577,9 @@ export default class OBJLoader {
         //textureCfg.wrapS = self.wrap;
         //textureCfg.wrapT = self.wrap;
         let texture = new Texture2DVars(this._m_Scene);
+        if(textureCfg.encoding == 'sRGB'){
+            texture.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
+        }
         texture.setPreloadColor(this._m_Scene, new Vector4(0.2, 0.2, 0.2, 1.0));
         texture.setImageSrc(this._m_Scene, textureCfg.src);
         texture.setFlipY(true);

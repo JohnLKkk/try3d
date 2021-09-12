@@ -92,8 +92,6 @@ Def DeferredLightingDef{
                         vec4 albedo = vec4(1.0f);
                     #endif
                 #endif
-                // 记住我们在线性空间计算材质,这里的一个优化是在载入纹理时处理而不是在着色阶段
-                albedo.rgb = pow(albedo.rgb, vec3(GAMMA));
 
                 #ifdef Params.alphaDiscard
                     if(albedo.a < Params.alphaDiscard){
@@ -465,10 +463,6 @@ Def DeferredLightingDef{
                 }
 
                 Context.OutColor.a = buff0.a;
-                // 色调映射(后续在后处理统一处理),理论上可以不需要
-                // Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));
-                // 伽马矫正(后续在后处理统一处理)
-                Context.OutColor.rgb = pow(Context.OutColor.rgb, vec3(GAMMA_T));
             }
         }
     }
@@ -731,10 +725,6 @@ Def DeferredLightingDef{
                 }
 
                 Context.OutColor.a = buff0.a;
-                // 色调映射(后续在后处理统一处理),理论上可以不需要
-                // Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));
-                // 伽马矫正(后续在后处理统一处理)
-                Context.OutColor.rgb = pow(Context.OutColor.rgb, vec3(GAMMA_T));
             }
         }
     }

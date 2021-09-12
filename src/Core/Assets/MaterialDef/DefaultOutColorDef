@@ -1,5 +1,9 @@
 // 输出颜色缓冲材质
 Def DefaultOutColorDef{
+    Params{
+        float gammaFactor;
+        bool toneMapping;
+    }
     SubTechnology DefaultOutColor{
         Vars{
             vec2 uv0;
@@ -13,6 +17,12 @@ Def DefaultOutColorDef{
         Fs_Shader{
             void main(){
                 Context.OutColor = texture(Context.InForwardColorMap, uv0);
+                #ifdef Params.toneMapping
+                    Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));
+                #endif
+                #ifdef Params.gammaFactor
+                    Context.OutColor.rgb = pow(Context.OutColor.rgb, vec3(Params.gammaFactor));
+                #endif
             }
         }
     }

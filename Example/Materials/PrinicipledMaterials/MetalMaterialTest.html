@@ -57,7 +57,8 @@
         envMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
         envMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
         envMap.setFilter(scene, Texture2DVars.S_FILTERS.S_LINEAR, Texture2DVars.S_FILTERS.S_LINEAR);
-        envMap.setImage(scene, imageData, {rgbe:true});
+        envMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_RGB16F, Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
+        envMap.setImage(scene, imageData, {rgbe:true, linearFloat:true});
         sky.getMaterial().setParam('envMap', envMap);
         sky.getMaterial().setParam('useEnvMap', new BoolVars().valueOf(true));
         sky.getMaterial().setParam('useHDR', new BoolVars().valueOf(true));
@@ -72,21 +73,23 @@
         let aoMap = null;
 
         let metalLightingDef = MaterialDef.load('../../../src/Core/Assets/MaterialDef/PrincipledLightingDef');
-        let getTexture = (src)=>{
+        let getTexture = (src, srgb)=>{
             let texture = new Texture2DVars(scene);
             texture.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
             texture.setImageSrc(scene, src);
+            if(srgb)
+                texture.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
             return texture;
         };
 
         // plastic
         let plastic = new Sphere(scene, {id:'plastic', widthSegments:35, heightSegments:35});
         let plasticMat = new Material(scene, {id:'plasticMat', materialDef:metalLightingDef});
-        plasticMat.setParam('baseColorMap', getTexture('../../Assets/Textures/pbr/plastic/albedo.png'));
+        plasticMat.setParam('baseColorMap', getTexture('../../Assets/Textures/pbr/plastic/albedo.png', true));
         plasticMat.setParam('normalMap', getTexture('../../Assets/Textures/pbr/plastic/normal.png'));
         plasticMat.setParam('metallicMap', getTexture('../../Assets/Textures/pbr/plastic/metallic.png'));
         plasticMat.setParam('roughnessMap', getTexture('../../Assets/Textures/pbr/plastic/roughness.png'));
-        plasticMat.setParam('lightMap', getTexture('../../Assets/Textures/pbr/plastic/ao.png'));
+        plasticMat.setParam('lightMap', getTexture('../../Assets/Textures/pbr/plastic/ao.png', true));
         plasticMat.setParam('aoMap', new BoolVars().valueOf(true));
         plastic.setMaterial(plasticMat);
         rootNode.addChildren(plastic);
@@ -95,11 +98,11 @@
         let gold = new Sphere(scene, {id:'gold', widthSegments:35, heightSegments:35});
         gold.setLocalTranslationXYZ(-2.5, 0, 0);
         let goldMat = new Material(scene, {id:'goldMat', materialDef:metalLightingDef});
-        goldMat.setParam('baseColorMap', getTexture('../../Assets/Textures/pbr/gold/albedo.png'));
+        goldMat.setParam('baseColorMap', getTexture('../../Assets/Textures/pbr/gold/albedo.png', true));
         goldMat.setParam('normalMap', getTexture('../../Assets/Textures/pbr/gold/normal.png'));
         goldMat.setParam('metallicMap', getTexture('../../Assets/Textures/pbr/gold/metallic.png'));
         goldMat.setParam('roughnessMap', getTexture('../../Assets/Textures/pbr/gold/roughness.png'));
-        goldMat.setParam('lightMap', getTexture('../../Assets/Textures/pbr/gold/ao.png'));
+        goldMat.setParam('lightMap', getTexture('../../Assets/Textures/pbr/gold/ao.png', true));
         goldMat.setParam('aoMap', new BoolVars().valueOf(true));
         gold.setMaterial(goldMat);
         rootNode.addChildren(gold);
@@ -108,11 +111,11 @@
         let grass = new Sphere(scene, {id:'grass', widthSegments:35, heightSegments:35});
         grass.setLocalTranslationXYZ(2.5, 0, 0);
         let grassMat = new Material(scene, {id:'grassMat', materialDef:metalLightingDef});
-        grassMat.setParam('baseColorMap', getTexture('../../Assets/Textures/pbr/grass/albedo.png'));
+        grassMat.setParam('baseColorMap', getTexture('../../Assets/Textures/pbr/grass/albedo.png', true));
         grassMat.setParam('normalMap', getTexture('../../Assets/Textures/pbr/grass/normal.png'));
         grassMat.setParam('metallicMap', getTexture('../../Assets/Textures/pbr/grass/metallic.png'));
         grassMat.setParam('roughnessMap', getTexture('../../Assets/Textures/pbr/grass/roughness.png'));
-        grassMat.setParam('lightMap', getTexture('../../Assets/Textures/pbr/grass/ao.png'));
+        grassMat.setParam('lightMap', getTexture('../../Assets/Textures/pbr/grass/ao.png', true));
         grassMat.setParam('aoMap', new BoolVars().valueOf(true));
         grass.setMaterial(grassMat);
         rootNode.addChildren(grass);
@@ -121,11 +124,11 @@
         let wall = new Sphere(scene, {id:'wall', widthSegments:35, heightSegments:35});
         wall.setLocalTranslationXYZ(5, 0, 0);
         let wallMat = new Material(scene, {id:'wallMat', materialDef:metalLightingDef});
-        wallMat.setParam('baseColorMap', getTexture('../../Assets/Textures/pbr/wall/albedo.png'));
+        wallMat.setParam('baseColorMap', getTexture('../../Assets/Textures/pbr/wall/albedo.png', true));
         wallMat.setParam('normalMap', getTexture('../../Assets/Textures/pbr/wall/normal.png'));
         wallMat.setParam('metallicMap', getTexture('../../Assets/Textures/pbr/wall/metallic.png'));
         wallMat.setParam('roughnessMap', getTexture('../../Assets/Textures/pbr/wall/roughness.png'));
-        wallMat.setParam('lightMap', getTexture('../../Assets/Textures/pbr/wall/ao.png'));
+        wallMat.setParam('lightMap', getTexture('../../Assets/Textures/pbr/wall/ao.png', true));
         wallMat.setParam('aoMap', new BoolVars().valueOf(true));
         wall.setMaterial(wallMat);
         rootNode.addChildren(wall);
@@ -134,11 +137,11 @@
         let rusted_iron = new Sphere(scene, {id:'rusted_iron', widthSegments:35, heightSegments:35});
         rusted_iron.setLocalTranslationXYZ(-5, 0, 0);
         let rusted_ironMat = new Material(scene, {id:'rusted_ironMat', materialDef:metalLightingDef});
-        rusted_ironMat.setParam('baseColorMap', getTexture('../../Assets/Textures/pbr/rusted_iron/albedo.png'));
+        rusted_ironMat.setParam('baseColorMap', getTexture('../../Assets/Textures/pbr/rusted_iron/albedo.png', true));
         rusted_ironMat.setParam('normalMap', getTexture('../../Assets/Textures/pbr/rusted_iron/normal.png'));
         rusted_ironMat.setParam('metallicMap', getTexture('../../Assets/Textures/pbr/rusted_iron/metallic.png'));
         rusted_ironMat.setParam('roughnessMap', getTexture('../../Assets/Textures/pbr/rusted_iron/roughness.png'));
-        rusted_ironMat.setParam('lightMap', getTexture('../../Assets/Textures/pbr/rusted_iron/ao.png'));
+        rusted_ironMat.setParam('lightMap', getTexture('../../Assets/Textures/pbr/rusted_iron/ao.png', true));
         rusted_ironMat.setParam('aoMap', new BoolVars().valueOf(true));
         rusted_iron.setMaterial(rusted_ironMat);
         rootNode.addChildren(rusted_iron);
