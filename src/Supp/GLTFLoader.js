@@ -670,7 +670,7 @@ export default class GLTFLoader {
                 else{
                     // 生成切线数据
                     if(mesh.getData(Mesh.S_UV0)){
-                        let tangents = Tools.generatorTangents(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
+                        let tangents = Tools.generatorTangents(mesh.getData(Mesh.S_INDICES) ? mesh.getData(Mesh.S_INDICES) : mesh.getData(Mesh.S_INDICES_32), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
                         let meshTangents = mesh.getData(Mesh.S_TANGENTS);
                         if(meshTangents){
                             tangents.forEach(tan=>{
@@ -681,7 +681,7 @@ export default class GLTFLoader {
                     }
                     else{
                         // 为了内存对齐
-                        let tangents = Tools.generatorFillTangents(mesh.getData(Mesh.S_INDICES), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
+                        let tangents = Tools.generatorFillTangents(mesh.getData(Mesh.S_INDICES) ? mesh.getData(Mesh.S_INDICES) : mesh.getData(Mesh.S_INDICES_32), mesh.getData(Mesh.S_POSITIONS), mesh.getData(Mesh.S_UV0));
                         let meshTangents = mesh.getData(Mesh.S_TANGENTS);
                         if(meshTangents){
                             tangents.forEach(tan=>{

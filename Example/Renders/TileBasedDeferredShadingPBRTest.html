@@ -89,7 +89,7 @@
             let ps = [];
             for(let i = 0;i < 100;i++){
                 let pointLight = new PointLight(scene, {id:'pointLight' + i});
-                pointLight.setRadius(1);
+                pointLight.setRadius(5);
                 pointLight.setColorRGBA(Math.random() * 1.0, Math.random() * 1.0, Math.random() * 1.0, 1.0);
                 pointLight.setPositionXYZ(Math.random() * dx + lx, Math.random() * dy + ly, Math.random() * dz + lz);
                 pointLight.dx = 1.0;

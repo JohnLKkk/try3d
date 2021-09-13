@@ -85,17 +85,17 @@
             let ly = center._m_Y - dy * 0.5;
             let lz = center._m_Z - dz * 0.5;
             let ps = [];
-            // for(let i = 0;i < 1000;i++){
-            //     let pointLight = new PointLight(scene, {id:'pointLight' + i});
-            //     pointLight.setRadius(1);
-            //     pointLight.setColorRGBA(Math.random() * 1.0, Math.random() * 1.0, Math.random() * 1.0, 1.0);
-            //     pointLight.setPositionXYZ(Math.random() * dx + lx, Math.random() * dy + ly, Math.random() * dz + lz);
-            //     pointLight.dx = 1.0;
-            //     pointLight.dy = 1.0;
-            //     pointLight.dz = 1.0;
-            //     rootNode.addChildren(pointLight);
-            //     ps.push(pointLight);
-            // }
+            for(let i = 0;i < 1000;i++){
+                let pointLight = new PointLight(scene, {id:'pointLight' + i});
+                pointLight.setRadius(1);
+                pointLight.setColorRGBA(Math.random() * 1.0, Math.random() * 1.0, Math.random() * 1.0, 1.0);
+                pointLight.setPositionXYZ(Math.random() * dx + lx, Math.random() * dy + ly, Math.random() * dz + lz);
+                pointLight.dx = 1.0;
+                pointLight.dy = 1.0;
+                pointLight.dz = 1.0;
+                rootNode.addChildren(pointLight);
+                ps.push(pointLight);
+            }
 
             // 使用dat gui
             let gui = new dat.GUI();
@@ -152,7 +152,7 @@
             stats.domElement.style.top = '0px';
             document.body.appendChild(stats.domElement);
             scene.on('update', (exTime)=>{
-                // stats.update();
+                stats.update();
                 if(settings.pointLightAnim){
                     ps.forEach(p=>{
                         let pos = p.getPosition();

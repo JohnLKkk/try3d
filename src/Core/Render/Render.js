@@ -194,7 +194,7 @@ export default class Render extends Component{
         // G-buffer0
         dfb.addTexture(gl, ShaderSource.S_G_BUFFER0_SRC, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT0, true);
         // G-buffer1
-        dfb.addTexture(gl, ShaderSource.S_G_BUFFER1_SRC, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT1, true);
+        dfb.addTexture(gl, ShaderSource.S_G_BUFFER1_SRC, gl.RGBA32F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT1, true);
         // G-buffer2
         dfb.addTexture(gl, ShaderSource.S_G_BUFFER2_SRC, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT2, true);
         // 创建depth附件(使用renderBuffer来提供)
