@@ -201,12 +201,34 @@ export default class GLTFLoader {
     }
     _bindBone(){
         let jis = null;
+        let bone = null;
         for(let i = 0;i < this._m_Aps.length;i++){
             jis = this._m_Aps[i].skeleton.getJoints();
             Log.log('jointcount:' + jis.length);
             for(let j = 0;j < jis.length;j++){
-                if(this._m_Nodes[jis[j].getId()]){
-                    jis[j].link(this._m_Nodes[jis[j].getId()]);
+                bone = this._m_Nodes[jis[j].getId()];
+                // 这里一个潜在性问题是，为了加速解析，这里并非首先遍历所有skin（因为skin并非顺序存储在gltf中）
+                // 所以为了避免某些joint引用自node,在这里手动转换为bone
+                if(!(bone instanceof Bone) && !bone._update2){
+                    bone.getType = function(){
+                        return 'Bone';
+                    };
+                    bone._update2 = bone._updateLocalMatrix;
+                    bone.bind = function(b){
+                        this._m_Bind = b;
+                    };
+                    bone.getBind = function(){
+                        return this._m_Bind;
+                    };
+                    bone._updateLocalMatrix = function(){
+                        this._update2();
+                        if(this._m_Bind){
+                            this._m_Bind.actived();
+                        }
+                    };
+                }
+                if(bone){
+                    jis[j].link(bone);
                 }
             }
         }

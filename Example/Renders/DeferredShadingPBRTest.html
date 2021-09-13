@@ -52,7 +52,7 @@
 
     // 环境纹理加载完再开始创建创建
     let radianceLoader = new RadianceLoader();
-    radianceLoader.loadHDR('./../Assets/Textures/hdr/env1.hdr', imageData=>{
+    radianceLoader.loadHDR('./../Assets/Textures/hdr/Path.hdr', imageData=>{
         // 创建一个sky
         let sky = new SkyBox(scene, {id:'sky'});
         // 使用cubeMap作为天空盒材质
@@ -60,7 +60,8 @@
         envMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
         envMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
         envMap.setFilter(scene, Texture2DVars.S_FILTERS.S_LINEAR, Texture2DVars.S_FILTERS.S_LINEAR);
-        envMap.setImage(scene, imageData, {rgbe:true});
+        envMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_RGB16F, Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
+        envMap.setImage(scene, imageData, {rgbe:true, linearFloat:true});
         sky.getMaterial().setParam('envMap', envMap);
         sky.getMaterial().setParam('useEnvMap', new BoolVars().valueOf(true));
         sky.getMaterial().setParam('useHDR', new BoolVars().valueOf(true));
@@ -84,17 +85,17 @@
             let ly = center._m_Y - dy * 0.5;
             let lz = center._m_Z - dz * 0.5;
             let ps = [];
-            for(let i = 0;i < 100;i++){
-                let pointLight = new PointLight(scene, {id:'pointLight' + i});
-                pointLight.setRadius(1);
-                pointLight.setColorRGBA(Math.random() * 1.0, Math.random() * 1.0, Math.random() * 1.0, 1.0);
-                pointLight.setPositionXYZ(Math.random() * dx + lx, Math.random() * dy + ly, Math.random() * dz + lz);
-                pointLight.dx = 1.0;
-                pointLight.dy = 1.0;
-                pointLight.dz = 1.0;
-                rootNode.addChildren(pointLight);
-                ps.push(pointLight);
-            }
+            // for(let i = 0;i < 1000;i++){
+            //     let pointLight = new PointLight(scene, {id:'pointLight' + i});
+            //     pointLight.setRadius(1);
+            //     pointLight.setColorRGBA(Math.random() * 1.0, Math.random() * 1.0, Math.random() * 1.0, 1.0);
+            //     pointLight.setPositionXYZ(Math.random() * dx + lx, Math.random() * dy + ly, Math.random() * dz + lz);
+            //     pointLight.dx = 1.0;
+            //     pointLight.dy = 1.0;
+            //     pointLight.dz = 1.0;
+            //     rootNode.addChildren(pointLight);
+            //     ps.push(pointLight);
+            // }
 
             // 使用dat gui
             let gui = new dat.GUI();
@@ -151,7 +152,7 @@
             stats.domElement.style.top = '0px';
             document.body.appendChild(stats.domElement);
             scene.on('update', (exTime)=>{
-                stats.update();
+                // stats.update();
                 if(settings.pointLightAnim){
                     ps.forEach(p=>{
                         let pos = p.getPosition();

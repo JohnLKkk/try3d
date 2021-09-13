@@ -29,6 +29,7 @@
     import BoolVars from "../../src/Core/WebGL/Vars/BoolVars.js";
     import GIProbe from "../../src/Core/Light/GIProbe.js";
     import ProbeTools from "../../src/Core/Util/ProbeTools.js";
+    import SceneBrowsingController from "../../src/Core/InputControl/SceneBrowsingController.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(10.00694701577273,4.752059754747693,-0.8094167189698362), new Vector3(9.020200568330681,4.844430342194254,-0.6760033649333097), new Vector3(0, 1, 0));
@@ -42,7 +43,7 @@
 
     // 环境纹理加载完再开始创建创建
     let radianceLoader = new RadianceLoader();
-    radianceLoader.loadHDR('./../Assets/Textures/hdr/env1.hdr', imageData=>{
+    radianceLoader.loadHDR('./../Assets/Textures/hdr/Path.hdr', imageData=>{
         // 创建一个sky
         let sky = new SkyBox(scene, {id:'sky'});
         // 使用cubeMap作为天空盒材质
@@ -62,6 +63,9 @@
         gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
         gltfLoader.load(scene, './../Assets/Models/GLTF/Sponza/Sponza.gltf', modelNode=>{
             rootNode.addChildren(modelNode);
+            let sceneControl = new SceneBrowsingController(scene, {id:"controller"});
+            sceneControl.lookScene(rootNode);
+            sceneControl.setTargetDistance(1);
         }, {batch:true});
 
         let dirLight = new DirectionalLight(scene, {id:'dirLight'});

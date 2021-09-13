@@ -368,7 +368,7 @@ export default class Texture2DVars extends Vars{
             //self._image = image; // 为了更快地恢复WebGL上下文-内存效率低下？
             this._setImage(this._m_Scene, this._m_Image);
             // 为该image生成硬件mipmap
-            if(this._m_MinFilter == Texture2DVars.S_FILTERS.S_LINEAR_MIPMAP_NEAREST || this._m_MagFilter == Texture2DVars.S_FILTERS.S_LINEAR_MIPMAP_NEAREST){
+            if(this._m_MinFilter != Texture2DVars.S_FILTERS.S_NEAREST && this._m_MinFilter != Texture2DVars.S_FILTERS.S_LINEAR){
                 this.genMipmap(this._m_Scene);
             }
             this.updateTextureFilter();

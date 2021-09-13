@@ -215,11 +215,11 @@ Def DeferredLightingDef{
 
 
 
-                Context.OutGBuffer0.xyz = _diffuseColor.rgb * 100.0f + ao * 0.1f;
+                Context.OutGBuffer0.xyz = floor(_diffuseColor.rgb * 100.0f) + ao * 0.1f;
                 Context.OutGBuffer0.w   = albedo.a;
-                Context.OutGBuffer1.xyz = normal.xyz * 1000.0f + wNormal * 0.001f;
-                Context.OutGBuffer2.rgb = _specularColor.rgb * 10.0f + fZero * 0.1f;
-                Context.OutGBuffer2.a = _roughness * 10.0f + _metallic * 0.1f;
+                Context.OutGBuffer1.xyz = floor(normal.xyz * 1000.0f) + wNormal * 0.001f;
+                Context.OutGBuffer2.rgb = floor(_specularColor.rgb * 10.0f) + fZero * 0.1f;
+                Context.OutGBuffer2.a = floor(_roughness * 100.0f) + _metallic * 0.1f;
             }
         }
     }
@@ -404,9 +404,9 @@ Def DeferredLightingDef{
                 vec3 _specularColor = floor(buff2.rgb) * 0.1f;
                 vec3 ao = min(fract(buff0.rgb) * 10.0f, vec3(1.0f));
                 vec3 fZero = min(fract(buff2.rgb) * 10.0f, vec3(0.5f));
-                float _roughness = floor(buff2.w) * 0.1f;
+                float _roughness = floor(buff2.w) * 0.01f;
                 vec3 n = texture(Context.InGBuffer1, uv0).xyz;
-                vec3 normal = floor(n) * 0.001;
+                vec3 normal = floor(n) * 0.001f;
                 vec3 wNormal = fract(n) * 1000.0f;
                 // 计算光照
                 vec4 lightColor;
@@ -646,10 +646,10 @@ Def DeferredLightingDef{
                 vec3 _diffuseColor = floor(buff0.rgb) * 0.01f * Context.AmbientLightColor;
                 vec3 _specularColor = floor(buff2.rgb) * 0.1f;
                 vec3 ao = min(fract(buff0.rgb) * 10.0f, vec3(1.0f));
-                vec3 fZero = min(fract(buff2.rgb) * 10.0f, vec3(0.5f));
-                float _roughness = floor(buff2.w) * 0.1f;
+                vec3 fZero = min(fract(buff2.rgb) * 10.0f, vec3(1.0f));
+                float _roughness = floor(buff2.w) * 0.01f;
                 vec3 n = texture(Context.InGBuffer1, uv0).xyz;
-                vec3 normal = floor(n) * 0.001;
+                vec3 normal = floor(n) * 0.001f;
                 vec3 wNormal = fract(n) * 1000.0f;
                 // 计算光照
                 vec4 lightColor;
@@ -909,9 +909,9 @@ Def DeferredLightingDef{
                 vec3 _specularColor = floor(buff2.rgb) * 0.1f;
                 vec3 ao = min(fract(buff0.rgb) * 10.0f, vec3(1.0f));
                 vec3 fZero = min(fract(buff2.rgb) * 10.0f, vec3(0.5f));
-                float _roughness = floor(buff2.w) * 0.1f;
+                float _roughness = floor(buff2.w) * 0.01f;
                 vec3 n = texture(Context.InGBuffer1, uv0).xyz;
-                vec3 normal = floor(n) * 0.001;
+                vec3 normal = floor(n) * 0.001f;
                 vec3 wNormal = fract(n) * 1000.0f;
                 // 计算光照
                 vec4 lightColor;
@@ -967,10 +967,6 @@ Def DeferredLightingDef{
                     #endif
                 }
                 Context.OutColor.a = buff0.a;
-                // 色调映射(后续在后处理统一处理),理论上可以不需要
-                // Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));
-                // 伽马矫正(后续在后处理统一处理)
-                Context.OutColor.rgb = pow(Context.OutColor.rgb, vec3(GAMMA_T));
             }
         }
     }
@@ -1155,9 +1151,9 @@ Def DeferredLightingDef{
                 vec3 _specularColor = floor(buff2.rgb) * 0.1f;
                 vec3 ao = min(fract(buff0.rgb) * 10.0f, vec3(1.0f));
                 vec3 fZero = min(fract(buff2.rgb) * 10.0f, vec3(0.5f));
-                float _roughness = floor(buff2.w) * 0.1f;
+                float _roughness = floor(buff2.w) * 0.01f;
                 vec3 n = texture(Context.InGBuffer1, uv0).xyz;
-                vec3 normal = floor(n) * 0.001;
+                vec3 normal = floor(n) * 0.001f;
                 vec3 wNormal = fract(n) * 1000.0f;
                 // 计算光照
                 vec4 lightColor;
@@ -1222,10 +1218,6 @@ Def DeferredLightingDef{
                     }
                 }
                 Context.OutColor.a = buff0.a;
-                // 色调映射(后续在后处理统一处理),理论上可以不需要
-                // Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));
-                // 伽马矫正(后续在后处理统一处理)
-                Context.OutColor.rgb = pow(Context.OutColor.rgb, vec3(GAMMA_T));
             }
         }
     }

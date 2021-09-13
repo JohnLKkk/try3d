@@ -44,7 +44,7 @@
 
     // 环境纹理加载完再开始创建创建
     let radianceLoader = new RadianceLoader();
-    radianceLoader.loadHDR('./../Assets/Textures/hdr/env1.hdr', imageData=>{
+    radianceLoader.loadHDR('./../Assets/Textures/hdr/Path.hdr', imageData=>{
 
         // 创建一个sky
         let sky = new SkyBox(scene, {id:'sky'});
@@ -64,12 +64,12 @@
 
         let gltfLoader = new GLTFLoader();
         gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
-        gltfLoader.load(scene, './../Assets/Models/GLTF/StarWars/scene.gltf', modelNode=>{
+        gltfLoader.load(scene, './../Assets/Models/GLTF/BattleRifle/scene.gltf', modelNode=>{
             rootNode.addChildren(modelNode);
             let sceneControl = new SceneBrowsingController(scene, {id:'control'});
             sceneControl.lookScene(modelNode);
-            // let animationProcessors = modelNode.getComponentAtTypes('AnimationProcessor');
-            // animationProcessors[0].getAnimationActionAtIndex(0).play();
+            let animationProcessors = modelNode.getComponentAtTypes('AnimationProcessor');
+            animationProcessors[0].getAnimationActionAtIndex(0).play();
             let giProbe = new GIProbe(scene, {id:'giProbe'});
             giProbe.setRadius(20);
             giProbe.setPositionFromXYZ(0, 5, 0);
