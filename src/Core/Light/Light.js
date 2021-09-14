@@ -6,6 +6,9 @@ import Node from "../Node/Node.js";
 import Vector4 from "../Math3d/Vector4.js";
 
 export default class Light extends Node{
+    static S_VISIBLE_LIGHT = 0x001;
+    static S_STATIC_LIGHT = 0x002;
+    static S_DYNAMIC = 0x003;
     getType() {
         return 'Light';
     }
@@ -19,6 +22,17 @@ export default class Light extends Node{
         this._m_Color = new Vector4();
         this._m_Enable = true;
         this._m_Scene.enableLight(this);
+        this._m_Mark = 0;
+        this._init();
+    }
+
+    /**
+     * 初始化。<br/>
+     * @private
+     */
+    _init(){
+        this._m_Mark |= Light.S_VISIBLE_LIGHT;
+        this._m_Mark |= Light.S_DYNAMIC;
     }
 
     /**

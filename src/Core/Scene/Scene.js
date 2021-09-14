@@ -448,15 +448,18 @@ export default class Scene extends Component{
             this._m_EnableLights.forEach(light=>{
                 // GIProbe和RefProbe单独处理
                 if(light.getType() == 'GIProbe' || light.getType() == 'RefProbe')return;
+                light._m_Mark ^= Light.S_VISIBLE_LIGHT;
                 if(light.getFilterFlag() == Node.S_DYNAMIC){
                     // 光锥剔除
                     // 尽管这里可以更加高效加速,但作为基础实现,仅在这里进行快速剔除
                     if(light.inFrustum(this._m_FrustumCullingCamera)){
+                        light._m_Mark |= Light.S_VISIBLE_LIGHT;
                         this._m_VisLights.push(light);
                     }
                 }
                 else if(light.getFilterFlag() == Node.S_NEVER){
                     // 直接渲染
+                    light._m_Mark |= Light.S_VISIBLE_LIGHT;
                     this._m_VisLights.push(light);
                 }
             });

@@ -45,6 +45,8 @@
     scene.setAmbientLightColor(1.0, 1.0, 1.0, 1.0);
     // 设置默认启用的技术方案为MultiPassDeferred
     scene.getRender().setPriorityTechnology('MultiPassDeferred');
+    // 启用色调映射
+    scene.getRender().enableToneMapping(true);
 
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));

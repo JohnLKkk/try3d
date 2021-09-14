@@ -18,7 +18,9 @@ Def DefaultOutColorDef{
             void main(){
                 Context.OutColor = texture(Context.InForwardColorMap, uv0);
                 #ifdef Params.toneMapping
-                    Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));
+                    if(Params.toneMapping){
+                        Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));
+                    }
                 #endif
                 #ifdef Params.gammaFactor
                     Context.OutColor.rgb = pow(Context.OutColor.rgb, vec3(Params.gammaFactor));

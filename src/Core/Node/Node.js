@@ -20,6 +20,12 @@ export default class Node extends Component{
     static S_ALWAYS = 1 << 3;
     // 永不
     static S_NEVER = 1 << 4;
+    // 接受阴影
+    static S_SHADOW_RECEIVE = 1 << 5;
+    // 计算阴影
+    static S_SHADOW_CAST = 1 << 6;
+    // 关闭阴影
+    static S_SHADOW_NONE = 0;
     static S_TEMP_VEC3 = new Vector3();
     static S_TEMP_Q = new Quaternion();
     static S_TEMP_VEC3_2 = new Vector3();
@@ -67,6 +73,56 @@ export default class Node extends Component{
         this._m_CullingFlags |= Node.S_DEFAULT_FRUSTUM_CULLING;
         // 过滤标记
         this._m_FilterFlag = Node.S_DYNAMIC;
+        // 阴影模式
+        this._m_ShadowMode = Node.S_SHADOW_NONE;
+    }
+
+    /**
+     * 设置是否计算阴影。<br/>
+     * @param {Boolean}[cast]
+     */
+    castShadow(cast){
+        if(cast && (this._m_FilterFlag & Node.S_SHADOW_CAST) == 0){
+            this._m_ShadowMode |= Node.S_SHADOW_CAST;
+        }
+        else if((this._m_FilterFlag & Node.S_SHADOW_CAST) != 0){
+            this._m_ShadowMode ^= Node.S_SHADOW_CAST;
+        }
+        this._m_Children.forEach(c=>{
+            c.castShadow(cast);
+        });
+    }
+
+    /**
+     * 返回是否计算阴影。<br/>
+     * @return {Boolean}
+     */
+    isCastShadow(){
+        return (this._m_ShadowMode & Node.S_SHADOW_CAST) != 0;
+    }
+
+    /**
+     * 设置是否接受阴影。<br/>
+     * @param {Boolean}[receive]
+     */
+    receiveShadow(receive){
+        if(receive && (this._m_ShadowMode & Node.S_SHADOW_RECEIVE) == 0){
+            this._m_ShadowMode |= Node.S_SHADOW_RECEIVE;
+        }
+        else if((this._m_ShadowMode & Node.S_SHADOW_RECEIVE) != 0){
+            this._m_ShadowMode ^= Node.S_SHADOW_RECEIVE;
+        }
+        this._m_Children.forEach(c=>{
+            c.receiveShadow(receive);
+        });
+    }
+
+    /**
+     * 返回是否接受阴影。<br/>
+     * @return {Boolean}
+     */
+    isReceiveShadow(){
+        return (this._m_ShadowMode & Node.S_SHADOW_RECEIVE) != 0;
     }
 
     /**

@@ -24,6 +24,7 @@ import TilePassLightingRenderProgram from "./Program/TilePassLightingRenderProgr
 import TileDeferred from "./Pipeline/TileDeferred.js";
 import TilePassIBLLightingRenderProgram from "./Program/TilePassIBLLightingRenderProgram.js";
 import FloatVars from "../WebGL/Vars/FloatVars.js";
+import BoolVars from "../WebGL/Vars/BoolVars.js";
 
 export default class Render extends Component{
     // 渲染路径
@@ -94,6 +95,8 @@ export default class Render extends Component{
         this._m_GammaCorrection = true;
         // gamma编码因子
         this._m_GammaFactor = 0.45;
+        // 色调映射
+        this._m_ToneMapping = false;
 
         // Tile
         this._m_TileInfo = {
@@ -707,11 +710,22 @@ export default class Render extends Component{
 
     /**
      * 启用或关闭gamma矫正。<br/>
-     * @param enable
+     * @param {Boolean}[enable]
      */
     enableGammaCorrection(enable){
         // 现在忽略这个参数
         this._m_GammaCorrection = enable;
+    }
+
+    /**
+     * 启用或关闭toneMapping。<br/>
+     * @param {Boolean}[enable]
+     */
+    enableToneMapping(enable){
+        if(enable != this._m_ToneMapping){
+            this._m_ToneMapping = enable;
+            this._m_FrameContext.getFrameBuffer(Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER).getFramePicture().getMaterial().setParam('toneMapping', new BoolVars().valueOf(this._m_ToneMapping));
+        }
     }
 
     /**

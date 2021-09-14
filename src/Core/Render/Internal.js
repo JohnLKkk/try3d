@@ -54,7 +54,9 @@ export default class Internal {
         "            void main(){\n" +
         "                Context.OutColor = texture(Context.InForwardColorMap, uv0);\n" +
         "                #ifdef Params.toneMapping\n" +
-        "                    Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));\n" +
+        "                    if(Params.toneMapping){\n" +
+        "                        Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));\n" +
+        "                    }\n" +
         "                #endif\n" +
         "                #ifdef Params.gammaFactor\n" +
         "                    Context.OutColor.rgb = pow(Context.OutColor.rgb, vec3(Params.gammaFactor));\n" +
