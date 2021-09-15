@@ -58,13 +58,15 @@
         import Vector3 from "../src/Core/Math3d/Vector3.js";
         import ProbeTools from "../src/Core/Util/ProbeTools.js";
 
-        console.log('0.5 ^ 2.2 = ' + Math.pow(0.534, 2.2));
-        let texelVect = new Vector3();
-        let weight = ProbeTools.getSAAV(120, 125, 128, 3, texelVect, ProbeTools._S_FIX_SEAMS_METHOD.Wrap);
-        console.log('weight:' + weight + ";texelVect:" + texelVect.toString());
-        let shDir = [];
-        ProbeTools.evalShBasis(texelVect, shDir);
-        console.log('shDir:' , shDir);
+        // console.log('0.5 ^ 2.2 = ' + Math.pow(0.534, 2.2));
+        // let texelVect = new Vector3();
+        // let weight = ProbeTools.getSAAV(120, 125, 128, 3, texelVect, ProbeTools._S_FIX_SEAMS_METHOD.Wrap);
+        // console.log('weight:' + weight + ";texelVect:" + texelVect.toString());
+        // let shDir = [];
+        // ProbeTools.evalShBasis(texelVect, shDir);
+        // console.log('shDir:' , shDir);
+        let cfg = {value:false};
+        console.log('value:' + (cfg.value || 1));
     </script>
     <!--<script>-->
         <!--function findSrc(str, reg){-->

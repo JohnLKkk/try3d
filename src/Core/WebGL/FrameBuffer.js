@@ -31,6 +31,24 @@ export default class FrameBuffer {
         this._m_RData = {};
         // 当前帧图像输出
         this._m_FramePicture = null;
+        // 固定尺寸
+        this._m_FixedSize = false;
+    }
+
+    /**
+     * 设置是否为固定尺寸。<br/>
+     * @param {Boolean}[fixedSize]
+     */
+    setFixedSize(fixedSize){
+        this._m_FixedSize = fixedSize;
+    }
+
+    /**
+     * 是否为固定尺寸的FrameBuffer。<br/>
+     * @return {Boolean}
+     */
+    isFixedSize(){
+        return this._m_FixedSize;
     }
 
     /**
@@ -250,6 +268,7 @@ export default class FrameBuffer {
      * @param {Number}[h]
      */
     resize(gl, w, h){
+        if(this._m_FixedSize)return;
         if(this._m_Width != w || this._m_Height != h){
             this._m_Width = w;
             this._m_Height = h;

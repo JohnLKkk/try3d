@@ -50,10 +50,11 @@ export default class Camera extends Component{
         this._m_ViewMatrixUpdate = false;
         this._m_ProjectMatrixUpdate = false;
         this._m_ProjectViewMatrixUpdate = false;
+        this._m_ParallelProjection = cfg.parallelProjection != null ? cfg.parallelProjection : false;
 
         // 相机参数
         this._m_Fovy = cfg.fovy || 45.0;
-        this._m_FixedAspect = cfg.aspect || false;
+        this._m_FixedAspect = cfg.aspect != null ? cfg.aspect : false;
 
         // 如果当前相机是一个主相机,则被激活用于主渲染
         this._m_IsRenderingCamera = false;
@@ -92,20 +93,33 @@ export default class Camera extends Component{
         // 初始化(默认是一个透视相机)
         let canvas = this._m_Scene.getCanvas();
         let gl = canvas.getGLContext();
+        this._m_Width = cfg.width || canvas.getWidth();
+        this._m_Height = cfg.height || canvas.getHeight();
+        this._m_FixedSize = cfg.fixedSize != null ? cfg.fixedSize : false;
         this._m_ViewMatrix.lookAt(this._m_Eye, this._m_At, this._m_Up);
-        this._m_ProjectMatrix.perspectiveM(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (canvas.getWidth() * 1.0 / canvas.getHeight()), 0.1, 1000);
+        // this._m_ProjectMatrix.perspectiveM(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (this._m_Width * 1.0 / this._m_Height), 0.1, 1000);
         this._m_ViewMatrixUpdate = true;
         this._m_ProjectMatrixUpdate = true;
         this._m_UpdateCameraPosition = true;
-        gl.viewport(0, 0, canvas.getWidth(), canvas.getHeight());
+        gl.viewport(0, 0, this._m_Width, this._m_Height);
         this._init();
 
         canvas.on('resize', ()=>{
-            if(this._m_IsRenderingCamera){
-                gl.viewport(0, 0, canvas.getWidth(), canvas.getHeight());
+            if(!this._m_FixedSize){
+                this._m_Width = canvas.getWidth();
+                this._m_Height = canvas.getHeight();
+                if(this._m_IsRenderingCamera){
+                    gl.viewport(0, 0, this._m_Width, this._m_Height);
+                }
+                // 直接展开而非函数调用,减少开销
+                if(this._m_ParallelProjection){
+                    this._m_ProjectMatrix.parallelM(this._m_FrustumLeft, this._m_FrustumRight, this._m_FrustumTop, this._m_FrustumBottom, this._m_FrustumNear, this._m_FrustumFar);
+                }
+                else{
+                    this._m_ProjectMatrix.perspectiveM(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (this._m_Width * 1.0 / this._m_Height), 0.1, 1000);
+                }
+                this._m_ProjectMatrixUpdate = true;
             }
-            this._m_ProjectMatrix.perspectiveM(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (canvas.getWidth() * 1.0 / canvas.getHeight()), 0.1, 1000);
-            this._m_ProjectMatrixUpdate = true;
             this._doUpdate();
         });
 
@@ -136,18 +150,31 @@ export default class Camera extends Component{
      * @private
      */
     _init(){
-        // 默认是一个透视相机,所以这里基于透视算法建立投影平面
-        // 这里直接基于fovY(45),near=0.1和far1000预建
-        let defaultAspect = this._m_Scene.getCanvas().getWidth() * 1.0 / this._m_Scene.getCanvas().getHeight();
-        let h = Math.tan(MoreMath.toRadians(this._m_Fovy) * 0.5) * 0.1;
-        let w = h * defaultAspect;
-        Log.debug("w:" + w + ";h:" + h + ";as:" + defaultAspect);
-        this._m_FrustumLeft = -w;
-        this._m_FrustumRight = w;
-        this._m_FrustumBottom = -h;
-        this._m_FrustumTop = h;
-        this._m_FrustumNear = 0.1;
-        this._m_FrustumFar = 1000;
+        if(this._m_ParallelProjection){
+            // 默认初始化的平行投影视锥
+            this._m_FrustumNear = 1.0;
+            this._m_FrustumFar = 2.0;
+            this._m_FrustumLeft = -0.5;
+            this._m_FrustumRight = 0.5;
+            this._m_FrustumTop = 0.5;
+            this._m_FrustumBottom = -0.5;
+            this._m_ProjectViewMatrix.parallelM(this._m_FrustumLeft, this._m_FrustumRight, this._m_FrustumTop, this._m_FrustumBottom, this._m_FrustumNear, this._m_FrustumFar);
+        }
+        else{
+            // 默认是一个透视相机,所以这里基于透视算法建立投影平面
+            // 这里直接基于fovY(45),near=0.1和far1000预建
+            let defaultAspect = this._m_Width * 1.0 / this._m_Height;
+            let h = Math.tan(MoreMath.toRadians(this._m_Fovy) * 0.5) * 0.1;
+            let w = h * defaultAspect;
+            Log.debug("w:" + w + ";h:" + h + ";as:" + defaultAspect);
+            this._m_FrustumLeft = -w;
+            this._m_FrustumRight = w;
+            this._m_FrustumBottom = -h;
+            this._m_FrustumTop = h;
+            this._m_FrustumNear = 0.1;
+            this._m_FrustumFar = 1000;
+            this._m_ProjectMatrix.perspectiveM(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (this._m_Width * 1.0 / this._m_Height), this._m_FrustumNear, this._m_FrustumFar);
+        }
 
 
         // 预建缓存
@@ -181,6 +208,18 @@ export default class Camera extends Component{
         }
 
         this._doUpdate();
+    }
+
+    /**
+     * 强行更行投影矩阵。<br/>
+     */
+    forceUpdateProjection(){
+        if(this._m_ParallelProjection){
+            this._m_ProjectMatrix.parallelM(this._m_FrustumLeft, this._m_FrustumRight, this._m_FrustumTop, this._m_FrustumBottom, this._m_FrustumNear, this._m_FrustumFar);
+        }
+        else{
+            this._m_ProjectMatrix.perspectiveM(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (this._m_Width * 1.0 / this._m_Height), 0.1, 1000);
+        }
     }
 
     /**
@@ -255,6 +294,14 @@ export default class Camera extends Component{
      */
     getFar(){
         return this._m_FrustumFar;
+    }
+
+    /**
+     * 设置Far截面。<br/>
+     * @param {Number}[far]
+     */
+    setFar(far){
+        this._m_FrustumFar = far;
     }
 
     /**
@@ -364,33 +411,57 @@ export default class Camera extends Component{
     }
 
     /**
+     * 是否为平行投影相机。<br/>
+     * @return {Boolean}
+     */
+    isParallelProjection(){
+        return this._m_ParallelProjection;
+    }
+
+    /**
      * 更新视锥体。<br/>
      * @private
      */
     _updateFrustum(){
         // 计算更新变量
-        // 这里根据相机类型更新计算变量(透视和平行相机计算方式不同)
-        let nearSquared = this._m_FrustumNear * this._m_FrustumNear;
-        let leftSquared = this._m_FrustumLeft * this._m_FrustumLeft;
-        let rightSquared = this._m_FrustumRight * this._m_FrustumRight;
-        let bottomSquared = this._m_FrustumBottom * this._m_FrustumBottom;
-        let topSquared = this._m_FrustumTop * this._m_FrustumTop;
+        if(this._m_ParallelProjection){
+            // 这里根据相机类型更新计算变量(透视和平行相机计算方式不同)
+            this._m_CoeffLeft[0] = 1.0;
+            this._m_CoeffLeft[1] = 0.0;
 
-        let inverseLength = 1.0 / Math.sqrt(nearSquared + leftSquared);
-        this._m_CoeffLeft[0] = -this._m_FrustumNear * inverseLength;
-        this._m_CoeffLeft[1] = -this._m_FrustumLeft * inverseLength;
+            this._m_CoeffRight[0] = -1.0;
+            this._m_CoeffRight[1] = 0.0;
 
-        inverseLength = 1.0 / Math.sqrt(nearSquared + rightSquared);
-        this._m_CoeffRight[0] = this._m_FrustumNear * inverseLength;
-        this._m_CoeffRight[1] = this._m_FrustumRight * inverseLength;
+            this._m_CoeffBottom[0] = 1.0;
+            this._m_CoeffBottom[1] = 0.0;
 
-        inverseLength = 1.0 / Math.sqrt(nearSquared + bottomSquared);
-        this._m_CoeffBottom[0] = this._m_FrustumNear * inverseLength;
-        this._m_CoeffBottom[1] = -this._m_FrustumBottom * inverseLength;
+            this._m_CoeffTop[0] = -1.0;
+            this._m_CoeffTop[1] = 0.0;
+        }
+        else{
+            // 这里根据相机类型更新计算变量(透视和平行相机计算方式不同)
+            let nearSquared = this._m_FrustumNear * this._m_FrustumNear;
+            let leftSquared = this._m_FrustumLeft * this._m_FrustumLeft;
+            let rightSquared = this._m_FrustumRight * this._m_FrustumRight;
+            let bottomSquared = this._m_FrustumBottom * this._m_FrustumBottom;
+            let topSquared = this._m_FrustumTop * this._m_FrustumTop;
 
-        inverseLength = 1.0 / Math.sqrt(nearSquared + topSquared);
-        this._m_CoeffTop[0] = -this._m_FrustumNear * inverseLength;
-        this._m_CoeffTop[1] = this._m_FrustumTop * inverseLength;
+            let inverseLength = 1.0 / Math.sqrt(nearSquared + leftSquared);
+            this._m_CoeffLeft[0] = -this._m_FrustumNear * inverseLength;
+            this._m_CoeffLeft[1] = -this._m_FrustumLeft * inverseLength;
+
+            inverseLength = 1.0 / Math.sqrt(nearSquared + rightSquared);
+            this._m_CoeffRight[0] = this._m_FrustumNear * inverseLength;
+            this._m_CoeffRight[1] = this._m_FrustumRight * inverseLength;
+
+            inverseLength = 1.0 / Math.sqrt(nearSquared + bottomSquared);
+            this._m_CoeffBottom[0] = this._m_FrustumNear * inverseLength;
+            this._m_CoeffBottom[1] = -this._m_FrustumBottom * inverseLength;
+
+            inverseLength = 1.0 / Math.sqrt(nearSquared + topSquared);
+            this._m_CoeffTop[0] = -this._m_FrustumNear * inverseLength;
+            this._m_CoeffTop[1] = this._m_FrustumTop * inverseLength;
+        }
 
         // 更新视锥体6平面
         Camera.S_TEMP_VEC3.setToInXYZ(-this._m_ViewMatrix.m[0], -this._m_ViewMatrix.m[4], -this._m_ViewMatrix.m[8]);
@@ -432,6 +503,12 @@ export default class Camera extends Component{
         this._m_FrustumPlane[Camera.S_TOP_PLANE].setD(this._m_Eye.dot(topPlaneNormal));
 
         // 如果是平行投影的话,需要修正left,right,top,bottom的边界
+        if(this._m_ParallelProjection){
+            this._m_FrustumPlane[Camera.S_LEFT_PLANE].setD(this._m_FrustumPlane[Camera.S_LEFT_PLANE].getD() + this._m_FrustumLeft);
+            this._m_FrustumPlane[Camera.S_RIGHT_PLANE].setD(this._m_FrustumPlane[Camera.S_RIGHT_PLANE].getD() - this._m_FrustumRight);
+            this._m_FrustumPlane[Camera.S_TOP_PLANE].setD(this._m_FrustumPlane[Camera.S_TOP_PLANE].getD() - this._m_FrustumTop);
+            this._m_FrustumPlane[Camera.S_BOTTOM_PLANE].setD(this._m_FrustumPlane[Camera.S_BOTTOM_PLANE].getD() + this._m_FrustumBottom);
+        }
 
         // far plane
         this._m_FrustumPlane[Camera.S_FAR_PLANE].setNormaXYZ(-Camera.S_TEMP_VEC3_3._m_X, -Camera.S_TEMP_VEC3_3._m_Y, -Camera.S_TEMP_VEC3_3._m_Z);
@@ -570,8 +647,9 @@ export default class Camera extends Component{
      * @return {Number}
      */
     getHeight(){
-        let canvas = this._m_Scene.getCanvas();
-        return canvas.getHeight();
+        // let canvas = this._m_Scene.getCanvas();
+        // return canvas.getHeight();
+        return this._m_Height;
     }
 
     /**
@@ -579,8 +657,9 @@ export default class Camera extends Component{
      * @return {Number}
      */
     getWidth(){
-        let canvas = this._m_Scene.getCanvas();
-        return canvas.getWidth();
+        // let canvas = this._m_Scene.getCanvas();
+        // return canvas.getWidth();
+        return this._m_Width;
     }
 
     /**
@@ -588,8 +667,7 @@ export default class Camera extends Component{
      * @param {Number}[zoom 滚动量,非累计量]
      */
     scroll(zoom){
-        let canvas = this._m_Scene.getCanvas();
-        this._m_ProjectMatrix.perspectiveM(zoom, canvas.getWidth() * 1.0 / canvas.getHeight(), 0.1, 1000);
+        this._m_ProjectMatrix.perspectiveM(zoom, this._m_Width * 1.0 / this._m_Height, this._m_FrustumNear, this._m_FrustumFar);
         this._m_ProjectMatrixUpdate = true;
         this._doUpdate();
     }

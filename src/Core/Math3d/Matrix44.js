@@ -192,7 +192,7 @@ export default class Matrix44 {
             b10 = a21 * a33 - a23 * a31,
             b11 = a22 * a33 - a23 * a32,
 
-            // Calculate the determinant
+            // 计算行列式
             det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
 
         if (!det) {
@@ -276,11 +276,36 @@ export default class Matrix44 {
     }
 
     /**
-     * 根据视场角度定义投影矩阵，纵横比和Z剪裁平面。
-     * @param {Array}[m保存透视矩阵的浮点数组]
-     * @param {Number}[offset将偏移量偏移到写入透视矩阵数据的浮点数组m中]
-     * @param {Number}[fovyY方向的视野，以度为单位]
-     * @param {Number}[aspect视区的纵横比]
+     * 根据指定的边界定义平行投影矩阵。<br/>
+     * @param {Array}[m 保存透视矩阵的浮点数组]
+     * @param {Number}[offset 将偏移量偏移到写入透视矩阵数据的浮点数组m中]
+     * @param {Number}[left]
+     * @param {Number}[right]
+     * @param {Number}[top]
+     * @param {Number}[bottom]
+     * @param {Number}[near]
+     * @param {Number}[far]
+     */
+    static parallelM(m, offset, left, right, top, bottom, near, far){
+        // 这里假设传入的矩阵数组m已经是单位矩阵,则只计算几个重要行列值
+        // scale
+        m[offset + 0] = 2.0 / (right * 1.0 - left);
+        m[offset + 5] = 2.0 / (top * 1.0 - bottom);
+        m[offset + 10] = -2.0 / (far * 1.0 - near);
+        m[offset + 15] = 1.0;
+
+        // translation
+        m[offset + 12] = -(right + left) / (right * 1.0 - left);
+        m[offset + 13] = -(top + bottom) / (top * 1.0 - bottom);
+        m[offset + 14] = -(far + near) / (far * 1.0 - near);
+    }
+
+    /**
+     * 根据视场角度，纵横比和Z剪裁平面定义透视投影矩阵。
+     * @param {Array}[m 保存透视矩阵的浮点数组]
+     * @param {Number}[offset 将偏移量偏移到写入透视矩阵数据的浮点数组m中]
+     * @param {Number}[fovy 方向的视野，以度为单位]
+     * @param {Number}[aspect 视区的纵横比]
      * @param {Number}[zNear]
      * @param {Number}[zFar]
      */
@@ -556,6 +581,11 @@ export default class Matrix44 {
     perspectiveM(fovy, aspect, zNear, zFar){
         // console.log('fovy:' + fovy + ',aspect:' + aspect + ',zNear:' + zNear + ',zFar:' + zFar);
         Matrix44.perspectiveM(this.m, 0, fovy, aspect, zNear, zFar);
+        return this;
+    }
+    parallelM(left, right, top, bottom, near, far){
+        this.identity();
+        Matrix44.parallelM(this.m, 0, left, right, top, bottom, near, far);
         return this;
     }
 

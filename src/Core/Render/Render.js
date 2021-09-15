@@ -615,6 +615,29 @@ export default class Render extends Component{
     }
 
     /**
+     * 强制在接下来中使用指定的某个材质。<br/>
+     * @param {String}[path]
+     * @param {Material}[mat]
+     * @param {Number}[passId]
+     */
+    useForcedMat(path, mat, passId){
+        let currentTechnology = mat.getCurrentTechnology();
+        let subPasss = currentTechnology.getSubPasss(path);
+        if(subPasss) {
+            let subShaders = subPasss.getSubShaders();
+            let i = 0;
+            for(let subShader in subShaders) {
+                // 指定subShader
+                if(i == passId){
+                    mat._selectSubShader(subShaders[subShader].subShader);
+                    break;
+                }
+                i++;
+            }
+        }
+    }
+
+    /**
      * 渲染指定列表。<br/>
      * 假设该列表已排序。<br/>
      * @param {WebGL}[gl]
