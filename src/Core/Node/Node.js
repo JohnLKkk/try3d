@@ -21,9 +21,11 @@ export default class Node extends Component{
     // 永不
     static S_NEVER = 1 << 4;
     // 接受阴影
-    static S_SHADOW_RECEIVE = 1 << 5;
+    static S_SHADOW_RECEIVE = 1 << 1;
     // 计算阴影
-    static S_SHADOW_CAST = 1 << 6;
+    static S_SHADOW_CAST = 1 << 2;
+    // 计算并接受阴影
+    static S_SHADOW_CAST_AND_RECEIVE = 1 << 3;
     // 关闭阴影
     static S_SHADOW_NONE = 0;
     static S_TEMP_VEC3 = new Vector3();
@@ -98,7 +100,7 @@ export default class Node extends Component{
      * @return {Boolean}
      */
     isCastShadow(){
-        return (this._m_ShadowMode & Node.S_SHADOW_CAST) != 0;
+        return ((this._m_ShadowMode & Node.S_SHADOW_CAST) != 0) || ((this._m_ShadowMode & Node.S_SHADOW_CAST_AND_RECEIVE) != 0);
     }
 
     /**
@@ -122,7 +124,7 @@ export default class Node extends Component{
      * @return {Boolean}
      */
     isReceiveShadow(){
-        return (this._m_ShadowMode & Node.S_SHADOW_RECEIVE) != 0;
+        return ((this._m_ShadowMode & Node.S_SHADOW_RECEIVE) != 0) || ((this._m_ShadowMode & Node.S_SHADOW_CAST_AND_RECEIVE) != 0);
     }
 
     /**

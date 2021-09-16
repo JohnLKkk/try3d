@@ -47,7 +47,7 @@
     let objLoader = new OBJLoader();
     // 设置默认加载的材质定义为DeferredLightingDef
     objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/', 'DeferredLightingDef');
-    objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/factory.obj', modelNode=>{
+    objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/Sponza/sponza.obj', modelNode=>{
         console.log("实体:" + modelNode.getChildren().length);
         // 使用OctCullingControl来管理静态场景
         rootNode.addChildren(modelNode);
@@ -68,7 +68,7 @@
         colorMat.setParam('color', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
         for(let i = 0;i < 1000;i++){
             let pointLight = new PointLight(scene, {id:'pointLight' + i});
-            pointLight.setRadius(0.35);
+            pointLight.setRadius(1);
             pointLight.setColorRGBA(Math.random() * 1.0, Math.random() * 1.0, Math.random() * 1.0, 1.0);
             pointLight.setPositionXYZ(Math.random() * dx + lx, Math.random() * dy + ly, Math.random() * dz + lz);
             // pointLight.setPositionXYZ(lx + dx * 0.4, center._m_Y, lz + dz * 0.4);

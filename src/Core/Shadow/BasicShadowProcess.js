@@ -83,7 +83,7 @@ export default class BasicShadowProcess extends Component{
     generateShadowMap(gl, render, frameContext, shadowMapIndex){
         // 获取当前光锥范围内的可见性集合
         this._m_ShadowGeometryCasts.length = 0;
-        this._m_ShadowGeometryCasts = this.getShadowGeometryList(shadowMapIndex, this._m_ShadowGeometryCasts);
+        this._m_ShadowGeometryCasts = this.getShadowGeometryCasts(shadowMapIndex, this._m_ShadowGeometryCasts);
 
         // 当前光锥
         let shadowCam = this.getShadowCam(shadowMapIndex);
@@ -106,7 +106,7 @@ export default class BasicShadowProcess extends Component{
      * @param {Array}[shadowGeometryCasts]
      * @return {Array}
      */
-    getShadowGeometryList(shadowMapIndex, shadowGeometryCasts){
+    getShadowGeometryCasts(shadowMapIndex, shadowGeometryCasts){
         return shadowGeometryCasts;
     }
 
