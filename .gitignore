@@ -7,7 +7,6 @@
 *.iml
 out
 gen
-/Example/Assets/Models/GLTF/
-/Example/Assets/Models/OBJ/
-/Example/Assets/Textures/
+/Example/Assets/Models/OBJ/ACU/
 .gitignore
+.git-rewrite/

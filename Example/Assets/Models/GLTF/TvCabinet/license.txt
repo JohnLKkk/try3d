@@ -1,0 +1,11 @@
+Model Information:
+* title:	TV cabinet
+* source:	https://sketchfab.com/3d-models/tv-cabinet-6a7bf986d18e432c9f6a60b986dabb0d
+* author:	D.art (https://sketchfab.com/D.art)
+
+Model License:
+* license type:	CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)
+* requirements:	Author must be credited. No commercial use.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "TV cabinet" (https://sketchfab.com/3d-models/tv-cabinet-6a7bf986d18e432c9f6a60b986dabb0d) by D.art (https://sketchfab.com/D.art) licensed under CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)
