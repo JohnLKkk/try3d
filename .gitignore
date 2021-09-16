@@ -9,5 +9,5 @@ out
 gen
 /Example/Assets/Models/GLTF/
 /Example/Assets/Models/OBJ/
+/Example/Assets/Textures/
 .gitignore
-Example/Shadows/
