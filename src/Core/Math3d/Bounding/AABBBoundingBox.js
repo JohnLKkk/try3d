@@ -23,6 +23,36 @@ export default class AABBBoundingBox extends BoundingVolume{
     }
 
     /**
+     * 设置半程值。<br/>
+     * @param {Number}[x]
+     * @param {Number}[y]
+     * @param {Number}[z]
+     */
+    setHalfInXYZ(x, y, z){
+        this._m_XHalf = x;
+        this._m_YHalf = y;
+        this._m_ZHalf = z;
+    }
+
+    /**
+     * 设置半程值。<br/>
+     * @param {Vector3}[vec3]
+     */
+    setHalf(vec3){
+        this._m_XHalf = vec3._m_X;
+        this._m_YHalf = vec3._m_Y;
+        this._m_ZHalf = vec3._m_Z;
+    }
+
+    /**
+     * 设置x半径。<br/>
+     * @param {Number}[xHalf]
+     */
+    setXHalf(xHalf){
+        this._m_XHalf = xHalf;
+    }
+
+    /**
      * 返回x半径。<br/>
      * @return {Number}
      */
@@ -31,11 +61,27 @@ export default class AABBBoundingBox extends BoundingVolume{
     }
 
     /**
+     * 设置y半径。<br/>
+     * @param {Number}[y]
+     */
+    setYHalf(y){
+        this._m_YHalf = y;
+    }
+
+    /**
      * 返回y半径。<br/>
      * @return {Number}
      */
     getYHalf(){
         return this._m_YHalf;
+    }
+
+    /**
+     * 设置z半径。<br/>
+     * @param {Number}[z]
+     */
+    setZHalf(z){
+        this._m_ZHalf = z;
     }
 
     /**
@@ -259,6 +305,29 @@ export default class AABBBoundingBox extends BoundingVolume{
         result._m_XHalf = Math.abs(AABBBoundingBox.S_TEMP_VEC32._m_X);
         result._m_YHalf = Math.abs(AABBBoundingBox.S_TEMP_VEC32._m_Y);
         result._m_ZHalf = Math.abs(AABBBoundingBox.S_TEMP_VEC32._m_Z);
+    }
+
+    /**
+     * 变换该AABBBoundaryBox。<br/>
+     * @param {Matrix44}[mat44]
+     * @param {AABBBoundingBox}[result]
+     */
+    transformFromMat44(mat44, result){
+        result = result || AABBBoundingBox.S_TEMP_AABB;
+
+        let pw = Matrix44.multiplyMV3(result._m_Center, this._m_Center, mat44);
+        result._m_Center.multLength(1.0 / pw);
+
+        let tran = AABBBoundingBox.S_TEMP_MAT4;
+        tran.set(mat44);
+        // 只保留旋转矩阵部分
+        tran.keepRotation();
+        // 确保得到正向半程（即半径）
+        tran.absLocal();
+
+        AABBBoundingBox.S_TEMP_VEC3.setToInXYZ(this._m_XHalf, this._m_YHalf, this._m_ZHalf);
+        Matrix44.multiplyMV3In3x3(AABBBoundingBox.S_TEMP_VEC32, AABBBoundingBox.S_TEMP_VEC3, tran);
+        result.setHalfInXYZ(Math.abs(AABBBoundingBox.S_TEMP_VEC32._m_X), Math.abs(AABBBoundingBox.S_TEMP_VEC32._m_Y), Math.abs(AABBBoundingBox.S_TEMP_VEC32._m_Z));
     }
 
     /**

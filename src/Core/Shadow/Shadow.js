@@ -6,6 +6,9 @@
  */
 import Vector3 from "../Math3d/Vector3.js";
 import Node from "../Node/Node";
+import Matrix44 from "../Math3d/Matrix44";
+import AABBBoundingBox from "../Math3d/Bounding/AABBBoundingBox.js";
+import SplitOccluders from "./SplitOccluders.js";
 
 export default class Shadow {
     static S_TEMP_VEC3_0 = new Vector3();
@@ -17,6 +20,16 @@ export default class Shadow {
     static S_TEMP_VEC3_6 = new Vector3();
     static S_TEMP_VEC3_7 = new Vector3();
     static S_TEMP_VEC3_8 = new Vector3();
+    static S_TEMP_VEC3_00 = new Vector3();
+    static S_TEMP_VEC3_11 = new Vector3();
+    static S_TEMP_VEC3_22 = new Vector3();
+    static S_TEMP_VEC3_33 = new Vector3();
+    static S_TEMP_VEC3_44 = new Vector3();
+    static S_TEMP_VEC3_55 = new Vector3();
+    static S_TEMP_MAT44_0 = new Matrix44();
+    static S_TEMP_MAT44_1 = new Matrix44();
+    static S_AABB_BOUNDARY_BOX0 = new AABBBoundingBox();
+    static S_AABB_BOUNDARY_BOX1 = new AABBBoundingBox();
     /**
      * 计算光锥边界范围，这里的思路是根据near,far将光锥代表的范围计算到一个边界体中。<br/>
      * @param {Camera}[viewCam 通常是渲染主相机]
@@ -111,6 +124,150 @@ export default class Shadow {
         // 这用于提高计算的正确性。 无论发生什么，camera的主要近平面和远平面始终保持不变。
         splits[0] = near;
         splits[splits.length - 1] = far;
+    }
+
+    /**
+     * 更新shadowCam确保视锥体包含指定的视锥边界体,同时计算锥体下的潜在可见集合。<br/>
+     * @param {Node[]}[sceneNodes]
+     * @param {Geometry[]}[splitShadowGeometryReceivers]
+     * @param {Camera}[shadowCam]
+     * @param {Vector3[]}[points]
+     * @param {Geometry[]}[splitShadowGeometryCasts]
+     * @param {Number}[shadowMapSize]
+     */
+    static calculateShadowCamera(sceneNodes, splitShadowGeometryReceivers, shadowCam, points, splitShadowGeometryCasts, shadowMapSize){
+        if(shadowCam.isParallelProjection()){
+            shadowCam.setFrustum(-1, 1, 1, -1, -shadowCam.getFar(), shadowCam.getFar());
+        }
+        let vp = shadowCam.getProjectViewMatrix(true);
+        let splitBoundary = Shadow.calculateBoundaryFromPoints(points, vp, Shadow.S_AABB_BOUNDARY_BOX0);
+
+        let casterBoundary = new AABBBoundingBox();
+        let receiverBoundary = new AABBBoundingBox();
+
+        let casterCount = 0, receiverCount = 0;
+
+        // 计算receiver包围体
+        let bv = null, recvBox = null;
+        let c = null;
+        splitShadowGeometryReceivers.forEach(geometry=>{
+            bv = geometry.getBoundingVolume();
+            recvBox = bv.transformFromMat44(vp, Shadow.S_AABB_BOUNDARY_BOX1);
+            if(splitBoundary.contains(recvBox)){
+                c = recvBox.getCenter();
+                if(Math.abs(c._m_X) != Number.MAX_VALUE && !Number.isNaN(c._m_X) && !Number.isFinite(c._m_X)){
+                    receiverBoundary.merge(recvBox);
+                    receiverCount++;
+                }
+            }
+        });
+
+        // 遍历整个场景（实际上仅遍历场景潜在可见集合）
+        // 获取分区下的潜在可见集合
+        let ext = new SplitOccluders(vp, casterCount, splitBoundary, casterBoundary, splitShadowGeometryCasts);
+        sceneNodes.forEach(sceneNode=>{
+            ext.calculate(sceneNode);
+        });
+        casterCount = ext._m_CasterCount;
+        if(casterCount != receiverCount){
+            casterBoundary.setHalfInXYZ(casterBoundary.getXHalf() + 2.0, casterBoundary.getYHalf() + 2.0, casterBoundary.getZHalf() + 2.0);
+        }
+        let casterMin = casterBoundary.getMin(Shadow.S_TEMP_VEC3_00);
+        let casterMax = casterBoundary.getMax(Shadow.S_TEMP_VEC3_11);
+
+        let receiverMin = receiverBoundary.getMin(Shadow.S_TEMP_VEC3_22);
+        let receiverMax = receiverBoundary.getMax(Shadow.S_TEMP_VEC3_33);
+
+        let splitMin = splitBoundary.getMin(Shadow.S_TEMP_VEC3_44);
+        let splitMax = splitBoundary.getMax(Shadow.S_TEMP_VEC3_55);
+
+        splitMin._m_Z = 0.0;
+
+        let p = shadowCam.getProjectMatrix();
+
+        // 为了避免使用重复,这里使用倒数临时变量
+        let cropMin = Shadow.S_TEMP_VEC3_8;
+        let cropMax = Shadow.S_TEMP_VEC3_7;
+
+        cropMin._m_X = max(max(casterMin._m_X, receiverMin._m_X), splitMin._m_X);
+        cropMax._m_X = min(min(casterMax._m_X, receiverMax._m_X), splitMax._m_X);
+
+        cropMin._m_Y = max(max(casterMin._m_Y, receiverMin._m_Y), splitMin._m_Y);
+        cropMax._m_Y = min(min(casterMax._m_Y, receiverMax._m_Y), splitMax._m_Y);
+
+        // Z 值的特殊处理
+        cropMin._m_Z = min(casterMin._m_Z, splitMin._m_Z);
+        cropMax._m_Z = min(receiverMax._m_Z, splitMax._m_Z);
+
+        // 创建cropMatrix
+        let scaleX, scaleY, scaleZ;
+        let offsetX, offsetY, offsetZ;
+
+        scaleX = (2.0) / (cropMax._m_X - cropMin._m_X);
+        scaleY = (2.0) / (cropMax._m_Y - cropMin._m_Y);
+
+        // 这里的思路来自ShaderX7,用于稳定的PSSM(尽管这是一个比较古老的方案)
+        let halfTS = shadowMapSize * 0.5;
+
+        if(halfTS != 0 && scaleX > 0 && scaleY > 0){
+            let scaleQuantizer = 0.1;
+            scaleX = 1.0 / Math.ceil(1.0 / scaleX * scaleQuantizer) * scaleQuantizer;
+            scaleY = 1.0 / Math.ceil(1.0 / scaleY * scaleQuantizer) * scaleQuantizer;
+        }
+
+        offsetX = -0.5 * (cropMax._m_X + cropMin._m_X) * scaleX;
+        offsetY = -0.5 * (cropMax._m_Y + cropMin._m_Y) * scaleY;
+
+        if(halfTS != 0 && scaleX > 0 && scaleY > 0){
+            offsetX = Math.ceil(offsetX * halfTS) * 1.0 / halfTS;
+            offsetY = Math.ceil(offsetY * halfTS) * 1.0 / halfTS;
+        }
+
+        scaleZ = 1.0 / (cropMax._m_Z - cropMin._m_Z);
+        offsetZ = -cropMin._m_Z * scaleZ;
+
+        let cropMatrix = Shadow.S_TEMP_MAT44_0;
+        cropMatrix.setArray([
+            scaleX, 0, 0, 0,
+            0, scaleY, 0, 0,
+            0, 0, scaleZ, 0,
+            offsetX, offsetY, offsetZ, 1
+        ]);
+
+        let pr = Shadow.S_TEMP_MAT44_1;
+        Matrix44.multiplyMM(pr, 0, p, 0, cropMatrix, 0);
+
+        shadowCam.setProjectMatrix(pr);
+    }
+
+    /**
+     * 根据指定点和变换矩阵计算BoundaryVolume。<br/>
+     * @param {Vector3[]}[pos]
+     * @param {Matrix44}[mat]
+     * @param {AABBBoundingBox}[result]
+     * @return {AABBBoundingBox}
+     */
+    static calculateBoundaryFromPoints(pos, mat, result){
+        let min = Shadow.S_TEMP_VEC3_0.setTo(Vector3.S_MIN);
+        let max = Shadow.S_TEMP_VEC3_1.setTo(Vector3.S_MAX);
+        let temp = Shadow.S_TEMP_VEC3_2;
+        let pw = 0;
+        for(let i = 0, len = pos.length;i < len;i++){
+            pw = Matrix44.multiplyMV3(temp, pos[i], mat);
+            temp.multLength(1.0 / pw);
+
+            min.min(temp);
+            max.max(temp);
+        }
+
+        // 计算Boundary中心和半径
+        let center = min.add(max, Shadow.S_TEMP_VEC3_3).multLength(0.5);
+        let r = max.sub(min, Shadow.S_TEMP_VEC3_4).multLength(0.5);
+        let boundary = result || new AABBBoundingBox();
+        boundary.setCenter(center);
+        // 加偏移是为了修正精度范围内的误差
+        boundary.setHalfInXYZ(r._m_X + 2.0, r._m_Y + 2.0, r._m_Z + 2.5);
+        return boundary;
     }
 
     /**

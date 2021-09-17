@@ -252,6 +252,14 @@ export default class Matrix44 {
     }
 
     /**
+     * 保留旋转矩阵部分。<br/>
+     */
+    keepRotation(){
+        this.m[12] = this.m[13] = this.m[14] = 0.0;
+        this.m[15] = 1.0;
+    }
+
+    /**
      * 转置该矩阵。<br/>
      */
     transpose(){

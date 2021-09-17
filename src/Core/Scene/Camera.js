@@ -211,6 +211,25 @@ export default class Camera extends Component{
     }
 
     /**
+     * 设置锥体截面。<br/>
+     * @param {Number}[left]
+     * @param {Number}[right]
+     * @param {Number}[top]
+     * @param {Number}[bottom]
+     * @param {Number}[near]
+     * @param {Number}[far]
+     */
+    setFrustum(left, right, top, bottom, near, far){
+        this._m_FrustumNear = near;
+        this._m_FrustumFar = far;
+        this._m_FrustumLeft = left;
+        this._m_FrustumRight = right;
+        this._m_FrustumTop = top;
+        this._m_FrustumBottom = bottom;
+        this._m_ProjectViewMatrix.parallelM(this._m_FrustumLeft, this._m_FrustumRight, this._m_FrustumTop, this._m_FrustumBottom, this._m_FrustumNear, this._m_FrustumFar);
+    }
+
+    /**
      * 强行更行投影矩阵。<br/>
      */
     forceUpdateProjection(){

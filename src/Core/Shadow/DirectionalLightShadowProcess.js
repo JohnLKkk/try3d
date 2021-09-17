@@ -26,6 +26,8 @@ export default class DirectionalLightShadowProcess extends BasicShadowProcess{
     // 临时变量
     _m_TempVec3 = new Vector3();
     _m_Lambda = 1.0;
+    // 渐变阴影
+    _m_Stabilize = true;
 
     /**
      * DirectionalLightShadowProcess。<br/>
@@ -106,5 +108,7 @@ export default class DirectionalLightShadowProcess extends BasicShadowProcess{
             // 我们需要根据receivers集合来计算完整的casts集合
             Shadow.calculateGeometriesInFrustum(this._m_Scene.getRender().getVisDrawables(), mainCamera, Node.S_SHADOW_RECEIVE, this._m_ShadowGeometryReceivers);
         }
+        Shadow.calculateShadowCamera(this._m_Scene.getSceneNodes(), this._m_ShadowGeometryReceivers, this._m_ShadowCam, this._m_Points, shadowGeometryCasts, this._m_Stabilize ? this._m_ShadowMapSize : 0.0);
+        return shadowGeometryCasts;
     }
 }

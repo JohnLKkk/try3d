@@ -14,6 +14,10 @@ export default class Vector3 {
     static S_UNIT_AXIS_NEGATIVE_X = new Vector3(-1, 0, 0);
     static S_UNIT_AXIS_NEGATIVE_Y = new Vector3(0, -1, 0);
     static S_UNIT_AXIS_NEGATIVE_Z = new Vector3(0, 0, -1);
+    static S_POSITIVE_INFINITY = new Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
+    static S_NEGATIVE_INFINITY = new Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
+    static S_MAX = new Vector3(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE);
+    static S_MIN = new Vector3(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE);
     constructor(x,y,z) {
         this._m_X = x || 0;
         this._m_Y = y || 0;
@@ -47,6 +51,56 @@ export default class Vector3 {
      */
     dot(vec3){
         return this._m_X * vec3._m_X + this._m_Y * vec3._m_Y + this._m_Z * vec3._m_Z;
+    }
+
+    /**
+     * 计算与指定Vector3之间的最小值。<br/>
+     * @param {Vector3}[vec3]
+     * @param {Vector3}[result]
+     * @return {Vector3}
+     */
+    min(vec3, result){
+        // 之所以不用Math.min是为了减少大量频繁js函数调用开销
+        // 另外这里完全可以result = result || this;但是对于高性能算法来说,分支预测比||快,直接展开代码是效率最快的
+        // 在整个项目里会看到很多展开的代码而不是封装成调用函数
+        // 不要怀疑代码的封装性，所谓的封装只会影响性能（性能第一）
+        if(result){
+            result._m_X = vec3._m_X < this._m_X ? vec3._m_X : this._m_X;
+            result._m_Y = vec3._m_Y < this._m_Y ? vec3._m_Y : this._m_Y;
+            result._m_Z = vec3._m_Z < this._m_Z ? vec3._m_Z : this._m_Z;
+            return result;
+        }
+        else{
+            this._m_X = vec3._m_X < this._m_X ? vec3._m_X : this._m_X;
+            this._m_Y = vec3._m_Y < this._m_Y ? vec3._m_Y : this._m_Y;
+            this._m_Z = vec3._m_Z < this._m_Z ? vec3._m_Z : this._m_Z;
+            return this;
+        }
+    }
+
+    /**
+     * 计算与指定Vector3之间的最大值。<br/>
+     * @param {Vector3}[vec3]
+     * @param {Vector3}[result]
+     * @return {Vector3}
+     */
+    max(vec3, result){
+        // 之所以不用Math.max是为了减少大量频繁js函数调用开销
+        // 另外这里完全可以result = result || this;但是对于高性能算法来说,分支预测比||快,直接展开代码是效率最快的
+        // 在整个项目里会看到很多展开的代码而不是封装成调用函数
+        // 不要怀疑代码的封装性，所谓的封装只会影响性能（性能第一）
+        if(result){
+            result._m_X = vec3._m_X > this._m_X ? vec3._m_X : this._m_X;
+            result._m_Y = vec3._m_Y > this._m_Y ? vec3._m_Y : this._m_Y;
+            result._m_Z = vec3._m_Z > this._m_Z ? vec3._m_Z : this._m_Z;
+            return result;
+        }
+        else{
+            this._m_X = vec3._m_X > this._m_X ? vec3._m_X : this._m_X;
+            this._m_Y = vec3._m_Y > this._m_Y ? vec3._m_Y : this._m_Y;
+            this._m_Z = vec3._m_Z > this._m_Z ? vec3._m_Z : this._m_Z;
+            return this;
+        }
     }
 
     /**

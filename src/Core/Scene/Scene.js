@@ -291,6 +291,17 @@ export default class Scene extends Component{
             }
         }
     }
+    getSceneNode(i){
+        return this._m_Nodes[i];
+    }
+
+    /**
+     * 返回所有场景节点。<br/>
+     * @return {Node[]}
+     */
+    getSceneNodes(){
+        return this._m_Nodes;
+    }
     /**
      * 载入一个组件到scene中,场景对象将包含所有组件。<br/>
      * @param {Component}[component]

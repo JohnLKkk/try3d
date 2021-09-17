@@ -65,6 +65,13 @@ export default class BoundingVolume {
     transform(scale, rotation, translation, result){};
 
     /**
+     * 将4x4变换矩阵应用到包围体。<br/>
+     * @param {Matrix44}[mat44]
+     * @param {BoundingVolume}[result]
+     */
+    transformFromMat44(mat44, result){};
+
+    /**
      * 合并一个BoundingVolume。<br/>
      * @param {BoundingVolume}[boundingVolume]
      * @return {BoundingVolume}
