@@ -100,6 +100,9 @@ export default class DirectionalLightShadowProcess extends BasicShadowProcess{
                 break;
         }
     }
+    getShadowCam(shadowMapIndex){
+        return this._m_ShadowCam;
+    }
     getShadowGeometryCasts(shadowMapIndex, shadowGeometryCasts){
         const mainCamera = this._m_Scene.getMainCamera();
         // 计算当前ShadowMap下光锥边界体
@@ -110,5 +113,10 @@ export default class DirectionalLightShadowProcess extends BasicShadowProcess{
         }
         Shadow.calculateShadowCamera(this._m_Scene.getSceneNodes(), this._m_ShadowGeometryReceivers, this._m_ShadowCam, this._m_Points, shadowGeometryCasts, this._m_Stabilize ? this._m_ShadowMapSize : 0.0);
         return shadowGeometryCasts;
+    }
+    getShadowGeometryReceivers(shadowGeometryReceivers){
+        if(shadowGeometryReceivers.length == 0){
+            Shadow.calculateGeometriesInFrustum(this._m_Scene.getRender().getVisDrawables(), mainCamera, Node.S_SHADOW_RECEIVE, shadowGeometryReceivers);
+        }
     }
 }

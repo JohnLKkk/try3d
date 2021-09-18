@@ -401,18 +401,20 @@ export default class Scene extends Component{
             if(node.getChildren().length > 0){
                 let resetFrustumMask = this._m_FrustumCullingCamera.getFrustumMask();
                 node.getChildren().forEach(node=>{
-                    if(node.getFilterFlag() == Node.S_DYNAMIC){
-                        // 检测是否需要默认剔除
-                        if(node.getCullingFlags() & Node.S_DEFAULT_FRUSTUM_CULLING){
-                            // 对于每个同级节点设置同样剔除掩码
-                            this._m_FrustumCullingCamera.setFrustumMask(resetFrustumMask);
-                            // 执行默认剔除
-                            this._frustumCulling(node, visDrawables);
+                    if(!(node instanceof Light)){
+                        if(node.getFilterFlag() == Node.S_DYNAMIC){
+                            // 检测是否需要默认剔除
+                            if(node.getCullingFlags() & Node.S_DEFAULT_FRUSTUM_CULLING){
+                                // 对于每个同级节点设置同样剔除掩码
+                                this._m_FrustumCullingCamera.setFrustumMask(resetFrustumMask);
+                                // 执行默认剔除
+                                this._frustumCulling(node, visDrawables);
+                            }
                         }
-                    }
-                    else if(node.getFilterFlag() == Node.S_NEVER){
-                        // 直接渲染
-                        this._gatherVisDrawable(node, visDrawables);
+                        else if(node.getFilterFlag() == Node.S_NEVER){
+                            // 直接渲染
+                            this._gatherVisDrawable(node, visDrawables);
+                        }
                     }
                 });
             }

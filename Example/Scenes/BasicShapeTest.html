@@ -5,7 +5,7 @@
     <title>BasicShapeTest</title>
 </head>
 <body>
-<div style="width: 100%;height: 100%;position:fixed">
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
     <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
 </div>
 <script type="module">
@@ -48,9 +48,6 @@
     let sphere0 = new Sphere(scene, {id:'sphere0', radius:1});
     sphere0.setMaterial(basicLightingMat);
     sphere0.setLocalTranslationXYZ(10, 0, 0);
-    console.log('p:'+sphere0.getMesh().getData(Mesh.S_POSITIONS));
-    console.log('n:'+sphere0.getMesh().getData(Mesh.S_NORMALS));
-    console.log('i:'+sphere0.getMesh().getData(Mesh.S_INDICES));
 
     let sphere1 = new Sphere(scene, {id:'sphere1', radius:2, widthSegments:18, heightSegments:24, lod:0.1});
     sphere1.setMaterial(basicLightingMat);

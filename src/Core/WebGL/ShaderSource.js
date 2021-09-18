@@ -97,6 +97,7 @@ export default class ShaderSource {
     static S_SCREEN_SRC = "_screen";
 
     static S_FORWARD_COLOR_MAP_SRC = "_forwardColorMap";
+    static S_IN_SCREEN_SRC = "_inScreenMap";
 
     // Tile
     static S_LIGHT_NUM_SRC = "_lightNum";
@@ -122,6 +123,27 @@ export default class ShaderSource {
     static S_WGIPROBE_SRC = "_wGIProbe";
     // 球谐系数
     static S_SH_COEFFS_SRC = "_ShCoeffs";
+
+
+    // Shadow
+    static S_SHADOW_MAP_ARRAY_SRC = {
+        0:'_shadowMap0',
+        1:'_shadowMap1',
+        2:'_shadowMap2',
+        3:'_shadowMap3',
+        4:'_shadowMap4',
+        5:'_shadowMap5',
+        6:'_shadowMap6'
+    };
+    static S_LIGHT_SHADOW_VP_ARRAY_SRC = {
+        0:'_lightViewProjectMatrix0',
+        1:'_lightViewProjectMatrix1',
+        2:'_lightViewProjectMatrix2',
+        3:'_lightViewProjectMatrix3',
+        4:'_lightViewProjectMatrix4',
+        5:'_lightViewProjectMatrix5',
+        6:'_lightViewProjectMatrix6'
+    };
 
     // 上下文块
     static ContextBlocks = {
@@ -149,6 +171,7 @@ export default class ShaderSource {
         "_gBuffer2":'DefaultDeferredShadingFrameBuffer',
         "_gDepth":'DefaultDeferredShadingFrameBuffer',
         "_forwardColorMap":'DefaultForwardShadingFrameBuffer',
+        "_inScreenMap":'DefaultPostFilterShadingFrameBuffer',
     };
 
     // 上下文数据
@@ -190,7 +213,7 @@ export default class ShaderSource {
         "Context.InGBuffer1":{src:ShaderSource.S_G_BUFFER1_SRC, pattern:/Context.InGBuffer1/, pattern2:/Context.InGBuffer1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGBuffer1/g, tag:ShaderSource.S_G_BUFFER1_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InGBuffer2":{src:ShaderSource.S_G_BUFFER2_SRC, pattern:/Context.InGBuffer2/, pattern2:/Context.InGBuffer2[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGBuffer2/g, tag:ShaderSource.S_G_BUFFER2_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InGDepth":{src:ShaderSource.S_G_DEPTH_SRC, pattern:/Context.InGDepth/, pattern2:/Context.InGDepth[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGDepth/g, tag:ShaderSource.S_G_DEPTH_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
-        "Context.InScreen":{src:ShaderSource.S_FORWARD_COLOR_MAP_SRC, pattern:/Context.InScreen/, pattern2:/Context.InScreen[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InScreen/g, tag:ShaderSource.S_FORWARD_COLOR_MAP_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
+        "Context.InScreen":{src:ShaderSource.S_IN_SCREEN_SRC, pattern:/Context.InScreen/, pattern2:/Context.InScreen[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InScreen/g, tag:ShaderSource.S_IN_SCREEN_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InForwardColorMap":{src:ShaderSource.S_FORWARD_COLOR_MAP_SRC, pattern:/Context.InForwardColorMap/, pattern2:/Context.InForwardColorMap[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InForwardColorMap/g, tag:ShaderSource.S_FORWARD_COLOR_MAP_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InPrefEnvMap":{src:ShaderSource.S_PREF_ENV_MAP_SRC, pattern:/Context.InPrefEnvMap/, pattern2:/Context.InPrefEnvMap[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InPrefEnvMap/g, tag:ShaderSource.S_PREF_ENV_MAP_SRC, type:"samplerCube", utype:"uniform samplerCube"},
         "Context.InTileLightDecode":{src:ShaderSource.S_TILE_LIGHT_DECODE_SRC, pattern:/Context.InTileLightDecode/, pattern2:/Context.InTileLightDecode[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InTileLightDecode/g, tag:ShaderSource.S_TILE_LIGHT_DECODE_SRC, type:"sampler2D", utype:"uniform sampler2D"},

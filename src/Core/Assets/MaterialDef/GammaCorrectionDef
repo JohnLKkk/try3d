@@ -2,7 +2,8 @@
 // 由于webGL不支持硬件gamma矫正,只能通过后处理进行
 Def GammaCorrectionFilterDef{
     Params{
-        float gamma;
+        float gammaFactor;
+        bool toneMapping;
     }
     SubTechnology GammaCorrectionFilter{
         Vars{
@@ -16,11 +17,14 @@ Def GammaCorrectionFilterDef{
         }
         Fs_Shader{
             void main(){
-                vec4 color = texture(Context.InScreen, uv0);
-                #ifdef Params.gamma
-                    Context.OutColor.rgb = pow(color.rgb, vec3(Params.gamma));
-                #else
-                    Context.OutColor.rgb = pow(color.rgb, vec3(1.0/2.2f));
+                Context.OutColor = texture(Context.InScreen, uv0);
+                #ifdef Params.toneMapping
+                    if(Params.toneMapping){
+                        Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));
+                    }
+                #endif
+                #ifdef Params.gammaFactor
+                    Context.OutColor.rgb = pow(Context.OutColor.rgb, vec3(Params.gammaFactor));
                 #endif
                 Context.OutColor.a = color.a;
             }

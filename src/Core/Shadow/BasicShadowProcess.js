@@ -6,6 +6,9 @@
 import Component from "../Component.js";
 import Light from "../Light/Light.js";
 import RenderState from "../WebGL/RenderState.js";
+import Matrix44 from "../Math3d/Matrix44.js";
+import FrameBuffer from "../WebGL/FrameBuffer.js";
+import ShaderSource from "../WebGL/ShaderSource.js";
 
 export default class BasicShadowProcess extends Component{
     // Pre ShadowMap
@@ -33,8 +36,36 @@ export default class BasicShadowProcess extends Component{
     // 所需的渲染状态
     _m_ShadowRenderState = new RenderState();
     _m_ShadowRenderState2 = new RenderState();
+
+    /**
+     * @param {Comment}[owner]
+     * @param {Number}[cfg.id]
+     * @param {Number}[cfg.nbShadowMaps]
+     * @param {Number}[cfg.shadowMapSize]
+     */
     constructor(owner, cfg) {
         super(owner, cfg);
+        this._m_NbShadowMaps = cfg.nbShadowMaps;
+        this._m_ShadowMapSize = cfg.shadowMapSize;
+
+        const gl = this._m_Scene.getCanvas().getGLContext();
+        // 这里的设计有一些架构上的改进,具体参考开发日志
+        for(let i = 0;i < this._m_NbShadowMaps;i++){
+            this._m_LVPM[i] = new Matrix44();
+            this._m_ShadowFB[i] = new FrameBuffer(gl, 'ShadowFB_' + i, this._m_ShadowMapSize, this._m_ShadowMapSize);
+            this._m_ShadowFB[i].setFixedSize(true);
+
+            // 添加一个颜色附件（原因是为了防止部分webGL实现对FB的支持需要）
+            this._m_ShadowFB[i].addTexture(gl, 'ShadowFBDefaultColor', gl.RGBA, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT0, false);
+            // 添加一个深度缓冲区
+            this._m_ShadowFB[i].addTexture(gl, ShaderSource.S_SHADOW_MAP_ARRAY_SRC[i], gl.DEPTH_COMPONENT24 , 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, gl.DEPTH_ATTACHMENT, false);
+            this._m_ShadowFB[i].finish(gl, this._m_Scene, false);
+        }
+
+
+
+
+
         this._m_ShadowRenderState.setFlag(RenderState.S_STATES[0], RenderState.S_FACE_CULL_FRONT);
         this._m_ShadowRenderState.setFlag(RenderState.S_STATES[2], 'Off');
         this._m_ShadowRenderState2.setFlag(RenderState.S_STATES[1], 'Off');

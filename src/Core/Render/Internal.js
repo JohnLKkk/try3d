@@ -3,7 +3,8 @@ export default class Internal {
         "// 由于webGL不支持硬件gamma矫正,只能通过后处理进行\n" +
         "Def GammaCorrectionFilterDef{\n" +
         "    Params{\n" +
-        "        float gamma;\n" +
+        "        float gammaFactor;\n" +
+        "        bool toneMapping;\n" +
         "    }\n" +
         "    SubTechnology GammaCorrectionFilter{\n" +
         "        Vars{\n" +
@@ -17,13 +18,15 @@ export default class Internal {
         "        }\n" +
         "        Fs_Shader{\n" +
         "            void main(){\n" +
-        "                vec4 color = texture(Context.InScreen, uv0);\n" +
-        "                #ifdef Params.gamma\n" +
-        "                    Context.OutColor.rgb = pow(color.rgb, vec3(Params.gamma));\n" +
-        "                #else\n" +
-        "                    Context.OutColor.rgb = pow(color.rgb, vec3(1.0/2.2f));\n" +
+        "                Context.OutColor = texture(Context.InScreen, uv0);\n" +
+        "                #ifdef Params.toneMapping\n" +
+        "                    if(Params.toneMapping){\n" +
+        "                        Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));\n" +
+        "                    }\n" +
         "                #endif\n" +
-        "                Context.OutColor.a = color.a;\n" +
+        "                #ifdef Params.gammaFactor\n" +
+        "                    Context.OutColor.rgb = pow(Context.OutColor.rgb, vec3(Params.gammaFactor));\n" +
+        "                #endif\n" +
         "            }\n" +
         "        }\n" +
         "    }\n" +

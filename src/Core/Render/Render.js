@@ -37,6 +37,8 @@ export default class Render extends Component{
     static DEFAULT_DEFERRED_SHADING_FRAMEBUFFER = 'DefaultDeferredShadingFrameBuffer';
     // 如果启用了多渲染路径,则创建默认forwardFrameBuffer而不是使用内置frameBuffer(这是因为webGL不支持从多fbo.blit到内置fbo)
     static DEFAULT_FORWARD_SHADING_FRAMEBUFFER = 'DefaultForwardShadingFrameBuffer';
+    // 用于FilterPipeline
+    static DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER = 'DefaultPostFilterShadingFrameBuffer';
 
     // Event
     // 一帧渲染开始
@@ -226,6 +228,15 @@ export default class Render extends Component{
         ffb.getFramePicture().setMaterial(forwardMat);
         this._m_FrameContext._m_DefaultFrameBuffer = ffb.getFrameBuffer();
 
+        // FilterPipeline
+        let filterfb = new FrameBuffer(gl, Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER, w, h);
+        this._m_FrameContext.addFrameBuffer(Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER, filterfb);
+        // 为了支持HDR和gamma矫正,使用一个RGBA16F ffb
+        filterfb.addTexture(gl, ShaderSource.S_IN_SCREEN_SRC, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT0, false);
+        filterfb.addBuffer(gl, 'depth', gl.DEPTH_COMPONENT24, gl.DEPTH_ATTACHMENT);
+        filterfb.finish(gl, this._m_Scene, false);
+        this._m_FrameContext._m_DefaultPostFilterFrameBuffer = filterfb.getFrameBuffer();
+
         // 加载可用渲染程序
         this._m_RenderPrograms[DefaultRenderProgram.PROGRAM_TYPE] = new DefaultRenderProgram();
         this._m_RenderPrograms[SinglePassLightingRenderProgram.PROGRAM_TYPE] = new SinglePassLightingRenderProgram();
@@ -247,6 +258,7 @@ export default class Render extends Component{
         this._m_Scene.getCanvas().on('resize', (w, h)=>{
             this._m_FrameContext.resize(gl, w, h);
             this._m_FrameContext._m_DefaultFrameBuffer = this._m_FrameContext.getFrameBuffer(Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER).getFrameBuffer();
+            this._m_FrameContext._m_DefaultPostFilterFrameBuffer = this._m_FrameContext.getFrameBuffer(Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER).getFrameBuffer();
         });
     }
 
@@ -532,10 +544,10 @@ export default class Render extends Component{
         let subShaders = null;
         // 延迟路径部分...
         useBackForwardFrameBuffer = this._m_Pipeline[1].render({gl, scene:this._m_Scene, frameContext:this._m_FrameContext, lights:lights, bucket:opaqueBucket});
+        let pfilter = this._m_Scene.getMainCamera().demandFilter();
         if(!useBackForwardFrameBuffer){
             // 检测filters
-            let mainCamera = this._m_Scene.getMainCamera();
-            if(this._m_GammaCorrection || mainCamera.demandFilter()){
+            if(this._m_GammaCorrection || pfilter){
                 useBackForwardFrameBuffer = true;
                 gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
                 this._m_FrameContext.m_LastFrameBuffer = this._m_FrameContext._m_DefaultFrameBuffer;
@@ -562,7 +574,21 @@ export default class Render extends Component{
             this._m_Pipeline[0].render({gl, scene:this._m_Scene, frameContext:this._m_FrameContext, lights:lights, translucent:true, bucket:translucentBucket});
         }
         // 一帧结束后
+        if(pfilter){
+            gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
+            gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this._m_FrameContext._m_DefaultPostFilterFrameBuffer);
+            gl.blitFramebuffer(0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), gl.COLOR_BUFFER_BIT, gl.NEAREST);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
+            if(this._m_FrameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){
+                gl.disable(gl.DEPTH_TEST);
+            }
+        }
         this.fire(Render.POST_FRAME, [exTime]);
+        if(pfilter){
+            if(this._m_FrameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){
+                gl.enable(gl.DEPTH_TEST);
+            }
+        }
 
         // 检测是否启用了自定义forwardFrameBuffer
         if(useBackForwardFrameBuffer){
