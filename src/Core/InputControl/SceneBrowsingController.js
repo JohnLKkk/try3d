@@ -248,6 +248,22 @@ export default class SceneBrowsingController extends Component{
     }
 
     /**
+     * 设置最小垂直旋转角度。<br/>
+     * @param {Number}[minVerticalRotation 弧度，默认为-Math.PI/2.0]
+     */
+    setMinVerticalRotation(minVerticalRotation){
+        this._m_MinVerticalRotation = minVerticalRotation;
+    }
+
+    /**
+     * 设置最大垂直旋转加偶。<br/>
+     * @param {Number}[maxVerticalRotation 弧度，默认为Math.PI/2.0]
+     */
+    setMaxVerticalRotation(maxVerticalRotation){
+        this._m_MaxVerticalRotation = maxVerticalRotation;
+    }
+
+    /**
      * 焦距相机。<br/>
      * @param {Number}[val]
      */

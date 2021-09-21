@@ -6,17 +6,28 @@
 import Component from "../Component.js";
 import Light from "../Light/Light.js";
 import RenderState from "../WebGL/RenderState.js";
+import Render from "../Render/Render.js";
 import Matrix44 from "../Math3d/Matrix44.js";
 import FrameBuffer from "../WebGL/FrameBuffer.js";
 import ShaderSource from "../WebGL/ShaderSource.js";
+import Material from "../Material/Material.js";
+import Tools from "../Util/Tools.js";
+import MaterialDef from "../Material/MaterialDef.js";
+import Internal from "../Render/Internal.js";
+import Picture from "../Node/Picture.js";
+import Texture2DTargetVars from "../WebGL/Vars/Texture2DTargetVars.js";
+import BoolVars from "../WebGL/Vars/BoolVars.js";
+import FramePicture from "../Node/FramePicture.js";
+import Vector2 from "../Math3d/Vector2.js";
 
 export default class BasicShadowProcess extends Component{
+    _m_MainCamera;
     // Pre ShadowMap
     _m_PreShadowMat;
     // Post Shadow
     _m_PostShadowMat;
     // shadowMap数目
-    _m_NbShadowMaps;
+    _m_NbShadowMaps = 1;
     // 要进行shadow的光源
     _m_Light;
     // 跳过处理
@@ -27,16 +38,55 @@ export default class BasicShadowProcess extends Component{
     _m_ShadowGeometryReceivers = [];
     // 过渡远处阴影
     _m_ZFarOverride = 0;
+    // 背面阴影
+    _m_BackfaceShadows = true;
+    // 分辨率倒数
+    _m_ResolutionInverse = new Vector2();
     // 光源矩阵
     _m_LVPM = [];
     _m_ShadowFB = [];
-    _m_NbShadowMaps = 1;
     // ShadowMapSize
     _m_ShadowMapSize = 512;
     // 所需的渲染状态
     _m_ShadowRenderState = new RenderState();
     _m_ShadowRenderState2 = new RenderState();
+    // 需要上载的shadowMap信息
+    _m_UploadShadowMaps = [];
+    // 需要上载的lightView信息
+    _m_UploadLightViews = [];
 
+    _m_DebugShadowMap = [];
+    _m_Debug = false;
+
+
+
+
+
+    // 尽量不要依赖外部引用
+    static S_SHADOW_MAP_ARRAY_SRC = {
+        0:'_shadowMap0',
+        1:'_shadowMap1',
+        2:'_shadowMap2',
+        3:'_shadowMap3',
+        4:'_shadowMap4',
+        5:'_shadowMap5',
+        6:'_shadowMap6'
+    };
+    static S_LIGHT_SHADOW_VP_ARRAY_SRC = {
+        0:'_lightViewProjectMatrix0',
+        1:'_lightViewProjectMatrix1',
+        2:'_lightViewProjectMatrix2',
+        3:'_lightViewProjectMatrix3',
+        4:'_lightViewProjectMatrix4',
+        5:'_lightViewProjectMatrix5',
+        6:'_lightViewProjectMatrix6'
+    };
+    static S_LIGHT_DIR = "_lightDir";
+    static S_LIGHT_POS = "_lightPos";
+    static S_SPLITS = "_splits";
+    static S_FADEINFO = "_fadeInfo";
+    // 分辨率倒数
+    static S_RESOLUTION_INVERSE = '_ResolutionInverse';
     /**
      * @param {Comment}[owner]
      * @param {Number}[cfg.id]
@@ -47,6 +97,7 @@ export default class BasicShadowProcess extends Component{
         super(owner, cfg);
         this._m_NbShadowMaps = cfg.nbShadowMaps;
         this._m_ShadowMapSize = cfg.shadowMapSize;
+        this._m_Debug = cfg.debug != null ? cfg.debug : false;
 
         const gl = this._m_Scene.getCanvas().getGLContext();
         // 这里的设计有一些架构上的改进,具体参考开发日志
@@ -56,10 +107,30 @@ export default class BasicShadowProcess extends Component{
             this._m_ShadowFB[i].setFixedSize(true);
 
             // 添加一个颜色附件（原因是为了防止部分webGL实现对FB的支持需要）
-            this._m_ShadowFB[i].addTexture(gl, 'ShadowFBDefaultColor', gl.RGBA, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT0, false);
+            if(this._m_Debug){
+                this._m_ShadowFB[i].addTexture(gl, 'ShadowFBDefaultColor', gl.RGBA, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.COLOR_ATTACHMENT0, false);
+            }
             // 添加一个深度缓冲区
-            this._m_ShadowFB[i].addTexture(gl, ShaderSource.S_SHADOW_MAP_ARRAY_SRC[i], gl.DEPTH_COMPONENT24 , 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, gl.DEPTH_ATTACHMENT, false);
+            this._m_ShadowFB[i].addTexture(gl, BasicShadowProcess.S_SHADOW_MAP_ARRAY_SRC[i], gl.DEPTH_COMPONENT24 , 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, gl.DEPTH_ATTACHMENT, false);
             this._m_ShadowFB[i].finish(gl, this._m_Scene, false);
+
+            this._m_UploadShadowMaps[i] = BasicShadowProcess.S_SHADOW_MAP_ARRAY_SRC[i];
+            this._m_UploadLightViews[i] = BasicShadowProcess.S_LIGHT_SHADOW_VP_ARRAY_SRC[i];
+
+
+
+            // debug
+            if(this._m_Debug){
+                this._m_DebugShadowMap[i] = new Picture(this._m_Scene, {id:'debug_shadow_map_' + i});
+                this._m_DebugShadowMap[i].setSize(0.25, 0.3);
+                this._m_DebugShadowMap[i].setLeftTop(-0.75 + 0.55 * i, -0.7);
+                this._m_DebugShadowMap[i].useDefaultMat();
+                let colorMap = new Texture2DTargetVars(this._m_Scene);
+                colorMap.setTextureFormat(Texture2DTargetVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DTargetVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DTargetVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
+                colorMap.target(this._m_ShadowFB[i]);
+                this._m_DebugShadowMap[i].getMaterial().setParam('colorMap', colorMap);
+                this._m_DebugShadowMap[i].setZIndex(0);
+            }
         }
 
 
@@ -67,10 +138,50 @@ export default class BasicShadowProcess extends Component{
 
 
         this._m_ShadowRenderState.setFlag(RenderState.S_STATES[0], RenderState.S_FACE_CULL_FRONT);
-        this._m_ShadowRenderState.setFlag(RenderState.S_STATES[2], 'Off');
+        // 调试,所以注释掉了下面这行
+        if(!this._m_Debug)
+            this._m_ShadowRenderState.setFlag(RenderState.S_STATES[2], 'Off');
         this._m_ShadowRenderState2.setFlag(RenderState.S_STATES[1], 'Off');
         this._m_ShadowRenderState2.setFlag(RenderState.S_STATES[4], 'On');
         this._m_ShadowRenderState2.setFlag(RenderState.S_STATES[5], ['SRC_ALPHA', 'ONE']);
+
+
+
+
+        // mat
+        this._m_PreShadowMat = new Material(this._m_Scene, {id:'preShadowMat_' + Tools.nextId(), materialDef:MaterialDef.parse(Internal.S_PRE_SHADOW_DEF_DATA)});
+        if(this._m_Debug){
+            this._m_PreShadowMat.setParam('debug', new BoolVars().valueOf(true));
+        }
+        this._m_PostShadowMat = new Material(this._m_Scene, {id:'postShadowMat_' + Tools.nextId(), materialDef:MaterialDef.parse(Internal.S_POST_SHADOW_DEF_DATA)});
+        let w = this._m_Scene.getCanvas().getWidth();
+        let h = this._m_Scene.getCanvas().getHeight();
+        this._m_ResolutionInverse.setToInXY(1.0/w, 1.0/h);
+        if(this._m_BackfaceShadows){
+            this._m_PostShadowMat.setParam('backfaceShadows', new BoolVars().valueOf(true));
+        }
+        this._m_Scene.getCanvas().on('resize', (w, h)=>{
+            this._m_ResolutionInverse.setToInXY(1.0/w, 1.0/h);
+        });
+        this.initMat();
+
+
+        this._m_FramePicture = new FramePicture(this._m_Scene, {id:this._m_Id + "_picture"});
+
+
+        this._m_Scene.getRender().on(Render.POST_QUEUE, ()=>{
+            this.postQueue();
+        });
+        this._m_Scene.getRender().on(Render.POST_FRAME, ()=>{
+            this.postFrame();
+        });
+    }
+
+    /**
+     * 初始化材质信息，由子类进行参数化。<br/>
+     */
+    initMat(){
+        // 子类实现
     }
 
     /**
@@ -127,6 +238,7 @@ export default class BasicShadowProcess extends Component{
         this._m_ShadowFB[shadowMapIndex].use(render);
         this._m_ShadowFB[shadowMapIndex].clear(gl);
         this._m_ShadowGeometryCasts.forEach(iDrawable=>{
+            // console.log('draw')
             iDrawable.draw(frameContext);
         });
     }
@@ -156,10 +268,39 @@ export default class BasicShadowProcess extends Component{
      * @return {Camera}[camera]
      */
     getShadowCam(shadowMapIndex){
+        // 由子类实现
+    }
 
+    /**
+     * 上载shadowMap信息。<br/>
+     * @param {GLContext}[gl]
+     * @param {FrameContext}[frameContext]
+     * @private
+     */
+    _uploadInfo(gl, frameContext){
+        let conVars = frameContext.m_LastSubShader.getContextVars();
+        let rd = null;
+        for(let i = 0;i < this._m_NbShadowMaps;i++){
+            rd = conVars[BasicShadowProcess.S_SHADOW_MAP_ARRAY_SRC[i]];
+            if(rd != null){
+                gl.activeTexture(gl.TEXTURE0 + rd.loc);
+                gl.bindTexture(gl.TEXTURE_2D, this._m_ShadowFB[i].getTexture(BasicShadowProcess.S_SHADOW_MAP_ARRAY_SRC[i]).getLoc());
+            }
+            rd = conVars[BasicShadowProcess.S_LIGHT_SHADOW_VP_ARRAY_SRC[i]];
+            if(rd != null){
+                gl[rd.fun](rd.loc, false, this._m_LVPM[i].getBufferData());
+            }
+        }
+        if(this._m_BackfaceShadows){
+            rd = conVars[BasicShadowProcess.S_RESOLUTION_INVERSE];
+            if(rd != null){
+                gl.uniform2f(rd.loc, this._m_ResolutionInverse._m_X, this._m_ResolutionInverse._m_Y);
+            }
+        }
     }
 
     postQueue(){
+        this._m_ShadowGeometryReceivers.length = 0;
         // draw shadowMap
         this._m_SkipPass = !this.visLight();
         if(this._m_SkipPass){
@@ -171,17 +312,17 @@ export default class BasicShadowProcess extends Component{
 
         // shadow map shading(这里的一个优化具体参考我的开发日志)
         let render = this._m_Scene.getRender();
-        let mainCamera = this._m_Scene.getMainCamera();
+        this._m_MainCamera = this._m_Scene.getMainCamera();
         let frameContext = render.getFrameContext();
         const gl = this._m_Scene.getCanvas().getGLContext();
         frameContext.getRenderState().store();
         render.setViewPort(gl, 0, 0, this._m_ShadowMapSize, this._m_ShadowMapSize);
         render._checkRenderState(gl, this._m_ShadowRenderState, frameContext.getRenderState());
-        render.useForcedMat(Render.FORWARD, this._m_PreShadowMat, 0);
+        render.useForcedMat('PreFrame', this._m_PreShadowMat, 0);
         for(let i = 0;i < this._m_NbShadowMaps;i++){
             this.generateShadowMap(gl, render, frameContext, i);
         }
-        this._m_Scene.setMainCamera(mainCamera);
+        this._m_Scene.setMainCamera(this._m_MainCamera);
         this._m_Scene.getRender().useDefaultFrame();
         render.setViewPort(gl, 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight());
         render._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
@@ -190,21 +331,41 @@ export default class BasicShadowProcess extends Component{
         // draw shadow
         if(this._m_SkipPass)return;
 
-        // 获取接受阴影的潜在可见集合
-        this._m_ShadowGeometryReceivers.length = 0;
-        this.getShadowGeometryReceivers(this._m_ShadowGeometryReceivers);
-        if(this._m_ShadowGeometryReceivers.length > 0){
-            // post shadow pass
-            let render = this._m_Scene.getRender();
-            let frameContext = render.getFrameContext();
-            const gl = this._m_Scene.getCanvas().getGLContext();
-            frameContext.getRenderState().store();
-            render._checkRenderState(gl, this._m_ShadowRenderState2, frameContext.getRenderState());
-            render.useForcedMat(Render.FORWARD, this._m_PostShadowMat, 0);
-            this._m_ShadowGeometryReceivers.forEach(iDrawable=>{
-                iDrawable.draw(frameContext);
-            });
-            render._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
+        // // 获取接受阴影的潜在可见集合
+        // this._m_ShadowGeometryReceivers.length = 0;
+        // this.getShadowGeometryReceivers(this._m_ShadowGeometryReceivers);
+        // if(this._m_ShadowGeometryReceivers.length > 0){
+        //     // post shadow pass
+        //     let render = this._m_Scene.getRender();
+        //     let frameContext = render.getFrameContext();
+        //     const gl = this._m_Scene.getCanvas().getGLContext();
+        //     frameContext.getRenderState().store();
+        //     render._checkRenderState(gl, this._m_ShadowRenderState2, frameContext.getRenderState());
+        //     render.useForcedMat(Render.FORWARD, this._m_PostShadowMat, 0);
+        //     this._uploadInfo();
+        //     this._m_ShadowGeometryReceivers.forEach(iDrawable=>{
+        //         iDrawable.draw(frameContext);
+        //     });
+        //     render._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
+        // }
+
+
+        let render = this._m_Scene.getRender();
+        let frameContext = render.getFrameContext();
+        const gl = this._m_Scene.getCanvas().getGLContext();
+        frameContext.getRenderState().store();
+        // render._checkRenderState(gl, this._m_ShadowRenderState2, frameContext.getRenderState());
+        render.useForcedMat('PostFilter', this._m_PostShadowMat, 0);
+        this._uploadInfo(gl, frameContext);
+        this._m_FramePicture.draw(frameContext);
+        // debug
+        if(this._m_Debug){
+            for(let i = 0;i < this._m_NbShadowMaps;i++){
+                render.useForcedMat(Render.FORWARD, this._m_DebugShadowMap[i].getMaterial(), 0);
+                // this._uploadInfo();
+                this._m_DebugShadowMap[i].draw(frameContext);
+            }
         }
+        render._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
     }
 }

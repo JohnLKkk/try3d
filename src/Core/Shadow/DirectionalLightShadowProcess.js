@@ -1,11 +1,12 @@
 import BasicShadowProcess from "./BasicShadowProcess.js";
 import Log from "../Util/Log.js";
-import Vec4Vars from "../WebGL/Vars/Vec4Vars.js";
 import Camera from "../Scene/Camera.js";
 import Tools from "../Util/Tools.js";
 import Vector3 from "../Math3d/Vector3.js";
 import Shadow from "./Shadow.js";
 import Vector4 from "../Math3d/Vector4.js";
+import Node from "../Node/Node.js";
+import ShaderSource from "../WebGL/ShaderSource.js";
 
 /**
  * DirectionalLightShadowProcess基于Parallel Split Shadow Mapping实现。具体参考:<br/>
@@ -15,7 +16,6 @@ import Vector4 from "../Math3d/Vector4.js";
  */
 export default class DirectionalLightShadowProcess extends BasicShadowProcess{
     // PSSM分割级别（rgba分别存储各级别信息）
-    _m_Splits = new Vec4Vars();
     _m_SplitsVec4 = new Vector4();
     // PSSM分区数据
     _m_SplitsArray = null;
@@ -25,7 +25,7 @@ export default class DirectionalLightShadowProcess extends BasicShadowProcess{
     _m_Points = new Array(8);
     // 临时变量
     _m_TempVec3 = new Vector3();
-    _m_Lambda = 1.0;
+    _m_Lambda = 0.65;
     // 渐变阴影
     _m_Stabilize = true;
 
@@ -37,7 +37,7 @@ export default class DirectionalLightShadowProcess extends BasicShadowProcess{
      * @param {Number}[cfg.shadowMapSize]
      */
     constructor(owner, cfg) {
-        super(owner, cfg);
+        super(owner, {id:cfg.id, nbShadowMaps:cfg.nbSplits, shadowMapSize:cfg.shadowMapSize, debug:cfg.debug});
         this.init(cfg.nbSplits, cfg.shadowMapSize);
     }
     init(nbSplits, shadowMapSize){
@@ -51,6 +51,27 @@ export default class DirectionalLightShadowProcess extends BasicShadowProcess{
         this._m_ShadowCam.setEye(new Vector3(0, 0, 0));
         for(let i = 0;i < 8;i++){
             this._m_Points[i] = new Vector3();
+        }
+    }
+    initMat() {
+        super.initMat();
+        // 追加材质定义
+        this._m_PostShadowMat.addDefine(ShaderSource.S_PSSM_SRC, false);
+    }
+
+    _uploadInfo(gl, frameContext){
+        super._uploadInfo(gl, frameContext);
+        // 更新PSSM信息
+        let conVars = frameContext.m_LastSubShader.getContextVars();
+        let rd = null;
+        rd = conVars[BasicShadowProcess.S_LIGHT_DIR];
+        if(rd){
+            let dir = this._m_Light.getDirection();
+            gl.uniform3f(rd.loc, this._m_SplitsVec4._m_X, this._m_SplitsVec4._m_Y, this._m_SplitsVec4._m_Z);
+        }
+        rd = conVars[BasicShadowProcess.S_SPLITS];
+        if(rd){
+            gl.uniform4f(rd.loc, this._m_SplitsVec4._m_X, this._m_SplitsVec4._m_Y, this._m_SplitsVec4._m_Z, this._m_SplitsVec4._m_W);
         }
     }
     updateShadowCams(){
@@ -73,6 +94,7 @@ export default class DirectionalLightShadowProcess extends BasicShadowProcess{
         this._m_ShadowCam.lookAt(e, e.add(this._m_Light.getDirection(), this._m_TempVec3), this._m_ShadowCam.getUp());
         // 强制更新
         this._m_ShadowCam._updateFrustum();
+        this._m_ShadowCam.forceUpdateProjection();
         this._m_ShadowCam.getProjectViewMatrix(true);
 
         Shadow.calculateSplits(this._m_SplitsArray, zNear, zFar, this._m_Lambda);
@@ -104,19 +126,18 @@ export default class DirectionalLightShadowProcess extends BasicShadowProcess{
         return this._m_ShadowCam;
     }
     getShadowGeometryCasts(shadowMapIndex, shadowGeometryCasts){
-        const mainCamera = this._m_Scene.getMainCamera();
         // 计算当前ShadowMap下光锥边界体
-        Shadow.calculateLightConeScope(mainCamera, this._m_SplitsArray[shadowMapIndex], this._m_SplitsArray[shadowMapIndex + 1], 1.0, this._m_Points);
+        Shadow.calculateLightConeScope(this._m_MainCamera, this._m_SplitsArray[shadowMapIndex], this._m_SplitsArray[shadowMapIndex + 1], 1.0, this._m_Points);
         if(this._m_ShadowGeometryReceivers.length == 0){
             // 我们需要根据receivers集合来计算完整的casts集合
-            Shadow.calculateGeometriesInFrustum(this._m_Scene.getRender().getVisDrawables(), mainCamera, Node.S_SHADOW_RECEIVE, this._m_ShadowGeometryReceivers);
+            Shadow.calculateGeometriesInFrustum(this._m_Scene.getRender().getVisDrawables(), this._m_MainCamera, Node.S_SHADOW_RECEIVE, this._m_ShadowGeometryReceivers);
         }
         Shadow.calculateShadowCamera(this._m_Scene.getSceneNodes(), this._m_ShadowGeometryReceivers, this._m_ShadowCam, this._m_Points, shadowGeometryCasts, this._m_Stabilize ? this._m_ShadowMapSize : 0.0);
         return shadowGeometryCasts;
     }
     getShadowGeometryReceivers(shadowGeometryReceivers){
         if(shadowGeometryReceivers.length == 0){
-            Shadow.calculateGeometriesInFrustum(this._m_Scene.getRender().getVisDrawables(), mainCamera, Node.S_SHADOW_RECEIVE, shadowGeometryReceivers);
+            Shadow.calculateGeometriesInFrustum(this._m_Scene.getRender().getVisDrawables(), this._m_MainCamera, Node.S_SHADOW_RECEIVE, shadowGeometryReceivers);
         }
     }
 }

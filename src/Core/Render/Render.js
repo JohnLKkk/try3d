@@ -233,7 +233,7 @@ export default class Render extends Component{
         this._m_FrameContext.addFrameBuffer(Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER, filterfb);
         // 为了支持HDR和gamma矫正,使用一个RGBA16F ffb
         filterfb.addTexture(gl, ShaderSource.S_IN_SCREEN_SRC, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT0, false);
-        filterfb.addBuffer(gl, 'depth', gl.DEPTH_COMPONENT24, gl.DEPTH_ATTACHMENT);
+        filterfb.addTexture(gl, ShaderSource.S_IN_DEPTH_SRC, gl.DEPTH_COMPONENT24 , 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, gl.DEPTH_ATTACHMENT, false);
         filterfb.finish(gl, this._m_Scene, false);
         this._m_FrameContext._m_DefaultPostFilterFrameBuffer = filterfb.getFrameBuffer();
 
@@ -505,6 +505,7 @@ export default class Render extends Component{
         // 暂时使用方法1
         let hasOpaque = false;
         let hasTranslucent = false;
+        let hasGUI = false;
         // 使用后置缓存?
         let useBackForwardFrameBuffer = false;
         // 灯光列表
@@ -514,8 +515,17 @@ export default class Render extends Component{
         // 半透明队列
         // let translucentBucket = {};
         let translucentBucket = [];
+        // 最后渲染的层
+        let guiBucket = [];
         visDrawables.forEach(drawable=>{
-            if(drawable.isOpaque()){
+            if(drawable.isGUI()){
+                hasGUI = true;
+                if(!guiBucket[drawable.getMaterial().getId()]){
+                    guiBucket[drawable.getMaterial().getId()] = [];
+                }
+                guiBucket[drawable.getMaterial().getId()].push(drawable);
+            }
+            else if(drawable.isOpaque()){
                 hasOpaque = true;
                 if(!opaqueBucket[drawable.getMaterial().getId()]){
                     opaqueBucket[drawable.getMaterial().getId()] = [];
@@ -573,18 +583,25 @@ export default class Render extends Component{
             translucentBucket = RenderQueue.sortTranslucentBucket(this._m_Scene.getMainCamera(), translucentBucket);
             this._m_Pipeline[0].render({gl, scene:this._m_Scene, frameContext:this._m_FrameContext, lights:lights, translucent:true, bucket:translucentBucket});
         }
+
+        // 然后是GUI层(这里需要注意的是，这里需要完善，目前暂时使用opaque渲染)
+        if(hasGUI){
+            // 对于GUI,启用半透明混合,但是渲染的是opaque
+            this._checkRenderState(gl, this._m_TranslucentRenderState, this._m_FrameContext.getRenderState());
+            this._m_Pipeline[0].render({gl, scene:this._m_Scene, frameContext:this._m_FrameContext, lights:lights, opaque:true, bucket:guiBucket});
+        }
         // 一帧结束后
-        if(pfilter){
+        if(pfilter || true){
             gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
             gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this._m_FrameContext._m_DefaultPostFilterFrameBuffer);
-            gl.blitFramebuffer(0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), gl.COLOR_BUFFER_BIT, gl.NEAREST);
+            gl.blitFramebuffer(0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, gl.NEAREST);
             gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
             if(this._m_FrameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){
                 gl.disable(gl.DEPTH_TEST);
             }
         }
         this.fire(Render.POST_FRAME, [exTime]);
-        if(pfilter){
+        if(pfilter || true){
             if(this._m_FrameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){
                 gl.enable(gl.DEPTH_TEST);
             }
@@ -656,6 +673,12 @@ export default class Render extends Component{
                 // 指定subShader
                 if(i == passId){
                     mat._selectSubShader(subShaders[subShader].subShader);
+                    let renderDatas = subShaders[subShader].subShader.getRenderDatas();
+                    const gl = this._m_Scene.getCanvas().getGLContext();
+                    for(let k in renderDatas){
+                        gl.activeTexture(gl.TEXTURE0 + renderDatas[k].loc);
+                        gl.bindTexture(gl.TEXTURE_2D, this._m_FrameContext.getFrameBuffer(renderDatas[k].refId).getTexture(renderDatas[k].dataId).getLoc());
+                    }
                     break;
                 }
                 i++;

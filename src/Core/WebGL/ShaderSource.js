@@ -87,6 +87,9 @@ export default class ShaderSource {
     // 常用宏
     static S_SRGB_SRC = '_C_SRGB';
     static S_GIPROBES_SRC = '_C_GIPROBES';
+    static S_PSSM_SRC = '_C_PSSM';
+    static S_POINTLIGHT_SHADOWS_SRC = '_C_POINTLIGHT_SHADOWS';
+    static S_FADE_SRC = '_C_FADE';
 
     static S_G_BUFFER0_SRC = "_gBuffer0";
     static S_G_BUFFER1_SRC = "_gBuffer1";
@@ -98,6 +101,7 @@ export default class ShaderSource {
 
     static S_FORWARD_COLOR_MAP_SRC = "_forwardColorMap";
     static S_IN_SCREEN_SRC = "_inScreenMap";
+    static S_IN_DEPTH_SRC = "_inDepthMap";
 
     // Tile
     static S_LIGHT_NUM_SRC = "_lightNum";
@@ -124,6 +128,9 @@ export default class ShaderSource {
     // 球谐系数
     static S_SH_COEFFS_SRC = "_ShCoeffs";
 
+    // 分辨率倒数
+    static S_RESOLUTION_INVERSE = '_ResolutionInverse';
+
 
     // Shadow
     static S_SHADOW_MAP_ARRAY_SRC = {
@@ -144,6 +151,10 @@ export default class ShaderSource {
         5:'_lightViewProjectMatrix5',
         6:'_lightViewProjectMatrix6'
     };
+    static S_LIGHT_DIR = "_lightDir";
+    static S_LIGHT_POS = "_lightPos";
+    static S_SPLITS = "_splits";
+    static S_FADEINFO = "_fadeInfo";
 
     // 上下文块
     static ContextBlocks = {
@@ -172,6 +183,7 @@ export default class ShaderSource {
         "_gDepth":'DefaultDeferredShadingFrameBuffer',
         "_forwardColorMap":'DefaultForwardShadingFrameBuffer',
         "_inScreenMap":'DefaultPostFilterShadingFrameBuffer',
+        "_inDepthMap":'DefaultPostFilterShadingFrameBuffer',
     };
 
     // 上下文数据
@@ -214,6 +226,7 @@ export default class ShaderSource {
         "Context.InGBuffer2":{src:ShaderSource.S_G_BUFFER2_SRC, pattern:/Context.InGBuffer2/, pattern2:/Context.InGBuffer2[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGBuffer2/g, tag:ShaderSource.S_G_BUFFER2_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InGDepth":{src:ShaderSource.S_G_DEPTH_SRC, pattern:/Context.InGDepth/, pattern2:/Context.InGDepth[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InGDepth/g, tag:ShaderSource.S_G_DEPTH_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InScreen":{src:ShaderSource.S_IN_SCREEN_SRC, pattern:/Context.InScreen/, pattern2:/Context.InScreen[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InScreen/g, tag:ShaderSource.S_IN_SCREEN_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
+        "Context.InDepth":{src:ShaderSource.S_IN_DEPTH_SRC, pattern:/Context.InDepth/, pattern2:/Context.InDepth[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InDepth/g, tag:ShaderSource.S_IN_DEPTH_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InForwardColorMap":{src:ShaderSource.S_FORWARD_COLOR_MAP_SRC, pattern:/Context.InForwardColorMap/, pattern2:/Context.InForwardColorMap[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InForwardColorMap/g, tag:ShaderSource.S_FORWARD_COLOR_MAP_SRC, type:"sampler2D", utype:"uniform sampler2D", flag:"renderData"},
         "Context.InPrefEnvMap":{src:ShaderSource.S_PREF_ENV_MAP_SRC, pattern:/Context.InPrefEnvMap/, pattern2:/Context.InPrefEnvMap[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InPrefEnvMap/g, tag:ShaderSource.S_PREF_ENV_MAP_SRC, type:"samplerCube", utype:"uniform samplerCube"},
         "Context.InTileLightDecode":{src:ShaderSource.S_TILE_LIGHT_DECODE_SRC, pattern:/Context.InTileLightDecode/, pattern2:/Context.InTileLightDecode[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InTileLightDecode/g, tag:ShaderSource.S_TILE_LIGHT_DECODE_SRC, type:"sampler2D", utype:"uniform sampler2D"},
@@ -224,6 +237,25 @@ export default class ShaderSource {
         "Context.InTileVLightData1":{src:ShaderSource.S_TILE_V_LIGHT_DATA_1, pattern:/Context.InTileVLightData1/, pattern2:/Context.InTileVLightData1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InTileVLightData1/g, tag:ShaderSource.S_TILE_V_LIGHT_DATA_1, type:"sampler2D", utype:"uniform sampler2D"},
         "Context.InTileWLightData2":{src:ShaderSource.S_TILE_W_LIGHT_DATA_2, pattern:/Context.InTileWLightData2/, pattern2:/Context.InTileWLightData2[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InTileWLightData2/g, tag:ShaderSource.S_TILE_W_LIGHT_DATA_2, type:"sampler2D", utype:"uniform sampler2D"},
         "Context.InTileVLightData2":{src:ShaderSource.S_TILE_V_LIGHT_DATA_2, pattern:/Context.InTileVLightData2/, pattern2:/Context.InTileVLightData2[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InTileVLightData2/g, tag:ShaderSource.S_TILE_V_LIGHT_DATA_2, type:"sampler2D", utype:"uniform sampler2D"},
+        "Context.InShadowMap0":{src:ShaderSource.S_SHADOW_MAP_ARRAY_SRC[0], pattern:/Context.InShadowMap0/, pattern2:/Context.InShadowMap0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InShadowMap0/g, tag:ShaderSource.S_SHADOW_MAP_ARRAY_SRC[0], type:"sampler2D", utype:"uniform sampler2D"},
+        "Context.InShadowMap1":{src:ShaderSource.S_SHADOW_MAP_ARRAY_SRC[1], pattern:/Context.InShadowMap1/, pattern2:/Context.InShadowMap1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InShadowMap1/g, tag:ShaderSource.S_SHADOW_MAP_ARRAY_SRC[1], type:"sampler2D", utype:"uniform sampler2D"},
+        "Context.InShadowMap2":{src:ShaderSource.S_SHADOW_MAP_ARRAY_SRC[2], pattern:/Context.InShadowMap2/, pattern2:/Context.InShadowMap2[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InShadowMap2/g, tag:ShaderSource.S_SHADOW_MAP_ARRAY_SRC[2], type:"sampler2D", utype:"uniform sampler2D"},
+        "Context.InShadowMap3":{src:ShaderSource.S_SHADOW_MAP_ARRAY_SRC[3], pattern:/Context.InShadowMap3/, pattern2:/Context.InShadowMap3[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InShadowMap3/g, tag:ShaderSource.S_SHADOW_MAP_ARRAY_SRC[3], type:"sampler2D", utype:"uniform sampler2D"},
+        "Context.InShadowMap4":{src:ShaderSource.S_SHADOW_MAP_ARRAY_SRC[4], pattern:/Context.InShadowMap4/, pattern2:/Context.InShadowMap4[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InShadowMap4/g, tag:ShaderSource.S_SHADOW_MAP_ARRAY_SRC[4], type:"sampler2D", utype:"uniform sampler2D"},
+        "Context.InShadowMap5":{src:ShaderSource.S_SHADOW_MAP_ARRAY_SRC[5], pattern:/Context.InShadowMap5/, pattern2:/Context.InShadowMap5[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InShadowMap5/g, tag:ShaderSource.S_SHADOW_MAP_ARRAY_SRC[5], type:"sampler2D", utype:"uniform sampler2D"},
+        "Context.InShadowMap6":{src:ShaderSource.S_SHADOW_MAP_ARRAY_SRC[6], pattern:/Context.InShadowMap6/, pattern2:/Context.InShadowMap6[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InShadowMap6/g, tag:ShaderSource.S_SHADOW_MAP_ARRAY_SRC[6], type:"sampler2D", utype:"uniform sampler2D"},
+        "Context.LightViewProjectMatrix0":{src:ShaderSource.S_LIGHT_SHADOW_VP_ARRAY_SRC[0], pattern:/Context.LightViewProjectMatrix0/, pattern2:/Context.LightViewProjectMatrix0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.LightViewProjectMatrix0/g, tag:ShaderSource.S_LIGHT_SHADOW_VP_ARRAY_SRC[0], type:"mat4", utype:"uniform mat4"},
+        "Context.LightViewProjectMatrix1":{src:ShaderSource.S_LIGHT_SHADOW_VP_ARRAY_SRC[1], pattern:/Context.LightViewProjectMatrix1/, pattern2:/Context.LightViewProjectMatrix1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.LightViewProjectMatrix1/g, tag:ShaderSource.S_LIGHT_SHADOW_VP_ARRAY_SRC[1], type:"mat4", utype:"uniform mat4"},
+        "Context.LightViewProjectMatrix2":{src:ShaderSource.S_LIGHT_SHADOW_VP_ARRAY_SRC[2], pattern:/Context.LightViewProjectMatrix2/, pattern2:/Context.LightViewProjectMatrix2[\s+-;.,\*\\]{1,}/, tagPattern:/Context.LightViewProjectMatrix2/g, tag:ShaderSource.S_LIGHT_SHADOW_VP_ARRAY_SRC[2], type:"mat4", utype:"uniform mat4"},
+        "Context.LightViewProjectMatrix3":{src:ShaderSource.S_LIGHT_SHADOW_VP_ARRAY_SRC[3], pattern:/Context.LightViewProjectMatrix3/, pattern2:/Context.LightViewProjectMatrix3[\s+-;.,\*\\]{1,}/, tagPattern:/Context.LightViewProjectMatrix3/g, tag:ShaderSource.S_LIGHT_SHADOW_VP_ARRAY_SRC[3], type:"mat4", utype:"uniform mat4"},
+        "Context.LightViewProjectMatrix4":{src:ShaderSource.S_LIGHT_SHADOW_VP_ARRAY_SRC[4], pattern:/Context.LightViewProjectMatrix4/, pattern2:/Context.LightViewProjectMatrix4[\s+-;.,\*\\]{1,}/, tagPattern:/Context.LightViewProjectMatrix4/g, tag:ShaderSource.S_LIGHT_SHADOW_VP_ARRAY_SRC[4], type:"mat4", utype:"uniform mat4"},
+        "Context.LightViewProjectMatrix5":{src:ShaderSource.S_LIGHT_SHADOW_VP_ARRAY_SRC[5], pattern:/Context.LightViewProjectMatrix5/, pattern2:/Context.LightViewProjectMatrix5[\s+-;.,\*\\]{1,}/, tagPattern:/Context.LightViewProjectMatrix5/g, tag:ShaderSource.S_LIGHT_SHADOW_VP_ARRAY_SRC[5], type:"mat4", utype:"uniform mat4"},
+        "Context.LightViewProjectMatrix6":{src:ShaderSource.S_LIGHT_SHADOW_VP_ARRAY_SRC[6], pattern:/Context.LightViewProjectMatrix6/, pattern2:/Context.LightViewProjectMatrix6[\s+-;.,\*\\]{1,}/, tagPattern:/Context.LightViewProjectMatrix6/g, tag:ShaderSource.S_LIGHT_SHADOW_VP_ARRAY_SRC[6], type:"mat4", utype:"uniform mat4"},
+        "Context.LightDir":{src:ShaderSource.S_LIGHT_DIR, pattern:/Context.LightDir/, pattern2:/Context.LightDir[\s+-;.,\*\\]{1,}/, tagPattern:/Context.LightDir/g, tag:ShaderSource.S_LIGHT_DIR, type:"vec3", utype:"uniform vec3"},
+        "Context.LightPos":{src:ShaderSource.S_LIGHT_POS, pattern:/Context.LightPos/, pattern2:/Context.LightPos[\s+-;.,\*\\]{1,}/, tagPattern:/Context.LightPos/g, tag:ShaderSource.S_LIGHT_POS, type:"vec3", utype:"uniform vec3"},
+        "Context.Splits":{src:ShaderSource.S_SPLITS, pattern:/Context.Splits/, pattern2:/Context.Splits[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Splits/g, tag:ShaderSource.S_SPLITS, type:"vec4", utype:"uniform vec4"},
+        "Context.Fadeinfo":{src:ShaderSource.S_FADEINFO, pattern:/Context.Fadeinfo/, pattern2:/Context.Fadeinfo[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Fadeinfo/g, tag:ShaderSource.S_FADEINFO, type:"vec2", utype:"uniform vec2"},
+        "Context.ResolutionInverse":{src:ShaderSource.S_RESOLUTION_INVERSE, pattern:/Context.ResolutionInverse/, pattern2:/Context.ResolutionInverse[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ResolutionInverse/g, tag:ShaderSource.S_RESOLUTION_INVERSE, type:"vec2", utype:"uniform vec2"},
         // 输出类型缓存
         "Context.OutGBuffer0":{src:ShaderSource.S_G_BUFFER0_SRC, loc:ShaderSource.S_G_BUFFER0, pattern:/Context.OutGBuffer0/, pattern2:/Context.OutGBuffer0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutGBuffer0/g, tag:ShaderSource.S_G_BUFFER0_SRC, type:"vec4"},
         "Context.OutGBuffer1":{src:ShaderSource.S_G_BUFFER1_SRC, loc:ShaderSource.S_G_BUFFER1, pattern:/Context.OutGBuffer1/, pattern2:/Context.OutGBuffer1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutGBuffer1/g, tag:ShaderSource.S_G_BUFFER1_SRC, type:"vec4"},
@@ -234,10 +266,16 @@ export default class ShaderSource {
         "Context.Skins":{src:ShaderSource.S_SKINS_SRC, pattern:/Context.Skins/, pattern2:/Context.Skins[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Skins/g, tag:ShaderSource.S_SKINS_SRC, isFlagVariable:true},
         "Context.Srgb":{src:ShaderSource.S_SRGB_SRC, pattern:/Context.Srgb/, pattern2:/Context.Srgb[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Srgb/g, tag:ShaderSource.S_SRGB_SRC, isFlagVariable:true},
         "Context.GIProbes":{src:ShaderSource.S_GIPROBES_SRC, pattern:/Context.GIProbes/, pattern2:/Context.GIProbes[\s+-;.,\*\\]{1,}/, tagPattern:/Context.GIProbes/g, tag:ShaderSource.S_GIPROBES_SRC, isFlagVariable:true},
+        "Context.Pssm":{src:ShaderSource.S_PSSM_SRC, pattern:/Context.Pssm/, pattern2:/Context.Pssm[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Pssm/g, tag:ShaderSource.S_PSSM_SRC, isFlagVariable:true},
+        "Context.PointLightShadows":{src:ShaderSource.S_POINTLIGHT_SHADOWS_SRC, pattern:/Context.PointLightShadows/, pattern2:/Context.PointLightShadows[\s+-;.,\*\\]{1,}/, tagPattern:/Context.PointLightShadows/g, tag:ShaderSource.S_POINTLIGHT_SHADOWS_SRC, isFlagVariable:true},
+        "Context.Fade":{src:ShaderSource.S_FADE_SRC, pattern:/Context.Fade/, pattern2:/Context.Fade[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Fade/g, tag:ShaderSource.S_FADE_SRC, isFlagVariable:true},
 
         // 上下文定义
         '_C_SKINS':"#define " + ShaderSource.S_SKINS_SRC + " " + ShaderSource.S_SKINS_SRC,
         '_C_GIPROBES':"#define " + ShaderSource.S_GIPROBES_SRC + " " + ShaderSource.S_GIPROBES_SRC,
+        '_C_PSSM':"#define " + ShaderSource.S_PSSM_SRC + " " + ShaderSource.S_PSSM_SRC,
+        '_C_POINTLIGHT_SHADOWS':"#define " + ShaderSource.S_POINTLIGHT_SHADOWS_SRC + " " + ShaderSource.S_POINTLIGHT_SHADOWS_SRC,
+        '_FADE':"#define " + ShaderSource.S_FADE_SRC + " " + ShaderSource.S_FADE_SRC,
     };
 
     constructor() {

@@ -1,6 +1,9 @@
 // PreShadowDef
 // 这个材质定义用于捕获ShadowMap,因此,它很简单,只是简单的将深度信息渲染到指定缓冲中
 Def PreShadowDef{
+    Params{
+        bool debug;
+    }
     SubTechnology PreShadowPass{
         Vars{
             vec2 wUv0;
@@ -26,6 +29,11 @@ Def PreShadowDef{
             void main(){
                 // 事实上这个fs可以不做任意事,但是考虑到部分webGL实现兼容性,在这里输出一个随意值
                 Context.OutColor = vec4(1.0f);
+                #ifdef Params.debug
+                    if(Params.debug){
+                        Context.OutColor = vec4(vec3(gl_FragCoord.z), 1.0f);
+                    }
+                #endif
             }
         }
     }

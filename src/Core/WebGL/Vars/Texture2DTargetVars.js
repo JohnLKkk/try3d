@@ -33,6 +33,8 @@ export default class Texture2DTargetVars extends Vars{
             S_SRGB:gl.SRGB,
             S_SRGB8:gl.SRGB8,
             S_SRGBA:gl.SRGB8_ALPHA8,
+            S_DEPTH_COMPONENT24:gl.DEPTH_COMPONENT24,
+            S_DEPTH_COMPONENT:gl.DEPTH_COMPONENT,
             S_SHORT:gl.SHORT,
             S_INT:gl.INT,
             S_BYTE:gl.BYTE,
@@ -54,8 +56,8 @@ export default class Texture2DTargetVars extends Vars{
         this._m_UpdateImage = false;
         this._m_Image = null;
         this._m_Rgbe = false;
-        this._m_Width = -1;
-        this._m_Height = -1;
+        this._m_Width = this._m_Scene.getCanvas().getWidth();
+        this._m_Height = this._m_Scene.getCanvas().getHeight();
         // 翻转y(需要在设置图像之前设置)
         this._m_FlipY = false;
         // 默认4字节对齐
@@ -379,7 +381,7 @@ export default class Texture2DTargetVars extends Vars{
             //self._image = image; // 为了更快地恢复WebGL上下文-内存效率低下？
             // this._setImage(this._m_Scene, this._m_Image);
             // gl.texImage2D(gl.TEXTURE_2D, 0, this._m_Internalformat, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), 0, this._m_Format, this._m_Type, null);
-            gl.copyTexImage2D(gl.TEXTURE_2D, 0, this._m_Internalformat, 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), 0);
+            gl.copyTexImage2D(gl.TEXTURE_2D, 0, this._m_Internalformat, 0, 0, this._m_Target._m_Width, this._m_Target._m_Height, 0);
             // 为该image生成硬件mipmap
             if(this._m_MinFilter != Texture2DTargetVars.S_FILTERS.S_NEAREST && this._m_MinFilter != Texture2DTargetVars.S_FILTERS.S_LINEAR){
                 // this.genMipmap(this._m_Scene);

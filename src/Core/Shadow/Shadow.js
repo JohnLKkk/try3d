@@ -5,8 +5,8 @@
  * @date 2021年9月15日17点38分
  */
 import Vector3 from "../Math3d/Vector3.js";
-import Node from "../Node/Node";
-import Matrix44 from "../Math3d/Matrix44";
+import Node from "../Node/Node.js";
+import Matrix44 from "../Math3d/Matrix44.js";
 import AABBBoundingBox from "../Math3d/Bounding/AABBBoundingBox.js";
 import SplitOccluders from "./SplitOccluders.js";
 
@@ -138,6 +138,7 @@ export default class Shadow {
     static calculateShadowCamera(sceneNodes, splitShadowGeometryReceivers, shadowCam, points, splitShadowGeometryCasts, shadowMapSize){
         if(shadowCam.isParallelProjection()){
             shadowCam.setFrustum(-1, 1, 1, -1, -shadowCam.getFar(), shadowCam.getFar());
+            shadowCam.forceUpdateProjection();
         }
         let vp = shadowCam.getProjectViewMatrix(true);
         let splitBoundary = Shadow.calculateBoundaryFromPoints(points, vp, Shadow.S_AABB_BOUNDARY_BOX0);
@@ -152,10 +153,11 @@ export default class Shadow {
         let c = null;
         splitShadowGeometryReceivers.forEach(geometry=>{
             bv = geometry.getBoundingVolume();
-            recvBox = bv.transformFromMat44(vp, Shadow.S_AABB_BOUNDARY_BOX1);
+            recvBox = Shadow.S_AABB_BOUNDARY_BOX1;
+            bv.transformFromMat44(vp, Shadow.S_AABB_BOUNDARY_BOX1);
             if(splitBoundary.contains(recvBox)){
                 c = recvBox.getCenter();
-                if(Math.abs(c._m_X) != Number.MAX_VALUE && !Number.isNaN(c._m_X) && !Number.isFinite(c._m_X)){
+                if(Math.abs(c._m_X) != Number.MAX_VALUE && !Number.isNaN(c._m_X) && Number.isFinite(c._m_X)){
                     receiverBoundary.merge(recvBox);
                     receiverCount++;
                 }
@@ -189,15 +191,15 @@ export default class Shadow {
         let cropMin = Shadow.S_TEMP_VEC3_8;
         let cropMax = Shadow.S_TEMP_VEC3_7;
 
-        cropMin._m_X = max(max(casterMin._m_X, receiverMin._m_X), splitMin._m_X);
-        cropMax._m_X = min(min(casterMax._m_X, receiverMax._m_X), splitMax._m_X);
+        cropMin._m_X = Math.max(Math.max(casterMin._m_X, receiverMin._m_X), splitMin._m_X);
+        cropMax._m_X = Math.min(Math.min(casterMax._m_X, receiverMax._m_X), splitMax._m_X);
 
-        cropMin._m_Y = max(max(casterMin._m_Y, receiverMin._m_Y), splitMin._m_Y);
-        cropMax._m_Y = min(min(casterMax._m_Y, receiverMax._m_Y), splitMax._m_Y);
+        cropMin._m_Y = Math.max(Math.max(casterMin._m_Y, receiverMin._m_Y), splitMin._m_Y);
+        cropMax._m_Y = Math.min(Math.min(casterMax._m_Y, receiverMax._m_Y), splitMax._m_Y);
 
         // Z 值的特殊处理
-        cropMin._m_Z = min(casterMin._m_Z, splitMin._m_Z);
-        cropMax._m_Z = min(receiverMax._m_Z, splitMax._m_Z);
+        cropMin._m_Z = Math.min(casterMin._m_Z, splitMin._m_Z);
+        cropMax._m_Z = Math.min(receiverMax._m_Z, splitMax._m_Z);
 
         // 创建cropMatrix
         let scaleX, scaleY, scaleZ;
@@ -235,7 +237,7 @@ export default class Shadow {
         ]);
 
         let pr = Shadow.S_TEMP_MAT44_1;
-        Matrix44.multiplyMM(pr, 0, p, 0, cropMatrix, 0);
+        Matrix44.multiplyMM(pr, 0, cropMatrix, 0, p, 0);
 
         shadowCam.setProjectMatrix(pr);
     }

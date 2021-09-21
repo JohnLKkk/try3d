@@ -5,6 +5,7 @@
     <title>Test</title>
 </head>
 <body>
+    <canvas id="canvas" width="512" height="512"></canvas>
     <script type="module">
         // let arr = ['color','get','test'];
         // var newArr = arr.sort(function(a,b){return a.localeCompare(b)});
@@ -57,6 +58,8 @@
         import Scene from "../src/Core/Scene/Scene.js";
         import Vector3 from "../src/Core/Math3d/Vector3.js";
         import ProbeTools from "../src/Core/Util/ProbeTools.js";
+        import Camera from "../src/Core/Scene/Camera.js";
+        import Shadow from "../src/Core/Shadow/Shadow.js";
 
         // console.log('0.5 ^ 2.2 = ' + Math.pow(0.534, 2.2));
         // let texelVect = new Vector3();
@@ -65,8 +68,51 @@
         // let shDir = [];
         // ProbeTools.evalShBasis(texelVect, shDir);
         // console.log('shDir:' , shDir);
-        let cfg = {value:false};
-        console.log('value:' + (cfg.value || 1));
+        // let cfg = {value:false};
+        // console.log('value:' + (cfg.value || 1));
+
+        let scene = new Scene({cavnas:document.getElementById('canvas')});
+        let shadowCam = new Camera(scene, {id:'shadowCam', parallelProjection:true});
+        console.log('projectMatrix:' + shadowCam.getProjectMatrix().toString());
+
+
+
+        shadowCam.setFar(1000.0);
+        shadowCam.setEye(new Vector3(0, 0, 0));
+        let e = shadowCam.getEye();
+        shadowCam.lookAt(e, e.add(new Vector3(-1, -1, -1), new Vector3()), shadowCam.getUp());
+        console.log('v:' + shadowCam.getViewMatrix().toString());
+        // 强制更新
+        shadowCam._updateFrustum();
+        shadowCam.forceUpdateProjection();
+        let pv = shadowCam.getProjectViewMatrix(true);
+        console.log('pv:' + pv.toString());
+
+
+
+        // 测试calculateLightConeScope
+        console.log('测试calculateLightConeScope...');
+        let points = [];
+        for(let i = 0;i < 8;i++){
+            points[i] = new Vector3();
+        }
+        let cam = new Camera(scene, {id:'cam'});
+        cam.setEye(new Vector3(0, 0, 0));
+        cam.lookAt(new Vector3(0, 0, 0), new Vector3(0, 0, -1), new Vector3(0, 1, 0));
+        console.log('w:' + cam.getWidth() + ',h:' + cam.getHeight());
+
+        Shadow.calculateLightConeScope(cam, 0.1, 1000.0, 1.0, points);
+        console.log('points:');
+        for(let i = 0;i < 8;i++){
+            console.log(i + ":" + points[i].toString());
+        }
+
+        // 测试calculateSplits
+        let splits = new Array(5);
+        Shadow.calculateSplits(splits, 0.1, 1000.0, 0.65);
+        for(let i = 0;i < 5;i++){
+            console.log(i + ':' + splits[i]);
+        }
     </script>
     <!--<script>-->
         <!--function findSrc(str, reg){-->

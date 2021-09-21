@@ -76,7 +76,7 @@ export default class Node extends Component{
         // 过滤标记
         this._m_FilterFlag = Node.S_DYNAMIC;
         // 阴影模式
-        this._m_ShadowMode = Node.S_SHADOW_NONE;
+        this._m_ShadowMode = Node.S_SHADOW_CAST_AND_RECEIVE;
     }
 
     /**

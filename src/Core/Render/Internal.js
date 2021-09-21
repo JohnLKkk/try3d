@@ -1,4 +1,283 @@
 export default class Internal {
+    static S_POST_SHADOW_DEF_DATA = "// PostShadowDef\n" +
+        "Def PostShadowDef{\n" +
+        "    Params{\n" +
+        "        // ShadowInfo\n" +
+        "        float shadowIntensity;\n" +
+        "        int filterMode;\n" +
+        "        bool hardwareShadow;\n" +
+        "        bool backfaceShadows;\n" +
+        "    }\n" +
+        "    SubTechnology PostShadowPass{\n" +
+        "        Vars{\n" +
+        "            vec2 wUv0;\n" +
+        "            mat4 pvInverse;\n" +
+        "            vec4 pvRow2;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" +
+        "                pvInverse = inverse(Context.ProjectViewMatrix);\n" +
+        "                pvRow2 = Context.ProjectViewMatrix[2];\n" +
+        "                wUv0 = Context.InUv0;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            //#extension GL_ARB_gpu_shader5 : enable\n" +
+        "            float shadowBorderScale = 1.0f;\n" +
+        "            #ifdef HARDWARE_SHADOWS\n" +
+        "                #define SHADOWMAP sampler2DShadow\n" +
+        "                #define SHADOWCOMPAREOFFSET(tex,coord,offset) textureProjOffset(tex, coord, offset)\n" +
+        "                #define SHADOWCOMPARE(tex,coord) textureProj(tex, coord)\n" +
+        "                #define SHADOWGATHER(tex,coord) textureGather(tex, coord.xy, coord.z)\n" +
+        "            #else\n" +
+        "                #define SHADOWMAP sampler2D\n" +
+        "                #define SHADOWCOMPAREOFFSET(tex,coord,offset) step(coord.z, textureProjOffset(tex, coord, offset).r)\n" +
+        "                #define SHADOWCOMPARE(tex,coord) step(coord.z, textureProj(tex, coord).r)\n" +
+        "                #define SHADOWGATHER(tex,coord) step(coord.z, textureGather(tex, coord.xy))\n" +
+        "            #endif\n" +
+        "\n" +
+        "            float Shadow_DoShadowCompare(in SHADOWMAP tex,in vec4 projCoord){\n" +
+        "                return SHADOWCOMPARE(tex, projCoord);\n" +
+        "            }\n" +
+        "\n" +
+        "            float Shadow_BorderCheck(in vec2 coord){\n" +
+        "                // 最快的“hack”方法（使用 4-5 条指令）\n" +
+        "                vec4 t = vec4(coord.xy, 0.0f, 1.0f);\n" +
+        "                t = step(t.wwxy, t.xyzz);\n" +
+        "                return dot(t,t);\n" +
+        "            }\n" +
+        "\n" +
+        "            float Shadow_Nearest(in SHADOWMAP tex,in vec4 projCoord){\n" +
+        "                float border = Shadow_BorderCheck(projCoord.xy);\n" +
+        "                if (border > 0.0f){\n" +
+        "                    return 1.0f;\n" +
+        "                }\n" +
+        "                return SHADOWCOMPARE(tex, projCoord);\n" +
+        "            }\n" +
+        "            vec3 getPosition(in float depth, in vec2 newTexCoord){\n" +
+        "\n" +
+        "                vec4 pos;\n" +
+        "                pos.xy = (newTexCoord * vec2(2.0f)) - vec2(1.0f);\n" +
+        "                pos.z  = depth * 2.0f - 1.0f;\n" +
+        "                pos.w  = 1.0f;\n" +
+        "                pos    = pvInverse * pos;\n" +
+        "                pos.xyz /= pos.w;\n" +
+        "                return pos.xyz;\n" +
+        "            }\n" +
+        "            #define GETSHADOW Shadow_Nearest\n" +
+        "            // 基于PSSM实现的CSM\n" +
+        "            float getDirectionalLightShadows(in vec4 splits,in float shadowPosition, in SHADOWMAP shadowMap0, in SHADOWMAP shadowMap1, in SHADOWMAP shadowMap2,in SHADOWMAP shadowMap3, in vec4 projCoord0,in vec4 projCoord1,in vec4 projCoord2,in vec4 projCoord3){\n" +
+        "                float shadow = 1.0f;\n" +
+        "                if(shadowPosition < splits.x){\n" +
+        "                    shadow = GETSHADOW(shadowMap0, projCoord0 );\n" +
+        "                }\n" +
+        "                else if( shadowPosition <  splits.y){\n" +
+        "                    shadowBorderScale = 0.5f;\n" +
+        "                    shadow = GETSHADOW(shadowMap1, projCoord1);\n" +
+        "                }\n" +
+        "                else if( shadowPosition <  splits.z){\n" +
+        "                    shadowBorderScale = 0.25f;\n" +
+        "                    shadow = GETSHADOW(shadowMap2, projCoord2);\n" +
+        "                }\n" +
+        "                else if( shadowPosition <  splits.w){\n" +
+        "                    shadowBorderScale = 0.125f;\n" +
+        "                    shadow = GETSHADOW(shadowMap3, projCoord3);\n" +
+        "                }\n" +
+        "                return shadow;\n" +
+        "            }\n" +
+        "            vec3 approximateNormal(in vec4 worldPos,in vec2 texCoord){\n" +
+        "                float step = Context.ResolutionInverse.x;\n" +
+        "                float stepy = Context.ResolutionInverse.y;\n" +
+        "                float depth2 = texture(Context.InGDepth, texCoord + vec2(step, -stepy)).r;\n" +
+        "                float depth3 = texture(Context.InGDepth, texCoord + vec2(-step, -stepy)).r;\n" +
+        "                vec4 worldPos2 = vec4(getPosition(depth2, texCoord + vec2(step, -stepy)),1.0f);\n" +
+        "                vec4 worldPos3 = vec4(getPosition(depth3, texCoord + vec2(-step, -stepy)),1.0f);\n" +
+        "\n" +
+        "                vec3 v1 = (worldPos - worldPos2).xyz;\n" +
+        "                vec3 v2 = (worldPos3 - worldPos2).xyz;\n" +
+        "                return normalize(cross(v1, v2));\n" +
+        "            }\n" +
+        "            const mat4 biasMat = mat4(0.5f, 0.0f, 0.0f, 0.0f,\n" +
+        "                                      0.0f, 0.5f, 0.0f, 0.0f,\n" +
+        "                                      0.0f, 0.0f, 0.5f, 0.0f,\n" +
+        "                                      0.5f, 0.5f, 0.5f, 1.0f);\n" +
+        "            void main(){\n" +
+        "                float depth = texture(Context.InDepth, wUv0).r;\n" +
+        "                Context.OutColor = texture(Context.InScreen, wUv0);\n" +
+        "\n" +
+        "                // 跳过不需要的部分,depth为1.0的基本上是背景或sky部分\n" +
+        "                if(depth >= 1.0f){\n" +
+        "                    return;\n" +
+        "                }\n" +
+        "\n" +
+        "                // 深度重建世界坐标\n" +
+        "                vec4 wPosition = vec4(getPosition(depth, wUv0), 1.0f);\n" +
+        "\n" +
+        "                vec3 lightDir;\n" +
+        "                #ifdef PSSM\n" +
+        "                    lightDir = Context.LightDir;\n" +
+        "                #else\n" +
+        "                    lightDir = wPosition.xyz - Context.LightPos;\n" +
+        "                #endif\n" +
+        "\n" +
+        "                #ifndef Params.backfaceShadows\n" +
+        "                    if(Params.backfaceShadows){\n" +
+        "                        vec3 normal = approximateNormal(wPosition, wUv0);\n" +
+        "                        float ndotl = dot(normal, lightDir);\n" +
+        "                        if(ndotl > -0.0f){\n" +
+        "                            return;\n" +
+        "                        }\n" +
+        "                    }\n" +
+        "                #endif\n" +
+        "\n" +
+        "                #if !defined(Context.PointLightShadows)\n" +
+        "                    #if !defined(Context.Pssm)\n" +
+        "                        if( dot(Context.LightDir, lightDir) < 0.0f){\n" +
+        "                            return;\n" +
+        "                        }\n" +
+        "                    #endif\n" +
+        "                #endif\n" +
+        "\n" +
+        "                // 将坐标转换到光源空间\n" +
+        "                vec4 projCoord0 = biasMat * Context.LightViewProjectMatrix0 * wPosition;\n" +
+        "                vec4 projCoord1 = biasMat * Context.LightViewProjectMatrix1 * wPosition;\n" +
+        "                vec4 projCoord2 = biasMat * Context.LightViewProjectMatrix2 * wPosition;\n" +
+        "                vec4 projCoord3 = biasMat * Context.LightViewProjectMatrix3 * wPosition;\n" +
+        "                #ifdef POINTLIGHT\n" +
+        "                   vec4 projCoord4 = biasMat * Context.LightViewProjectMatrix4 * wPosition;\n" +
+        "                   vec4 projCoord5 = biasMat * Context.LightViewProjectMatrix5 * wPosition;\n" +
+        "                #endif\n" +
+        "\n" +
+        "                // 计算阴影\n" +
+        "                float shadow = 1.0f;\n" +
+        "\n" +
+        "                #if defined(Context.Pssm)\n" +
+        "                    float shadowPosition = pvRow2.x * wPosition.x +  pvRow2.y * wPosition.y +  pvRow2.z * wPosition.z +  pvRow2.w;\n" +
+        "                #else\n" +
+        "                    #if defined(Context.Fade)\n" +
+        "                        float shadowPosition = pvRow2.x * wPosition.x +  pvRow2.y * wPosition.y +  pvRow2.z * wPosition.z +  pvRow2.w;\n" +
+        "                    #endif\n" +
+        "                #endif\n" +
+        "\n" +
+        "                #ifdef Context.PointLightShadows\n" +
+        "                #else\n" +
+        "                    #ifdef Context.Pssm\n" +
+        "                        // directionalLight shadow\n" +
+        "                        shadow = getDirectionalLightShadows(Context.Splits, shadowPosition, Context.InShadowMap0, Context.InShadowMap1, Context.InShadowMap2, Context.InShadowMap3, projCoord0, projCoord1, projCoord2, projCoord3);\n" +
+        "                    #else\n" +
+        "                        // spotLight shadow\n" +
+        "                    #endif\n" +
+        "                #endif\n" +
+        "\n" +
+        "                #ifdef Context.Fade\n" +
+        "                    shadow = clamp(max(0.0f, mix(shadow, 1.0f,(shadowPosition - Context.FadeInfo.x) * Context.FadeInfo.y)), 0.0f, 1.0f);\n" +
+        "                #endif\n" +
+        "                #ifdef Params.shadowIntensity\n" +
+        "                    shadow = shadow * Params.shadowIntensity + (1.0f - Params.shadowIntensity);\n" +
+        "                #else\n" +
+        "                    shadow = shadow * 0.5f + 0.5f;\n" +
+        "                #endif\n" +
+        "                Context.OutColor = Context.OutColor * vec4(shadow, shadow, shadow, 1.0f);\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology{\n" +
+        "        Sub_Pass PostFilter{\n" +
+        "            Pass PostShadowPass{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "}\n";
+    static S_PRE_SHADOW_DEF_DATA = "// PreShadowDef\n" +
+        "// 这个材质定义用于捕获ShadowMap,因此,它很简单,只是简单的将深度信息渲染到指定缓冲中\n" +
+        "Def PreShadowDef{\n" +
+        "    Params{\n" +
+        "        bool debug;\n" +
+        "    }\n" +
+        "    SubTechnology PreShadowPass{\n" +
+        "        Vars{\n" +
+        "            vec2 wUv0;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                #ifdef Context.Skins\n" +
+        "                    mat4 skinMat =\n" +
+        "                            Context.InWeight0.x * Context.Joints[int(Context.InJoint0.x)] +\n" +
+        "                            Context.InWeight0.y * Context.Joints[int(Context.InJoint0.y)] +\n" +
+        "                            Context.InWeight0.z * Context.Joints[int(Context.InJoint0.z)] +\n" +
+        "                            Context.InWeight0.w * Context.Joints[int(Context.InJoint0.w)];\n" +
+        "                    // vec4 pos = Context.ModelMatrix * skinMat * vec4(Context.InPosition, 1.0f);\n" +
+        "                    vec4 pos = skinMat * vec4(Context.InPosition, 1.0f);\n" +
+        "                #else\n" +
+        "                    vec4 pos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);\n" +
+        "                #endif\n" +
+        "                wUv0 = Context.InUv0;\n" +
+        "                Context.OutPosition = Context.ProjectViewMatrix * pos;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            void main(){\n" +
+        "                #ifdef Params.debug\n" +
+        "                    if(Params.debug){\n" +
+        "                        Context.OutColor = vec4(vec3(gl_FragCoord.z), 1.0f);\n" +
+        "                    }\n" +
+        "                #endif\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology{\n" +
+        "        Sub_Pass PreFrame{\n" +
+        "            Pass PreShadowPass{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "}\n";
+    static S_PICTURE_DEF_DATA = "// 颜色材质,提供指定颜色或颜色纹理并渲染\n" +
+        "Def PictureDef{\n" +
+        "    Params{\n" +
+        "        vec4 color;\n" +
+        "        sampler2D colorMap;\n" +
+        "        float alphaDiscard;\n" +
+        "    }\n" +
+        "    SubTechnology DefaultPass{\n" +
+        "        Vars{\n" +
+        "            vec2 uv0;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                Context.OutPosition = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);\n" +
+        "                uv0 = Context.InUv0;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            void main(){\n" +
+        "                // 使用自定义颜色输出\n" +
+        "                #ifdef Params.color\n" +
+        "                    Context.OutColor = Params.color;\n" +
+        "                #else\n" +
+        "                    // 使用纹理\n" +
+        "                    #ifdef Params.colorMap\n" +
+        "                        Context.OutColor = texture(Params.colorMap, uv0);\n" +
+        "                        #ifdef Params.alphaDiscard\n" +
+        "                            if(Context.OutColor.a < Params.alphaDiscard){\n" +
+        "                                discard;\n" +
+        "                            }\n" +
+        "                        #endif\n" +
+        "                    #else\n" +
+        "                        Context.OutColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);\n" +
+        "                    #endif\n" +
+        "                #endif\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology{\n" +
+        "        Sub_Pass{\n" +
+        "            Pass DefaultPass{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "}\n";
     static S_GAMMA_CORRECTION_DEF_DATA = "// gamma矫正\n" +
         "// 由于webGL不支持硬件gamma矫正,只能通过后处理进行\n" +
         "Def GammaCorrectionFilterDef{\n" +

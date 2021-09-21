@@ -1,6 +1,10 @@
 import Geometry from "./Geometry.js";
 import Node from "./Node.js";
 import Mesh from "../WebGL/Mesh.js";
+import Internal from "../Render/Internal.js";
+import MaterialDef from "../Material/MaterialDef.js";
+import Material from "../Material/Material.js";
+import Tools from "../Util/Tools.js";
 
 /**
  * Picture用于提供图像输出需要,一般而言,用它作为GUI元素或Frame输出结果。<br/>
@@ -47,6 +51,13 @@ export default class Picture extends Geometry{
     }
 
     /**
+     * 使用默认材质。<br/>
+     */
+    useDefaultMat(){
+        this.setMaterial(new Material(this._m_Scene, {id:'picture_gui_' + Tools.nextId(), materialDef:MaterialDef.parse(Internal.S_PICTURE_DEF_DATA)}));
+    }
+
+    /**
      * 设置大小。<br/>
      * @param {Number}[w 值为0.0-1.0]
      * @param {Number}[h 值为0.0-1.0]
@@ -63,7 +74,11 @@ export default class Picture extends Geometry{
      * @param {Number}[top 0.0-1.0]
      */
     setLeftTop(left, top){
-
+        if(this._m_Left != left || this._m_Top != top){
+            this._m_Left = left;
+            this._m_Top = top;
+            this.setLocalTranslationXYZ(this._m_Left, this._m_Top, 2.0 * this._m_Zindex - 1.0);
+        }
     }
 
     /**
@@ -73,7 +88,9 @@ export default class Picture extends Geometry{
     setZIndex(zIndex){
         if(this._m_Zindex != zIndex){
             this._m_Zindex = Math.min(Math.max(0, zIndex), 1);
-            this.setLocalTranslationXYZ(0, 0, 2.0 * this._m_Zindex - 1.0);
+            let w = this._m_Scene.getCanvas().getWidth();
+            let h = this._m_Scene.getCanvas().getHeight();
+            this.setLocalTranslationXYZ(this._m_Left, this._m_Top, 2.0 * this._m_Zindex - 1.0);
         }
     }
 
@@ -109,6 +126,9 @@ export default class Picture extends Geometry{
         return this._m_Height;
     }
     isDrawable() {
+        return true;
+    }
+    isGUI(){
         return true;
     }
 

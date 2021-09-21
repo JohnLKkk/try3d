@@ -129,7 +129,13 @@ export default class Camera extends Component{
         // postFilter
         this._m_Scene.getRender().on(Render.POST_QUEUE, (renderQueue)=>{
             if(this._m_IsRenderingCamera){
-
+                if(this.demandFilter()){
+                    this._m_Filters.forEach(filter=>{
+                        if(filter.isEnable()){
+                            filter.preFrame();
+                        }
+                    });
+                }
             }
         });
         this._m_Scene.getRender().on(Render.POST_FRAME, (exTime)=>{
@@ -158,7 +164,7 @@ export default class Camera extends Component{
             this._m_FrustumRight = 0.5;
             this._m_FrustumTop = 0.5;
             this._m_FrustumBottom = -0.5;
-            this._m_ProjectViewMatrix.parallelM(this._m_FrustumLeft, this._m_FrustumRight, this._m_FrustumTop, this._m_FrustumBottom, this._m_FrustumNear, this._m_FrustumFar);
+            this._m_ProjectMatrix.parallelM(this._m_FrustumLeft, this._m_FrustumRight, this._m_FrustumTop, this._m_FrustumBottom, this._m_FrustumNear, this._m_FrustumFar);
         }
         else{
             // 默认是一个透视相机,所以这里基于透视算法建立投影平面
@@ -226,7 +232,7 @@ export default class Camera extends Component{
         this._m_FrustumRight = right;
         this._m_FrustumTop = top;
         this._m_FrustumBottom = bottom;
-        this._m_ProjectViewMatrix.parallelM(this._m_FrustumLeft, this._m_FrustumRight, this._m_FrustumTop, this._m_FrustumBottom, this._m_FrustumNear, this._m_FrustumFar);
+        this._m_ProjectMatrix.parallelM(this._m_FrustumLeft, this._m_FrustumRight, this._m_FrustumTop, this._m_FrustumBottom, this._m_FrustumNear, this._m_FrustumFar);
     }
 
     /**

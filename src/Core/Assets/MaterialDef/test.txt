@@ -1,372 +1,177 @@
 #version 300 es
-#define baseColorMap baseColorMap
-#define metallicRoughnessMap metallicRoughnessMap
-#define normalMap normalMap
-#define lightMap lightMap
-#define aoMap aoMap
-#define emissive emissive
-#define emissiveMap emissiveMap
+#define backfaceShadows backfaceShadows
+#define _C_PSSM _C_PSSM
 
 precision mediump float;
 
-uniform vec3 _ambientLightColor;
-uniform int _curLightCount;
-uniform vec4 _wLightData[12];
+uniform vec2 _ResolutionInverse;
+uniform sampler2D _gDepth;
+uniform sampler2D _inDepthMap;
 out vec4 _outColor;
-uniform bool _blend_gi_probes;
-uniform vec4 _wGIProbe;
-uniform vec3 _ShCoeffs[9];
-uniform samplerCube _prefEnvMap;
-layout (std140) uniform VIEW
-{
-vec3 _cameraPosition;
-};
+uniform sampler2D _inScreenMap;
+uniform vec3 _lightDir;
+uniform vec3 _lightPos;
+uniform mat4 _lightViewProjectMatrix0;
+uniform mat4 _lightViewProjectMatrix1;
+uniform mat4 _lightViewProjectMatrix2;
+uniform mat4 _lightViewProjectMatrix3;
+uniform mat4 _lightViewProjectMatrix4;
+uniform mat4 _lightViewProjectMatrix5;
+uniform sampler2D _shadowMap0;
+uniform sampler2D _shadowMap1;
+uniform sampler2D _shadowMap2;
+uniform sampler2D _shadowMap3;
+uniform vec4 _splits;
 
-in vec3 wPosition;
+in mat4 pvInverse;
 in vec2 wUv0;
-in vec3 wNormal;
-in vec4 wTangent;
-in vec2 wUv1;
+in vec4 pvRow2;
 
-uniform vec4 baseColor;
-uniform sampler2D baseColorMap;
-uniform float alphaDiscard;
-uniform sampler2D normalMap;
-uniform sampler2D metallicRoughnessMap;
-uniform float metallic;
-uniform float roughness;
-uniform sampler2D roughnessMap;
-uniform sampler2D metallicMap;
-uniform bool useSpecGloss;
-uniform sampler2D specularGlossinessMap;
-uniform vec4 specular;
-uniform float glossiness;
-uniform sampler2D specularMap;
-uniform sampler2D glossinessMap;
-uniform sampler2D lightMap;
-uniform bool lightMapTexCoord;
-uniform bool aoMap;
-uniform vec4 emissive;
-uniform float emissivePower;
-uniform sampler2D emissiveMap;
-void ComputeLightDir(in vec3 worldPos, in float lightType, in vec4 position, out vec4 lightDir, out vec3 lightVec){
-float posLight = step(0.5f, lightType);
-
-lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);
-float dist = length(lightVec);
-
-#ifdef _C_SRGB
-lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
-lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
+uniform bool backfaceShadows;
+uniform float shadowIntensity;
+float shadowBorderScale = 1.0f;
+#ifdef HARDWARE_SHADOWS
+#define SHADOWMAP sampler2DShadow
+#define SHADOWCOMPAREOFFSET(tex,coord,offset) textureProjOffset(tex, coord, offset)
+#define SHADOWCOMPARE(tex,coord) textureProj(tex, coord)
+#define SHADOWGATHER(tex,coord) textureGather(tex, coord.xy, coord.z)
 #else
-lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
+#define SHADOWMAP sampler2D
+#define SHADOWCOMPAREOFFSET(tex,coord,offset) step(coord.z, textureProjOffset(tex, coord, offset).r)
+#define SHADOWCOMPARE(tex,coord) step(coord.z, textureProj(tex, coord).r)
+#define SHADOWGATHER(tex,coord) step(coord.z, textureGather(tex, coord.xy))
 #endif
 
-lightDir.xyz = lightVec / vec3(dist);
+float Shadow_DoShadowCompare(in SHADOWMAP tex,in vec4 projCoord){
+return SHADOWCOMPARE(tex, projCoord);
 }
-#define PI 3.14159265358979323846264
-vec3 F_Shlick(float vh,	vec3 F0){
-float fresnelFact = pow(2.0f, (-5.55473f * vh - 6.98316f) * vh);
-return mix(F0, vec3(1.0f, 1.0f, 1.0f), fresnelFact);
+
+float Shadow_BorderCheck(in vec2 coord){
+vec4 t = vec4(coord.xy, 0.0f, 1.0f);
+t = step(t.wwxy, t.xyzz);
+return dot(t,t);
 }
-vec3 F_Schlick2(float cosTheta, vec3 F0)
-{
-return F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
+
+float Shadow_Nearest(in SHADOWMAP tex,in vec4 projCoord){
+float border = Shadow_BorderCheck(projCoord.xy);
+if (border > 0.0f){
+return 1.0f;
 }
-void ComputeDirectLighting(in vec3 normal, in vec3 viewDir, in vec3 lightDir, in vec3 lightColor, in vec3 diffuseColor, in vec3 fZero, in float roughness, in float ndotv, out vec3 directLighting){
-vec3 h = normalize(lightDir + viewDir);
-float ndotl = max( dot( normal, lightDir ), 0.0f );
-float ndoth = max( dot( normal, h), 0.0f );
-float hdotv = max( dot( h, viewDir ), 0.0f );
-
-vec3 diffuse = vec3( ndotl ) * lightColor * diffuseColor;
-
-float alpha = roughness * roughness;
-
-float alpha2 = alpha * alpha;
-float sum = (( ndoth * ndoth ) * ( alpha2 - 1.0f ) + 1.0f);
-float denom = PI * sum * sum;
-float D = alpha2 / denom;
-
-vec3 F = F_Shlick( hdotv, fZero );
-
-float k = alpha * 0.5f;
-float G_V = ndotv + sqrt( ( ndotv - ndotv * k ) * ndotv + k );
-float G_L = ndotl + sqrt( ( ndotl - ndotl * k ) * ndotl + k );
-float G = 1.0f / max( G_V * G_L ,0.01f );
-
-float t = D * G * ndotl;
-vec3 specular =  vec3( t ) * F * lightColor;
-
-directLighting = diffuse + specular;
+return SHADOWCOMPARE(tex, projCoord);
 }
-float ComputeSpotFalloff(in vec4 spotDirection, in vec3 lightDir){
-float curAngleCos = dot(lightDir, -spotDirection.xyz);
-float innerAngleCos = floor(spotDirection.w) * 0.001f;
-float outerAngleCos = fract(spotDirection.w);
-float innerMinusOuter = innerAngleCos - outerAngleCos;
-float falloff = clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f);
+vec3 getPosition(in float depth, in vec2 newTexCoord){
 
-#ifdef _C_SRGB
-return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f), 4.0f);
-#else
-return falloff;
-#endif
+vec4 pos;
+pos.xy = (newTexCoord * vec2(2.0f)) - vec2(1.0f);
+pos.z  = depth * 2.0f - 1.0f;
+pos.w  = 1.0f;
+pos    = pvInverse * pos;
+pos.xyz /= pos.w;
+return pos.xyz;
 }
-vec3 sphericalHarmonics( const in vec3 normal, const vec3 sph[9] ){
-float x = normal.x;
-float y = normal.y;
-float z = normal.z;
-
-vec3 result = (
-sph[0] +
-
-sph[1] * y +
-sph[2] * z +
-sph[3] * x +
-
-sph[4] * y * x +
-sph[5] * y * z +
-sph[6] * (3.0f * z * z - 1.0f) +
-sph[7] * (z * x) +
-sph[8] * (x*x - y*y)
-);
-
-return max(result, vec3(0.0f));
+#define GETSHADOW Shadow_Nearest
+float getDirectionalLightShadows(in vec4 splits,in float shadowPosition, in SHADOWMAP shadowMap0, in SHADOWMAP shadowMap1, in SHADOWMAP shadowMap2,in SHADOWMAP shadowMap3, in vec4 projCoord0,in vec4 projCoord1,in vec4 projCoord2,in vec4 projCoord3){
+float shadow = 1.0f;
+if(shadowPosition < splits.x){
+shadow = GETSHADOW(shadowMap0, projCoord0 );
 }
-vec3 getSpecularDominantDir(const in vec3 N, const in vec3 R, const in float realRoughness){
+else if( shadowPosition <  splits.y){
+shadowBorderScale = 0.5f;
+shadow = GETSHADOW(shadowMap1, projCoord1);
+}
+else if( shadowPosition <  splits.z){
+shadowBorderScale = 0.25f;
+shadow = GETSHADOW(shadowMap2, projCoord2);
+}
+else if( shadowPosition <  splits.w){
+shadowBorderScale = 0.125f;
+shadow = GETSHADOW(shadowMap3, projCoord3);
+}
+return shadow;
+}
+vec3 approximateNormal(in vec4 worldPos,in vec2 texCoord){
+float step = _ResolutionInverse.x;
+float stepy = _ResolutionInverse.y;
+float depth2 = texture(_gDepth, texCoord + vec2(step, -stepy)).r;
+float depth3 = texture(_gDepth, texCoord + vec2(-step, -stepy)).r;
+vec4 worldPos2 = vec4(getPosition(depth2, texCoord + vec2(step, -stepy)),1.0f);
+vec4 worldPos3 = vec4(getPosition(depth3, texCoord + vec2(-step, -stepy)),1.0f);
 
-float smoothness = 1.0f - realRoughness;
-float lerpFactor = smoothness * (sqrt(smoothness) + realRoughness);
-vec3 dominant = mix(N, R, lerpFactor);
-
-return dominant;
+vec3 v1 = (worldPos - worldPos2).xyz;
+vec3 v2 = (worldPos3 - worldPos2).xyz;
+return normalize(cross(v1, v2));
 }
-vec3 integrateBRDFApprox( const in vec3 specular, in float roughness, in float NoV ){
-const vec4 c0 = vec4( -1.0f, -0.0275f, -0.572f, 0.022f );
-const vec4 c1 = vec4( 1.0f, 0.0425f, 1.04f, -0.04f );
-vec4 r = roughness * c0 + c1;
-float a004 = min( r.x * r.x, exp2( -9.28f * NoV ) ) * r.x + r.y;
-vec2 ab = vec2( -1.04f, 1.04f ) * a004 + r.zw;
-return specular * ab.x + ab.y;
-}
-vec3 approximateSpecularIBLPolynomial(in samplerCube envMap, in vec3 specularColor , in float roughness, in float ndotv, in vec3 refVec, in float mipMaps){
-float lod = sqrt( roughness ) * (mipMaps - 1.0f);
-vec3 prefilteredColor = textureLod(envMap, refVec.xyz, lod).rgb;
-return prefilteredColor * integrateBRDFApprox(specularColor, roughness, ndotv);
-}
-#define GAMMA 2.2f
-#define GAMMA_T 1.0f / GAMMA
+const mat4 biasMat = mat4(0.5f, 0.0f, 0.0f, 0.0f,
+0.0f, 0.5f, 0.0f, 0.0f,
+0.0f, 0.0f, 0.5f, 0.0f,
+0.5f, 0.5f, 0.5f, 1.0f);
 void main(){
-vec4 lightColor;
-vec4 lightData1;
-vec4 lightDir = vec4(0.0f);
-vec3 lightVec = vec3(0.0f);
-vec3 directLighting = vec3(0.0f);
-vec3 viewDir = normalize(_cameraPosition.xyz - wPosition.xyz);
+float depth = texture(_inDepthMap, wUv0).r;
+_outColor = texture(_inScreenMap, wUv0);
 
-#ifdef baseColor
-#ifdef baseColorMap
-vec4 albedo = texture(baseColorMap, wUv0) * baseColor * vec4(_ambientLightColor, 1.0);
+if(depth >= 1.0f){
+return;
+}
+
+vec4 wPosition = vec4(getPosition(depth, wUv0), 1.0f);
+
+vec3 lightDir;
+#ifdef PSSM
+lightDir = _lightDir;
 #else
-vec4 albedo = baseColor * vec4(_ambientLightColor, 1.0);
-#endif
-#else
-#ifdef baseColorMap
-vec4 albedo = texture(baseColorMap, wUv0) * vec4(_ambientLightColor, 1.0);
-#else
-vec4 albedo = vec4(1.0f) * vec4(_ambientLightColor, 1.0);
-#endif
+lightDir = wPosition.xyz - _lightPos;
 #endif
 
-#ifdef alphaDiscard
-if(albedo.a < alphaDiscard){
-discard;
+#ifndef backfaceShadows
+if(backfaceShadows){
+vec3 normal = approximateNormal(wPosition, wUv0);
+float ndotl = dot(normal, lightDir);
+if(ndotl > -0.0f){
+return;
+}
 }
 #endif
 
-vec3 normal = wNormal;
-#ifdef normalMap
-vec3 normalHeight = texture(normalMap, wUv0).xyz;
-vec3 tangent = normalize(wTangent.xyz);
-mat3 tbnMat = mat3(tangent, wTangent.w * cross(normal, tangent), normal);
-normal = normalize(tbnMat * ( normalHeight * 2.0f - 1.0f ));
-#endif
-
-#ifdef metallicRoughnessMap
-vec2 rm = texture(metallicRoughnessMap, wUv0).gb;
-#ifdef roughness
-float _roughness = rm.x * max(roughness, 1e-4);
-#else
-float _roughness = rm.x;
-#endif
-#ifdef metallic
-float _metallic = rm.y * max(metallic, 0.0f);
-#else
-float _metallic = rm.y;
-#endif
-#else
-#ifdef roughnessMap
-#ifdef roughness
-float _roughness = texture(roughnessMap, wUv0).r * max(roughness, 1e-4);
-#else
-float _roughness = texture(roughnessMap, wUv0).r;
-#endif
-#else
-#ifdef roughness
-float _roughness = max(roughness, 1e-4);
-#else
-float _roughness = 1.0f;
-#endif
-#endif
-#ifdef metallicMap
-#ifdef metallic
-float _metallic = texture(metallicMap, wUv0).r * max(metallic, 0.0f);
-#else
-float _metallic = texture(metallicMap, wUv0).r;
-#endif
-#else
-#ifdef metallic
-float _metallic = max(metallic, 0.0f);
-#else
-float _metallic = 1.0f;
-#endif
-#endif
-#endif
-
-#ifdef useSpecGloss
-#ifdef specularGlossinessMap
-vec4 _specularColor = texture(specularGlossinessMap, wUv0);
-#ifdef glossiness
-float _glossiness = _specularColor.a * glossiness;
-#else
-float _glossiness = _specularColor.a;
-#endif
-#ifdef specular
-_specularColor *= specular;
-#endif
-#else
-#ifdef specularMap
-vec4 _specularColor = texture(specularMap, wUv0);
-#else
-vec4 _specularColor = vec4(1.0f);
-#endif
-#ifdef specular
-_specularColor *= specular;
-#endif
-#ifdef glossinessMap
-#ifdef glossiness
-float _glossiness = texture(glossinessMap, wUv0).r * glossiness;
-#else
-float _glossiness = texture(glossinessMap, wUv0).r;
-#endif
-#else
-#ifdef glossiness
-float _glossiness = glossiness;
-#else
-float _glossiness = 1.0f;
-#endif
-#endif
-#endif
-vec4 _diffuseColor = albedo;
-_roughness = 1.0f - _glossiness;
-vec3 fZero = _specularColor.rgb;
-#else
-float nonMetalSpec = 0.04f;
-vec4 _specularColor = (nonMetalSpec - nonMetalSpec * _metallic) + albedo * _metallic;
-vec4 _diffuseColor = albedo - albedo * _metallic;
-vec3 fZero = vec3( 0.5f );
-#endif
-
-#ifdef lightMap
-vec3 _lightMapColor;
-#ifdef lightMapTexCoord
-_lightMapColor = texture(lightMap, wUv1).rgb;
-#else
-_lightMapColor = texture(lightMap, wUv0).rgb;
-#endif
-#ifdef aoMap
-_lightMapColor.gb = _lightMapColor.rr;
-vec3 ao = _lightMapColor;
-#else
-_specularColor.rgb *= _lightMapColor;
-_diffuseColor.rgb  *= _lightMapColor;
-vec3 ao = vec3(1.0f);
-#endif
-#else
-vec3 ao = vec3(1.0f);
-#endif
-
-float ndotv = max( dot( normal, viewDir ), 0.0f );
-for( int i = 0;i < _curLightCount;i+=3 ){
-lightColor = _wLightData[i];
-lightData1 = _wLightData[i + 1];
-ComputeLightDir(wPosition, lightColor.w, lightData1, lightDir, lightVec);
-
-float spotFallOff = 1.0 * lightDir.w;
-if( lightColor.w > 1.0f )
-{
-spotFallOff = ComputeSpotFalloff( _wLightData[i + 2], lightDir.xyz );
+#if (!defined(POINTLIGHT) && !defined(PSSM))
+if( dot(_lightDir, lightDir) < 0.0f){
+return;
 }
-
-ComputeDirectLighting(normal, viewDir, lightDir.xyz, lightColor.rgb, _diffuseColor.rgb, fZero, _roughness, ndotv, directLighting);
-_outColor.rgb += directLighting * spotFallOff;
-}
-
-if(_blend_gi_probes){
-#ifdef _C_GIPROBES
-
-vec3 _rv = reflect( -viewDir.xyz, normal.xyz );
-float _r = fract( _wGIProbe.w );
-float _mipMaps = _wGIProbe.w - _r;
-_rv = _r * ( wPosition.xyz - _wGIProbe.xyz ) + _rv;
-
-vec3 giLighting = sphericalHarmonics(normal.xyz, _ShCoeffs) * _diffuseColor.rgb;
-
-float horiz = dot(_rv, wNormal);
-float horizFadePower = 1.0f - _roughness;
-horiz = clamp( 1.0f + horizFadePower * horiz, 0.0f, 1.0f );
-horiz *= horiz;
-
-vec3 _dominantR = getSpecularDominantDir( normal, _rv.xyz, _roughness * _roughness );
-giLighting += approximateSpecularIBLPolynomial(_prefEnvMap, _specularColor.rgb, _roughness, ndotv, _dominantR, _mipMaps) * vec3( horiz );
-giLighting *= ao;
-
-_outColor.rgb += giLighting * step( 0.0f, _wGIProbe.w );
 #endif
-}
 
-#ifdef emissive
-float _emissivePower = 3.0f;
-#ifdef emissivePower
-_emissivePower = emissivePower;
+vec4 projCoord0 = biasMat * _lightViewProjectMatrix0 * wPosition;
+vec4 projCoord1 = biasMat * _lightViewProjectMatrix1 * wPosition;
+vec4 projCoord2 = biasMat * _lightViewProjectMatrix2 * wPosition;
+vec4 projCoord3 = biasMat * _lightViewProjectMatrix3 * wPosition;
+#ifdef POINTLIGHT
+vec4 projCoord4 = biasMat * _lightViewProjectMatrix4 * wPosition;
+vec4 projCoord5 = biasMat * _lightViewProjectMatrix5 * wPosition;
 #endif
-float _emisiveIntensity = 2.0f;
-#ifdef Params.emisiveIntensity
-_emisiveIntensity = Params.emisiveIntensity;
-#endif
-#ifdef emissiveMap
-vec4 eMap = texture(emissiveMap, wUv0);
-_outColor.rgb += emissive.rgb * eMap.rgb * pow(emissive.a * eMap.a, _emissivePower) * _emisiveIntensity;
+
+float shadow = 1.0f;
+
+#if defined(_C_PSSM)
+float shadowPosition = pvRow2.x * worldPos.x +  pvRow2.y * worldPos.y +  pvRow2.z * worldPos.z +  pvRow2.w;
 #else
-_outColor.rgb += emissive.rgb * pow(emissive.a, _emissivePower) * _emisiveIntensity;
+#if defined(_C_FADE)
+float shadowPosition = pvRow2.x * worldPos.x +  pvRow2.y * worldPos.y +  pvRow2.z * worldPos.z +  pvRow2.w;
 #endif
+#endif
+
+#ifdef _C_POINTLIGHT_SHADOWS
 #else
-#ifdef emissiveMap
-float _emissivePower = 3.0f;
-#ifdef emissivePower
-_emissivePower = emissivePower;
-#endif
-float _emisiveIntensity = 2.0f;
-#ifdef Params.emisiveIntensity
-_emisiveIntensity = Params.emisiveIntensity;
-#endif
-vec4 eMap = texture(emissiveMap, wUv0);
-_outColor.rgb += eMap.rgb * pow(eMap.a, _emissivePower) * _emisiveIntensity;
+#ifdef _C_PSSM
+shadow = getDirectionalLightShadows(_splits, shadowPosition, _shadowMap0, _shadowMap1, _shadowMap2, _shadowMap3, projCoord0, projCoord1, projCoord2, projCoord3);
+#else
 #endif
 #endif
 
-_outColor.a = albedo.a;
-_outColor.rgb = pow(_outColor.rgb, vec3(GAMMA_T));
-
+#ifdef _C_FADE
+shadow = clamp(max(0.0f, mix(shadow, 1.0f,(shadowPosition - _C_FADEInfo.x) * _C_FADEInfo.y)), 0.0f, 1.0f);
+#endif
+#ifdef shadowIntensity
+shadow = shadow * shadowIntensity + (1.0f - shadowIntensity);
+#else
+shadow = shadow * 0.5f + 0.5f;
+#endif
+_outColor = _outColor * vec4(shadow, shadow, shadow, 1.0f);
 }

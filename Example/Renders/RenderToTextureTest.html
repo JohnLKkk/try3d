@@ -12,32 +12,17 @@
     import Scene from "../../src/Core/Scene/Scene.js";
     import RenderEngine from "../../src/Core/RenderEngine.js";
     import Render from "../../src/Core/Render/Render.js";
-    import ShaderSource from "../../src/Core/WebGL/ShaderSource.js";
     import Node from "../../src/Core/Node/Node.js";
     import Vector3 from "../../src/Core/Math3d/Vector3.js";
-    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
     import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
     import OBJLoader from "../../src/Supp/OBJLoader.js";
-    import MoreMath from "../../src/Core/Math3d/MoreMath.js";
     import Stats from "../stats.min.js";
-    import OctCullingControl from "../../src/Core/Optimization/OctCullingControl.js";
-    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
-    import Material from "../../src/Core/Material/Material.js";
-    import Camera from "../../src/Core/Scene/Camera.js";
-    import MeshFactor from "../../src/Core/Util/MeshFactor.js";
-    import Geometry from "../../src/Core/Node/Geometry.js";
-    import Vec4Vars from "../../src/Core/WebGL/Vars/Vec4Vars.js";
     import SceneBrowsingController from "../../src/Core/InputControl/SceneBrowsingController.js";
     import Picture from "../../src/Core/Node/Picture.js";
     import Texture2DTargetVars from "../../src/Core/WebGL/Vars/Texture2DTargetVars.js";
-    import Texture2DVars from "../../src/Core/WebGL/Vars/Texture2DVars.js";
-    import Vector4 from "../../src/Core/Math3d/Vector4.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(25, 25, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
-
-    let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
 
     let rootNode = new Node(scene, {id:'rootNode'});
     let objLoader = new OBJLoader();
@@ -47,20 +32,15 @@
         let sc = new SceneBrowsingController(scene, {id:'control'});
         sc.lookScene(rootNode);
 
-        // 添加一个Picture,用于展示渲染到纹理的效果
+        // 添加一个Picture,用于展示渲染到纹理的效果(Picture是GUI层，所以会在最后进行绘制，以确保获取场景帧渲染结果)
+        // 将默认帧缓存数据渲染到Picture上
         let picture = new Picture(scene, {id:'target'});
-        picture.setMaterial(new Material(scene, {id:'out', materialDef:MaterialDef.load("../../src/Core/Assets/MaterialDef/PictureDef")}));
+        picture.useDefaultMat();
         let texture = new Texture2DTargetVars(scene);
-        // texture.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
         texture.target(scene.getRender().getFrameContext().getFrameBuffer(Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER));
-        // picture.getMaterial().setParam('colorMap', texture);
-
-
-        let diffuseMap = new Texture2DVars(scene);
-        diffuseMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
-        diffuseMap.setImageSrc(scene, './../Assets/Textures/brickwall.jpg');
         picture.getMaterial().setParam('colorMap', texture);
         picture.setSize(0.3, 0.3);
+        picture.setLeftTop(0.7, -0.7);
         picture.setZIndex(0);
         rootNode.addChildren(picture);
     });
