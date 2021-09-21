@@ -68,9 +68,9 @@ export default class Camera extends Component{
 
         // Frustum6截面距离
         // 相机到Near截面的距离
-        this._m_FrustumNear = 0;
+        this._m_FrustumNear = 0.1;
         // 相机到Far截面的距离
-        this._m_FrustumFar = 0;
+        this._m_FrustumFar = 1000;
         // 相机到Left截面的距离
         this._m_FrustumLeft = 0;
         // 相机到Right截面的距离
@@ -116,7 +116,7 @@ export default class Camera extends Component{
                     this._m_ProjectMatrix.parallelM(this._m_FrustumLeft, this._m_FrustumRight, this._m_FrustumTop, this._m_FrustumBottom, this._m_FrustumNear, this._m_FrustumFar);
                 }
                 else{
-                    this._m_ProjectMatrix.perspectiveM(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (this._m_Width * 1.0 / this._m_Height), 0.1, 1000);
+                    this._m_ProjectMatrix.perspectiveM(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (this._m_Width * 1.0 / this._m_Height), this._m_FrustumNear, this._m_FrustumFar);
                 }
                 this._m_ProjectMatrixUpdate = true;
             }
@@ -255,6 +255,25 @@ export default class Camera extends Component{
         let newFilter = Filter.newFilterFromMaterial(this, material);
         this._m_Filters.push(newFilter);
         return newFilter;
+    }
+
+    /**
+     * 添加一个场景处理器。<br/>
+     * @param {Object}[filter]
+     * @param {Number}[priority 优先级]
+     */
+    addFilter(filter, priority){
+        let cur = [];
+        let i = 0;
+        for(let len = Math.min(priority, this._m_Filters.length);i < len;i++){
+            cur.push(this._m_Filters[i]);
+        }
+        cur.push(filter);
+        i++;
+        for(let len = this._m_Filters.length;i < len;i++){
+            cur.push(this._m_Filters[i]);
+        }
+        this._m_Filters = cur;
     }
 
     /**

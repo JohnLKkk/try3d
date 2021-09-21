@@ -227,6 +227,8 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
             if(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
                 gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, enableGI);
             }
+            if(conVars[SinglePassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT] != null)
+                gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, 0);
             if(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
                 let ambientLightColor = scene.AmbientLightColor;
                 gl.uniform3f(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
@@ -261,6 +263,8 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
             if(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES] != undefined){
                 gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_BLEND_GI_PROBES].loc, enableGI);
             }
+            if(conVars[SinglePassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT] != null)
+                gl.uniform1i(conVars[SinglePassIBLLightingRenderProgram.S_CUR_LIGHT_COUNT].loc, 0);
             if(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR] != null){
                 let ambientLightColor = scene.AmbientLightColor;
                 gl.uniform3f(conVars[SinglePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);

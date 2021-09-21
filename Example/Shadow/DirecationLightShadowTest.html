@@ -8,6 +8,7 @@
 <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
     <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
 </div>
+<script src="./../dat.gui.min.js"></script>
 <script type="module">
     import Scene from "../../src/Core/Scene/Scene.js";
     import RenderEngine from "../../src/Core/RenderEngine.js";
@@ -28,6 +29,7 @@
     import Material from "../../src/Core/Material/Material.js";
     import MaterialDef from "../../src/Core/Material/MaterialDef.js";
     import DirectionalLightShadowProcess from "../../src/Core/Shadow/DirectionalLightShadowProcess.js";
+    import Vec4Vars from "../../src/Core/WebGL/Vars/Vec4Vars.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(25, 25, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -63,6 +65,7 @@
             diffuseMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
             diffuseMap.setImageSrc(scene, './../Assets/Textures/ground 3.png');
             floorMat.setParam('diffuseMap', diffuseMap);
+            floorMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
             floor.setMaterial(floorMat);
             floor.setLocalScaleXYZ(50, 1, 50);
             floor.setLocalTranslationXYZ(0, 0, 0);
@@ -74,25 +77,59 @@
             sceneControl.lookScene(rootNode);
             sceneControl.setTargetDistance(10);
         }, {batch:false});
-
-        // let dirLight = new DirectionalLight(scene, {id:'dirLight'});
-        // dirLight.setDirectionXYZ(-1, -1, 1);
-        // dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
-        // rootNode.addChildren(dirLight);
-
-        let giProbe = new GIProbe(scene, {id:'giProbe'});
-        giProbe.setRadius(20);
-        giProbe.setPositionFromXYZ(0, 5, 0);
-        let envCapture = ProbeTools.bakeGIProbe(scene, giProbe, {resolute:128});
+        window.giProbe = new GIProbe(scene, {id:'giProbe'});
+        window.giProbe.setRadius(20);
+        window.giProbe.setPositionFromXYZ(0, 5, 0);
+        let envCapture = ProbeTools.bakeGIProbe(scene, window.giProbe, {resolute:128});
     });
 
     let dirLight = new DirectionalLight(scene, {id:'dirLight'});
     dirLight.setDirectionXYZ(-1, -1, 1);
     dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    dirLight.setShadowMapSize(1024);
+    dirLight.proShadow(true);
+    dirLight.getShadow().setShadowIntensity(0.8);
     rootNode.addChildren(dirLight);
 
-    let dlsp = new DirectionalLightShadowProcess(scene, {id:'dlsp', nbSplits:1, shadowMapSize:512});
-    dlsp.setLight(dirLight);
+
+    // 使用dat gui
+    let gui = new dat.GUI();
+    var settings = {
+        directionalLight: true,
+        gi:true,
+        shadow: true,
+        biasFactor:1.0,
+        biasUnits:1.0,
+        shadowIntensity: 0.8
+    };
+    gui.add(settings, 'directionalLight').onChange(function(value) {
+        if(value){
+            dirLight.enable();
+        }
+        else{
+            dirLight.disable();
+        }
+    });
+    gui.add(settings, 'gi').onChange(function(value) {
+        if(value){
+            window.giProbe.enable();
+        }
+        else{
+            window.giProbe.disable();
+        }
+    });
+    gui.add(settings, 'shadow').onChange(function(value) {
+        dirLight.proShadow(value);
+    });
+    gui.add(settings, 'biasFactor').onChange(function(value) {
+        dirLight.getShadow().setBias(value, settings.biasUnits);
+    });
+    gui.add(settings, 'biasUnits').onChange(function(value) {
+        dirLight.getShadow().setBias(settings.biasFactor, value);
+    });
+    gui.add(settings, 'shadowIntensity').onChange(function(value) {
+        dirLight.getShadow().setShadowIntensity(value);
+    });
 
     let renderEngine = new RenderEngine();
     scene.addSceneNode(rootNode);

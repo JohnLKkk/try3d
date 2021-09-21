@@ -26,7 +26,7 @@ export default class DirectionalLightShadowProcess extends BasicShadowProcess{
     // 临时变量
     _m_TempVec3 = new Vector3();
     _m_Lambda = 0.65;
-    // 渐变阴影
+    // 防止突然消失的阴影
     _m_Stabilize = true;
 
     /**
@@ -35,9 +35,12 @@ export default class DirectionalLightShadowProcess extends BasicShadowProcess{
      * @param {Number}[cfg.id]
      * @param {Number}[cfg.nbSplits]
      * @param {Number}[cfg.shadowMapSize]
+     * @param {Boolean}[cfg.debug]
+     * @param {Boolean}[cfg.backfaceShadows]
      */
     constructor(owner, cfg) {
-        super(owner, {id:cfg.id, nbShadowMaps:cfg.nbSplits, shadowMapSize:cfg.shadowMapSize, debug:cfg.debug});
+        cfg.nbShadowMaps = cfg.nbSplits;
+        super(owner, cfg);
         this.init(cfg.nbSplits, cfg.shadowMapSize);
     }
     init(nbSplits, shadowMapSize){

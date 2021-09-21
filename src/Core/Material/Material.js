@@ -356,6 +356,14 @@ export default class Material extends Component{
     }
 
     /**
+     * 清楚一个参数。<br/>
+     * @param {String}[paramName]
+     */
+    clearParams(paramName){
+        // 待实现
+    }
+
+    /**
      * 添加一个定义。<br/>
      * @param {String}[name]
      * @param {Boolean}[globalRefresh]
@@ -379,6 +387,15 @@ export default class Material extends Component{
                 }
             }
         }
+    }
+
+    /**
+     * 清除一个定义。<br/>
+     * @param {String}[name]
+     * @param {Boolean}[globalRefresh]
+     */
+    clearDefine(name, globalRefresh){
+        // 待实现
     }
 
 }

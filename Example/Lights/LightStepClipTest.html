@@ -27,6 +27,7 @@
     import Mesh from "../../src/Core/WebGL/Mesh.js";
     import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
+    scene.setAmbientLightColor(0.1, 0.1, 0.1);
     // 启用MultiPass
     scene.getRender().setPriorityTechnology('MultiPass');
     let mainCamera = scene.getComponent('mainCamera');

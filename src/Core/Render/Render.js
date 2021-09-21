@@ -464,6 +464,17 @@ export default class Render extends Component{
                             gl.disable(gl.SCISSOR_TEST);
                         }
                         break;
+                    case RenderState.S_STATES[7]:
+                        if(state[k] == 'On'){
+                            gl.enable(gl.POLYGON_OFFSET_FILL);
+                        }
+                        else if(state[k] == 'Off'){
+                            gl.disable(gl.POLYGON_OFFSET_FILL);
+                        }
+                        break;
+                    case RenderState.S_STATES[8]:
+                        gl.polygonOffset(state[k][0], state[k][1]);
+                        break;
                 }
             }
         }

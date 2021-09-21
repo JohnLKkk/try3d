@@ -92,10 +92,12 @@
     let dirLight = new DirectionalLight(scene, {id:'dirLight'});
     dirLight.setDirectionXYZ(-0.5, -0.5, -0.5);
     dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    dirLight.setShadowMapSize(512);
+    dirLight.proShadow(true);
     rootNode.addChildren(dirLight);
 
-    let dlsp = new DirectionalLightShadowProcess(scene, {id:'dlsp', nbSplits:1, shadowMapSize:512, debug:true});
-    dlsp.setLight(dirLight);
+    // let dlsp = new DirectionalLightShadowProcess(scene, {id:'dlsp', nbSplits:1, shadowMapSize:512, debug:true});
+    // dlsp.setLight(dirLight);
 
     let renderEngine = new RenderEngine();
     scene.addSceneNode(rootNode);

@@ -7,6 +7,8 @@ export default class Internal {
         "        int filterMode;\n" +
         "        bool hardwareShadow;\n" +
         "        bool backfaceShadows;\n" +
+        "        float pcfEdge;\n" +
+        "        vec2 fadeInfo;\n" +
         "    }\n" +
         "    SubTechnology PostShadowPass{\n" +
         "        Vars{\n" +
@@ -37,6 +39,34 @@ export default class Internal {
         "                #define SHADOWGATHER(tex,coord) step(coord.z, textureGather(tex, coord.xy))\n" +
         "            #endif\n" +
         "\n" +
+        "            #define FILTER_MODE 1\n" +
+        "\n" +
+        "            #if FILTER_MODE == 10\n" +
+        "                #define GETSHADOW Shadow_Nearest\n" +
+        "                #define KERNEL 1.0\n" +
+        "            #elif FILTER_MODE == 1\n" +
+        "                #ifdef HARDWARE_SHADOWS\n" +
+        "                    #define GETSHADOW Shadow_Nearest\n" +
+        "                #else\n" +
+        "                    #define GETSHADOW Shadow_DoBilinear_2x2\n" +
+        "                #endif\n" +
+        "                #define KERNEL 1.0\n" +
+        "            #endif\n" +
+        "\n" +
+        "            #if (FILTER_MODE == 2)\n" +
+        "                #define GETSHADOW Shadow_DoDither_2x2\n" +
+        "                #define KERNEL 1.0\n" +
+        "            #elif FILTER_MODE == 3\n" +
+        "                #define GETSHADOW Shadow_DoPCF\n" +
+        "                #define KERNEL 4.0\n" +
+        "            #elif FILTER_MODE == 4\n" +
+        "                #define GETSHADOW Shadow_DoPCFPoisson\n" +
+        "                #define KERNEL 4.0\n" +
+        "            #elif FILTER_MODE == 5\n" +
+        "                #define GETSHADOW Shadow_DoPCF\n" +
+        "                #define KERNEL 8.0\n" +
+        "            #endif\n" +
+        "\n" +
         "            float Shadow_DoShadowCompare(in SHADOWMAP tex,in vec4 projCoord){\n" +
         "                return SHADOWCOMPARE(tex, projCoord);\n" +
         "            }\n" +
@@ -55,6 +85,113 @@ export default class Internal {
         "                }\n" +
         "                return SHADOWCOMPARE(tex, projCoord);\n" +
         "            }\n" +
+        "\n" +
+        "            //----------------------------------ShadowFilter--------------------------------------\n" +
+        "            float Shadow_DoShadowCompareOffset(in SHADOWMAP tex,in vec4 projCoord,in vec2 offset){\n" +
+        "                vec4 coord = vec4(projCoord.xy + offset.xy * Context.SMapSizeInverse * shadowBorderScale, projCoord.zw);\n" +
+        "                return SHADOWCOMPARE(tex, coord);\n" +
+        "            }\n" +
+        "\n" +
+        "\n" +
+        "            float Shadow_DoDither_2x2(in SHADOWMAP tex, in vec4 projCoord){\n" +
+        "                float border = Shadow_BorderCheck(projCoord.xy);\n" +
+        "                if (border > 0.0f)\n" +
+        "                    return 1.0f;\n" +
+        "\n" +
+        "                float shadow = 0.0f;\n" +
+        "                vec2 o = vec2(ivec2(mod(floor(gl_FragCoord.xy), 2.0f))); //Strict type checking in GLSL ES\n" +
+        "                shadow += Shadow_DoShadowCompareOffset(tex, projCoord, (vec2(-1.5f, 1.5f)+o));\n" +
+        "                shadow += Shadow_DoShadowCompareOffset(tex, projCoord, (vec2( 0.5f, 1.5f)+o));\n" +
+        "                shadow += Shadow_DoShadowCompareOffset(tex, projCoord, (vec2(-1.5f, -0.5f)+o));\n" +
+        "                shadow += Shadow_DoShadowCompareOffset(tex, projCoord, (vec2( 0.5f, -0.5f)+o));\n" +
+        "                shadow *= 0.25f;\n" +
+        "                return shadow;\n" +
+        "            }\n" +
+        "\n" +
+        "            float Shadow_DoBilinear_2x2(in SHADOWMAP tex, in vec4 projCoord){\n" +
+        "                float border = Shadow_BorderCheck(projCoord.xy);\n" +
+        "                if (border > 0.0f){\n" +
+        "                    return 1.0f;\n" +
+        "                }\n" +
+        "\n" +
+        "                vec4 gather = vec4(0.0f);\n" +
+        "                #if defined GL_ARB_gpu_shader5 || defined GL_OES_gpu_shader5\n" +
+        "                    vec4 coord = vec4(projCoord.xyz / projCoord.www, 0.0f);\n" +
+        "                    gather = SHADOWGATHER(tex, coord);\n" +
+        "                #else\n" +
+        "                    gather.x = SHADOWCOMPAREOFFSET(tex, projCoord, ivec2(0, 1));\n" +
+        "                    gather.y = SHADOWCOMPAREOFFSET(tex, projCoord, ivec2(1, 1));\n" +
+        "                    gather.z = SHADOWCOMPAREOFFSET(tex, projCoord, ivec2(1, 0));\n" +
+        "                    gather.w = SHADOWCOMPAREOFFSET(tex, projCoord, ivec2(0, 0));\n" +
+        "                #endif\n" +
+        "\n" +
+        "               vec2 f = fract( projCoord.xy * Context.ShadowMapSize );\n" +
+        "               vec2 mx = mix( gather.wx, gather.zy, f.x );\n" +
+        "               return mix( mx.x, mx.y, f.y );\n" +
+        "            }\n" +
+        "\n" +
+        "            float Shadow_DoPCF(in SHADOWMAP tex,in vec4 projCoord){\n" +
+        "\n" +
+        "                float shadow = 0.0f;\n" +
+        "                float border = Shadow_BorderCheck(projCoord.xy);\n" +
+        "                if (border > 0.0f)\n" +
+        "                    return 1.0f;\n" +
+        "\n" +
+        "                float bound = KERNEL * 0.5f - 0.5f;\n" +
+        "                bound *= Params.pcfEdge;\n" +
+        "                for (float y = -bound; y <= bound; y += Params.pcfEdge){\n" +
+        "                    for (float x = -bound; x <= bound; x += Params.pcfEdge){\n" +
+        "                        shadow += Shadow_DoShadowCompareOffset(tex, projCoord, vec2(x,y));\n" +
+        "                    }\n" +
+        "                }\n" +
+        "\n" +
+        "                shadow = shadow / (KERNEL * KERNEL);\n" +
+        "                return shadow;\n" +
+        "            }\n" +
+        "\n" +
+        "            //12 tap poisson disk\n" +
+        "            const vec2 poissonDisk0 =  vec2(-0.1711046f, -0.425016f);\n" +
+        "            const vec2 poissonDisk1 =  vec2(-0.7829809f, 0.2162201f);\n" +
+        "            const vec2 poissonDisk2 =  vec2(-0.2380269f, -0.8835521f);\n" +
+        "            const vec2 poissonDisk3 =  vec2(0.4198045f, 0.1687819f);\n" +
+        "            const vec2 poissonDisk4 =  vec2(-0.684418f, -0.3186957f);\n" +
+        "            const vec2 poissonDisk5 =  vec2(0.6026866f, -0.2587841f);\n" +
+        "            const vec2 poissonDisk6 =  vec2(-0.2412762f, 0.3913516f);\n" +
+        "            const vec2 poissonDisk7 =  vec2(0.4720655f, -0.7664126f);\n" +
+        "            const vec2 poissonDisk8 =  vec2(0.9571564f, 0.2680693f);\n" +
+        "            const vec2 poissonDisk9 =  vec2(-0.5238616f, 0.802707f);\n" +
+        "            const vec2 poissonDisk10 = vec2(0.5653144f, 0.60262f);\n" +
+        "            const vec2 poissonDisk11 = vec2(0.0123658f, 0.8627419f);\n" +
+        "\n" +
+        "\n" +
+        "            float Shadow_DoPCFPoisson(in SHADOWMAP tex, in vec4 projCoord){\n" +
+        "                float shadow = 0.0f;\n" +
+        "                float border = Shadow_BorderCheck(projCoord.xy);\n" +
+        "                if (border > 0.0f){\n" +
+        "                    return 1.0f;\n" +
+        "                }\n" +
+        "\n" +
+        "                vec2 texelSize = Context.SMapSizeInverse * 4.0f * Params.pcfEdge * shadowBorderScale;\n" +
+        "\n" +
+        "                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk0 * texelSize, projCoord.zw));\n" +
+        "                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk1 * texelSize, projCoord.zw));\n" +
+        "                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk2 * texelSize, projCoord.zw));\n" +
+        "                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk3 * texelSize, projCoord.zw));\n" +
+        "                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk4 * texelSize, projCoord.zw));\n" +
+        "                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk5 * texelSize, projCoord.zw));\n" +
+        "                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk6 * texelSize, projCoord.zw));\n" +
+        "                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk7 * texelSize, projCoord.zw));\n" +
+        "                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk8 * texelSize, projCoord.zw));\n" +
+        "                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk9 * texelSize, projCoord.zw));\n" +
+        "                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk10 * texelSize, projCoord.zw));\n" +
+        "                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk11 * texelSize, projCoord.zw));\n" +
+        "\n" +
+        "                // 除以 12\n" +
+        "                return shadow * 0.08333333333f;\n" +
+        "            }\n" +
+        "            //----------------------------------ShadowFilter--------------------------------------\n" +
+        "\n" +
+        "\n" +
         "            vec3 getPosition(in float depth, in vec2 newTexCoord){\n" +
         "\n" +
         "                vec4 pos;\n" +
@@ -65,7 +202,7 @@ export default class Internal {
         "                pos.xyz /= pos.w;\n" +
         "                return pos.xyz;\n" +
         "            }\n" +
-        "            #define GETSHADOW Shadow_Nearest\n" +
+        "            //#define GETSHADOW Shadow_Nearest\n" +
         "            // 基于PSSM实现的CSM\n" +
         "            float getDirectionalLightShadows(in vec4 splits,in float shadowPosition, in SHADOWMAP shadowMap0, in SHADOWMAP shadowMap1, in SHADOWMAP shadowMap2,in SHADOWMAP shadowMap3, in vec4 projCoord0,in vec4 projCoord1,in vec4 projCoord2,in vec4 projCoord3){\n" +
         "                float shadow = 1.0f;\n" +
@@ -122,10 +259,12 @@ export default class Internal {
         "                #endif\n" +
         "\n" +
         "                #ifndef Params.backfaceShadows\n" +
-        "                    if(Params.backfaceShadows){\n" +
+        "                    // 丢弃背面时,由于在forward pipeline下无法获取该点法线,所以只能通过近似算法获取法线\n" +
+        "                    // 该近似算法依赖于深度信息,所以很容易造成Shadow Acne\n" +
+        "                    if(!Params.backfaceShadows){\n" +
         "                        vec3 normal = approximateNormal(wPosition, wUv0);\n" +
         "                        float ndotl = dot(normal, lightDir);\n" +
-        "                        if(ndotl > -0.0f){\n" +
+        "                        if(ndotl > 0.0f){\n" +
         "                            return;\n" +
         "                        }\n" +
         "                    }\n" +
@@ -170,13 +309,13 @@ export default class Internal {
         "                    #endif\n" +
         "                #endif\n" +
         "\n" +
-        "                #ifdef Context.Fade\n" +
-        "                    shadow = clamp(max(0.0f, mix(shadow, 1.0f,(shadowPosition - Context.FadeInfo.x) * Context.FadeInfo.y)), 0.0f, 1.0f);\n" +
+        "                #ifdef Params.fadeInfo\n" +
+        "                    shadow = clamp(max(0.0f, mix(shadow, 1.0f,(shadowPosition - Params.fadeInfo.x) * Params.fadeInfo.y)), 0.0f, 1.0f);\n" +
         "                #endif\n" +
         "                #ifdef Params.shadowIntensity\n" +
         "                    shadow = shadow * Params.shadowIntensity + (1.0f - Params.shadowIntensity);\n" +
         "                #else\n" +
-        "                    shadow = shadow * 0.5f + 0.5f;\n" +
+        "                    shadow = shadow * 0.7f + 0.3f;\n" +
         "                #endif\n" +
         "                Context.OutColor = Context.OutColor * vec4(shadow, shadow, shadow, 1.0f);\n" +
         "            }\n" +

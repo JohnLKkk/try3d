@@ -155,6 +155,8 @@ export default class ShaderSource {
     static S_LIGHT_POS = "_lightPos";
     static S_SPLITS = "_splits";
     static S_FADEINFO = "_fadeInfo";
+    static S_SHADOW_MAP_SIZE = "_shadowMapSize";
+    static S_SHADOW_MAP_SIZE_INVERSE = "_sMapSizeInverse";
 
     // 上下文块
     static ContextBlocks = {
@@ -256,6 +258,8 @@ export default class ShaderSource {
         "Context.Splits":{src:ShaderSource.S_SPLITS, pattern:/Context.Splits/, pattern2:/Context.Splits[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Splits/g, tag:ShaderSource.S_SPLITS, type:"vec4", utype:"uniform vec4"},
         "Context.Fadeinfo":{src:ShaderSource.S_FADEINFO, pattern:/Context.Fadeinfo/, pattern2:/Context.Fadeinfo[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Fadeinfo/g, tag:ShaderSource.S_FADEINFO, type:"vec2", utype:"uniform vec2"},
         "Context.ResolutionInverse":{src:ShaderSource.S_RESOLUTION_INVERSE, pattern:/Context.ResolutionInverse/, pattern2:/Context.ResolutionInverse[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ResolutionInverse/g, tag:ShaderSource.S_RESOLUTION_INVERSE, type:"vec2", utype:"uniform vec2"},
+        "Context.ShadowMapSize":{src:ShaderSource.S_SHADOW_MAP_SIZE, pattern:/Context.ShadowMapSize/, pattern2:/Context.ShadowMapSize[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ShadowMapSize/g, tag:ShaderSource.S_SHADOW_MAP_SIZE, type:"float", utype:"uniform float"},
+        "Context.SMapSizeInverse":{src:ShaderSource.S_SHADOW_MAP_SIZE_INVERSE, pattern:/Context.SMapSizeInverse/, pattern2:/Context.SMapSizeInverse[\s+-;.,\*\\]{1,}/, tagPattern:/Context.SMapSizeInverse/g, tag:ShaderSource.S_SHADOW_MAP_SIZE_INVERSE, type:"vec2", utype:"uniform vec2"},
         // 输出类型缓存
         "Context.OutGBuffer0":{src:ShaderSource.S_G_BUFFER0_SRC, loc:ShaderSource.S_G_BUFFER0, pattern:/Context.OutGBuffer0/, pattern2:/Context.OutGBuffer0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutGBuffer0/g, tag:ShaderSource.S_G_BUFFER0_SRC, type:"vec4"},
         "Context.OutGBuffer1":{src:ShaderSource.S_G_BUFFER1_SRC, loc:ShaderSource.S_G_BUFFER1, pattern:/Context.OutGBuffer1/, pattern2:/Context.OutGBuffer1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutGBuffer1/g, tag:ShaderSource.S_G_BUFFER1_SRC, type:"vec4"},

@@ -41,6 +41,23 @@ float shadowBorderScale = 1.0f;
 #define SHADOWCOMPARE(tex,coord) step(coord.z, textureProj(tex, coord).r)
 #define SHADOWGATHER(tex,coord) step(coord.z, textureGather(tex, coord.xy))
 #endif
+#define PCFEDGE 1.0
+
+#define FILTER_MODE 3
+
+#if (FILTER_MODE == 2)
+#define GETSHADOW Shadow_DoDither_2x2
+#define KERNEL 1.0
+#elif FILTER_MODE == 3
+#define GETSHADOW Shadow_DoPCF
+#define KERNEL 4.0
+#elif FILTER_MODE == 4
+#define GETSHADOW Shadow_DoPCFPoisson
+#define KERNEL 4.0
+#elif FILTER_MODE == 5
+#define GETSHADOW Shadow_DoPCF
+#define KERNEL 8.0
+#endif
 
 float Shadow_DoShadowCompare(in SHADOWMAP tex,in vec4 projCoord){
 return SHADOWCOMPARE(tex, projCoord);
@@ -59,6 +76,109 @@ return 1.0f;
 }
 return SHADOWCOMPARE(tex, projCoord);
 }
+
+float Shadow_DoShadowCompareOffset(in SHADOWMAP tex,in vec4 projCoord,in vec2 offset){
+vec4 coord = vec4(projCoord.xy + offset.xy * pixSize2 * shadowBorderScale, projCoord.zw);
+return SHADOWCOMPARE(tex, coord);
+}
+
+
+float Shadow_DoDither_2x2(in SHADOWMAP tex, in vec4 projCoord){
+float border = Shadow_BorderCheck(projCoord.xy);
+if (border > 0.0f)
+return 1.0f;
+
+float shadow = 0.0f;
+vec2 o = vec2(ivec2(mod(floor(gl_FragCoord.xy), 2.0f))); //Strict type checking in GLSL ES
+shadow += Shadow_DoShadowCompareOffset(tex, projCoord, (vec2(-1.5f, 1.5f)+o));
+shadow += Shadow_DoShadowCompareOffset(tex, projCoord, (vec2( 0.5f, 1.5f)+o));
+shadow += Shadow_DoShadowCompareOffset(tex, projCoord, (vec2(-1.5f, -0.5f)+o));
+shadow += Shadow_DoShadowCompareOffset(tex, projCoord, (vec2( 0.5f, -0.5f)+o));
+shadow *= 0.25f;
+return shadow;
+}
+
+float Shadow_DoBilinear_2x2(in SHADOWMAP tex, in vec4 projCoord){
+float border = Shadow_BorderCheck(projCoord.xy);
+if (border > 0.0f){
+return 1.0f;
+}
+
+vec4 gather = vec4(0.0f);
+#if defined GL_ARB_gpu_shader5 || defined GL_OES_gpu_shader5
+vec4 coord = vec4(projCoord.xyz / projCoord.www, 0.0f);
+gather = SHADOWGATHER(tex, coord);
+#else
+gather.x = SHADOWCOMPAREOFFSET(tex, projCoord, ivec2(0, 1));
+gather.y = SHADOWCOMPAREOFFSET(tex, projCoord, ivec2(1, 1));
+gather.z = SHADOWCOMPAREOFFSET(tex, projCoord, ivec2(1, 0));
+gather.w = SHADOWCOMPAREOFFSET(tex, projCoord, ivec2(0, 0));
+#endif
+
+vec2 f = fract( projCoord.xy * SHADOWMAP_SIZE );
+vec2 mx = mix( gather.wx, gather.zy, f.x );
+return mix( mx.x, mx.y, f.y );
+}
+
+float Shadow_DoPCF(in SHADOWMAP tex,in vec4 projCoord){
+
+float shadow = 0.0f;
+float border = Shadow_BorderCheck(projCoord.xy);
+if (border > 0.0f)
+return 1.0f;
+
+float bound = KERNEL * 0.5f - 0.5f;
+bound *= PCFEDGE;
+for (float y = -bound; y <= bound; y += PCFEDGE){
+for (float x = -bound; x <= bound; x += PCFEDGE){
+shadow += Shadow_DoShadowCompareOffset(tex, projCoord, vec2(x,y));
+}
+}
+
+shadow = shadow / (KERNEL * KERNEL);
+return shadow;
+}
+
+const vec2 poissonDisk0 =  vec2(-0.1711046f, -0.425016f);
+const vec2 poissonDisk1 =  vec2(-0.7829809f, 0.2162201f);
+const vec2 poissonDisk2 =  vec2(-0.2380269f, -0.8835521f);
+const vec2 poissonDisk3 =  vec2(0.4198045f, 0.1687819f);
+const vec2 poissonDisk4 =  vec2(-0.684418f, -0.3186957f);
+const vec2 poissonDisk5 =  vec2(0.6026866f, -0.2587841f);
+const vec2 poissonDisk6 =  vec2(-0.2412762f, 0.3913516f);
+const vec2 poissonDisk7 =  vec2(0.4720655f, -0.7664126f);
+const vec2 poissonDisk8 =  vec2(0.9571564f, 0.2680693f);
+const vec2 poissonDisk9 =  vec2(-0.5238616f, 0.802707f);
+const vec2 poissonDisk10 = vec2(0.5653144f, 0.60262f);
+const vec2 poissonDisk11 = vec2(0.0123658f, 0.8627419f);
+
+
+float Shadow_DoPCFPoisson(in SHADOWMAP tex, in vec4 projCoord){
+float shadow = 0.0f;
+float border = Shadow_BorderCheck(projCoord.xy);
+if (border > 0.0f){
+return 1.0f;
+}
+
+vec2 texelSize = pixSize2 * 4.0f * PCFEDGE * shadowBorderScale;
+
+shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk0 * texelSize, projCoord.zw));
+shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk1 * texelSize, projCoord.zw));
+shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk2 * texelSize, projCoord.zw));
+shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk3 * texelSize, projCoord.zw));
+shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk4 * texelSize, projCoord.zw));
+shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk5 * texelSize, projCoord.zw));
+shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk6 * texelSize, projCoord.zw));
+shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk7 * texelSize, projCoord.zw));
+shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk8 * texelSize, projCoord.zw));
+shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk9 * texelSize, projCoord.zw));
+shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk10 * texelSize, projCoord.zw));
+shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk11 * texelSize, projCoord.zw));
+
+return shadow * 0.08333333333f;
+}
+
+
 vec3 getPosition(in float depth, in vec2 newTexCoord){
 
 vec4 pos;
@@ -123,19 +243,21 @@ lightDir = wPosition.xyz - _lightPos;
 #endif
 
 #ifndef backfaceShadows
-if(backfaceShadows){
+if(!backfaceShadows){
 vec3 normal = approximateNormal(wPosition, wUv0);
 float ndotl = dot(normal, lightDir);
-if(ndotl > -0.0f){
+if(ndotl < 0.0f){
 return;
 }
 }
 #endif
 
-#if (!defined(POINTLIGHT) && !defined(PSSM))
+#if !defined(_C_POINTLIGHT_SHADOWS)
+#if !defined(_C_PSSM)
 if( dot(_lightDir, lightDir) < 0.0f){
 return;
 }
+#endif
 #endif
 
 vec4 projCoord0 = biasMat * _lightViewProjectMatrix0 * wPosition;
@@ -150,10 +272,10 @@ vec4 projCoord5 = biasMat * _lightViewProjectMatrix5 * wPosition;
 float shadow = 1.0f;
 
 #if defined(_C_PSSM)
-float shadowPosition = pvRow2.x * worldPos.x +  pvRow2.y * worldPos.y +  pvRow2.z * worldPos.z +  pvRow2.w;
+float shadowPosition = pvRow2.x * wPosition.x +  pvRow2.y * wPosition.y +  pvRow2.z * wPosition.z +  pvRow2.w;
 #else
 #if defined(_C_FADE)
-float shadowPosition = pvRow2.x * worldPos.x +  pvRow2.y * worldPos.y +  pvRow2.z * worldPos.z +  pvRow2.w;
+float shadowPosition = pvRow2.x * wPosition.x +  pvRow2.y * wPosition.y +  pvRow2.z * wPosition.z +  pvRow2.w;
 #endif
 #endif
 
@@ -171,7 +293,7 @@ shadow = clamp(max(0.0f, mix(shadow, 1.0f,(shadowPosition - _C_FADEInfo.x) * _C_
 #ifdef shadowIntensity
 shadow = shadow * shadowIntensity + (1.0f - shadowIntensity);
 #else
-shadow = shadow * 0.5f + 0.5f;
+shadow = shadow * 0.7f + 0.3f;
 #endif
 _outColor = _outColor * vec4(shadow, shadow, shadow, 1.0f);
 }

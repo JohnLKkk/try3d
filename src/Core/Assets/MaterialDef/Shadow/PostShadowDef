@@ -6,6 +6,8 @@ Def PostShadowDef{
         int filterMode;
         bool hardwareShadow;
         bool backfaceShadows;
+        float pcfEdge;
+        vec2 fadeInfo;
     }
     SubTechnology PostShadowPass{
         Vars{
@@ -36,6 +38,34 @@ Def PostShadowDef{
                 #define SHADOWGATHER(tex,coord) step(coord.z, textureGather(tex, coord.xy))
             #endif
 
+            #define FILTER_MODE 3
+
+            #if FILTER_MODE == 10
+                #define GETSHADOW Shadow_Nearest
+                #define KERNEL 1.0
+            #elif FILTER_MODE == 1
+                #ifdef HARDWARE_SHADOWS
+                    #define GETSHADOW Shadow_Nearest
+                #else
+                    #define GETSHADOW Shadow_DoBilinear_2x2
+                #endif
+                #define KERNEL 1.0
+            #endif
+
+            #if (FILTER_MODE == 2)
+                #define GETSHADOW Shadow_DoDither_2x2
+                #define KERNEL 1.0
+            #elif FILTER_MODE == 3
+                #define GETSHADOW Shadow_DoPCF
+                #define KERNEL 4.0
+            #elif FILTER_MODE == 4
+                #define GETSHADOW Shadow_DoPCFPoisson
+                #define KERNEL 4.0
+            #elif FILTER_MODE == 5
+                #define GETSHADOW Shadow_DoPCF
+                #define KERNEL 8.0
+            #endif
+
             float Shadow_DoShadowCompare(in SHADOWMAP tex,in vec4 projCoord){
                 return SHADOWCOMPARE(tex, projCoord);
             }
@@ -54,6 +84,113 @@ Def PostShadowDef{
                 }
                 return SHADOWCOMPARE(tex, projCoord);
             }
+
+            //----------------------------------ShadowFilter--------------------------------------
+            float Shadow_DoShadowCompareOffset(in SHADOWMAP tex,in vec4 projCoord,in vec2 offset){
+                vec4 coord = vec4(projCoord.xy + offset.xy * Context.SMapSizeInverse * shadowBorderScale, projCoord.zw);
+                return SHADOWCOMPARE(tex, coord);
+            }
+
+
+            float Shadow_DoDither_2x2(in SHADOWMAP tex, in vec4 projCoord){
+                float border = Shadow_BorderCheck(projCoord.xy);
+                if (border > 0.0f)
+                    return 1.0f;
+
+                float shadow = 0.0f;
+                vec2 o = vec2(ivec2(mod(floor(gl_FragCoord.xy), 2.0f))); //Strict type checking in GLSL ES
+                shadow += Shadow_DoShadowCompareOffset(tex, projCoord, (vec2(-1.5f, 1.5f)+o));
+                shadow += Shadow_DoShadowCompareOffset(tex, projCoord, (vec2( 0.5f, 1.5f)+o));
+                shadow += Shadow_DoShadowCompareOffset(tex, projCoord, (vec2(-1.5f, -0.5f)+o));
+                shadow += Shadow_DoShadowCompareOffset(tex, projCoord, (vec2( 0.5f, -0.5f)+o));
+                shadow *= 0.25f;
+                return shadow;
+            }
+
+            float Shadow_DoBilinear_2x2(in SHADOWMAP tex, in vec4 projCoord){
+                float border = Shadow_BorderCheck(projCoord.xy);
+                if (border > 0.0f){
+                    return 1.0f;
+                }
+
+                vec4 gather = vec4(0.0f);
+                #if defined GL_ARB_gpu_shader5 || defined GL_OES_gpu_shader5
+                    vec4 coord = vec4(projCoord.xyz / projCoord.www, 0.0f);
+                    gather = SHADOWGATHER(tex, coord);
+                #else
+                    gather.x = SHADOWCOMPAREOFFSET(tex, projCoord, ivec2(0, 1));
+                    gather.y = SHADOWCOMPAREOFFSET(tex, projCoord, ivec2(1, 1));
+                    gather.z = SHADOWCOMPAREOFFSET(tex, projCoord, ivec2(1, 0));
+                    gather.w = SHADOWCOMPAREOFFSET(tex, projCoord, ivec2(0, 0));
+                #endif
+
+               vec2 f = fract( projCoord.xy * Context.ShadowMapSize );
+               vec2 mx = mix( gather.wx, gather.zy, f.x );
+               return mix( mx.x, mx.y, f.y );
+            }
+
+            float Shadow_DoPCF(in SHADOWMAP tex,in vec4 projCoord){
+
+                float shadow = 0.0f;
+                float border = Shadow_BorderCheck(projCoord.xy);
+                if (border > 0.0f)
+                    return 1.0f;
+
+                float bound = KERNEL * 0.5f - 0.5f;
+                bound *= Params.pcfEdge;
+                for (float y = -bound; y <= bound; y += Params.pcfEdge){
+                    for (float x = -bound; x <= bound; x += Params.pcfEdge){
+                        shadow += Shadow_DoShadowCompareOffset(tex, projCoord, vec2(x,y));
+                    }
+                }
+
+                shadow = shadow / (KERNEL * KERNEL);
+                return shadow;
+            }
+
+            //12 tap poisson disk
+            const vec2 poissonDisk0 =  vec2(-0.1711046f, -0.425016f);
+            const vec2 poissonDisk1 =  vec2(-0.7829809f, 0.2162201f);
+            const vec2 poissonDisk2 =  vec2(-0.2380269f, -0.8835521f);
+            const vec2 poissonDisk3 =  vec2(0.4198045f, 0.1687819f);
+            const vec2 poissonDisk4 =  vec2(-0.684418f, -0.3186957f);
+            const vec2 poissonDisk5 =  vec2(0.6026866f, -0.2587841f);
+            const vec2 poissonDisk6 =  vec2(-0.2412762f, 0.3913516f);
+            const vec2 poissonDisk7 =  vec2(0.4720655f, -0.7664126f);
+            const vec2 poissonDisk8 =  vec2(0.9571564f, 0.2680693f);
+            const vec2 poissonDisk9 =  vec2(-0.5238616f, 0.802707f);
+            const vec2 poissonDisk10 = vec2(0.5653144f, 0.60262f);
+            const vec2 poissonDisk11 = vec2(0.0123658f, 0.8627419f);
+
+
+            float Shadow_DoPCFPoisson(in SHADOWMAP tex, in vec4 projCoord){
+                float shadow = 0.0f;
+                float border = Shadow_BorderCheck(projCoord.xy);
+                if (border > 0.0f){
+                    return 1.0f;
+                }
+
+                vec2 texelSize = Context.SMapSizeInverse * 4.0f * Params.pcfEdge * shadowBorderScale;
+
+                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk0 * texelSize, projCoord.zw));
+                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk1 * texelSize, projCoord.zw));
+                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk2 * texelSize, projCoord.zw));
+                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk3 * texelSize, projCoord.zw));
+                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk4 * texelSize, projCoord.zw));
+                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk5 * texelSize, projCoord.zw));
+                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk6 * texelSize, projCoord.zw));
+                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk7 * texelSize, projCoord.zw));
+                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk8 * texelSize, projCoord.zw));
+                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk9 * texelSize, projCoord.zw));
+                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk10 * texelSize, projCoord.zw));
+                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk11 * texelSize, projCoord.zw));
+
+                // 除以 12
+                return shadow * 0.08333333333f;
+            }
+            //----------------------------------ShadowFilter--------------------------------------
+
+
             vec3 getPosition(in float depth, in vec2 newTexCoord){
 
                 vec4 pos;
@@ -64,7 +201,7 @@ Def PostShadowDef{
                 pos.xyz /= pos.w;
                 return pos.xyz;
             }
-            #define GETSHADOW Shadow_Nearest
+            //#define GETSHADOW Shadow_Nearest
             // 基于PSSM实现的CSM
             float getDirectionalLightShadows(in vec4 splits,in float shadowPosition, in SHADOWMAP shadowMap0, in SHADOWMAP shadowMap1, in SHADOWMAP shadowMap2,in SHADOWMAP shadowMap3, in vec4 projCoord0,in vec4 projCoord1,in vec4 projCoord2,in vec4 projCoord3){
                 float shadow = 1.0f;
@@ -121,10 +258,12 @@ Def PostShadowDef{
                 #endif
 
                 #ifndef Params.backfaceShadows
-                    if(Params.backfaceShadows){
+                    // 丢弃背面时,由于在forward pipeline下无法获取该点法线,所以只能通过近似算法获取法线
+                    // 该近似算法依赖于深度信息,所以很容易造成Shadow Acne
+                    if(!Params.backfaceShadows){
                         vec3 normal = approximateNormal(wPosition, wUv0);
                         float ndotl = dot(normal, lightDir);
-                        if(ndotl > -0.0f){
+                        if(ndotl > 0.0f){
                             return;
                         }
                     }
@@ -169,13 +308,13 @@ Def PostShadowDef{
                     #endif
                 #endif
 
-                #ifdef Context.Fade
-                    shadow = clamp(max(0.0f, mix(shadow, 1.0f,(shadowPosition - Context.FadeInfo.x) * Context.FadeInfo.y)), 0.0f, 1.0f);
+                #ifdef Params.fadeInfo
+                    shadow = clamp(max(0.0f, mix(shadow, 1.0f,(shadowPosition - Params.fadeInfo.x) * Params.fadeInfo.y)), 0.0f, 1.0f);
                 #endif
                 #ifdef Params.shadowIntensity
                     shadow = shadow * Params.shadowIntensity + (1.0f - Params.shadowIntensity);
                 #else
-                    shadow = shadow * 0.5f + 0.5f;
+                    shadow = shadow * 0.7f + 0.3f;
                 #endif
                 Context.OutColor = Context.OutColor * vec4(shadow, shadow, shadow, 1.0f);
             }
