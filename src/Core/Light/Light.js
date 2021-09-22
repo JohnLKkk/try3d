@@ -25,7 +25,7 @@ export default class Light extends Node{
         this._m_ProShadow = false;
         this._m_ResetProShadow = this._m_ProShadow;
         this._m_Shadow = null;
-        this._m_ShadowCfg = {shadowMapSize:512, backfaceShadows:false};
+        this._m_ShadowCfg = {shadowMapSize:512, backfaceShadows:false, debug:false};
         this._m_Mark = 0;
         this._init();
     }
@@ -67,6 +67,13 @@ export default class Light extends Node{
      */
     setShadowMapSize(shadowMapSize){
         this._m_ShadowCfg.shadowMapSize = shadowMapSize;
+    }
+
+    /**
+     * debug，只能在第一次调用proShadow时生效。<br/>
+     */
+    debugShadowMap(){
+        this._m_ShadowCfg.debug = true;
     }
 
     /**

@@ -19,7 +19,8 @@ Def PostShadowDef{
             void main(){
                 Context.OutPosition = vec4(Context.InPosition, 1.0f);
                 pvInverse = inverse(Context.ProjectViewMatrix);
-                pvRow2 = Context.ProjectViewMatrix[2];
+                // glsl是列矩阵,这里我获取第二行(只需要变换得到z即可测试PSSM)
+                pvRow2 = vec4(Context.ProjectViewMatrix[0][2], Context.ProjectViewMatrix[1][2], Context.ProjectViewMatrix[2][2], Context.ProjectViewMatrix[3][2]);
                 wUv0 = Context.InUv0;
             }
         }

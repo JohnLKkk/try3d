@@ -438,6 +438,14 @@ export default class Camera extends Component{
     }
 
     /**
+     * 返回方向。<br/>
+     * @return {Vector3}
+     */
+    getDir(){
+        return this._m_Dir;
+    }
+
+    /**
      * 设置镜头eye,at,up。<br/>
      * @param {Vector3}[eye]
      * @param {Vector3}[at]
@@ -446,9 +454,11 @@ export default class Camera extends Component{
     lookAt(eye, at, up){
         this._m_Eye.setTo(eye);
         this._m_At.setTo(at);
-        this._m_Up.setTo(up);
         this._m_At.sub(this._m_Eye, this._m_Dir);
         this._m_Dir.normal();
+        up.cross(this._m_Dir, Camera.S_TEMP_VEC3).normal();
+        this._m_Dir.cross(Camera.S_TEMP_VEC3, this._m_Up).normal();
+        // this._m_Up.setTo(up);
         this._m_ViewMatrix.lookAt(this._m_Eye, this._m_At, this._m_Up);
         this._m_ViewMatrixUpdate = true;
         this._doUpdate();

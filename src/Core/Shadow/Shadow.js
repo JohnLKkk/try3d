@@ -63,7 +63,7 @@ export default class Shadow {
 
         // 计算光锥包围体
         let pos = viewCam.getEye();
-        let dir = viewCam.getAt().sub(pos, Shadow.S_TEMP_VEC3_0).normal();
+        let dir = viewCam.getDir();
         let up = viewCam.getUp();
 
         let r = dir.cross(up, Shadow.S_TEMP_VEC3_1).normal();

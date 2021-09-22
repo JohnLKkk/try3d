@@ -20,7 +20,8 @@ export default class Internal {
         "            void main(){\n" +
         "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" +
         "                pvInverse = inverse(Context.ProjectViewMatrix);\n" +
-        "                pvRow2 = Context.ProjectViewMatrix[2];\n" +
+        "                // glsl是列矩阵,这里我获取第二行(只需要变换得到z即可测试PSSM)\n" +
+        "                pvRow2 = vec4(Context.ProjectViewMatrix[0][2], Context.ProjectViewMatrix[1][2], Context.ProjectViewMatrix[2][2], Context.ProjectViewMatrix[3][2]);\n" +
         "                wUv0 = Context.InUv0;\n" +
         "            }\n" +
         "        }\n" +

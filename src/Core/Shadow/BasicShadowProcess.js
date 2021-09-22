@@ -171,7 +171,7 @@ export default class BasicShadowProcess extends Component{
             if(this._m_Debug){
                 this._m_DebugShadowMap[i] = new Picture(this._m_Scene, {id:'debug_shadow_map_' + i});
                 this._m_DebugShadowMap[i].setSize(0.25, 0.3);
-                this._m_DebugShadowMap[i].setLeftTop(-0.75 + 0.55 * i, -0.7);
+                this._m_DebugShadowMap[i].setLeftTop(-0.75 + 0.52 * i, -0.7);
                 this._m_DebugShadowMap[i].useDefaultMat();
                 let colorMap = new Texture2DTargetVars(this._m_Scene);
                 colorMap.setTextureFormat(Texture2DTargetVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DTargetVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DTargetVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);

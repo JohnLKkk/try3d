@@ -32,7 +32,8 @@
     import Vec4Vars from "../../src/Core/WebGL/Vars/Vec4Vars.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
-    mainCamera.lookAt(new Vector3(25, 25, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    // mainCamera.lookAt(new Vector3(25, 25, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(-70.04971538141703,112.1166428168139,115.71113243476611), new Vector3(-0.7636363229868266,15.599713284563862,3.228377883106475), new Vector3(0, 1, 0));
 
     let rootNode = new Node(scene, {id:'rootNode'});
     // 环境纹理加载完再开始创建创建
@@ -72,10 +73,11 @@
     let dirLight = new DirectionalLight(scene, {id:'dirLight'});
     dirLight.setDirectionXYZ(-1, -1, 1);
     dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    dirLight.debugShadowMap();
     // 最大ShadowMapSize为1024
     dirLight.setShadowMapSize(1024);
-    // 设置2层ShadowMap分区
-    dirLight.setShadowSplitNum(2);
+    // 设置4层ShadowMap分区
+    dirLight.setShadowSplitNum(4);
     dirLight.proShadow(true);
     dirLight.getShadow().setShadowIntensity(0.8);
     rootNode.addChildren(dirLight);
@@ -136,6 +138,9 @@
     document.body.appendChild(stats.domElement);
     scene.on('update', (exTime)=>{
         stats.update();
+        // console.log('eye:' + mainCamera.getEye().toString());
+        // console.log('at:' + mainCamera.getAt().toString());
+        // console.log('up:' + mainCamera.getUp().toString());
     });
 </script>
 </body>
