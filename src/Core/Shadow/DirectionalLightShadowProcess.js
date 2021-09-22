@@ -70,7 +70,7 @@ export default class DirectionalLightShadowProcess extends BasicShadowProcess{
         rd = conVars[BasicShadowProcess.S_LIGHT_DIR];
         if(rd){
             let dir = this._m_Light.getDirection();
-            gl.uniform3f(rd.loc, this._m_SplitsVec4._m_X, this._m_SplitsVec4._m_Y, this._m_SplitsVec4._m_Z);
+            gl.uniform3f(rd.loc, dir._m_X, dir._m_Y, dir._m_Z);
         }
         rd = conVars[BasicShadowProcess.S_SPLITS];
         if(rd){

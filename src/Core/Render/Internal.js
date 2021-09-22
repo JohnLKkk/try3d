@@ -223,11 +223,11 @@ export default class Internal {
         "                }\n" +
         "                return shadow;\n" +
         "            }\n" +
-        "            vec3 approximateNormal(in vec4 worldPos,in vec2 texCoord){\n" +
-        "                float step = Context.ResolutionInverse.x;\n" +
-        "                float stepy = Context.ResolutionInverse.y;\n" +
-        "                float depth2 = texture(Context.InGDepth, texCoord + vec2(step, -stepy)).r;\n" +
-        "                float depth3 = texture(Context.InGDepth, texCoord + vec2(-step, -stepy)).r;\n" +
+        "            vec3 approximateNormal(in vec4 worldPos,in vec2 texCoord, in sampler2D depthMap, in vec2 resolutionInverse){\n" +
+        "                float step = resolutionInverse.x;\n" +
+        "                float stepy = resolutionInverse.y;\n" +
+        "                float depth2 = texture(depthMap, texCoord + vec2(step, -stepy)).r;\n" +
+        "                float depth3 = texture(depthMap, texCoord + vec2(-step, -stepy)).r;\n" +
         "                vec4 worldPos2 = vec4(getPosition(depth2, texCoord + vec2(step, -stepy)),1.0f);\n" +
         "                vec4 worldPos3 = vec4(getPosition(depth3, texCoord + vec2(-step, -stepy)),1.0f);\n" +
         "\n" +
@@ -252,17 +252,17 @@ export default class Internal {
         "                vec4 wPosition = vec4(getPosition(depth, wUv0), 1.0f);\n" +
         "\n" +
         "                vec3 lightDir;\n" +
-        "                #ifdef PSSM\n" +
+        "                #ifdef Context.Pssm\n" +
         "                    lightDir = Context.LightDir;\n" +
         "                #else\n" +
         "                    lightDir = wPosition.xyz - Context.LightPos;\n" +
         "                #endif\n" +
         "\n" +
-        "                #ifndef Params.backfaceShadows\n" +
+        "                #ifdef Params.backfaceShadows\n" +
         "                    // 丢弃背面时,由于在forward pipeline下无法获取该点法线,所以只能通过近似算法获取法线\n" +
         "                    // 该近似算法依赖于深度信息,所以很容易造成Shadow Acne\n" +
         "                    if(!Params.backfaceShadows){\n" +
-        "                        vec3 normal = approximateNormal(wPosition, wUv0);\n" +
+        "                        vec3 normal = approximateNormal(wPosition, wUv0, Context.InDepth, Context.ResolutionInverse);\n" +
         "                        float ndotl = dot(normal, lightDir);\n" +
         "                        if(ndotl > 0.0f){\n" +
         "                            return;\n" +
@@ -294,7 +294,7 @@ export default class Internal {
         "                #if defined(Context.Pssm)\n" +
         "                    float shadowPosition = pvRow2.x * wPosition.x +  pvRow2.y * wPosition.y +  pvRow2.z * wPosition.z +  pvRow2.w;\n" +
         "                #else\n" +
-        "                    #if defined(Context.Fade)\n" +
+        "                    #if defined(Params.fadeInfo)\n" +
         "                        float shadowPosition = pvRow2.x * wPosition.x +  pvRow2.y * wPosition.y +  pvRow2.z * wPosition.z +  pvRow2.w;\n" +
         "                    #endif\n" +
         "                #endif\n" +

@@ -1,0 +1,307 @@
+{
+  "accessors": [
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 7565,
+      "max": [
+        13577.6962890625,
+        7755.322265625,
+        2175.365478515625
+      ],
+      "min": [
+        -16878.7890625,
+        -162.84844970703125,
+        -52172.16015625
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 90780,
+      "componentType": 5126,
+      "count": 7565,
+      "max": [
+        0.9999998807907104,
+        1.0,
+        0.9999736547470093
+      ],
+      "min": [
+        -1.0,
+        -1.0,
+        -0.9999085664749146
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5126,
+      "count": 7565,
+      "max": [
+        1.0,
+        1.0,
+        0.9999948143959045,
+        1.0
+      ],
+      "min": [
+        -0.9999865889549255,
+        -1.0,
+        -1.0,
+        -1.0
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 7565,
+      "max": [
+        10.43191909790039,
+        10.435218811035156
+      ],
+      "min": [
+        -9.435226440429688,
+        -9.43191146850586
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 60520,
+      "componentType": 5126,
+      "count": 7565,
+      "max": [
+        256.1571044921875,
+        261.36077880859375
+      ],
+      "min": [
+        -256.14788818359375,
+        -257.6539306640625
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 121040,
+      "componentType": 5126,
+      "count": 7565,
+      "max": [
+        10.43191909790039,
+        10.435218811035156
+      ],
+      "min": [
+        -9.435226440429688,
+        -9.43191146850586
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 15561,
+      "type": "SCALAR"
+    }
+  ],
+  "asset": {
+    "extras": {
+      "author": "DJMaesen (https://sketchfab.com/bumstrum)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/level-blockout-24b39d9beef54166a14e6f2542d01def",
+      "title": "level blockout"
+    },
+    "generator": "Sketchfab-11.53.0",
+    "version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 62244,
+      "name": "floatBufferViews",
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 181560,
+      "byteOffset": 62244,
+      "byteStride": 8,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 181560,
+      "byteOffset": 243804,
+      "byteStride": 12,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 121040,
+      "byteOffset": 425364,
+      "byteStride": 16,
+      "name": "floatBufferViews",
+      "target": 34962
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 546404,
+      "uri": "scene.bin"
+    }
+  ],
+  "images": [
+    {
+      "uri": "textures/terrain1_baseColor.png"
+    },
+    {
+      "uri": "textures/terrain1_normal.png"
+    }
+  ],
+  "materials": [
+    {
+      "name": "terrain1",
+      "normalTexture": {
+        "index": 1
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0
+        },
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.6334795615
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "terrain1_terrain1_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 1,
+            "POSITION": 0,
+            "TANGENT": 2,
+            "TEXCOORD_0": 3,
+            "TEXCOORD_1": 4,
+            "TEXCOORD_2": 5
+          },
+          "indices": 6,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "children": [
+        1
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.220446049250313e-16,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        2.220446049250313e-16,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "Sketchfab_model"
+    },
+    {
+      "children": [
+        2
+      ],
+      "matrix": [
+        0.009999999776482582,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.009999999776482582,
+        0.0,
+        0.0,
+        -0.009999999776482582,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "80549bcd4fbc4cbda57358a58398182a.fbx"
+    },
+    {
+      "children": [
+        3
+      ],
+      "name": "RootNode"
+    },
+    {
+      "children": [
+        4
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.7474883794784546,
+        0.0,
+        -3.653839349746704,
+        1.0
+      ],
+      "name": "terrain1"
+    },
+    {
+      "mesh": 0,
+      "name": "terrain1_terrain1_0"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Sketchfab_Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    }
+  ]
+}

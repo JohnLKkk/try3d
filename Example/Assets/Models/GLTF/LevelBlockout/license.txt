@@ -1,0 +1,11 @@
+Model Information:
+* title:	level blockout
+* source:	https://sketchfab.com/3d-models/level-blockout-24b39d9beef54166a14e6f2542d01def
+* author:	DJMaesen (https://sketchfab.com/bumstrum)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "level blockout" (https://sketchfab.com/3d-models/level-blockout-24b39d9beef54166a14e6f2542d01def) by DJMaesen (https://sketchfab.com/bumstrum) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

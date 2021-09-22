@@ -38,7 +38,7 @@ Def PostShadowDef{
                 #define SHADOWGATHER(tex,coord) step(coord.z, textureGather(tex, coord.xy))
             #endif
 
-            #define FILTER_MODE 3
+            #define FILTER_MODE 1
 
             #if FILTER_MODE == 10
                 #define GETSHADOW Shadow_Nearest
@@ -222,11 +222,11 @@ Def PostShadowDef{
                 }
                 return shadow;
             }
-            vec3 approximateNormal(in vec4 worldPos,in vec2 texCoord){
-                float step = Context.ResolutionInverse.x;
-                float stepy = Context.ResolutionInverse.y;
-                float depth2 = texture(Context.InGDepth, texCoord + vec2(step, -stepy)).r;
-                float depth3 = texture(Context.InGDepth, texCoord + vec2(-step, -stepy)).r;
+            vec3 approximateNormal(in vec4 worldPos,in vec2 texCoord, in sampler2D depthMap, in vec2 resolutionInverse){
+                float step = resolutionInverse.x;
+                float stepy = resolutionInverse.y;
+                float depth2 = texture(depthMap, texCoord + vec2(step, -stepy)).r;
+                float depth3 = texture(depthMap, texCoord + vec2(-step, -stepy)).r;
                 vec4 worldPos2 = vec4(getPosition(depth2, texCoord + vec2(step, -stepy)),1.0f);
                 vec4 worldPos3 = vec4(getPosition(depth3, texCoord + vec2(-step, -stepy)),1.0f);
 
@@ -251,17 +251,17 @@ Def PostShadowDef{
                 vec4 wPosition = vec4(getPosition(depth, wUv0), 1.0f);
 
                 vec3 lightDir;
-                #ifdef PSSM
+                #ifdef Context.Pssm
                     lightDir = Context.LightDir;
                 #else
                     lightDir = wPosition.xyz - Context.LightPos;
                 #endif
 
-                #ifndef Params.backfaceShadows
+                #ifdef Params.backfaceShadows
                     // 丢弃背面时,由于在forward pipeline下无法获取该点法线,所以只能通过近似算法获取法线
                     // 该近似算法依赖于深度信息,所以很容易造成Shadow Acne
                     if(!Params.backfaceShadows){
-                        vec3 normal = approximateNormal(wPosition, wUv0);
+                        vec3 normal = approximateNormal(wPosition, wUv0, Context.InDepth, Context.ResolutionInverse);
                         float ndotl = dot(normal, lightDir);
                         if(ndotl > 0.0f){
                             return;
@@ -293,7 +293,7 @@ Def PostShadowDef{
                 #if defined(Context.Pssm)
                     float shadowPosition = pvRow2.x * wPosition.x +  pvRow2.y * wPosition.y +  pvRow2.z * wPosition.z +  pvRow2.w;
                 #else
-                    #if defined(Context.Fade)
+                    #if defined(Params.fadeInfo)
                         float shadowPosition = pvRow2.x * wPosition.x +  pvRow2.y * wPosition.y +  pvRow2.z * wPosition.z +  pvRow2.w;
                     #endif
                 #endif

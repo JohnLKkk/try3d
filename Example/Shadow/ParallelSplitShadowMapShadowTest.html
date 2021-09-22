@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>DirecationLightShadowTest</title>
+    <title>ParallelSplitShadowMapShadowTest</title>
 </head>
 <body>
 <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
@@ -55,22 +55,8 @@
 
         let gltfLoader = new GLTFLoader();
         gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
-        gltfLoader.load(scene, './../Assets/Models/GLTF/HousePoor/scene.gltf', modelNode=>{
+        gltfLoader.load(scene, './../Assets/Models/GLTF/LevelBlockout/scene.gltf', modelNode=>{
             rootNode.addChildren(modelNode);
-
-            // 地板
-            let floor = new Plane(scene, {id:'floor'});
-            let floorMat = new Material(scene, {id:"floorMat", materialDef:MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef")});
-            let diffuseMap = new Texture2DVars(scene);
-            diffuseMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
-            diffuseMap.setImageSrc(scene, './../Assets/Textures/ground 3.png');
-            floorMat.setParam('diffuseMap', diffuseMap);
-            floorMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
-            floor.setMaterial(floorMat);
-            floor.setLocalScaleXYZ(50, 1, 50);
-            floor.setLocalTranslationXYZ(0, 0, 0);
-            rootNode.addChildren(floor);
-
 
             let sceneControl = new SceneBrowsingController(scene, {id:"controller"});
             sceneControl.setMinVerticalRotation(0);

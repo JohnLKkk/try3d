@@ -51,7 +51,7 @@ export default class BasicShadowProcess extends Component{
     _m_ZFarOverride = 0;
     _m_FadeLength = 0;
     // 背面阴影
-    _m_BackfaceShadows = true;
+    _m_BackfaceShadows = false;
     // PCF软阴影边缘阈值
     _m_PCFEdge = 1.0;
     // 阴影强度(默认0.7)
@@ -132,7 +132,7 @@ export default class BasicShadowProcess extends Component{
         this._m_NbShadowMaps = cfg.nbShadowMaps;
         this._m_ShadowMapSize = cfg.shadowMapSize;
         this._m_Debug = cfg.debug != null ? cfg.debug : false;
-        this._m_BackfaceShadows = cfg.backfaceShadows != null ? cfg.backfaceShadows : true;
+        this._m_BackfaceShadows = cfg.backfaceShadows != null ? cfg.backfaceShadows : false;
 
         const gl = this._m_Scene.getCanvas().getGLContext();
         // 这里的设计有一些架构上的改进,具体参考开发日志
@@ -210,9 +210,7 @@ export default class BasicShadowProcess extends Component{
         let w = this._m_Scene.getCanvas().getWidth();
         let h = this._m_Scene.getCanvas().getHeight();
         this._m_ResolutionInverse.setToInXY(1.0/w, 1.0/h);
-        if(this._m_BackfaceShadows){
-            this._m_PostShadowMat.setParam('backfaceShadows', new BoolVars().valueOf(true));
-        }
+        this._m_PostShadowMat.setParam('backfaceShadows', new BoolVars().valueOf(this._m_BackfaceShadows));
         this._m_Scene.getCanvas().on('resize', (w, h)=>{
             this._m_ResolutionInverse.setToInXY(1.0/w, 1.0/h);
         });
@@ -246,6 +244,25 @@ export default class BasicShadowProcess extends Component{
      */
     initMat(){
         // 子类实现
+    }
+
+    /**
+     * 是否启用背面阴影,默认为false。<br/>
+     * @param {Boolean}[backfaceShadows]
+     */
+    setBackfaceShadows(backfaceShadows){
+        if(this._m_BackfaceShadows != backfaceShadows){
+            this._m_BackfaceShadows = backfaceShadows;
+            this._m_PostShadowMat.setParam('backfaceShadows', new BoolVars().valueOf(this._m_BackfaceShadows));
+        }
+    }
+
+    /**
+     * 是否启用背面阴影。<br/>
+     * @return {Boolean}
+     */
+    isBackfaceShadows(){
+        return this._m_BackfaceShadows;
     }
 
     /**
@@ -487,7 +504,7 @@ export default class BasicShadowProcess extends Component{
                 gl[rd.fun](rd.loc, false, this._m_LVPM[i].getBufferData());
             }
         }
-        if(this._m_BackfaceShadows){
+        if(!this._m_BackfaceShadows){
             rd = conVars[BasicShadowProcess.S_RESOLUTION_INVERSE];
             if(rd != null){
                 gl.uniform2f(rd.loc, this._m_ResolutionInverse._m_X, this._m_ResolutionInverse._m_Y);
