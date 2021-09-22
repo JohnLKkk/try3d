@@ -1,5 +1,5 @@
 /**
- * Shadow。<br/>
+ * Shadows。<br/>
  * 该类封装了Shadow的一些计算方法,以便可以独立调试。<br/>
  * @author Kkk
  * @date 2021年9月15日17点38分

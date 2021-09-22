@@ -132,7 +132,7 @@ export default class ShaderSource {
     static S_RESOLUTION_INVERSE = '_ResolutionInverse';
 
 
-    // Shadow
+    // Shadows
     static S_SHADOW_MAP_ARRAY_SRC = {
         0:'_shadowMap0',
         1:'_shadowMap1',

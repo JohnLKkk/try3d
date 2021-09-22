@@ -4,6 +4,13 @@ import DirectionalLightShadowProcess from "../Shadow/DirectionalLightShadowProce
 import Log from "../Util/Log.js";
 
 export default class DirectionalLight extends Light{
+    // 尽量不依赖外部类枚举，所以在这里声明合适类型
+    // 半过渡类型表示分区随着等级而衰减一半大小的shadowMap(也是默认模式)
+    static S_SHADER_SPLIT_TYPE_HALF_TRANSITION = 0x001;
+    // 固定shadowMap分辨率,表示所有分区shadowMap分辨率一致
+    static S_SHADER_SPLIT_TYPE_FIXED = 0x002;
+
+
     getType() {
         return 'DirectionalLight';
     }
@@ -32,6 +39,14 @@ export default class DirectionalLight extends Light{
             Log.error('错误的分区数目:' + splitNum);
         }
         this._m_ShadowCfg.nbSplits = splitNum || 2;
+    }
+
+    /**
+     * 设置分区模式，只能在第一次调用proShadow之前生效。<br/>
+     * @param {Number}[type 必须是DirectionalLight的枚举之一]
+     */
+    setShadowSplitType(type){
+        this._m_ShadowCfg.shadowSplitType = type;
     }
 
     /**

@@ -29,12 +29,12 @@ export default class BasicShadowProcess extends Component{
     static S_FIXED = 0x002;
 
 
-    // 阴影类型（默认为二次方缩小）
-    _m_ShadowType = BasicShadowProcess.S_QUADRATIC_SCALING;
+    // 阴影分区类型（默认为二次方缩小）
+    _m_ShadowSplitType = BasicShadowProcess.S_QUADRATIC_SCALING;
     _m_MainCamera;
     // Pre ShadowMap
     _m_PreShadowMat;
-    // Post Shadow
+    // Post Shadows
     _m_PostShadowMat;
     // shadowMap数目
     _m_NbShadowMaps = 1;
@@ -133,6 +133,7 @@ export default class BasicShadowProcess extends Component{
         this._m_ShadowMapSize = cfg.shadowMapSize;
         this._m_Debug = cfg.debug != null ? cfg.debug : false;
         this._m_BackfaceShadows = cfg.backfaceShadows != null ? cfg.backfaceShadows : false;
+        this._m_ShadowSplitType = cfg.shadowSplitType || this._m_ShadowSplitType;
 
         const gl = this._m_Scene.getCanvas().getGLContext();
         // 这里的设计有一些架构上的改进,具体参考开发日志
@@ -140,13 +141,13 @@ export default class BasicShadowProcess extends Component{
         let nextSize = this._m_ShadowMapSize;
         for(let i = 0;i < this._m_NbShadowMaps;i++){
             this._m_LVPM[i] = new Matrix44();
-            if(this._m_ShadowType == BasicShadowProcess.S_QUADRATIC_SCALING){
+            if(this._m_ShadowSplitType == BasicShadowProcess.S_QUADRATIC_SCALING){
                 this._m_ShadowFB[i] = new FrameBuffer(gl, 'ShadowFB_' + i, nextSize, nextSize);
                 this._m_ShadowMapSizes[i] = nextSize;
                 nextSize /= 2;
                 nextSize = Math.max(nextSize, minSize);
             }
-            else if(this._m_ShadowType == BasicShadowProcess.S_FIXED){
+            else if(this._m_ShadowSplitType == BasicShadowProcess.S_FIXED){
                 this._m_ShadowFB[i] = new FrameBuffer(gl, 'ShadowFB_' + i, this._m_ShadowMapSize, this._m_ShadowMapSize);
             }
             else{
@@ -537,13 +538,13 @@ export default class BasicShadowProcess extends Component{
         let frameContext = render.getFrameContext();
         const gl = this._m_Scene.getCanvas().getGLContext();
         frameContext.getRenderState().store();
-        if(this._m_ShadowType == BasicShadowProcess.S_FIXED){
+        if(this._m_ShadowSplitType == BasicShadowProcess.S_FIXED){
             render.setViewPort(gl, 0, 0, this._m_ShadowMapSize, this._m_ShadowMapSize);
         }
         render._checkRenderState(gl, this._m_ShadowRenderState, frameContext.getRenderState());
         render.useForcedMat('PreFrame', this._m_PreShadowMat, 0);
         for(let i = 0;i < this._m_NbShadowMaps;i++){
-            if(this._m_ShadowType == BasicShadowProcess.S_QUADRATIC_SCALING){
+            if(this._m_ShadowSplitType == BasicShadowProcess.S_QUADRATIC_SCALING){
                 render.setViewPort(gl, 0, 0, this._m_ShadowMapSizes[i], this._m_ShadowMapSizes[i]);
             }
             this.generateShadowMap(gl, render, frameContext, i);

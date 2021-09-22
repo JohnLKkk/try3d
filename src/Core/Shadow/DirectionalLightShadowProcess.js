@@ -9,7 +9,7 @@ import Node from "../Node/Node.js";
 import ShaderSource from "../WebGL/ShaderSource.js";
 
 /**
- * DirectionalLightShadowProcess基于Parallel Split Shadow Mapping实现。具体参考:<br/>
+ * DirectionalLightShadowProcess基于Parallel Split Shadows Mapping实现。具体参考:<br/>
  * <a href="https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html">https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html</a><br/>
  * @author Kkk
  * @date 2021年9月15日11点26分

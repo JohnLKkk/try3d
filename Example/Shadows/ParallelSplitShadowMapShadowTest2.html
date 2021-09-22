@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ParallelSplitShadowMapShadowTest2</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
+    <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script src="./../dat.gui.min.js"></script>
+<script type="module">
+    import Scene from "../../src/Core/Scene/Scene.js";
+    import RenderEngine from "../../src/Core/RenderEngine.js";
+    import Node from "../../src/Core/Node/Node.js";
+    import Vector3 from "../../src/Core/Math3d/Vector3.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import Stats from "../stats.min.js";
+    import SceneBrowsingController from "../../src/Core/InputControl/SceneBrowsingController.js";
+    import Texture2DVars from "../../src/Core/WebGL/Vars/Texture2DVars.js";
+    import SkyBox from "../../src/Core/Node/Sky/SkyBox.js";
+    import Vector4 from "../../src/Core/Math3d/Vector4.js";
+    import GLTFLoader from "../../src/Supp/GLTFLoader.js";
+    import ProbeTools from "../../src/Core/Util/ProbeTools.js";
+    import BoolVars from "../../src/Core/WebGL/Vars/BoolVars.js";
+    import RadianceLoader from "../../src/Supp/RadianceLoader.js";
+    import GIProbe from "../../src/Core/Light/GIProbe.js";
+    import Plane from "../../src/Core/Node/Shape/Plane.js";
+    import Material from "../../src/Core/Material/Material.js";
+    import MaterialDef from "../../src/Core/Material/MaterialDef.js";
+    import DirectionalLightShadowProcess from "../../src/Core/Shadow/DirectionalLightShadowProcess.js";
+    import Vec4Vars from "../../src/Core/WebGL/Vars/Vec4Vars.js";
+    import Ext from "../Ext.js";
+
+    let ext = new Ext();
+    ext.show('  这个例子演示了基于PSSM(ParallelSplitShadowMapShadow)的DirectionalLight的阴影渲染，在这里，设置了ShadowSplitType为S_SHADER_SPLIT_TYPE_FIXED，并设置了4层分区，每一级的大小都为1024*1024。', {lineheight:50});
+
+
+    let scene = new Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    // mainCamera.lookAt(new Vector3(25, 25, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+    mainCamera.lookAt(new Vector3(-70.04971538141703,112.1166428168139,115.71113243476611), new Vector3(-0.7636363229868266,15.599713284563862,3.228377883106475), new Vector3(0, 1, 0));
+
+    let rootNode = new Node(scene, {id:'rootNode'});
+    // 环境纹理加载完再开始创建创建
+    let radianceLoader = new RadianceLoader();
+    radianceLoader.loadHDR('./../Assets/Textures/hdr/env1.hdr', imageData=>{
+        // 创建一个sky
+        let sky = new SkyBox(scene, {id:'sky'});
+        // 使用cubeMap作为天空盒材质
+        let envMap = new Texture2DVars(scene);
+        envMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
+        envMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+        envMap.setFilter(scene, Texture2DVars.S_FILTERS.S_LINEAR, Texture2DVars.S_FILTERS.S_LINEAR);
+        envMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_RGB16F, Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
+        envMap.setImage(scene, imageData, {rgbe:true, linearFloat:true});
+        sky.getMaterial().setParam('envMap', envMap);
+        sky.getMaterial().setParam('useEnvMap', new BoolVars().valueOf(true));
+        sky.getMaterial().setParam('useHDR', new BoolVars().valueOf(true));
+
+        scene.setSky(sky);
+
+        let gltfLoader = new GLTFLoader();
+        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+        gltfLoader.load(scene, './../Assets/Models/GLTF/LevelBlockout/scene.gltf', modelNode=>{
+            rootNode.addChildren(modelNode);
+
+            let sceneControl = new SceneBrowsingController(scene, {id:"controller"});
+            sceneControl.setMinVerticalRotation(0);
+            sceneControl.lookScene(rootNode);
+            sceneControl.setTargetDistance(10);
+        }, {batch:false});
+        window.giProbe = new GIProbe(scene, {id:'giProbe'});
+        window.giProbe.setRadius(20);
+        window.giProbe.setPositionFromXYZ(0, 5, 0);
+        let envCapture = ProbeTools.bakeGIProbe(scene, window.giProbe, {resolute:128});
+    });
+
+    let dirLight = new DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(-1, -1, 1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    // 调试(只能在第一次调用proShadow()生效)
+    dirLight.debugShadowMap();
+    // 设置PSSM分区模式(只能在第一次调用proShadow()生效)
+    dirLight.setShadowSplitType(DirectionalLight.S_SHADER_SPLIT_TYPE_FIXED);
+    // 最大ShadowMapSize为1024(只能在第一次调用proShadow()生效)
+    dirLight.setShadowMapSize(1024);
+    // 设置4层ShadowMap分区(只能在第一次调用proShadow()生效)
+    dirLight.setShadowSplitNum(4);
+    dirLight.proShadow(true);
+    dirLight.getShadow().setShadowIntensity(0.8);
+    rootNode.addChildren(dirLight);
+
+
+    // 使用dat gui
+    let gui = new dat.GUI();
+    var settings = {
+        directionalLight: true,
+        gi:true,
+        shadow: true,
+        biasFactor:1.0,
+        biasUnits:1.0,
+        backfaceShadows:false,
+        shadowIntensity: 0.8
+    };
+    gui.add(settings, 'directionalLight').onChange(function(value) {
+        if(value){
+            dirLight.enable();
+        }
+        else{
+            dirLight.disable();
+        }
+    });
+    gui.add(settings, 'gi').onChange(function(value) {
+        if(value){
+            window.giProbe.enable();
+        }
+        else{
+            window.giProbe.disable();
+        }
+    });
+    gui.add(settings, 'shadow').onChange(function(value) {
+        dirLight.proShadow(value);
+    });
+    gui.add(settings, 'biasFactor').onChange(function(value) {
+        dirLight.getShadow().setBias(value, settings.biasUnits);
+    });
+    gui.add(settings, 'biasUnits').onChange(function(value) {
+        dirLight.getShadow().setBias(settings.biasFactor, value);
+    });
+    gui.add(settings, 'backfaceShadows').onChange(function(value) {
+        dirLight.getShadow().setBackfaceShadows(value);
+    });
+    gui.add(settings, 'shadowIntensity').onChange(function(value) {
+        dirLight.getShadow().setShadowIntensity(value);
+    });
+
+    let renderEngine = new RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+        // console.log('eye:' + mainCamera.getEye().toString());
+        // console.log('at:' + mainCamera.getAt().toString());
+        // console.log('up:' + mainCamera.getUp().toString());
+    });
+</script>
+</body>
+</html>
