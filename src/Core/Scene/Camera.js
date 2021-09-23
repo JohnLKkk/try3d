@@ -236,6 +236,32 @@ export default class Camera extends Component{
     }
 
     /**
+     * 根据视角fovy,视口aspect,视锥near与far设置透视投影矩阵。<br/>
+     * @param {Number}[fovy]
+     * @param {Number}[aspect]
+     * @param {Number}[near]
+     * @param {Number}[far]
+     */
+    setFrustumPerspective(fovy, aspect, near, far){
+        // 无论如何,调用这个方法意味着变成了透视投影相机
+        this._m_ParallelProjection = false;
+
+
+        this._m_Fovy = fovy;
+        this._m_FixedAspect = aspect;
+        let h = Math.tan(MoreMath.toRadians(this._m_Fovy) * 0.5) * near;
+        let w = h * this._m_FixedAspect;
+        Log.debug("w:" + w + ";h:" + h + ";as:" + this._m_FixedAspect);
+        this._m_FrustumLeft = -w;
+        this._m_FrustumRight = w;
+        this._m_FrustumBottom = -h;
+        this._m_FrustumTop = h;
+        this._m_FrustumNear = near;
+        this._m_FrustumFar = far;
+        this._m_ProjectMatrix.perspectiveM(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (this._m_Width * 1.0 / this._m_Height), this._m_FrustumNear, this._m_FrustumFar);
+    }
+
+    /**
      * 强行更行投影矩阵。<br/>
      */
     forceUpdateProjection(){
@@ -243,7 +269,7 @@ export default class Camera extends Component{
             this._m_ProjectMatrix.parallelM(this._m_FrustumLeft, this._m_FrustumRight, this._m_FrustumTop, this._m_FrustumBottom, this._m_FrustumNear, this._m_FrustumFar);
         }
         else{
-            this._m_ProjectMatrix.perspectiveM(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (this._m_Width * 1.0 / this._m_Height), 0.1, 1000);
+            this._m_ProjectMatrix.perspectiveM(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (this._m_Width * 1.0 / this._m_Height), this._m_FrustumNear, this._m_FrustumFar);
         }
     }
 

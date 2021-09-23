@@ -139,6 +139,7 @@ export default class BasicShadowProcess extends Component{
         // 这里的设计有一些架构上的改进,具体参考开发日志
         let minSize = 128;
         let nextSize = this._m_ShadowMapSize;
+        let debugWSize = 1.0 / this._m_NbShadowMaps;
         for(let i = 0;i < this._m_NbShadowMaps;i++){
             this._m_LVPM[i] = new Matrix44();
             if(this._m_ShadowSplitType == BasicShadowProcess.S_QUADRATIC_SCALING){
@@ -171,8 +172,8 @@ export default class BasicShadowProcess extends Component{
             // debug
             if(this._m_Debug){
                 this._m_DebugShadowMap[i] = new Picture(this._m_Scene, {id:'debug_shadow_map_' + i});
-                this._m_DebugShadowMap[i].setSize(0.25, 0.3);
-                this._m_DebugShadowMap[i].setLeftTop(-0.75 + 0.52 * i, -0.7);
+                this._m_DebugShadowMap[i].setSize(debugWSize, 0.3);
+                this._m_DebugShadowMap[i].setLeftTop(-(1.0 - debugWSize) + debugWSize * 2.01 * i, -0.7);
                 this._m_DebugShadowMap[i].useDefaultMat();
                 let colorMap = new Texture2DTargetVars(this._m_Scene);
                 colorMap.setTextureFormat(Texture2DTargetVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DTargetVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DTargetVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);

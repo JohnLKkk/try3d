@@ -76,7 +76,8 @@ export default class Node extends Component{
         // 过滤标记
         this._m_FilterFlag = Node.S_DYNAMIC;
         // 阴影模式
-        this._m_ShadowMode = Node.S_SHADOW_CAST_AND_RECEIVE;
+        this._m_ShadowMode = 1;
+        this._m_ShadowMode |= Node.S_SHADOW_CAST_AND_RECEIVE;
     }
 
     /**
@@ -84,11 +85,20 @@ export default class Node extends Component{
      * @param {Boolean}[cast]
      */
     castShadow(cast){
-        if(cast && (this._m_FilterFlag & Node.S_SHADOW_CAST) == 0){
+        if(cast && ((this._m_ShadowMode & Node.S_SHADOW_CAST) == 0 || (this._m_ShadowMode & Node.S_SHADOW_CAST_AND_RECEIVE) == 0)){
             this._m_ShadowMode |= Node.S_SHADOW_CAST;
         }
-        else if((this._m_FilterFlag & Node.S_SHADOW_CAST) != 0){
-            this._m_ShadowMode ^= Node.S_SHADOW_CAST;
+        else{
+            if((this._m_ShadowMode & Node.S_SHADOW_CAST) != 0){
+                this._m_ShadowMode ^= Node.S_SHADOW_CAST;
+            }
+            if((this._m_ShadowMode & Node.S_SHADOW_CAST_AND_RECEIVE) != 0){
+                this._m_ShadowMode ^= Node.S_SHADOW_CAST_AND_RECEIVE;
+                console.log('_m_ShadowMode:' + this._m_ShadowMode);
+                if(this._m_ShadowMode & Node.S_SHADOW_RECEIVE == 0){
+                    this._m_ShadowMode |= Node.S_SHADOW_RECEIVE;
+                }
+            }
         }
         this._m_Children.forEach(c=>{
             c.castShadow(cast);
@@ -108,11 +118,19 @@ export default class Node extends Component{
      * @param {Boolean}[receive]
      */
     receiveShadow(receive){
-        if(receive && (this._m_ShadowMode & Node.S_SHADOW_RECEIVE) == 0){
+        if(receive && ((this._m_ShadowMode & Node.S_SHADOW_RECEIVE) == 0 || (this._m_FilterFlag & Node.S_SHADOW_CAST_AND_RECEIVE) == 0)){
             this._m_ShadowMode |= Node.S_SHADOW_RECEIVE;
         }
-        else if((this._m_ShadowMode & Node.S_SHADOW_RECEIVE) != 0){
-            this._m_ShadowMode ^= Node.S_SHADOW_RECEIVE;
+        else{
+            if((this._m_ShadowMode & Node.S_SHADOW_RECEIVE) != 0){
+                this._m_ShadowMode ^= Node.S_SHADOW_RECEIVE;
+            }
+            if((this._m_ShadowMode & Node.S_SHADOW_CAST_AND_RECEIVE) != 0){
+                this._m_ShadowMode ^= Node.S_SHADOW_CAST_AND_RECEIVE;
+                if(this._m_ShadowMode & Node.S_SHADOW_CAST == 0){
+                    this._m_ShadowMode |= Node.S_SHADOW_CAST;
+                }
+            }
         }
         this._m_Children.forEach(c=>{
             c.receiveShadow(receive);

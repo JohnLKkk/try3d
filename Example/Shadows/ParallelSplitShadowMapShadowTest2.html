@@ -131,7 +131,7 @@
     gui.add(settings, 'backfaceShadows').onChange(function(value) {
         dirLight.getShadow().setBackfaceShadows(value);
     });
-    gui.add(settings, 'shadowIntensity').onChange(function(value) {
+    gui.add(settings, 'shadowIntensity', 0.1, 1.0).step(0.1).onChange(function(value) {
         dirLight.getShadow().setShadowIntensity(value);
     });
 

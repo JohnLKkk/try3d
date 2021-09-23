@@ -202,27 +202,61 @@ Def PostShadowDef{
                 pos.xyz /= pos.w;
                 return pos.xyz;
             }
-            //#define GETSHADOW Shadow_Nearest
-            // 基于PSSM实现的CSM
-            float getDirectionalLightShadows(in vec4 splits,in float shadowPosition, in SHADOWMAP shadowMap0, in SHADOWMAP shadowMap1, in SHADOWMAP shadowMap2,in SHADOWMAP shadowMap3, in vec4 projCoord0,in vec4 projCoord1,in vec4 projCoord2,in vec4 projCoord3){
-                float shadow = 1.0f;
-                if(shadowPosition < splits.x){
-                    shadow = GETSHADOW(shadowMap0, projCoord0 );
+            #ifdef Context.Pssm
+                // 基于PSSM实现的DirectionalLightShadows
+                float getDirectionalLightShadows(in vec4 splits,in float shadowPosition, in SHADOWMAP shadowMap0, in SHADOWMAP shadowMap1, in SHADOWMAP shadowMap2,in SHADOWMAP shadowMap3, in vec4 projCoord0,in vec4 projCoord1,in vec4 projCoord2,in vec4 projCoord3){
+                    float shadow = 1.0f;
+                    if(shadowPosition < splits.x){
+                        shadow = GETSHADOW(shadowMap0, projCoord0 );
+                    }
+                    else if( shadowPosition <  splits.y){
+                        shadowBorderScale = 0.5f;
+                        shadow = GETSHADOW(shadowMap1, projCoord1);
+                    }
+                    else if( shadowPosition <  splits.z){
+                        shadowBorderScale = 0.25f;
+                        shadow = GETSHADOW(shadowMap2, projCoord2);
+                    }
+                    else if( shadowPosition <  splits.w){
+                        shadowBorderScale = 0.125f;
+                        shadow = GETSHADOW(shadowMap3, projCoord3);
+                    }
+                    return shadow;
                 }
-                else if( shadowPosition <  splits.y){
-                    shadowBorderScale = 0.5f;
-                    shadow = GETSHADOW(shadowMap1, projCoord1);
+            #endif
+            #ifdef Context.PointLightShadows
+                float getPointLightShadows(in vec4 worldPos,in vec3 lightPos, in SHADOWMAP shadowMap0, in SHADOWMAP shadowMap1, in SHADOWMAP shadowMap2, in SHADOWMAP shadowMap3, in SHADOWMAP shadowMap4, in SHADOWMAP shadowMap5, in vec4 projCoord0,in vec4 projCoord1,in vec4 projCoord2,in vec4 projCoord3,in vec4 projCoord4,in vec4 projCoord5){
+                    float shadow = 1.0f;
+                    vec3 vect = worldPos.xyz - lightPos;
+                    vec3 absv = abs(vect);
+                    float maxComp = max(absv.x,max(absv.y,absv.z));
+                    if(maxComp == absv.y){
+                       if(vect.y < 0.0f){
+                           shadow = GETSHADOW(shadowMap0, projCoord0 / projCoord0.w);
+                       }
+                       else{
+                           shadow = GETSHADOW(shadowMap1, projCoord1 / projCoord1.w);
+                       }
+                    }
+                    else if(maxComp == absv.z){
+                       if(vect.z < 0.0f){
+                           shadow = GETSHADOW(shadowMap2, projCoord2 / projCoord2.w);
+                       }
+                       else{
+                           shadow = GETSHADOW(shadowMap3, projCoord3 / projCoord3.w);
+                       }
+                    }
+                    else if(maxComp == absv.x){
+                       if(vect.x < 0.0f){
+                           shadow = GETSHADOW(shadowMap4, projCoord4 / projCoord4.w);
+                       }
+                       else{
+                           shadow = GETSHADOW(shadowMap5, projCoord5 / projCoord5.w);
+                       }
+                    }
+                    return shadow;
                 }
-                else if( shadowPosition <  splits.z){
-                    shadowBorderScale = 0.25f;
-                    shadow = GETSHADOW(shadowMap2, projCoord2);
-                }
-                else if( shadowPosition <  splits.w){
-                    shadowBorderScale = 0.125f;
-                    shadow = GETSHADOW(shadowMap3, projCoord3);
-                }
-                return shadow;
-            }
+            #endif
             vec3 approximateNormal(in vec4 worldPos,in vec2 texCoord, in sampler2D depthMap, in vec2 resolutionInverse){
                 float step = resolutionInverse.x;
                 float stepy = resolutionInverse.y;
@@ -283,7 +317,7 @@ Def PostShadowDef{
                 vec4 projCoord1 = biasMat * Context.LightViewProjectMatrix1 * wPosition;
                 vec4 projCoord2 = biasMat * Context.LightViewProjectMatrix2 * wPosition;
                 vec4 projCoord3 = biasMat * Context.LightViewProjectMatrix3 * wPosition;
-                #ifdef POINTLIGHT
+                #ifdef Context.PointLightShadows
                    vec4 projCoord4 = biasMat * Context.LightViewProjectMatrix4 * wPosition;
                    vec4 projCoord5 = biasMat * Context.LightViewProjectMatrix5 * wPosition;
                 #endif
@@ -300,6 +334,8 @@ Def PostShadowDef{
                 #endif
 
                 #ifdef Context.PointLightShadows
+                    // pointLight shadow
+                    shadow = getPointLightShadows(wPosition, Context.LightPos, Context.InShadowMap0, Context.InShadowMap1, Context.InShadowMap2, Context.InShadowMap3, Context.InShadowMap4, Context.InShadowMap5, projCoord0, projCoord1, projCoord2, projCoord3, projCoord4, projCoord5);
                 #else
                     #ifdef Context.Pssm
                         // directionalLight shadow

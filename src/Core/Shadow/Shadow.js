@@ -9,6 +9,7 @@ import Node from "../Node/Node.js";
 import Matrix44 from "../Math3d/Matrix44.js";
 import AABBBoundingBox from "../Math3d/Bounding/AABBBoundingBox.js";
 import SplitOccluders from "./SplitOccluders.js";
+import Light from "../Light/Light.js";
 
 export default class Shadow {
     static S_TEMP_VEC3_0 = new Vector3();
@@ -273,7 +274,7 @@ export default class Shadow {
     }
 
     /**
-     * 计算当前锥体内的潜在可见性集合，这里有很多优化的地方，最基本的，可以记录每次剔除后的另一部分，因为假设目标node是整个潜在可见集合，而camera是分区锥体。<br/>
+     * 计算当前锥体内的潜在可见性集合，这里的优化策略是，这个方法用于查找主相机中潜在可见集合的子集，因此不必遍历场景图。<br/>
      * @param {Array}[visDrawables]
      * @param {Camera}[camera]
      * @param {Number}[mode]
@@ -283,6 +284,21 @@ export default class Shadow {
         let restoreFrustumMask = camera.getFrustumMask();
         // 执行默认剔除
         Shadow._cull(visDrawables, camera, mode, result);
+        camera.setFrustumMask(restoreFrustumMask);
+    }
+
+    /**
+     * 计算当前锥体内的潜在可见集合。<br/>
+     * @param {Node}[node]
+     * @param {Camera}[camera]
+     * @param {Number}[mode]
+     * @param {Array}[result]
+     */
+    static calculateNodeInFrustum(node, camera, mode, result){
+        let restoreFrustumMask = camera.getFrustumMask();
+        // 执行默认剔除
+        camera.setFrustumMask(0);
+        Shadow._cull2(node, camera, mode, result);
         camera.setFrustumMask(restoreFrustumMask);
     }
 
@@ -306,6 +322,38 @@ export default class Shadow {
             }
         });
     }
+    static _cull2(node, camera, mode, result){
+        if(node.getFilterFlag() == Node.S_ALWAYS)return;
+
+        if(node.inFrustum(camera)){
+            if(node.isDrawable && node.isDrawable() && !node.isGUI()){
+                // 判断是否为指定阴影模式
+                if(Shadow._parseShadowMode(node, mode)){
+                    // 添加到result中
+                    result.push(node);
+                }
+            }
+            else{
+                if(node.getChildren().length > 0){
+                    let resetFrustumMask = camera.getFrustumMask();
+                    node.getChildren().forEach(node=>{
+                        if(!(node instanceof Light)){
+                            camera.setFrustumMask(resetFrustumMask);
+                            Shadow._cull2(node, camera, mode, result);
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    /**
+     * 解析阴影类型。<br/>
+     * @param {Node}[node]
+     * @param {Number}[mode]
+     * @return {Number}
+     * @private
+     */
     static _parseShadowMode(node, mode){
         if(mode != Node.S_SHADOW_NONE){
             switch (mode) {

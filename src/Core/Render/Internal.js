@@ -203,27 +203,61 @@ export default class Internal {
         "                pos.xyz /= pos.w;\n" +
         "                return pos.xyz;\n" +
         "            }\n" +
-        "            //#define GETSHADOW Shadow_Nearest\n" +
-        "            // 基于PSSM实现的CSM\n" +
-        "            float getDirectionalLightShadows(in vec4 splits,in float shadowPosition, in SHADOWMAP shadowMap0, in SHADOWMAP shadowMap1, in SHADOWMAP shadowMap2,in SHADOWMAP shadowMap3, in vec4 projCoord0,in vec4 projCoord1,in vec4 projCoord2,in vec4 projCoord3){\n" +
-        "                float shadow = 1.0f;\n" +
-        "                if(shadowPosition < splits.x){\n" +
-        "                    shadow = GETSHADOW(shadowMap0, projCoord0 );\n" +
+        "            #ifdef Context.Pssm\n" +
+        "                // 基于PSSM实现的DirectionalLightShadows\n" +
+        "                float getDirectionalLightShadows(in vec4 splits,in float shadowPosition, in SHADOWMAP shadowMap0, in SHADOWMAP shadowMap1, in SHADOWMAP shadowMap2,in SHADOWMAP shadowMap3, in vec4 projCoord0,in vec4 projCoord1,in vec4 projCoord2,in vec4 projCoord3){\n" +
+        "                    float shadow = 1.0f;\n" +
+        "                    if(shadowPosition < splits.x){\n" +
+        "                        shadow = GETSHADOW(shadowMap0, projCoord0 );\n" +
+        "                    }\n" +
+        "                    else if( shadowPosition <  splits.y){\n" +
+        "                        shadowBorderScale = 0.5f;\n" +
+        "                        shadow = GETSHADOW(shadowMap1, projCoord1);\n" +
+        "                    }\n" +
+        "                    else if( shadowPosition <  splits.z){\n" +
+        "                        shadowBorderScale = 0.25f;\n" +
+        "                        shadow = GETSHADOW(shadowMap2, projCoord2);\n" +
+        "                    }\n" +
+        "                    else if( shadowPosition <  splits.w){\n" +
+        "                        shadowBorderScale = 0.125f;\n" +
+        "                        shadow = GETSHADOW(shadowMap3, projCoord3);\n" +
+        "                    }\n" +
+        "                    return shadow;\n" +
         "                }\n" +
-        "                else if( shadowPosition <  splits.y){\n" +
-        "                    shadowBorderScale = 0.5f;\n" +
-        "                    shadow = GETSHADOW(shadowMap1, projCoord1);\n" +
+        "            #endif\n" +
+        "            #ifdef Context.PointLightShadows\n" +
+        "                float getPointLightShadows(in vec4 worldPos,in vec3 lightPos, in SHADOWMAP shadowMap0, in SHADOWMAP shadowMap1, in SHADOWMAP shadowMap2, in SHADOWMAP shadowMap3, in SHADOWMAP shadowMap4, in SHADOWMAP shadowMap5, in vec4 projCoord0,in vec4 projCoord1,in vec4 projCoord2,in vec4 projCoord3,in vec4 projCoord4,in vec4 projCoord5){\n" +
+        "                    float shadow = 1.0f;\n" +
+        "                    vec3 vect = worldPos.xyz - lightPos;\n" +
+        "                    vec3 absv = abs(vect);\n" +
+        "                    float maxComp = max(absv.x,max(absv.y,absv.z));\n" +
+        "                    if(maxComp == absv.y){\n" +
+        "                       if(vect.y < 0.0f){\n" +
+        "                           shadow = GETSHADOW(shadowMap0, projCoord0 / projCoord0.w);\n" +
+        "                       }\n" +
+        "                       else{\n" +
+        "                           shadow = GETSHADOW(shadowMap1, projCoord1 / projCoord1.w);\n" +
+        "                       }\n" +
+        "                    }\n" +
+        "                    else if(maxComp == absv.z){\n" +
+        "                       if(vect.z < 0.0f){\n" +
+        "                           shadow = GETSHADOW(shadowMap2, projCoord2 / projCoord2.w);\n" +
+        "                       }\n" +
+        "                       else{\n" +
+        "                           shadow = GETSHADOW(shadowMap3, projCoord3 / projCoord3.w);\n" +
+        "                       }\n" +
+        "                    }\n" +
+        "                    else if(maxComp == absv.x){\n" +
+        "                       if(vect.x < 0.0f){\n" +
+        "                           shadow = GETSHADOW(shadowMap4, projCoord4 / projCoord4.w);\n" +
+        "                       }\n" +
+        "                       else{\n" +
+        "                           shadow = GETSHADOW(shadowMap5, projCoord5 / projCoord5.w);\n" +
+        "                       }\n" +
+        "                    }\n" +
+        "                    return shadow;\n" +
         "                }\n" +
-        "                else if( shadowPosition <  splits.z){\n" +
-        "                    shadowBorderScale = 0.25f;\n" +
-        "                    shadow = GETSHADOW(shadowMap2, projCoord2);\n" +
-        "                }\n" +
-        "                else if( shadowPosition <  splits.w){\n" +
-        "                    shadowBorderScale = 0.125f;\n" +
-        "                    shadow = GETSHADOW(shadowMap3, projCoord3);\n" +
-        "                }\n" +
-        "                return shadow;\n" +
-        "            }\n" +
+        "            #endif\n" +
         "            vec3 approximateNormal(in vec4 worldPos,in vec2 texCoord, in sampler2D depthMap, in vec2 resolutionInverse){\n" +
         "                float step = resolutionInverse.x;\n" +
         "                float stepy = resolutionInverse.y;\n" +
@@ -284,7 +318,7 @@ export default class Internal {
         "                vec4 projCoord1 = biasMat * Context.LightViewProjectMatrix1 * wPosition;\n" +
         "                vec4 projCoord2 = biasMat * Context.LightViewProjectMatrix2 * wPosition;\n" +
         "                vec4 projCoord3 = biasMat * Context.LightViewProjectMatrix3 * wPosition;\n" +
-        "                #ifdef POINTLIGHT\n" +
+        "                #ifdef Context.PointLightShadows\n" +
         "                   vec4 projCoord4 = biasMat * Context.LightViewProjectMatrix4 * wPosition;\n" +
         "                   vec4 projCoord5 = biasMat * Context.LightViewProjectMatrix5 * wPosition;\n" +
         "                #endif\n" +
@@ -301,6 +335,8 @@ export default class Internal {
         "                #endif\n" +
         "\n" +
         "                #ifdef Context.PointLightShadows\n" +
+        "                    // pointLight shadow\n" +
+        "                    shadow = getPointLightShadows(wPosition, Context.LightPos, Context.InShadowMap0, Context.InShadowMap1, Context.InShadowMap2, Context.InShadowMap3, Context.InShadowMap4, Context.InShadowMap5, projCoord0, projCoord1, projCoord2, projCoord3, projCoord4, projCoord5);\n" +
         "                #else\n" +
         "                    #ifdef Context.Pssm\n" +
         "                        // directionalLight shadow\n" +

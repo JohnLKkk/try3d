@@ -133,6 +133,8 @@ export default class DirectionalLightShadowProcess extends BasicShadowProcess{
         Shadow.calculateLightConeScope(this._m_MainCamera, this._m_SplitsArray[shadowMapIndex], this._m_SplitsArray[shadowMapIndex + 1], 1.0, this._m_Points);
         if(this._m_ShadowGeometryReceivers.length == 0){
             // 我们需要根据receivers集合来计算完整的casts集合
+            // 简而言之,这里根据收集当前可见视锥下需要参与receiver的物体
+            // 此时仅需从潜在可见集合中中计算子集
             Shadow.calculateGeometriesInFrustum(this._m_Scene.getRender().getVisDrawables(), this._m_MainCamera, Node.S_SHADOW_RECEIVE, this._m_ShadowGeometryReceivers);
         }
         Shadow.calculateShadowCamera(this._m_Scene.getSceneNodes(), this._m_ShadowGeometryReceivers, this._m_ShadowCam, this._m_Points, shadowGeometryCasts, this._m_Stabilize ? this._m_ShadowMapSize : 0.0);

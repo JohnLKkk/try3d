@@ -1,6 +1,7 @@
 import Light from "./Light.js";
 import Vector3 from "../Math3d/Vector3.js";
 import BoundingSphere from "../Math3d/Bounding/BoundingSphere.js";
+import PointLightShadowProcess from "../Shadow/PointLightShadowProcess.js";
 
 /**
  * 点光源。<br/>
@@ -29,6 +30,11 @@ export default class PointLight extends Light{
         // 与其在裁剪范围进行扩大，不如直接减少半径，但是这可能带来一个问题是SpotLight和PointLight半径范围变小
         // 因为使用了1.0/r,所以会与光锥裁剪时的r有误差,只能在这里进行误差缩小
         this._m_InvRadius2 = 1.0 / (this._m_Radius - this._m_StepClip);
+    }
+    _genShadow() {
+        // 创建用于PointLight的阴影
+        this._m_ShadowCfg.id = this._m_Id + "_shadow";
+        this._m_Shadow = new PointLightShadowProcess(this._m_Scene, this._m_ShadowCfg);
     }
 
     /**

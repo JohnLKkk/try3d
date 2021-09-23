@@ -338,6 +338,19 @@ export default class Vector3 {
     }
 
     /**
+     * 判断是否与指定的v相等。<br/>
+     * @param {Vector3}[v]
+     * @return {Boolean}
+     */
+    equals(v){
+        if(v == this){
+            return true;
+        }
+        else if(v == null)return false;
+        else return this._m_X == v._m_X && this._m_Y == v._m_Y && this._m_Z == v._m_Z;
+    }
+
+    /**
      * 以线性插值方式从v1到v2。<br/>
      * @param {Vector3}[v1]
      * @param {Vector3}[v2]
