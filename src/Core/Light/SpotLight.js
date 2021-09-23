@@ -218,7 +218,7 @@ export default class SpotLight extends Light{
      * @param {Number}[z]
      */
     setDirectionXYZ(x, y, z){
-        this._m_Direction.setToInXYZ(x, y, z);
+        this._m_Direction.setToInXYZ(x, y, z).normal();
     }
 
     /**

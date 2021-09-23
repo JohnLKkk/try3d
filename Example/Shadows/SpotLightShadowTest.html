@@ -79,7 +79,9 @@
 
     let spotLight = new SpotLight(scene, {id:'spotLight'});
     spotLight.setInnerAngle(MoreMath.toRadians(5));
-    spotLight.setOuterAngle(MoreMath.toRadians(8));
+    spotLight.setOuterAngle(MoreMath.toRadians(15));
+    console.log('innerAngle:' + spotLight.getInnerAngle());
+    console.log('outAngle:' + spotLight.getOuterAngle());
     spotLight.setDirectionXYZ(-0.2, -1, -0.2);
     spotLight.setColorRGBA(0.5, 0.5, 0.5, 1.0);
     spotLight.setPositionXYZ(-1, 5, -1);
@@ -93,6 +95,8 @@
     var settings = {
         spotLight: true,
         spotLightX:spotLight.getPosition()._m_X,
+        innerAngle:MoreMath.toAngle(spotLight.getInnerAngle()),
+        outerAngle:MoreMath.toAngle(spotLight.getOuterAngle()),
         gi:true,
         shadow: true,
         biasFactor:1.0,
@@ -109,8 +113,14 @@
         }
     });
     gui.add(settings, 'spotLightX', -10, 10).step(1).onChange(value=>{
-        spotLight.setPositionXYZ(value, 2, 0);
+        spotLight.setPositionXYZ(value, 5, -1);
         // sphere.setLocalTranslation(spotLight.getPosition());
+    });
+    gui.add(settings, 'innerAngle', 5, 15).step(1).onChange(value=>{
+        spotLight.setInnerAngle(MoreMath.toRadians(value));
+    });
+    gui.add(settings, 'outerAngle', 15, 45).step(1).onChange(value=>{
+        spotLight.setOuterAngle(MoreMath.toRadians(value));
     });
     gui.add(settings, 'gi').onChange(function(value) {
         if(value){

@@ -1,5 +1,6 @@
 import BasicShadowProcess from "./BasicShadowProcess.js";
 import Camera from "../Scene/Camera.js";
+import Node from "../Node/Node.js";
 import Tools from "../Util/Tools.js";
 import Vector3 from "../Math3d/Vector3.js";
 import Log from "../Util/Log.js";
@@ -15,7 +16,11 @@ import ShaderSource from "../WebGL/ShaderSource.js";
  */
 export default class SpotLightShadowProcess extends BasicShadowProcess{
     _m_ShadowCam;
-    _m_Points = new Array(8);
+    _m_OutAngle = -1;
+    _m_SpotRange = -1;
+    _m_Position = new Vector3();
+    _m_Direction = new Vector3();
+    _m_UpdateCasterCam = false;
 
     // 临时变量
     _m_TempVec3 = new Vector3();
@@ -27,9 +32,6 @@ export default class SpotLightShadowProcess extends BasicShadowProcess{
     }
     init(shadowMapSize){
         this._m_ShadowCam = new Camera(this._m_Scene, {id:this._m_Id + "_" + Tools.nextId(), width:shadowMapSize, height:shadowMapSize, fixedSize:true});
-        for(let i = 0;i < 8;i++){
-            this._m_Points[i] = new Vector3();
-        }
     }
     initMat() {
         super.initMat();
@@ -63,22 +65,23 @@ export default class SpotLightShadowProcess extends BasicShadowProcess{
             Log.warn('无效光源!');
             return;
         }
-        const mainCamera = this._m_Scene.getMainCamera();
-
-        let zFar = this._m_ZFarOverride;
-        if(zFar == 0){
-            zFar = mainCamera.getFar();
+        if(this._m_OutAngle != this._m_Light.getOuterAngle() || this._m_SpotRange != this._m_Light.getSpotRange() || !this._m_Position.equals(this._m_Light.getPosition()) || !this._m_Direction.equals(this._m_Light.getDirection())){
+            this._m_OutAngle = this._m_Light.getOuterAngle();
+            this._m_SpotRange = this._m_Light.getSpotRange();
+            this._m_Position.setTo(this._m_Light.getPosition());
+            this._m_Direction.setTo(this._m_Light.getDirection());
+            this._m_ShadowCam.setFrustumPerspective(this._m_OutAngle * MoreMath.S_RAD_TO_DEG * 2.0, 1.0, 1.0, this._m_SpotRange);
+            this._m_ShadowCam.lookAt(this._m_Position, this._m_Position.add(this._m_Direction, this._m_TempVec3), this._m_ShadowCam.getUp());
+            // 强制更新
+            this._m_ShadowCam._updateFrustum();
+            this._m_ShadowCam.getProjectViewMatrix(true);
+        }
+        else if(this._m_UpdateCasterCam){
+            this._m_UpdateCasterCam = false;
+            this._m_ShadowCam.setFrustumPerspective(this._m_OutAngle * MoreMath.S_RAD_TO_DEG * 2.0, 1.0, 1.0, this._m_SpotRange);
+            this._m_ShadowCam._updateFrustum();
         }
 
-        let zNear = Math.max(mainCamera.getNear(), 0.001);
-        Shadow.calculateLightConeScope(mainCamera, zNear, zFar, 1.0, this._m_Points);
-
-        this._m_ShadowCam.setFrustumPerspective(this._m_Light.getOuterAngle() * MoreMath.S_RAD_TO_DEG * 2.0, 1.0, 1.0, this._m_Light.getSpotRange());
-        this._m_ShadowCam.lookAt(this._m_Light.getPosition(), this._m_Light.getPosition().add(this._m_Light.getDirection(), this._m_TempVec3), this._m_ShadowCam.getUp());
-        // 强制更新
-        this._m_ShadowCam._updateFrustum();
-        this._m_ShadowCam.forceUpdateProjection();
-        this._m_ShadowCam.getProjectViewMatrix(true);
     }
 
     getShadowGeometryCasts(shadowMapIndex, shadowGeometryCasts){
@@ -87,6 +90,9 @@ export default class SpotLightShadowProcess extends BasicShadowProcess{
         scenes.forEach(scene=>{
             Shadow.calculateNodeInFrustum(scene, this._m_ShadowCam, Node.S_SHADOW_CAST, shadowGeometryCasts);
         });
+        this._m_UpdateCasterCam = true;
+        this._m_ShadowCam.setFrustumPerspective(this._m_OutAngle * MoreMath.S_RAD_TO_DEG * 2.0, 1.0, 1.0, 1000.0);
+        this._m_ShadowCam.getProjectViewMatrix(true);
         return shadowGeometryCasts;
     }
 
