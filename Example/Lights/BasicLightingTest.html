@@ -58,8 +58,8 @@
     spotLight.setPositionXYZ(8, 0, 0);
     spotLight.setDirectionXYZ(-1, 0, 0);
     spotLight.setColorRGBA(1.0, 0.0, 0.0, 1.0);
-    spotLight.setInnerCorner(MoreMath.toRadians(3));
-    spotLight.setOuterCorner(MoreMath.toRadians(5));
+    spotLight.setInnerAngle(MoreMath.toRadians(3));
+    spotLight.setOuterAngle(MoreMath.toRadians(5));
 
     let renderEngine = new RenderEngine();
     scene.addSceneNode(rootNode);

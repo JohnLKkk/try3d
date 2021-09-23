@@ -3,6 +3,7 @@ import Vector3 from "../Math3d/Vector3.js";
 import MoreMath from "../Math3d/MoreMath.js";
 import BoundingSphere from "../Math3d/Bounding/BoundingSphere.js";
 import TempVars from "../Util/TempVars.js";
+import SpotLightShadowProcess from "../Shadow/SpotLightShadowProcess.js";
 
 /**
  * 聚光灯。<br/>
@@ -25,9 +26,11 @@ export default class SpotLight extends Light{
         // 位置
         this._m_Position = new Vector3();
         // 内角
-        this._m_InnerCorner = Math.cos(MoreMath.toRadians(30));
+        this._m_InnerAngle = MoreMath.toRadians(30);
+        this._m_InnerCorner = Math.cos(this._m_InnerAngle);
         // 外角
-        this._m_OuterCorner = Math.cos(MoreMath.toRadians(45));
+        this._m_OuterAngle = MoreMath.toRadians(45);
+        this._m_OuterCorner = Math.cos(this._m_OuterAngle);
         // 最远能够照射多远(为0表示可以无限远)
         this._m_SpotRange = 100;
         // 光源裁剪渐变范围
@@ -39,6 +42,11 @@ export default class SpotLight extends Light{
         // 打包内外角到一个变量中
         this._m_PackedAngleCos = 0;
         this.computeAngleParameters();
+    }
+    _genShadow() {
+        // 创建用于SpotLight的阴影
+        this._m_ShadowCfg.id = this._m_Id + "_shadow";
+        this._m_Shadow = new SpotLightShadowProcess(this._m_Scene, this._m_ShadowCfg);
     }
 
     /**
@@ -79,7 +87,7 @@ export default class SpotLight extends Light{
         if(Number.parseInt(this._m_PackedAngleCos) == Number.parseInt(this._m_OuterCorner * 1000)){
             this._m_OuterCorner -= 0.001;
         }
-        this._m_PackedAngleCos += parseInt(this._m_OuterCorner);
+        this._m_PackedAngleCos += this._m_OuterCorner * 1.0;
     }
 
     /**
@@ -123,11 +131,12 @@ export default class SpotLight extends Light{
 
     /**
      * 设置内角。<br/>
-     * @param {Number}[innerCorner 弧度值]
+     * @param {Number}[innerAngle 弧度值]
      */
-    setInnerCorner(innerCorner){
-        this._m_InnerCorner = Math.cos(innerCorner);
-        this._m_InnerMinusOuter = innerCorner - this._m_OuterCorner;
+    setInnerAngle(innerAngle){
+        this._m_InnerAngle = innerAngle;
+        this._m_InnerCorner = Math.cos(this._m_InnerAngle);
+        this._m_InnerMinusOuter = this._m_InnerCorner - this._m_OuterCorner;
         this.computeAngleParameters();
     }
 
@@ -135,17 +144,18 @@ export default class SpotLight extends Light{
      * 返回外角。<br/>
      * @return {Number|*}
      */
-    getInnerCorner(){
-        return this._m_InnerCorner;
+    getInnerAngle(){
+        return this._m_InnerAngle;
     }
 
     /**
      * 设置外角。<br/>
-     * @param {Number}[outerCorner 弧度值]
+     * @param {Number}[outerAngle 弧度值]
      */
-    setOuterCorner(outerCorner){
-        this._m_OuterCorner = Math.cos(outerCorner);
-        this._m_InnerMinusOuter = this._m_InnerCorner - outerCorner;
+    setOuterAngle(outerAngle){
+        this._m_OuterAngle = outerAngle;
+        this._m_OuterCorner = Math.cos(this._m_OuterAngle);
+        this._m_InnerMinusOuter = this._m_InnerCorner - this._m_OuterCorner;
         this.computeAngleParameters();
     }
 
@@ -153,8 +163,8 @@ export default class SpotLight extends Light{
      * 返回外角。<br/>
      * @return {Number|*}
      */
-    getOuterCorner(){
-        return this._m_OuterCorner;
+    getOuterAngle(){
+        return this._m_OuterAngle;
     }
 
     /**

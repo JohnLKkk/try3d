@@ -139,7 +139,7 @@ export default class BasicShadowProcess extends Component{
         // 这里的设计有一些架构上的改进,具体参考开发日志
         let minSize = 128;
         let nextSize = this._m_ShadowMapSize;
-        let debugWSize = 1.0 / this._m_NbShadowMaps;
+        let debugWSize = Math.min(1.0 / this._m_NbShadowMaps, 0.25);
         for(let i = 0;i < this._m_NbShadowMaps;i++){
             this._m_LVPM[i] = new Matrix44();
             if(this._m_ShadowSplitType == BasicShadowProcess.S_QUADRATIC_SCALING){

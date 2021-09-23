@@ -89,6 +89,7 @@ export default class ShaderSource {
     static S_GIPROBES_SRC = '_C_GIPROBES';
     static S_PSSM_SRC = '_C_PSSM';
     static S_POINTLIGHT_SHADOWS_SRC = '_C_POINTLIGHT_SHADOWS';
+    static S_SPOTLIGHT_SHADOWS_SRC = '_C_SPOTLIGHT_SHADOWS';
     static S_FADE_SRC = '_C_FADE';
 
     static S_G_BUFFER0_SRC = "_gBuffer0";
@@ -272,6 +273,7 @@ export default class ShaderSource {
         "Context.GIProbes":{src:ShaderSource.S_GIPROBES_SRC, pattern:/Context.GIProbes/, pattern2:/Context.GIProbes[\s+-;.,\*\\]{1,}/, tagPattern:/Context.GIProbes/g, tag:ShaderSource.S_GIPROBES_SRC, isFlagVariable:true},
         "Context.Pssm":{src:ShaderSource.S_PSSM_SRC, pattern:/Context.Pssm/, pattern2:/Context.Pssm[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Pssm/g, tag:ShaderSource.S_PSSM_SRC, isFlagVariable:true},
         "Context.PointLightShadows":{src:ShaderSource.S_POINTLIGHT_SHADOWS_SRC, pattern:/Context.PointLightShadows/, pattern2:/Context.PointLightShadows[\s+-;.,\*\\]{1,}/, tagPattern:/Context.PointLightShadows/g, tag:ShaderSource.S_POINTLIGHT_SHADOWS_SRC, isFlagVariable:true},
+        "Context.SpotLightShadows":{src:ShaderSource.S_SPOTLIGHT_SHADOWS_SRC, pattern:/Context.SpotLightShadows/, pattern2:/Context.SpotLightShadows[\s+-;.,\*\\]{1,}/, tagPattern:/Context.SpotLightShadows/g, tag:ShaderSource.S_SPOTLIGHT_SHADOWS_SRC, isFlagVariable:true},
         "Context.Fade":{src:ShaderSource.S_FADE_SRC, pattern:/Context.Fade/, pattern2:/Context.Fade[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Fade/g, tag:ShaderSource.S_FADE_SRC, isFlagVariable:true},
 
         // 上下文定义
@@ -279,6 +281,7 @@ export default class ShaderSource {
         '_C_GIPROBES':"#define " + ShaderSource.S_GIPROBES_SRC + " " + ShaderSource.S_GIPROBES_SRC,
         '_C_PSSM':"#define " + ShaderSource.S_PSSM_SRC + " " + ShaderSource.S_PSSM_SRC,
         '_C_POINTLIGHT_SHADOWS':"#define " + ShaderSource.S_POINTLIGHT_SHADOWS_SRC + " " + ShaderSource.S_POINTLIGHT_SHADOWS_SRC,
+        '_C_SPOTLIGHT_SHADOWS':"#define " + ShaderSource.S_SPOTLIGHT_SHADOWS_SRC + " " + ShaderSource.S_SPOTLIGHT_SHADOWS_SRC,
         '_FADE':"#define " + ShaderSource.S_FADE_SRC + " " + ShaderSource.S_FADE_SRC,
     };
 

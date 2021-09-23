@@ -251,7 +251,7 @@ export default class Camera extends Component{
         this._m_FixedAspect = aspect;
         let h = Math.tan(MoreMath.toRadians(this._m_Fovy) * 0.5) * near;
         let w = h * this._m_FixedAspect;
-        Log.debug("w:" + w + ";h:" + h + ";as:" + this._m_FixedAspect);
+        // Log.debug("w:" + w + ";h:" + h + ";as:" + this._m_FixedAspect);
         this._m_FrustumLeft = -w;
         this._m_FrustumRight = w;
         this._m_FrustumBottom = -h;

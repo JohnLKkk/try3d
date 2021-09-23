@@ -258,6 +258,18 @@ export default class Internal {
         "                    return shadow;\n" +
         "                }\n" +
         "            #endif\n" +
+        "            #ifdef Context.SpotLightShadows\n" +
+        "                float getSpotLightShadows(in SHADOWMAP shadowMap, in  vec4 projCoord){\n" +
+        "                    float shadow = 1.0f;\n" +
+        "                    projCoord /= projCoord.w;\n" +
+        "                    shadow = GETSHADOW(shadowMap, projCoord);\n" +
+        "\n" +
+        "                    // 一个小的衰减，使阴影很好地融入暗部，将纹理坐标值转换为 -1,1 范围，因此纹理坐标向量的长度实际上是地面上变亮区域的半径\n" +
+        "                    projCoord = projCoord * 2.0f - 1.0f;\n" +
+        "                    float fallOff = ( length(projCoord.xy) - 0.9f ) / 0.1f;\n" +
+        "                    return mix(shadow, 1.0f, clamp(fallOff, 0.0f, 1.0f));\n" +
+        "                }\n" +
+        "            #endif\n" +
         "            vec3 approximateNormal(in vec4 worldPos,in vec2 texCoord, in sampler2D depthMap, in vec2 resolutionInverse){\n" +
         "                float step = resolutionInverse.x;\n" +
         "                float stepy = resolutionInverse.y;\n" +
@@ -342,7 +354,10 @@ export default class Internal {
         "                        // directionalLight shadow\n" +
         "                        shadow = getDirectionalLightShadows(Context.Splits, shadowPosition, Context.InShadowMap0, Context.InShadowMap1, Context.InShadowMap2, Context.InShadowMap3, projCoord0, projCoord1, projCoord2, projCoord3);\n" +
         "                    #else\n" +
-        "                        // spotLight shadow\n" +
+        "                        #ifdef Context.SpotLightShadows\n" +
+        "                            // spotLight shadow\n" +
+        "                            shadow = getSpotLightShadows(Context.InShadowMap0, projCoord0);\n" +
+        "                        #endif\n" +
         "                    #endif\n" +
         "                #endif\n" +
         "\n" +
