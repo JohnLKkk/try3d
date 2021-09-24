@@ -30,7 +30,7 @@
     mainCamera.lookAt(new Vector3(25, 25, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
 
-    let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
+    let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/Misc/ColorDef");
     // 根据当前相机创建测试用的视锥体
     let testCamera = new Camera(scene, {id:'testCamera'});
     testCamera.lookAt(new Vector3(25, 25, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -44,7 +44,7 @@
     let rootNode = new Node(scene, {id:'rootNode'});
     rootNode.addChildren(wireFrustum);
     let objLoader = new OBJLoader();
-    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/');
+    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/Light/');
     objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/Jingzhuxuan/jinzuxuan.obj', modelNode=>{
         console.log("实体:" + modelNode.getChildren().length);
         // 使用OctCullingControl来管理静态场景

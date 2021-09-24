@@ -27,8 +27,10 @@
 
     // 创建scene
     let scene = new Scene({cavnas:document.getElementById('canvas')});
+    // 这个例子实际上不需要gamma矫正效果更好
+    scene.getRender().setGammaFactor(1.0);
     // 颜色材质定义
-    let colorMatDef = MaterialDef.load("../../../src/Core/Assets/MaterialDef/ColorDef");
+    let colorMatDef = MaterialDef.load("../../../src/Core/Assets/MaterialDef/Misc/ColorDef");
 
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(2.1097467668423975,2.621471875719666,7.807826316200079), new Vector3(1.8857783812511344,2.4633975281589504,6.846134752912297), new Vector3(0, 1, 0));

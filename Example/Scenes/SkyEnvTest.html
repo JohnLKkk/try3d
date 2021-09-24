@@ -41,7 +41,7 @@
     // 创建一个场景
     let rootNode = new Node(scene, {id:'rootNode'});
     let objLoader = new OBJLoader();
-    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/');
+    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/Light/');
     objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/testScene.obj', modelNode=>{
         rootNode.addChildren(modelNode);
     });

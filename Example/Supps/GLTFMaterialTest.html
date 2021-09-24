@@ -48,7 +48,8 @@
         envMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
         envMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
         envMap.setFilter(scene, Texture2DVars.S_FILTERS.S_LINEAR, Texture2DVars.S_FILTERS.S_LINEAR);
-        envMap.setImage(scene, imageData, {rgbe: true});
+        envMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_RGB16F, Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
+        envMap.setImage(scene, imageData, {rgbe: true, linearFloat:true});
         sky.getMaterial().setParam('envMap', envMap);
         sky.getMaterial().setParam('useEnvMap', new BoolVars().valueOf(true));
         sky.getMaterial().setParam('useHDR', new BoolVars().valueOf(true));
@@ -57,7 +58,7 @@
 
 
         let gltfLoader = new GLTFLoader();
-        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/Light/");
         gltfLoader.load(scene, './../Assets/Models/GLTF/SpecGlossVsMetalRough/SpecGlossVsMetalRough.gltf', modelNode=>{
             modelNode.setLocalScaleXYZ(10, 10, 10);
             modelNode.setLocalTranslationXYZ(-5, 0, 5);

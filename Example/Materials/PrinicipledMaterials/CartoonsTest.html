@@ -76,7 +76,7 @@
         let roughnessMap = null;
         let aoMap = null;
 
-        let metalLightingDef = MaterialDef.load('../../../src/Core/Assets/MaterialDef/PrincipledLightingDef');
+        let metalLightingDef = MaterialDef.load('../../../src/Core/Assets/MaterialDef/Light/PrincipledLightingDef');
         let getTexture = (src)=>{
             let texture = new Texture2DVars(scene);
             texture.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
@@ -103,7 +103,7 @@
         rootNode.addChildren(giProbeGeo);
 
         let gltfLoader = new GLTFLoader();
-        gltfLoader.setAssetsPath("../../../src/Core/Assets/MaterialDef/");
+        gltfLoader.setAssetsPath("../../../src/Core/Assets/MaterialDef/Light/");
         gltfLoader.load(scene, '../../Assets/Models/GLTF/ftm/scene.gltf', (modelNode)=>{
             modelNode.setLocalRotationFromEuler(MoreMath.toRadians(0), 0, 0);
             rootNode.addChildren(modelNode);

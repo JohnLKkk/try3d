@@ -94,7 +94,7 @@
         rootNode.addChildren(giProbeGeo);
 
         let gltfLoader = new GLTFLoader();
-        gltfLoader.setAssetsPath("../../../src/Core/Assets/MaterialDef/");
+        gltfLoader.setAssetsPath("../../../src/Core/Assets/MaterialDef/Light/");
         gltfLoader.load(scene, '../../Assets/Models/GLTF/TvCabinet/scene.gltf', (modelNode)=>{
             // modelNode.setLocalRotationFromEuler(MoreMath.toRadians(0), 0, 0);
             modelNode.setLocalScaleXYZ(10, 10, 10);

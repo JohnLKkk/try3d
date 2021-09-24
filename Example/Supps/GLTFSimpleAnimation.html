@@ -29,7 +29,7 @@
 
     let testCamera = new Camera(scene, {id:'testCamera'});
     testCamera.lookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-    let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
+    let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/Misc/ColorDef");
     let colorMat = new Material(scene, {id:'colorWireFrustum', materialDef:colorDef});
     let wireFrustum = new Geometry(scene, {id:'wireFrustum'});
     // 根据当前相机创建测试用的视锥体
@@ -40,12 +40,12 @@
     let rootNode = new Node(scene, {id:'rootNode'});
     rootNode.addChildren(wireFrustum);
     let gltfLoader = new GLTFLoader();
-    gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+    gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/Light/");
     gltfLoader.load(scene, './../Assets/Models/GLTF/Axes/Axes.gltf', modelNode=>{
         rootNode.addChildren(modelNode);
     });
     gltfLoader = new GLTFLoader();
-    gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+    gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/Misc/");
     gltfLoader.load(scene, './../Assets/Models/GLTF/AnimatedTriangle/AnimatedTriangle.gltf', modelNode=>{
         // // 使用OctCullingControl来管理静态场景
         rootNode.addChildren(modelNode);

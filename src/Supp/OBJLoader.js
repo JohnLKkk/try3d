@@ -17,7 +17,10 @@ import Texture2DVars from "../Core/WebGL/Vars/Texture2DVars.js";
  * @date 2021年2月28日13点34分
  */
 export default class OBJLoader {
+    static S_ALPHA_MODE_BLEND = 'blend';
+    static S_ALPHA_MODE_DISCARD = 'discard';
     _m_CustomMatDef = 'BasicLightingDef';
+    _m_AlphaMode = OBJLoader.S_ALPHA_MODE_BLEND;
     /**
      * 加载一个OBJ模型。<br/>
      * @param {Scene}[scene]
@@ -33,6 +36,9 @@ export default class OBJLoader {
         let modelNode = new Node(scene, {id:modelId || Tools.nextId()});
         // 加载obj模型
         this._load(modelNode, src, callback);
+    }
+    config(config){
+        this._m_AlphaMode = config.alphaMode || this._m_AlphaMode;
     }
 
     /**
@@ -693,30 +699,38 @@ export default class OBJLoader {
                 case 'd':
                     alpha = parseFloat(value);
                     if(alpha <= 0.1){
-                        this._m_CurrentMat.alphaMode = 'blend';
-                        // this._m_CurrentMat.setParam('alphaDiscard', new FloatVars().valueOf(alpha));
+                        if(this._m_AlphaMode == OBJLoader.S_ALPHA_MODE_BLEND){
+                            this._m_CurrentMat.alphaMode = 'blend';
+                        }
+                        else if(this._m_AlphaMode == OBJLoader.S_ALPHA_MODE_DISCARD){
+                            this._m_CurrentMat.setParam('alphaDiscard', new FloatVars().valueOf(alpha));
+                        }
                     }
                     else{
                         // this._m_CurrentMat.alphaMode = 'blend';
                     }
                     if (alpha < 1) {
                         materialCfg.alpha = alpha;
-                        materialCfg.alphaMode = "blend";
+                        if(this._m_AlphaMode == OBJLoader.S_ALPHA_MODE_BLEND)
+                            materialCfg.alphaMode = "blend";
                     }
                     break;
 
                 case 'tr':
                     alpha = parseFloat(value);
                     if(alpha <= 0.1){
-                        this._m_CurrentMat.alphaMode = 'blend';
-                        // this._m_CurrentMat.setParam('alphaDiscard', new FloatVars().valueOf(1 - alpha));
+                        if(this._m_AlphaMode == OBJLoader.S_ALPHA_MODE_BLEND)
+                            this._m_CurrentMat.alphaMode = 'blend';
+                        else if(this._m_AlphaMode == OBJLoader.S_ALPHA_MODE_DISCARD)
+                            this._m_CurrentMat.setParam('alphaDiscard', new FloatVars().valueOf(1 - alpha));
                     }
                     else{
                         // this._m_CurrentMat.alphaMode = 'blend';
                     }
                     if (alpha > 0) {
                         materialCfg.alpha = 1 - alpha;
-                        materialCfg.alphaMode = "blend";
+                        if(this._m_AlphaMode == OBJLoader.S_ALPHA_MODE_BLEND)
+                            materialCfg.alphaMode = "blend";
                     }
                     break;
 

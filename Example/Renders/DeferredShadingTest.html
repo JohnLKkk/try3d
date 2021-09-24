@@ -46,7 +46,7 @@
 
     let objLoader = new OBJLoader();
     // 设置默认加载的材质定义为DeferredLightingDef
-    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/', 'DeferredLightingDef');
+    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/Light/', 'DeferredLightingDef');
     objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/Sponza/sponza.obj', modelNode=>{
         console.log("实体:" + modelNode.getChildren().length);
         // 使用OctCullingControl来管理静态场景

@@ -595,12 +595,6 @@ export default class Render extends Component{
             this._m_Pipeline[0].render({gl, scene:this._m_Scene, frameContext:this._m_FrameContext, lights:lights, translucent:true, bucket:translucentBucket});
         }
 
-        // 然后是GUI层(这里需要注意的是，这里需要完善，目前暂时使用opaque渲染)
-        if(hasGUI){
-            // 对于GUI,启用半透明混合,但是渲染的是opaque
-            this._checkRenderState(gl, this._m_TranslucentRenderState, this._m_FrameContext.getRenderState());
-            this._m_Pipeline[0].render({gl, scene:this._m_Scene, frameContext:this._m_FrameContext, lights:lights, opaque:true, bucket:guiBucket});
-        }
         // 一帧结束后
         if(pfilter || true){
             gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
@@ -616,6 +610,13 @@ export default class Render extends Component{
             if(this._m_FrameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){
                 gl.enable(gl.DEPTH_TEST);
             }
+        }
+        // 然后是GUI层(这里需要注意的是，这里需要完善，目前暂时使用opaque渲染)
+        // 这里，GUI层比较特殊，应该在最后进行渲染（事实上，应该在默认gamma矫正之后，但可能gui本身也是在sRGB空间，所以这里在默认gamma矫正之前进行渲染）
+        if(hasGUI){
+            // 对于GUI,启用半透明混合,但是渲染的是opaque
+            this._checkRenderState(gl, this._m_TranslucentRenderState, this._m_FrameContext.getRenderState());
+            this._m_Pipeline[0].render({gl, scene:this._m_Scene, frameContext:this._m_FrameContext, lights:lights, opaque:true, bucket:guiBucket});
         }
 
         // 检测是否启用了自定义forwardFrameBuffer

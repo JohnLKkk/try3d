@@ -21,8 +21,9 @@
     import Texture2DVars from "../../src/Core/WebGL/Vars/Texture2DVars.js";
     import Vector4 from "../../src/Core/Math3d/Vector4.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
+    scene.getRender().setGammaFactor(1.0);
     // 加载一个材质定义
-    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
+    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/Misc/ColorDef");
 
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -46,6 +47,7 @@
     // 纹理图像未加载完成前设置一个默认颜色纹理
     colorMap.setPreloadColor(scene, new Vector4(0.5, 0.3, 0.3, 1.0));
     colorMap.setImageSrc(scene, './../Assets/Textures/terrain.png');
+    colorMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
     mat3.setParam('colorMap', colorMap);
     let box3 = new Box(scene, {id:'box3'});
     box3.setLocalTranslationXYZ(0, 5, 0);
@@ -57,6 +59,7 @@
     // 纹理图像未加载完成前设置一个默认颜色纹理
     colorMap2.setPreloadColor(scene, new Vector4(0.5, 0.3, 0.3, 1.0));
     colorMap2.setImageSrc(scene, './../Assets/Textures/ground 3.png');
+    colorMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
     mat4.setParam('colorMap', colorMap2);
     let box4 = new Box(scene, {id:'box4'});
     box4.setLocalTranslationXYZ(0, -5, 0);

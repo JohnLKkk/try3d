@@ -46,7 +46,7 @@
 
     let objLoader = new OBJLoader();
     // 设置默认加载的材质定义为DeferredLightingDef
-    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/', 'DeferredLightingDef');
+    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/Light/', 'DeferredLightingDef');
     objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/Sponza/sponza.obj', modelNode=>{
         console.log("实体:" + modelNode.getChildren().length);
         // 使用OctCullingControl来管理静态场景
@@ -64,7 +64,7 @@
         let ly = center._m_Y - dy * 0.5;
         let lz = center._m_Z - dz * 0.5;
         let ps = [];
-        let colorMat = new Material(scene, {id:'colorMat', materialDef:MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef")});
+        let colorMat = new Material(scene, {id:'colorMat', materialDef:MaterialDef.load("../../src/Core/Assets/MaterialDef/Light/ColorDef")});
         colorMat.setParam('color', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
         for(let i = 0;i < 1000;i++){
             let pointLight = new PointLight(scene, {id:'pointLight' + i});
@@ -82,19 +82,10 @@
         // 使用dat gui
         let gui = new dat.GUI();
         var settings = {
-            renderTechnology: 'MultiPassDeferred',
             directionalLight: true,
             pointLights: true,
             pointLightAnim: true
         };
-        gui.add(settings, 'renderTechnology', ['MultiPassDeferred', 'Default']).name('渲染技术').onChange(function(value) {
-            modelNode.traverse((node)=>{
-                if(node.isDrawable()){
-                    // SinglePass是默认技术，所以传递""即可
-                    node.getMaterial().selectTechnology(value == 'Default' ? "" : value);
-                }
-            });
-        });
         gui.add(settings, 'directionalLight').onChange(swi=>{
             if(swi){
                 dirLight.enable();

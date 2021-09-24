@@ -27,7 +27,7 @@ export default class Deferred extends Base{
         let deferredShadingPass = null;
         let useBackForwardFrameBuffer = false;
         for(let matId in cfg.bucket){
-            frameContext.getRenderState().restore();
+            frameContext.getRenderState().store();
             let subShader = null;
             cfg.bucket[matId].forEach(geo=>{
                 stateChange = false;
@@ -70,7 +70,7 @@ export default class Deferred extends Base{
                     deferredShadingPass = subShaders[subShader] ? subShaders[subShader] : subShaders[Deferred.S_DEFERRED_SHADING_PASS_GROUP_2[1]];
                 }
                 if(stateChange){
-                    this._checkRenderState(gl, frameContext.restore(), frameContext.getRenderState());
+                    this._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
                 }
             });
         }

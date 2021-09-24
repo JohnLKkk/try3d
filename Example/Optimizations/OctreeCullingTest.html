@@ -34,7 +34,7 @@
     testCamera.lookAt(new Vector3(25, 0, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
     firstPersonController.setMovementSpeed(500);
-    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
+    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/Light/BasicLightingDef");
     console.log("materialDef:",materialDef);
     let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
     basicLightingMat.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
@@ -42,7 +42,7 @@
     basicLightingMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
     basicLightingMat.setParam('shininess', new FloatVars().valueOf(24.0));
 
-    let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
+    let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/Misc/ColorDef");
     let wireColorMat = new Material(scene, {id:'colorWireFrustum', materialDef:colorDef});
     wireColorMat.setParam('color', new Vec4Vars().valueFromXYZW(1.0, 0, 0, 1.0));
     let wireFrustum = new Geometry(scene, {id:'wireFrustum'});

@@ -5,7 +5,7 @@
     <title>DiscardTextureMapTest</title>
 </head>
 <body>
-<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;margin: 0px;">
     <canvas id="canvas" tabindex="0" width="400" height="300" style="border: none;margin: 0px;padding: 0px;"></canvas>
 </div>
 <script type="module">
@@ -23,12 +23,32 @@
     import DirectionalLight from "../../../src/Core/Light/DirectionalLight.js";
     import Plane from "../../../src/Core/Node/Shape/Plane.js";
     import MoreMath from "../../../src/Core/Math3d/MoreMath.js";
+    import TextureCubeVars from "../../../src/Core/WebGL/Vars/TextureCubeVars.js";
+    import BoolVars from "../../../src/Core/WebGL/Vars/BoolVars.js";
+    import SkyBox from "../../../src/Core/Node/Sky/SkyBox.js";
 
 
     // 创建scene
     let scene = new Scene({cavnas:document.getElementById('canvas')});
+    // scene.getRender().setGammaFactor(2.2);
     // 颜色材质定义
-    let colorMatDef = MaterialDef.load("../../../src/Core/Assets/MaterialDef/ColorDef");
+    let colorMatDef = MaterialDef.load("../../../src/Core/Assets/MaterialDef/Misc/ColorDef");
+    // 创建一个sky
+    let sky = new SkyBox(scene, {id:'sky'});
+    // 使用cubeMap作为天空盒材质
+    sky.getMaterial().setParam('useCubeMap', new BoolVars().valueOf(true));
+    let cubeMap = new TextureCubeVars(scene);
+    cubeMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
+
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.PositiveX, '../../Assets/Textures/sky/SkyBlue2/sky_front.jpg');
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.NegativeX, '../../Assets/Textures/sky/SkyBlue2/sky_behind.jpg');
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.PositiveY, '../../Assets/Textures/sky/SkyBlue2/sky_top.jpg');
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.NegativeY, '../../Assets/Textures/sky/SkyBlue2/sky_bottom.jpg');
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.PositiveZ, '../../Assets/Textures/sky/SkyBlue2/sky_left.jpg');
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.NegativeZ, '../../Assets/Textures/sky/SkyBlue2/sky_right.jpg');
+    cubeMap.setWrap(scene, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE);
+    sky.getMaterial().setParam('cubeMap', cubeMap);
+    scene.setSky(sky);
 
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(-5, 2, 3), new Vector3(-3, 1.5, 0), new Vector3(0, 1, 0));
@@ -41,6 +61,7 @@
     colorMap = new Texture2DVars(scene);
     colorMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
     colorMap.setImageSrc(scene, '../../Assets/Textures/metal.png');
+    colorMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
     let floorMat = new Material(scene, {id:'floorMat', materialDef:colorMatDef});
     floorMat.setParam('colorMap', colorMap);
     floor.setMaterial(floorMat);
@@ -50,6 +71,7 @@
     colorMap = new Texture2DVars(scene);
     colorMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
     colorMap.setImageSrc(scene, '../../Assets/Textures/marble.jpg');
+    colorMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
     let marbleMat = new Material(scene, {id:'marbleMat', materialDef:colorMatDef});
     marbleMat.setParam('colorMap', colorMap);
     let marble0 = new Box(scene, {id:'marble0'});
@@ -67,6 +89,7 @@
     colorMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
     colorMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
     colorMap.setImageSrc(scene, '../../Assets/Textures/grass.png');
+    colorMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
     let grassMat = new Material(scene, {id:'grassMat', materialDef:colorMatDef});
     grassMat.setParam('colorMap', colorMap);
     // 设置透明剔除因子(小于该值的alpha将被剔除,0.6表示透明度0.4,即40%透明的部分都剔除)

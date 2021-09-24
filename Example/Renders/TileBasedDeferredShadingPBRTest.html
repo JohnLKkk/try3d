@@ -71,7 +71,7 @@
         scene.setSky(sky);
 
         let gltfLoader = new GLTFLoader();
-        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/", 'PrincipledDeferredLightingDef');
+        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/Light/", 'PrincipledDeferredLightingDef');
         gltfLoader.load(scene, './../Assets/Models/GLTF/Sponza/Sponza.gltf', modelNode=>{
             rootNode.addChildren(modelNode);
             let sceneControl = new SceneBrowsingController(scene, {id:'sceneControl'});

@@ -82,9 +82,12 @@ export default class SpotLight extends Light{
     computeAngleParameters(){
         // 将内角放在1000之后的字节中
         // 将外角放在1000之内的字节中
-        this._m_PackedAngleCos = parseInt(this._m_InnerCorner * 1000);
+        this._m_PackedAngleCos = Math.floor(this._m_InnerCorner * 1000);
         // 为了避免位数据不够
-        if(Number.parseInt(this._m_PackedAngleCos) == Number.parseInt(this._m_OuterCorner * 1000)){
+        // 这里的情况是,假设InnerCorner和OutCorner都是1.0,则此时是没有小数部分的
+        // 为了能够将OuterCorner编码到小数部分,一种做法是对OuterCorner进行缩放0.1
+        // 或者,在这里对其进行-0.001
+        if(this._m_PackedAngleCos == Math.floor(this._m_OuterCorner * 1000)){
             this._m_OuterCorner -= 0.001;
         }
         this._m_PackedAngleCos += this._m_OuterCorner * 1.0;

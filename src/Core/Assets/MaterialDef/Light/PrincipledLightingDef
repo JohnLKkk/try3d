@@ -157,18 +157,13 @@ Def PrincipledLightingDef{
                 float innerAngleCos = floor(spotDirection.w) * 0.001f;
                 float outerAngleCos = fract(spotDirection.w);
                 float innerMinusOuter = innerAngleCos - outerAngleCos;
-                float falloff = clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f);
-                //if(curAngleCos > innerMinusOuter)
-                //    falloff = 1.0f;
-                //else
-                //    falloff = 0.0f;
 
-                #ifdef Context.Srgb
+                #ifndef Context.Srgb
                     // 使用二次衰减（请注意^ 4）
                     return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f), 4.0f);
                 #else
                     // 线性空间衰减
-                    return falloff;
+                    return clamp((curAngleCos - outerAngleCos) / innerMinusOuter, step(spotDirection.w, 0.001f), 1.0f);
                 #endif
             }
             // 球谐函数

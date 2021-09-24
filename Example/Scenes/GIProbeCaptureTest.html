@@ -7,22 +7,12 @@
 <body>
 <div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
     <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
-    <div style="position:fixed;right: 0px;top: 0px;background-color: black">
-        <p style="margin: 5px;padding: 5px;color: white;">
-            GIProbe用于烘焙全局光照,是新一代实时渲染的重要技术,<br/>
-            该案例演示如何仅在TEORT_WebGL中进行指定“光探头”的<br/>
-            烘焙,你可以按住键盘U键以查看高粗糙度(Roughness)的烘培<br/>
-            结果,按住键盘J键以查看低粗糙度(Roughness)的烘培结果。<br/>
-            (注意:请确保页面获取焦点,即先把鼠标点击页面以便键盘接收<br/>
-            输入。)<br/>
-        </p>
-    </div>
 </div>
+<script src="./../dat.gui.min.js"></script>
 <script type="module">
     import Scene from "../../src/Core/Scene/Scene.js";
     import RenderEngine from "../../src/Core/RenderEngine.js";
     import Vector3 from "../../src/Core/Math3d/Vector3.js";
-    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
     import SkyBox from "../../src/Core/Node/Sky/SkyBox.js";
     import Internal from "../../src/Core/Render/Internal.js";
     import Node  from "../../src/Core/Node/Node.js";
@@ -39,11 +29,10 @@
     import Input from "../../src/Core/InputControl/Input.js";
     import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
     import GIProbe from "../../src/Core/Light/GIProbe.js";
+    import SceneBrowsingController from "../../src/Core/InputControl/SceneBrowsingController.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(0.5, 0.5, 0.5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
-    firstPersonController.setMovementSpeed(1);
 
     // 环境纹理加载完再开始创建创建
     let radianceLoader = new RadianceLoader();
@@ -59,7 +48,8 @@
         envMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
         envMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
         envMap.setFilter(scene, Texture2DVars.S_FILTERS.S_LINEAR, Texture2DVars.S_FILTERS.S_LINEAR);
-        envMap.setImage(scene, imageData, {rgbe:true});
+        envMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_RGB16F, Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
+        envMap.setImage(scene, imageData, {rgbe:true, linearFloat:true});
         sky.getMaterial().setParam('envMap', envMap);
         sky.getMaterial().setParam('useEnvMap', new BoolVars().valueOf(true));
         sky.getMaterial().setParam('useHDR', new BoolVars().valueOf(true));
@@ -88,27 +78,20 @@
         rootNode.addChildren(giProbeGeo);
 
         scene.addSceneNode(rootNode);
+        let sceneControl = new SceneBrowsingController(scene, {id:'sceneControl'});
+        sceneControl.lookScene(rootNode);
+        sceneControl.setMinDistance(0.5);
+        sceneControl.setMaxDistance(2);
+        sceneControl.setTargetDistance(1);
 
 
-        let input = Input.getInput(scene, {id:scene.getId()});
-        let lod = 0;
-        input.on('keydown', (key)=>{
-            if(key == Input.S_KEY_U){
-                lod += 0.1;
-                // 由于分辨率为256,所以最大为9级别
-                lod = Math.max(0, lod);
-                lod = Math.min(9, lod);
-                console.log('lod:' + lod);
-                giProbeMat.setParam('lod', new FloatVars().valueOf(lod));
-            }
-            if(key == Input.S_KEY_J){
-                lod -= 0.1;
-                // 由于分辨率为256,所以最大为9级别
-                lod = Math.max(0, lod);
-                lod = Math.min(9, lod);
-                console.log('lod:' + lod);
-                giProbeMat.setParam('lod', new FloatVars().valueOf(lod));
-            }
+        // 使用dat gui
+        let gui = new dat.GUI();
+        var settings = {
+            roughness: 0
+        };
+        gui.add(settings, 'roughness', 0.0, 1.0).onChange(function(value) {
+            giProbeMat.setParam('lod', new FloatVars().valueOf(value * 6.0));
         });
     });
     let renderEngine = new RenderEngine();

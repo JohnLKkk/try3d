@@ -29,7 +29,7 @@
     import MoreMath from "../../../src/Core/Math3d/MoreMath.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     // 加载一个材质定义
-    let materialDef = MaterialDef.load("../../../src/Core/Assets/MaterialDef/BasicLightingDef");
+    let materialDef = MaterialDef.load("../../../src/Core/Assets/MaterialDef/Light/BasicLightingDef");
 
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
@@ -47,6 +47,7 @@
     diffuseMap = new Texture2DVars(scene);
     diffuseMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
     diffuseMap.setImageSrc(scene, './../../Assets/Textures/brickwall.jpg');
+    diffuseMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
     wallMat.setParam('diffuseMap', diffuseMap);
     normalMap = new Texture2DVars(scene);
     normalMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
@@ -66,6 +67,7 @@
     diffuseMap = new Texture2DVars(scene);
     diffuseMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
     diffuseMap.setImageSrc(scene, './../../Assets/Textures/bricks2.jpg');
+    diffuseMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
     floorMat.setParam('diffuseMap', diffuseMap);
     normalMap = new Texture2DVars(scene);
     normalMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
@@ -86,6 +88,7 @@
     diffuseMap = new Texture2DVars(scene);
     diffuseMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
     diffuseMap.setImageSrc(scene, './../../Assets/Textures/ground 3.png');
+    diffuseMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
     grassMat.setParam('diffuseMap', diffuseMap);
     normalMap = new Texture2DVars(scene);
     normalMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
@@ -105,6 +108,7 @@
     diffuseMap = new Texture2DVars(scene);
     diffuseMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
     diffuseMap.setImageSrc(scene, './../../Assets/Textures/toy_box_diffuse.png');
+    diffuseMap.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
     toyBoxMat.setParam('diffuseMap', diffuseMap);
     normalMap = new Texture2DVars(scene);
     normalMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));

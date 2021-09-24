@@ -6,7 +6,7 @@
 </head>
 <body>
 <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
-    <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0" width="800" height="600"></canvas>
+    <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
 </div>
 <script src="./../dat.gui.min.js"></script>
 <script type="module">
@@ -54,7 +54,7 @@
         scene.setSky(sky);
 
         let gltfLoader = new GLTFLoader();
-        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/Light/");
         gltfLoader.load(scene, './../Assets/Models/GLTF/MiniScene/test.gltf', modelNode=>{
             rootNode.addChildren(modelNode);
 

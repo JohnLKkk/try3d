@@ -20,17 +20,47 @@
     import SceneBrowsingController from "../../src/Core/InputControl/SceneBrowsingController.js";
     import Picture from "../../src/Core/Node/Picture.js";
     import Texture2DTargetVars from "../../src/Core/WebGL/Vars/Texture2DTargetVars.js";
+    import SkyBox from "../../src/Core/Node/Sky/SkyBox.js";
+    import TextureCubeVars from "../../src/Core/WebGL/Vars/TextureCubeVars.js";
+    import Vector4 from "../../src/Core/Math3d/Vector4.js";
+    import BoolVars from "../../src/Core/WebGL/Vars/BoolVars.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(25, 25, 25), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
 
+
+
     let rootNode = new Node(scene, {id:'rootNode'});
+
+    // 创建一个sky
+    let sky = new SkyBox(scene, {id:'sky'});
+    // 使用cubeMap作为天空盒材质
+    sky.getMaterial().setParam('useCubeMap', new BoolVars().valueOf(true));
+    let cubeMap = new TextureCubeVars(scene);
+    cubeMap.setPreloadColor(scene, new Vector4(0.5, 0.5, 0.5, 1.0));
+
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.PositiveX, '../Assets/Textures/sky/SkyBlue/Front5.jpg');
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.NegativeX, '../Assets/Textures/sky/SkyBlue/Back5.jpg');
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.PositiveY, '../Assets/Textures/sky/SkyBlue/Up5.jpg');
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.NegativeY, '../Assets/Textures/sky/SkyBlue/Down5.jpg');
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.PositiveZ, '../Assets/Textures/sky/SkyBlue/Left5.jpg');
+    cubeMap.setImageSrc(scene, TextureCubeVars.S_FACE.NegativeZ, '../Assets/Textures/sky/SkyBlue/Right5.jpg');
+    cubeMap.setWrap(scene, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE);
+    sky.getMaterial().setParam('cubeMap', cubeMap);
+    scene.setSky(sky);
+
+
     let objLoader = new OBJLoader();
-    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/');
-    objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/Cabin/Cabin.obj', modelNode=>{
+    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/Light/');
+    objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/Cabin/testScene.obj', modelNode=>{
+        modelNode.setLocalScaleXYZ(10, 10, 10);
         rootNode.addChildren(modelNode);
         let sc = new SceneBrowsingController(scene, {id:'control'});
         sc.lookScene(rootNode);
+        sc.setMinDistance(5);
+        sc.setMaxDistance(15);
+        sc.setTargetDistance(10);
+        sc.setMinVerticalRotation(0);
 
         // 添加一个Picture,用于展示渲染到纹理的效果(Picture是GUI层，所以会在最后进行绘制，以确保获取场景帧渲染结果)
         // 将默认帧缓存数据渲染到Picture上
@@ -46,8 +76,12 @@
     });
 
     let dirLight = new DirectionalLight(scene, {id:'dirLight'});
-    dirLight.setDirectionXYZ(-1, -1, 1);
+    dirLight.setDirectionXYZ(1, -1, 1);
     dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    dirLight.setShadowSplitType(DirectionalLight.S_SHADER_SPLIT_TYPE_FIXED);
+    dirLight.setShadowSplitNum(2);
+    dirLight.setShadowMapSize(1024);
+    dirLight.proShadow(true);
     rootNode.addChildren(dirLight);
 
     let renderEngine = new RenderEngine();

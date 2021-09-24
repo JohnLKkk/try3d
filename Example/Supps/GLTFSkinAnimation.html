@@ -37,7 +37,7 @@
 
     let testCamera = new Camera(scene, {id:'testCamera'});
     testCamera.lookAt(new Vector3(5, 5, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-    let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
+    let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/Misc/ColorDef");
     let colorMat = new Material(scene, {id:'colorWireFrustum', materialDef:colorDef});
 
     let rootNode = new Node(scene, {id:'rootNode'});
@@ -64,7 +64,7 @@
 
 
         let gltfLoader = new GLTFLoader();
-        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/Light/");
         gltfLoader.load(scene, './../Assets/Models/GLTF/EstialKnight/EstialKnight.gltf', modelNode=>{
             rootNode.addChildren(modelNode);
             console.log('modelNode:',modelNode);

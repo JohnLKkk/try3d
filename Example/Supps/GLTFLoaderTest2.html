@@ -32,7 +32,7 @@
 
     let testCamera = new Camera(scene, {id:'testCamera'});
     testCamera.lookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-    let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
+    let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/Misc/ColorDef");
     let rootNode = new Node(scene, {id:'rootNode'});
 
 
@@ -55,7 +55,7 @@
         scene.setSky(sky);
 
         let gltfLoader = new GLTFLoader();
-        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/Light/");
         gltfLoader.load(scene, './../Assets/Models/GLTF/AdamHead/adamHead.gltf', modelNode=>{
             rootNode.addChildren(modelNode);
             let sceneControl = new SceneBrowsingController(scene, {id:'sceneControl'});

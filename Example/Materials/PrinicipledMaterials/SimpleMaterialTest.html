@@ -86,7 +86,7 @@
         let roughnessMap = null;
         let aoMap = null;
 
-        let metalLightingDef = MaterialDef.load('../../../src/Core/Assets/MaterialDef/PrincipledLightingDef');
+        let metalLightingDef = MaterialDef.load('../../../src/Core/Assets/MaterialDef/Light/PrincipledLightingDef');
         let getTexture = (src)=>{
             let texture = new Texture2DVars(scene);
             texture.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));

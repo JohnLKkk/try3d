@@ -32,7 +32,7 @@ export default class TileDeferred extends Deferred{
         let tilePass = null;
         let useBackForwardFrameBuffer = false;
         for(let matId in cfg.bucket){
-            frameContext.getRenderState().restore();
+            frameContext.getRenderState().store();
             let subShader = null;
             cfg.bucket[matId].forEach(geo=>{
                 stateChange = false;
@@ -78,7 +78,7 @@ export default class TileDeferred extends Deferred{
                     tilePass = subShaders[subShader] ? subShaders[subShader] : subShaders[TileDeferred.S_TILE_DEFERRED_SHADING_PASS_GROUP_2[2]];
                 }
                 if(stateChange){
-                    this._checkRenderState(gl, frameContext.restore(), frameContext.getRenderState());
+                    this._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
                 }
             });
         }

@@ -54,13 +54,13 @@
         scene.setSky(sky);
 
         let gltfLoader = new GLTFLoader();
-        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/Light/");
         gltfLoader.load(scene, './../Assets/Models/GLTF/HousePoor/scene.gltf', modelNode=>{
             rootNode.addChildren(modelNode);
 
             // 地板
             let floor = new Plane(scene, {id:'floor'});
-            let floorMat = new Material(scene, {id:"floorMat", materialDef:MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef")});
+            let floorMat = new Material(scene, {id:"floorMat", materialDef:MaterialDef.load("../../src/Core/Assets/MaterialDef/Light/BasicLightingDef")});
             let diffuseMap = new Texture2DVars(scene);
             diffuseMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
             diffuseMap.setImageSrc(scene, './../Assets/Textures/ground 3.png');

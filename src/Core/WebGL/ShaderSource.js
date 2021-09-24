@@ -278,6 +278,7 @@ export default class ShaderSource {
 
         // 上下文定义
         '_C_SKINS':"#define " + ShaderSource.S_SKINS_SRC + " " + ShaderSource.S_SKINS_SRC,
+        '_C_SRGB':"#define " + ShaderSource.S_SRGB_SRC + " " + ShaderSource.S_SRGB_SRC,
         '_C_GIPROBES':"#define " + ShaderSource.S_GIPROBES_SRC + " " + ShaderSource.S_GIPROBES_SRC,
         '_C_PSSM':"#define " + ShaderSource.S_PSSM_SRC + " " + ShaderSource.S_PSSM_SRC,
         '_C_POINTLIGHT_SHADOWS':"#define " + ShaderSource.S_POINTLIGHT_SHADOWS_SRC + " " + ShaderSource.S_POINTLIGHT_SHADOWS_SRC,

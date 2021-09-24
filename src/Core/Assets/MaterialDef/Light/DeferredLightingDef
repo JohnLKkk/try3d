@@ -178,18 +178,13 @@ Def DeferredLightingDef{
                 float innerAngleCos = floor(spotDirection.w) * 0.001f;
                 float outerAngleCos = fract(spotDirection.w);
                 float innerMinusOuter = innerAngleCos - outerAngleCos;
-                float falloff = clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f);
-                //if(curAngleCos > innerMinusOuter)
-                //    falloff = 1.0f;
-                //else
-                //    falloff = 0.0f;
 
-                #ifdef SRGB
-                    // Use quadratic falloff (notice the ^4)
-                    return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0, 1.0), 4.0);
+                #ifndef Context.Srgb
+                    // 使用二次衰减（请注意^ 4）
+                    return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f), 4.0f);
                 #else
-                    // Use linear falloff
-                    return falloff;
+                    // 线性空间衰减
+                    return clamp((curAngleCos - outerAngleCos) / innerMinusOuter, step(spotDirection.w, 0.001f), 1.0f);
                 #endif
             }
             void main(){
@@ -323,18 +318,13 @@ Def DeferredLightingDef{
                 float innerAngleCos = floor(spotDirection.w) * 0.001f;
                 float outerAngleCos = fract(spotDirection.w);
                 float innerMinusOuter = innerAngleCos - outerAngleCos;
-                float falloff = clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f);
-                //if(curAngleCos > innerMinusOuter)
-                //    falloff = 1.0f;
-                //else
-                //    falloff = 0.0f;
 
-                #ifdef SRGB
-                    // Use quadratic falloff (notice the ^4)
-                    return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0, 1.0), 4.0);
+                #ifndef Context.Srgb
+                    // 使用二次衰减（请注意^ 4）
+                    return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f), 4.0f);
                 #else
-                    // Use linear falloff
-                    return falloff;
+                    // 线性空间衰减
+                    return clamp((curAngleCos - outerAngleCos) / innerMinusOuter, step(spotDirection.w, 0.001f), 1.0f);
                 #endif
             }
             void main(){

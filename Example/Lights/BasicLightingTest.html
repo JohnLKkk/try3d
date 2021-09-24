@@ -30,7 +30,7 @@
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(15, 15, 15), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
-    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
+    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/Light/BasicLightingDef");
     let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
     basicLightingMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
     basicLightingMat.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));

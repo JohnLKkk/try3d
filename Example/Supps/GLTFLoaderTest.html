@@ -13,14 +13,10 @@
     import RenderEngine from "../../src/Core/RenderEngine.js";
     import Node from "../../src/Core/Node/Node.js";
     import Vector3 from "../../src/Core/Math3d/Vector3.js";
-    import FirstPersonController from "../../src/Core/InputControl/FirstPersonController.js";
     import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
     import Stats from "../stats.min.js";
     import MaterialDef from "../../src/Core/Material/MaterialDef.js";
-    import Material from "../../src/Core/Material/Material.js";
     import Camera from "../../src/Core/Scene/Camera.js";
-    import MeshFactor from "../../src/Core/Util/MeshFactor.js";
-    import Geometry from "../../src/Core/Node/Geometry.js";
     import GLTFLoader from "../../src/Supp/GLTFLoader.js";
     import RadianceLoader from "../../src/Supp/RadianceLoader.js";
     import SkyBox from "../../src/Core/Node/Sky/SkyBox.js";
@@ -33,11 +29,10 @@
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(10.00694701577273,4.752059754747693,-0.8094167189698362), new Vector3(9.020200568330681,4.844430342194254,-0.6760033649333097), new Vector3(0, 1, 0));
-    let firstPersonController = new FirstPersonController(scene, {id:'myController'});
 
     let testCamera = new Camera(scene, {id:'testCamera'});
     testCamera.lookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-    let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef");
+    let colorDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/Misc/ColorDef");
     let rootNode = new Node(scene, {id:'rootNode'});
 
 
@@ -60,7 +55,7 @@
         scene.setSky(sky);
 
         let gltfLoader = new GLTFLoader();
-        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/Light/");
         gltfLoader.load(scene, './../Assets/Models/GLTF/Sponza/Sponza.gltf', modelNode=>{
             rootNode.addChildren(modelNode);
             let sceneControl = new SceneBrowsingController(scene, {id:"controller"});

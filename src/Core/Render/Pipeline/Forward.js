@@ -18,7 +18,7 @@ export default class Forward extends Base{
         let lights = cfg.lights;
         let stateChange = false;
         let subShaders = null;
-        frameContext.getRenderState().restore();
+        frameContext.getRenderState().store();
 
         if(cfg.opaque){
             for(let matId in cfg.bucket){
@@ -44,7 +44,7 @@ export default class Forward extends Base{
                     }
                 }
                 if(stateChange){
-                    this._m_Render._checkRenderState(gl, frameContext.restore(), frameContext.getRenderState());
+                    this._m_Render._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
                 }
             }
         }
