@@ -113,6 +113,18 @@
         for(let i = 0;i < 5;i++){
             console.log(i + ':' + splits[i]);
         }
+
+        async function test() {
+            return new Promise(resolve => {
+                setTimeout(()=>{
+                    resolve('ttt');
+                }, 5000);
+            });
+        }
+        console.time('test');
+        let result = await test();
+        console.timeEnd('test');
+        console.log('result:' + result);
     </script>
     <!--<script>-->
         <!--function findSrc(str, reg){-->
