@@ -21,7 +21,7 @@
     import Vector4 from "../../../src/Core/Math3d/Vector4.js";
     import FloatVars from "../../../src/Core/WebGL/Vars/FloatVars.js";
     import DirectionalLight from "../../../src/Core/Light/DirectionalLight.js";
-    import Plane from "../../../src/Core/Node/Shape/Plane.js";
+    import GroupPlane from "../../../src/Core/Node/Shape/GroupPlane.js";
     import MoreMath from "../../../src/Core/Math3d/MoreMath.js";
 
 
@@ -39,7 +39,7 @@
 
     let colorMap = null;
     // 创建一个地板
-    let floor = new Plane(scene, {id:'floor', xSize:25, zSize:25});
+    let floor = new GroupPlane(scene, {id:'floor', xSize:25, zSize:25});
     colorMap = new Texture2DVars(scene);
     colorMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
     colorMap.setImageSrc(scene, '../../Assets/Textures/terrain2.png');
@@ -99,7 +99,7 @@
     for(let i = 0;i < position.length;i++){
         botMat = new Material(scene, {id:'botMat' + i, materialDef:colorMatDef});
         botMat.setParam('colorMap', botMap[i % botMap.length]);
-        bot = new Plane(scene, {id:'bot' + i, xSize:2, zSize:2});
+        bot = new GroupPlane(scene, {id:'bot' + i, xSize:2, zSize:2});
         bot.setMaterial(botMat);
         bot.setTranslucent();
         bot.setLocalTranslationXYZ(position[i][0], position[i][1], position[i][2]);

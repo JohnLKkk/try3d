@@ -1,4 +1,133 @@
 export default class Internal {
+    static S_COLOR_DEF_DATA = "// 颜色材质,提供指定颜色或颜色纹理并渲染\n" +
+        "Def ColorDef{\n" +
+        "    Params{\n" +
+        "        vec4 color;\n" +
+        "        sampler2D colorMap;\n" +
+        "        float alphaDiscard;\n" +
+        "    }\n" +
+        "    SubTechnology ScalePass{\n" +
+        "        Vars{\n" +
+        "            vec4 wordPosition;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                //Context.OutPosition = Context.ProjectViewModelMatrix * vec4(Context.InPosition, 1.0f);\n" +
+        "                mat4 scaleMat4 = mat4(\n" +
+        "                    0.2f, 0.0f, 0.0f, 0.0f,\n" +
+        "                    0.0f, 0.2f, 0.0f, 0.0f,\n" +
+        "                    0.0f, 0.0f, 0.2f, 0.0f,\n" +
+        "                    0.0f, 0.0f, 0.0f, 1.0f\n" +
+        "                );\n" +
+        "                Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);\n" +
+        "                wordPosition = Context.OutPosition;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            void main(){\n" +
+        "                // 使用自定义颜色输出\n" +
+        "                #ifdef Params.color\n" +
+        "                    Context.OutColor = Params.color;\n" +
+        "                #else\n" +
+        "                    // 使用纹理\n" +
+        "                    #ifdef Params.colorMap\n" +
+        "                        Context.OutColor = texture(Params.colorMap, Context.InUv0);\n" +
+        "                        #ifdef Params.alphaDiscard\n" +
+        "                            if(Context.OutColor.a < Params.alphaDiscard){\n" +
+        "                                discard;\n" +
+        "                            }\n" +
+        "                        #endif\n" +
+        "                    #else\n" +
+        "                        Context.OutColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n" +
+        "                    #endif\n" +
+        "                #endif\n" +
+        "                vec4 wPosition = wordPosition;\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    SubTechnology ColorPass{\n" +
+        "        Vars{\n" +
+        "            vec4 wordPosition;\n" +
+        "            vec2 uv0;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                //Context.OutPosition = Context.ProjectViewModelMatrix * vec4(Context.InPosition, 1.0f);\n" +
+        "                Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);\n" +
+        "                wordPosition = Context.OutPosition;\n" +
+        "                uv0 = Context.InUv0;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            void main(){\n" +
+        "                // 使用自定义颜色输出\n" +
+        "                #ifdef Params.color\n" +
+        "                    Context.OutColor = Params.color;\n" +
+        "                #else\n" +
+        "                    // 使用纹理\n" +
+        "                    #ifdef Params.colorMap\n" +
+        "                        Context.OutColor = texture(Params.colorMap, uv0);\n" +
+        "                        #ifdef Params.alphaDiscard\n" +
+        "                            if(Context.OutColor.a < Params.alphaDiscard){\n" +
+        "                                discard;\n" +
+        "                            }\n" +
+        "                        #endif\n" +
+        "                    #else\n" +
+        "                        Context.OutColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);\n" +
+        "                    #endif\n" +
+        "                #endif\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    SubTechnology GreenPass{\n" +
+        "        Vars{\n" +
+        "            vec4 wordPosition;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);\n" +
+        "                wordPosition = Context.OutPosition;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            void main(){\n" +
+        "                // 先判断Params.color是否有值\n" +
+        "                #ifdef Params.color\n" +
+        "                    Context.OutColor = Params.color;\n" +
+        "                #else\n" +
+        "                    Context.OutColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);\n" +
+        "                #endif\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology{\n" +
+        "        Sub_Pass{\n" +
+        "            Pass ColorPass{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology Green{\n" +
+        "        Sub_Pass{\n" +
+        "            Pass GreenPass{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    // ScaleColorPass\n" +
+        "    Technology ScaleColor{\n" +
+        "        Sub_Pass{\n" +
+        "            //第一个pass不应该写入深度,否则第二个pass被剔除\n" +
+        "            //可以指定每个pass的写入状态,比如关闭深度,开启深度之类的\n" +
+        "            Pass ScalePass{\n" +
+        "                // 这个pass剔除前面\n" +
+        "                FaceCull Front;\n" +
+        "            }\n" +
+        "            Pass ColorPass{\n" +
+        "                // 这个pass剔除背面\n" +
+        "                FaceCull Back;\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "}\n";
     static S_POST_SHADOW_DEF_DATA = "// PostShadowDef\n" +
         "Def PostShadowDef{\n" +
         "    Params{\n" +

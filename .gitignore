@@ -7,6 +7,8 @@
 *.iml
 out
 gen
-/Example/Assets/Models/OBJ/ACU/
+/examples/Assets/Models/OBJ/ACU/
+/node_modules/
+webpack.config.js
 .gitignore
 .git-rewrite/

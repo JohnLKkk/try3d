@@ -1,7 +1,7 @@
-# TEORT_WebGL
+# try3D
 
 #### Description
-This is my attempt at WebGL called TEORT series project. For fun, this project is mainly a renderer designed by some new ideas that I recently researched. Currently, the renderer is still in its infancy, but it contains some visible results. Initially the project was hosted on gite as a private project, now I also update it to github.
+This is my attempt at WebGL called try3d series project. For fun, this project is mainly a renderer designed by some new ideas that I recently researched. Currently, the renderer is still in its infancy, but it contains some visible results. Initially the project was hosted on gite as a private project, now I also update it to github.
 
 #### Showcase
 

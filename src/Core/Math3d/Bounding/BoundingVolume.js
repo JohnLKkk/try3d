@@ -45,7 +45,7 @@ export default class BoundingVolume {
 
     /**
      * 返回处于平面的哪一边。<br/>
-     * @param {Plane}[plane]
+     * @param {GroupPlane}[plane]
      */
     whichSide(plane){};
 

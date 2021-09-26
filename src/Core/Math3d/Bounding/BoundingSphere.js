@@ -37,7 +37,7 @@ export default class BoundingSphere extends BoundingVolume{
     /**
      * 返回处于平面的哪一边。<br/>
      * @param {Plane}[plane]
-     * @return {Number}[Plane.S_SIDE_POSITIVE/Plane.S_SIDE_NEGATIVE/Plane.NONE]
+     * @return {Number}[GroupPlane.S_SIDE_POSITIVE/GroupPlane.S_SIDE_NEGATIVE/GroupPlane.NONE]
      */
     whichSide(plane){
         let distance = plane.distance(this._m_Center);

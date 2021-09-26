@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ParallelSplitShadowMapShadowTest2</title>
+    <title>ParallelSplitShadowMapShadowTest</title>
 </head>
 <body>
 <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
@@ -25,7 +25,7 @@
     import BoolVars from "../../src/Core/WebGL/Vars/BoolVars.js";
     import RadianceLoader from "../../src/Supp/RadianceLoader.js";
     import GIProbe from "../../src/Core/Light/GIProbe.js";
-    import Plane from "../../src/Core/Node/Shape/Plane.js";
+    import GroupPlane from "../../src/Core/Node/Shape/GroupPlane.js";
     import Material from "../../src/Core/Material/Material.js";
     import MaterialDef from "../../src/Core/Material/MaterialDef.js";
     import DirectionalLightShadowProcess from "../../src/Core/Shadow/DirectionalLightShadowProcess.js";
@@ -33,7 +33,7 @@
     import Ext from "../Ext.js";
 
     let ext = new Ext();
-    ext.show('  这个例子演示了基于PSSM(ParallelSplitShadowMapShadow)的DirectionalLight的阴影渲染，在这里，设置了ShadowSplitType为S_SHADER_SPLIT_TYPE_FIXED，并设置了4层分区，每一级的大小都为1024*1024。', {lineheight:50});
+    ext.show('  这个例子演示了基于PSSM(ParallelSplitShadowMapShadow)的DirectionalLight的阴影渲染，在这里，设置了ShadowSplitType为S_SHADER_SPLIT_TYPE_HALF_TRANSITION，并设置了4层分区，第一级为1024*1024，第二级为512*512，依次类推。', {lineheight:50});
 
 
     let scene = new Scene({cavnas:document.getElementById('canvas')});
@@ -81,8 +81,9 @@
     dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
     // 调试(只能在第一次调用proShadow()生效)
     dirLight.debugShadowMap();
+    // dirLight.setShadowSplitType(DirectionalLight.S_SHADER_SPLIT_TYPE_FIXED);
     // 设置PSSM分区模式(只能在第一次调用proShadow()生效)
-    dirLight.setShadowSplitType(DirectionalLight.S_SHADER_SPLIT_TYPE_FIXED);
+    dirLight.setShadowSplitType(DirectionalLight.S_SHADER_SPLIT_TYPE_HALF_TRANSITION);
     // 最大ShadowMapSize为1024(只能在第一次调用proShadow()生效)
     dirLight.setShadowMapSize(1024);
     // 设置4层ShadowMap分区(只能在第一次调用proShadow()生效)

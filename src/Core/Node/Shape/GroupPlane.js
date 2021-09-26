@@ -3,11 +3,11 @@ import Mesh from "../../WebGL/Mesh.js";
 import Tools from "../../Util/Tools.js";
 
 /**
- * Plane。<br/>
+ * GroupPlane。<br/>
  * @author Kkk
  * @date 2021年2月22日17点18分
  */
-export default class Plane extends Geometry{
+export default class GroupPlane extends Geometry{
     /**
      * 根据指定参数创建一个Plane。<br/>
      * @param {Component}[owner]

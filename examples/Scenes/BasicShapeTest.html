@@ -19,7 +19,7 @@
     import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
     import Box from "../../src/Core/Node/Shape/Box.js";
     import Sphere from "../../src/Core/Node/Shape/Sphere.js";
-    import Plane from "../../src/Core/Node/Shape/Plane.js";
+    import GroupPlane from "../../src/Core/Node/Shape/GroupPlane.js";
     import Geometry from "../../src/Core/Node/Geometry.js";
     import MeshFactor from "../../src/Core/Util/MeshFactor.js";
     import Mesh from "../../src/Core/WebGL/Mesh.js";
@@ -53,7 +53,7 @@
     sphere1.setMaterial(basicLightingMat);
     sphere1.setLocalTranslationXYZ(0, 10, 0);
 
-    let plane = new Plane(scene, {id:'plane'});
+    let plane = new GroupPlane(scene, {id:'plane'});
     plane.setMaterial(basicLightingMat);
     plane.setLocalScaleXYZ(50, 1, 50);
     plane.setLocalTranslationXYZ(0, -5, 0);

@@ -24,7 +24,7 @@
     import BoolVars from "../../src/Core/WebGL/Vars/BoolVars.js";
     import RadianceLoader from "../../src/Supp/RadianceLoader.js";
     import GIProbe from "../../src/Core/Light/GIProbe.js";
-    import Plane from "../../src/Core/Node/Shape/Plane.js";
+    import GroupPlane from "../../src/Core/Node/Shape/GroupPlane.js";
     import Material from "../../src/Core/Material/Material.js";
     import MaterialDef from "../../src/Core/Material/MaterialDef.js";
     import DirectionalLightShadowProcess from "../../src/Core/Shadow/DirectionalLightShadowProcess.js";
@@ -60,7 +60,7 @@
             rootNode.addChildren(modelNode);
 
             // 地板
-            // let floor = new Plane(scene, {id:'floor'});
+            // let floor = new GroupPlane(scene, {id:'floor'});
             // let floorMat = new Material(scene, {id:"floorMat", materialDef:MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef")});
             // let diffuseMap = new Texture2DVars(scene);
             // diffuseMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));

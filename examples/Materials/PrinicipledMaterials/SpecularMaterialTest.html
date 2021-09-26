@@ -2,9 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MetalMaterialTest</title>
-    <link rel="stylesheet" type="text/css" href="../../Assets/Htmls/Css/Base.css"/>
-    <script src="../../Assets/Htmls/Js/Infos.js"></script>
+    <title>SpecularMaterialTest</title>
 </head>
 <body>
 <div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
@@ -23,7 +21,7 @@
     import Vector4 from "../../../src/Core/Math3d/Vector4.js";
     import FloatVars from "../../../src/Core/WebGL/Vars/FloatVars.js";
     import DirectionalLight from "../../../src/Core/Light/DirectionalLight.js";
-    import Plane from "../../../src/Core/Node/Shape/Plane.js";
+    import GroupPlane from "../../../src/Core/Node/Shape/GroupPlane.js";
     import MoreMath from "../../../src/Core/Math3d/MoreMath.js";
     import Sphere from "../../../src/Core/Node/Shape/Sphere.js";
     import Vec4Vars from "../../../src/Core/WebGL/Vars/Vec4Vars.js";
@@ -36,8 +34,6 @@
     import RadianceLoader from "../../../src/Supp/RadianceLoader.js";
     import SkyBox from "../../../src/Core/Node/Sky/SkyBox.js";
     import Internal from "../../../src/Core/Render/Internal.js";
-
-    addInfos('金属工作流', '这个例子使用了经典的金属工作流以展示原理化材质的典型用法。在金属工作流中，通过BaseColor(基础色或反照度)，Metallic(金属度)，Roughness(粗糙度)控制物体的表面材质。');
 
 
     // 创建scene
@@ -73,78 +69,12 @@
         let aoMap = null;
 
         let metalLightingDef = MaterialDef.load('../../../src/Core/Assets/MaterialDef/Light/PrincipledLightingDef');
-        let getTexture = (src, srgb)=>{
+        let getTexture = (src)=>{
             let texture = new Texture2DVars(scene);
             texture.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
             texture.setImageSrc(scene, src);
-            if(srgb)
-                texture.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
             return texture;
         };
-
-        // plastic
-        let plastic = new Sphere(scene, {id:'plastic', widthSegments:35, heightSegments:35});
-        let plasticMat = new Material(scene, {id:'plasticMat', materialDef:metalLightingDef});
-        plasticMat.setParam('baseColorMap', getTexture('../../Assets/Textures/pbr/plastic/albedo.png', true));
-        plasticMat.setParam('normalMap', getTexture('../../Assets/Textures/pbr/plastic/normal.png'));
-        plasticMat.setParam('metallicMap', getTexture('../../Assets/Textures/pbr/plastic/metallic.png'));
-        plasticMat.setParam('roughnessMap', getTexture('../../Assets/Textures/pbr/plastic/roughness.png'));
-        plasticMat.setParam('lightMap', getTexture('../../Assets/Textures/pbr/plastic/ao.png', true));
-        plasticMat.setParam('aoMap', new BoolVars().valueOf(true));
-        plastic.setMaterial(plasticMat);
-        rootNode.addChildren(plastic);
-
-        // gold
-        let gold = new Sphere(scene, {id:'gold', widthSegments:35, heightSegments:35});
-        gold.setLocalTranslationXYZ(-2.5, 0, 0);
-        let goldMat = new Material(scene, {id:'goldMat', materialDef:metalLightingDef});
-        goldMat.setParam('baseColorMap', getTexture('../../Assets/Textures/pbr/gold/albedo.png', true));
-        goldMat.setParam('normalMap', getTexture('../../Assets/Textures/pbr/gold/normal.png'));
-        goldMat.setParam('metallicMap', getTexture('../../Assets/Textures/pbr/gold/metallic.png'));
-        goldMat.setParam('roughnessMap', getTexture('../../Assets/Textures/pbr/gold/roughness.png'));
-        goldMat.setParam('lightMap', getTexture('../../Assets/Textures/pbr/gold/ao.png', true));
-        goldMat.setParam('aoMap', new BoolVars().valueOf(true));
-        gold.setMaterial(goldMat);
-        rootNode.addChildren(gold);
-
-        // grass
-        let grass = new Sphere(scene, {id:'grass', widthSegments:35, heightSegments:35});
-        grass.setLocalTranslationXYZ(2.5, 0, 0);
-        let grassMat = new Material(scene, {id:'grassMat', materialDef:metalLightingDef});
-        grassMat.setParam('baseColorMap', getTexture('../../Assets/Textures/pbr/grass/albedo.png', true));
-        grassMat.setParam('normalMap', getTexture('../../Assets/Textures/pbr/grass/normal.png'));
-        grassMat.setParam('metallicMap', getTexture('../../Assets/Textures/pbr/grass/metallic.png'));
-        grassMat.setParam('roughnessMap', getTexture('../../Assets/Textures/pbr/grass/roughness.png'));
-        grassMat.setParam('lightMap', getTexture('../../Assets/Textures/pbr/grass/ao.png', true));
-        grassMat.setParam('aoMap', new BoolVars().valueOf(true));
-        grass.setMaterial(grassMat);
-        rootNode.addChildren(grass);
-
-        // wall
-        let wall = new Sphere(scene, {id:'wall', widthSegments:35, heightSegments:35});
-        wall.setLocalTranslationXYZ(5, 0, 0);
-        let wallMat = new Material(scene, {id:'wallMat', materialDef:metalLightingDef});
-        wallMat.setParam('baseColorMap', getTexture('../../Assets/Textures/pbr/wall/albedo.png', true));
-        wallMat.setParam('normalMap', getTexture('../../Assets/Textures/pbr/wall/normal.png'));
-        wallMat.setParam('metallicMap', getTexture('../../Assets/Textures/pbr/wall/metallic.png'));
-        wallMat.setParam('roughnessMap', getTexture('../../Assets/Textures/pbr/wall/roughness.png'));
-        wallMat.setParam('lightMap', getTexture('../../Assets/Textures/pbr/wall/ao.png', true));
-        wallMat.setParam('aoMap', new BoolVars().valueOf(true));
-        wall.setMaterial(wallMat);
-        rootNode.addChildren(wall);
-
-        // rusted_iron
-        let rusted_iron = new Sphere(scene, {id:'rusted_iron', widthSegments:35, heightSegments:35});
-        rusted_iron.setLocalTranslationXYZ(-5, 0, 0);
-        let rusted_ironMat = new Material(scene, {id:'rusted_ironMat', materialDef:metalLightingDef});
-        rusted_ironMat.setParam('baseColorMap', getTexture('../../Assets/Textures/pbr/rusted_iron/albedo.png', true));
-        rusted_ironMat.setParam('normalMap', getTexture('../../Assets/Textures/pbr/rusted_iron/normal.png'));
-        rusted_ironMat.setParam('metallicMap', getTexture('../../Assets/Textures/pbr/rusted_iron/metallic.png'));
-        rusted_ironMat.setParam('roughnessMap', getTexture('../../Assets/Textures/pbr/rusted_iron/roughness.png'));
-        rusted_ironMat.setParam('lightMap', getTexture('../../Assets/Textures/pbr/rusted_iron/ao.png', true));
-        rusted_ironMat.setParam('aoMap', new BoolVars().valueOf(true));
-        rusted_iron.setMaterial(rusted_ironMat);
-        rootNode.addChildren(rusted_iron);
 
         let dirLight = new DirectionalLight(scene, {id:'dirLight'});
         dirLight.setDirectionXYZ(-1, -1, -1);
