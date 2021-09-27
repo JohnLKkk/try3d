@@ -4,6 +4,7 @@ const Examples = {
         'HelloNode.html',
         'HelloMaterial.html',
         'HelloEvent.html',
+        'HelloGeometry.html',
     ],
     'Animations':[
 

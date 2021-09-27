@@ -24,7 +24,6 @@
 
 
         let objLoader = new Try3d.OBJLoader();
-        objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/Light/');
         objLoader.load(scene, 'blackboardOBJ', './../Assets/Models/OBJ/blackboard2.obj', modelNode=>{
             modelNode.setLocalScaleXYZ(0.1, 0.1, 0.1);
             modelNode.setLocalRotationFromEuler(0, Try3d.MoreMath.toRadians(-90), 0);
@@ -34,12 +33,15 @@
             let blackboardMat = new Try3d.Material(scene, {id:'blackboardMat', materialDef:colorDef});
             let blackboardTexture = new Try3d.Texture2DVars(scene);
             let textImage = new Try3d.TextImage(512, 512, '请按下任意按键(😀)', 50, '#191919');
+            // 文本对齐方式(0.5,0.5表示水平垂直中心)
             textImage.setAlign(0.5, 0.5);
+            // 文本颜色
             textImage.setTextColor('white');
             blackboardTexture.setImage(scene, textImage.getImage());
             blackboardTexture.setFlipY(true);
             blackboardMat.setParam('colorMap', blackboardTexture);
             blackboard.setMaterial(blackboardMat);
+            // 这里仅仅只是为了将这个blackboard放到与上面加载的模型黑板位置
             blackboard.setLocalRotationFromEuler(Try3d.MoreMath.toRadians(90), Try3d.MoreMath.toRadians(90), 0);
             blackboard.setLocalTranslationXYZ(0, 6.1, -0.12);
             rootNode.addChildren(blackboard);

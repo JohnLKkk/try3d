@@ -9,6 +9,7 @@ import Vec4Vars from "../Core/WebGL/Vars/Vec4Vars.js";
 import FloatVars from "../Core/WebGL/Vars/FloatVars.js";
 import Vector4 from "../Core/Math3d/Vector4.js";
 import Texture2DVars from "../Core/WebGL/Vars/Texture2DVars.js";
+import Internal from "../Core/Render/Internal.js";
 
 /**
  * OBJLoader。<br/>
@@ -56,7 +57,12 @@ export default class OBJLoader {
         // 解析OBJ数据块
         this.loadOBJ(modelNode, src, (state)=>{
             if(!this._m_DefaultMatDef){
-                this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + this._m_CustomMatDef);
+                if(this._m_AssetsPath && this._m_CustomMatDef){
+                    this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + this._m_CustomMatDef);
+                }
+                else{
+                    this._m_DefaultMatDef = MaterialDef.parse(Internal.S_BASIC_LIGHTING_DEF_DATA);
+                }
             }
             // 加载完实例材质后再创建obj实体
             this.loadMTLs(modelNode, state, ()=>{
