@@ -97,9 +97,31 @@ export default class Canvas extends Component{
         // <=
         gl.depthFunc(gl.LEQUAL);
     }
+
+    /**
+     * 设置ClearColor。<br/>
+     * @param {Number}[r]
+     * @param {Number}[g]
+     * @param {Number}[b]
+     * @param {Number}[a]
+     */
+    setClearColor(r, g, b, a){
+        let gl = this._m_GL;
+        gl.clearColor(r, g, b, a);
+    }
+
+    /**
+     * 返回Canvas宽度。<br/>
+     * @return {Number}
+     */
     getWidth(){
         return this._m_Canvas.width;
     }
+
+    /**
+     * 返回Canvas高度。<br/>
+     * @return {Number}
+     */
     getHeight(){
         return this._m_Canvas.height;
     }

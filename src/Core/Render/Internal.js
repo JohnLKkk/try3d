@@ -553,6 +553,141 @@ export default class Internal {
         "        }\n" +
         "    }\n" +
         "}\n";
+    static S_FOG_FILTER_DEF_DATA = "// 雾化\n" +
+        "Def FogFilterDef{\n" +
+        "    Params{\n" +
+        "        // 雾化距离(默认1000.0f)\n" +
+        "        float fogDistance;\n" +
+        "        // 通常为1.0\n" +
+        "        float fogDensity;\n" +
+        "        // 视锥near\n" +
+        "        float vNear;\n" +
+        "        // 视锥far\n" +
+        "        float vFar;\n" +
+        "        // 雾化near\n" +
+        "        float fogNear;\n" +
+        "        // 雾化far\n" +
+        "        float fogFar;\n" +
+        "        // 雾化颜色\n" +
+        "        vec4 fogColor;\n" +
+        "    }\n" +
+        "    SubTechnology Fog{\n" +
+        "        Vars{\n" +
+        "            vec2 wUv0;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" +
+        "                wUv0 = Context.InUv0;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            const float LOG2 = 1.442695f;\n" +
+        "            void main(){\n" +
+        "                Context.OutColor = texture(Context.InScreen, wUv0);\n" +
+        "                float depth = texture(Context.InDepth, wUv0).r;\n" +
+        "\n" +
+        "                #ifdef Params.fogDistance\n" +
+        "                    float _fogDistance = Params.fogDistance;\n" +
+        "                #else\n" +
+        "                    float _fogDistance = 1000.0f;\n" +
+        "                #endif\n" +
+        "                #ifdef Params.fogDensity\n" +
+        "                    float _fogDensity = Params.fogDensity;\n" +
+        "                #else\n" +
+        "                    float _fogDensity = 1.0f;\n" +
+        "                #endif\n" +
+        "                #ifdef Params.fogColor\n" +
+        "                    vec4 _fogColor = Params.fogColor;\n" +
+        "                #else\n" +
+        "                    vec4 _fogColor = vec4(1.0f);\n" +
+        "                #endif\n" +
+        "\n" +
+        "                // 可以简单的将视锥范围作为雾化过渡范围，如下：\n" +
+        "                // 此时，越靠近相机，dis越接近0，fog越接近1.0f，最终混合下Context.OutColor越清晰，远离相机时，dis小于0，fog逐渐变小，最终混合下_fogColor逐渐清晰\n" +
+        "                // 但是这种雾化计算dis在一个很小的非线性范围内变化\n" +
+        "                // float dis = (0.5f * depth + 0.5f);\n" +
+        "                // 所以这里变化到线性深度范围(假设near恒定为1.0)\n" +
+        "                float dis = 2.0f / (_fogDistance + 1.0f - depth * (_fogDistance - 1.0f));\n" +
+        "\n" +
+        "                // 一个经典的浓度过渡方程\n" +
+        "                float fog = exp2(-_fogDensity * _fogDensity * dis * dis * LOG2);\n" +
+        "                // 雾化规范到(0.0f,1.0f)\n" +
+        "                fog = clamp(fog, 0.0f, 1.0f);\n" +
+        "\n" +
+        "                // 混合结果\n" +
+        "                Context.OutColor = mix(_fogColor, Context.OutColor, fog);\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    SubTechnology LinearFog{\n" +
+        "        Vars{\n" +
+        "            vec2 wUv0;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" +
+        "                wUv0 = Context.InUv0;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            const float LOG2 = 1.442695f;\n" +
+        "            void main(){\n" +
+        "                Context.OutColor = texture(Context.InScreen, wUv0);\n" +
+        "                float depth = texture(Context.InDepth, wUv0).r;\n" +
+        "\n" +
+        "                #ifdef Params.vNear\n" +
+        "                    float _vNear = Params.vNear;\n" +
+        "                #else\n" +
+        "                    float _vNear = 0.1f;\n" +
+        "                #endif\n" +
+        "                #ifdef Params.vFar\n" +
+        "                    float _vFar = Params.vFar;\n" +
+        "                #else\n" +
+        "                    float _vFar = 1000.0f;\n" +
+        "                #endif\n" +
+        "                #ifdef Params.fogNear\n" +
+        "                    float _fogNear = Params.fogNear;\n" +
+        "                #else\n" +
+        "                    float _fogNear = 1.0f;\n" +
+        "                #endif\n" +
+        "                #ifdef Params.fogFar\n" +
+        "                    float _fogFar = Params.fogFar;\n" +
+        "                #else\n" +
+        "                    float _fogFar = 1000.0f;\n" +
+        "                #endif\n" +
+        "                #ifdef Params.fogColor\n" +
+        "                    vec4 _fogColor = Params.fogColor;\n" +
+        "                #else\n" +
+        "                    vec4 _fogColor = vec4(1.0f);\n" +
+        "                #endif\n" +
+        "\n" +
+        "\n" +
+        "                // 线性雾化相对来说比较简单,仅考虑指定near,far内的过渡\n" +
+        "                float dis = (2.0f * _vNear) / (_vFar + _vNear - depth * (_vFar - _vNear));\n" +
+        "\n" +
+        "                // 雾化规范到(0.0f,1.0f)\n" +
+        "                float fog = smoothstep(_fogNear, _fogFar, dis * (_vFar - _vNear));\n" +
+        "\n" +
+        "                // 混合结果\n" +
+        "                Context.OutColor = mix(Context.OutColor, _fogColor, fog);\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology{\n" +
+        "        Sub_Pass PostFilter{\n" +
+        "            Pass Fog{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology LinearFog{\n" +
+        "\n" +
+        "        Sub_Pass PostFilter{\n" +
+        "            Pass LinearFog{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "}\n";
     static S_PICTURE_DEF_DATA = "// 颜色材质,提供指定颜色或颜色纹理并渲染\n" +
         "Def PictureDef{\n" +
         "    Params{\n" +

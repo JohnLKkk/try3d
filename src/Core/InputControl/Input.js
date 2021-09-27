@@ -81,7 +81,7 @@ export default class Input extends Component{
         'x':Input.S_KEY_X,
         'y':Input.S_KEY_Y,
         'z':Input.S_KEY_Z
-    }
+    };
     static S_MOUSE_BUTTON0_DOWN = 36;
     static S_MOUSE_BUTTON1_DOWN = 37;
     static S_MOUSE_BUTTON2_DOWN = 38;

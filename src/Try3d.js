@@ -116,6 +116,7 @@ import OBJLoader from "./Supp/OBJLoader.js";
 import RadianceLoader from "./Supp/RadianceLoader.js";
 import hdrpng from "./TPLibs/hdrpng.js";
 import Grid from "./Core/Node/Shape/Grid.js";
+import TextImage from "./Core/Util/TextImage.js";
 
 export default {
     Scene,
@@ -207,6 +208,7 @@ export default {
     ProbeTools,
     Queue,
     TempVars,
+    TextImage,
     Tools,
     BoolVars,
     FloatVars,

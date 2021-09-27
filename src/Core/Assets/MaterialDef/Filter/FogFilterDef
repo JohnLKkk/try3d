@@ -1,0 +1,135 @@
+// 雾化
+Def FogFilterDef{
+    Params{
+        // 雾化距离(默认1000.0f)
+        float fogDistance;
+        // 通常为1.0
+        float fogDensity;
+        // 视锥near
+        float vNear;
+        // 视锥far
+        float vFar;
+        // 雾化near
+        float fogNear;
+        // 雾化far
+        float fogFar;
+        // 雾化颜色
+        vec4 fogColor;
+    }
+    SubTechnology Fog{
+        Vars{
+            vec2 wUv0;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = vec4(Context.InPosition, 1.0f);
+                wUv0 = Context.InUv0;
+            }
+        }
+        Fs_Shader{
+            const float LOG2 = 1.442695f;
+            void main(){
+                Context.OutColor = texture(Context.InScreen, wUv0);
+                float depth = texture(Context.InDepth, wUv0).r;
+
+                #ifdef Params.fogDistance
+                    float _fogDistance = Params.fogDistance;
+                #else
+                    float _fogDistance = 1000.0f;
+                #endif
+                #ifdef Params.fogDensity
+                    float _fogDensity = Params.fogDensity;
+                #else
+                    float _fogDensity = 1.0f;
+                #endif
+                #ifdef Params.fogColor
+                    vec4 _fogColor = Params.fogColor;
+                #else
+                    vec4 _fogColor = vec4(1.0f);
+                #endif
+
+                // 可以简单的将视锥范围作为雾化过渡范围，如下：
+                // 此时，越靠近相机，dis越接近0，fog越接近1.0f，最终混合下Context.OutColor越清晰，远离相机时，dis小于0，fog逐渐变小，最终混合下_fogColor逐渐清晰
+                // 但是这种雾化计算dis在一个很小的非线性范围内变化
+                // float dis = (0.5f * depth + 0.5f);
+                // 所以这里变化到线性深度范围(假设near恒定为1.0)
+                float dis = 2.0f / (_fogDistance + 1.0f - depth * (_fogDistance - 1.0f));
+
+                // 一个经典的浓度过渡方程
+                float fog = exp2(-_fogDensity * _fogDensity * dis * dis * LOG2);
+                // 雾化规范到(0.0f,1.0f)
+                fog = clamp(fog, 0.0f, 1.0f);
+
+                // 混合结果
+                Context.OutColor = mix(_fogColor, Context.OutColor, fog);
+            }
+        }
+    }
+    SubTechnology LinearFog{
+        Vars{
+            vec2 wUv0;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = vec4(Context.InPosition, 1.0f);
+                wUv0 = Context.InUv0;
+            }
+        }
+        Fs_Shader{
+            const float LOG2 = 1.442695f;
+            void main(){
+                Context.OutColor = texture(Context.InScreen, wUv0);
+                float depth = texture(Context.InDepth, wUv0).r;
+
+                #ifdef Params.vNear
+                    float _vNear = Params.vNear;
+                #else
+                    float _vNear = 0.1f;
+                #endif
+                #ifdef Params.vFar
+                    float _vFar = Params.vFar;
+                #else
+                    float _vFar = 1000.0f;
+                #endif
+                #ifdef Params.fogNear
+                    float _fogNear = Params.fogNear;
+                #else
+                    float _fogNear = 1.0f;
+                #endif
+                #ifdef Params.fogFar
+                    float _fogFar = Params.fogFar;
+                #else
+                    float _fogFar = 1000.0f;
+                #endif
+                #ifdef Params.fogColor
+                    vec4 _fogColor = Params.fogColor;
+                #else
+                    vec4 _fogColor = vec4(1.0f);
+                #endif
+
+
+                // 线性雾化相对来说比较简单,仅考虑指定near,far内的过渡
+                float dis = (2.0f * _vNear) / (_vFar + _vNear - depth * (_vFar - _vNear));
+
+                // 雾化规范到(0.0f,1.0f)
+                float fog = smoothstep(_fogNear, _fogFar, dis * (_vFar - _vNear));
+
+                // 混合结果
+                Context.OutColor = mix(Context.OutColor, _fogColor, fog);
+            }
+        }
+    }
+    Technology{
+        Sub_Pass PostFilter{
+            Pass Fog{
+            }
+        }
+    }
+    Technology LinearFog{
+
+        Sub_Pass PostFilter{
+            Pass LinearFog{
+            }
+        }
+    }
+}

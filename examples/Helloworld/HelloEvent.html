@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HelloEvent</title>
+</head>
+<script src="../../build/try3d.min.js"></script>
+<script src="../helpers.js"></script>
+<body>
+    <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;margin: 0px;">
+        <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+    </div>
+    <script type="module">
+
+        // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
+        let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+        scene.getCanvas().setClearColor(1.0, 1.0, 1.0, 1.0);
+        // 内置ColorDef
+        let colorDef = Try3d.MaterialDef.parse(Try3d.Internal.S_COLOR_DEF_DATA);
+
+        // 定义一个根节点
+        let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+        scene.addSceneNode(rootNode);
+
+
+        let objLoader = new Try3d.OBJLoader();
+        objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/Light/');
+        objLoader.load(scene, 'blackboardOBJ', './../Assets/Models/OBJ/blackboard2.obj', modelNode=>{
+            modelNode.setLocalScaleXYZ(0.1, 0.1, 0.1);
+            modelNode.setLocalRotationFromEuler(0, Try3d.MoreMath.toRadians(-90), 0);
+            rootNode.addChildren(modelNode);
+            // 定义一个黑板(其实也可以直接从加载的obj模型中获取黑板节点,但是这个模型被优化为一个整体了)
+            let blackboard = new Try3d.GroupPlane(scene, {id:'blackboard', xSize:3.8, zSize:3.4});
+            let blackboardMat = new Try3d.Material(scene, {id:'blackboardMat', materialDef:colorDef});
+            let blackboardTexture = new Try3d.Texture2DVars(scene);
+            let textImage = new Try3d.TextImage(512, 512, '请按下任意按键(😀)', 50, '#191919');
+            textImage.setAlign(0.5, 0.5);
+            textImage.setTextColor('white');
+            blackboardTexture.setImage(scene, textImage.getImage());
+            blackboardTexture.setFlipY(true);
+            blackboardMat.setParam('colorMap', blackboardTexture);
+            blackboard.setMaterial(blackboardMat);
+            blackboard.setLocalRotationFromEuler(Try3d.MoreMath.toRadians(90), Try3d.MoreMath.toRadians(90), 0);
+            blackboard.setLocalTranslationXYZ(0, 6.1, -0.12);
+            rootNode.addChildren(blackboard);
+
+            // 创建一个控制器
+            let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
+            sceneControl.lookScene(rootNode);
+            sceneControl.setTargetDistance(12);
+            initOther(scene, rootNode);
+            // 获取当前默认的窗口输入控制器
+            let input = Try3d.Input.getInput(scene, {id:scene.getId()});
+            // 在更新循环中监听事件(或者以原生html方式监听)
+            // 这里由于例子需要监听所有按键事件,所以在信号中监听所有按下事件
+            input.on('keydown', (event)=>{
+                if(event){
+                    textImage.setText('按下的keyCode:' + event);
+                    blackboardTexture.setImage(scene, textImage.getImage());
+                }
+            });
+        });
+
+
+
+        // 创建渲染器
+        let renderEngine = new Try3d.RenderEngine();
+        // 添加要渲染的场景对象
+        renderEngine.addScene(scene);
+        // 启动渲染器
+        renderEngine.launch();
+        showStats(scene);
+    </script>
+</body>
+</html>

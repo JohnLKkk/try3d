@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HelloNode</title>
+</head>
+<script src="../../build/try3d.min.js"></script>
+<script src="../helpers.js"></script>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;margin: 0px;">
+    <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script type="module">
+
+    // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
+
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    scene.getRender().setGammaFactor(1.0);
+    scene.getCanvas().setClearColor(1.0, 1.0, 1.0, 1.0);
+    // 内置ColorDef
+    let colorDef = Try3d.MaterialDef.parse(Try3d.Internal.S_COLOR_DEF_DATA);
+
+    // 定义一个根节点
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+    scene.addSceneNode(rootNode);
+
+    // 地板
+    let floor = new Try3d.GroupPlane(scene, {id:'floor', xSize:10, zSize:10, xSegments:6, zSegments:10, xRepeat:true, zRepeat:true});
+    let floorMat = new Try3d.Material(scene, {id:'floorMat', materialDef:colorDef});
+    let floorTexture = new Try3d.Texture2DVars(scene);
+    floorTexture.setImageSrc(scene, '../Assets/Textures/rockwall.jpg');
+    floorMat.setParam('colorMap', floorTexture);
+    floor.setMaterial(floorMat);
+    floor.setLocalTranslationXYZ(0, 0.1, 0);
+    rootNode.addChildren(floor);
+
+    // 创建一堆box
+    let box1Mat = new Try3d.Material(scene, {id:'box1Mat', materialDef:colorDef});
+    let box2Mat = new Try3d.Material(scene, {id:'box2Mat', materialDef:colorDef});
+    let box3Mat = new Try3d.Material(scene, {id:'box3Mat', materialDef:colorDef});
+    let box1Texture = new Try3d.Texture2DVars(scene);
+    box1Texture.setImageSrc(scene, "../Assets/Textures/container2.png");
+    box1Mat.setParam('colorMap', box1Texture);
+    let box2Texture = new Try3d.Texture2DVars(scene);
+    box2Texture.setImageSrc(scene, "../Assets/Textures/Pond.jpg");
+    box2Mat.setParam('colorMap', box2Texture);
+    let box3Texture = new Try3d.Texture2DVars(scene);
+    box3Texture.setImageSrc(scene, "../Assets/Textures/Rock.PNG");
+    box3Mat.setParam('colorMap', box3Texture);
+    let mat = [box1Mat, box2Mat, box3Mat];
+
+    for(let i = 0;i < 3;i++){
+        let y = i * 2 + 1;
+        let r = 4 - i * 1;
+        let nextNode = new Try3d.Node(scene, {id:'boxs_' + i});
+        nextNode.setLocalTranslationXYZ(0, y, 0);
+        let angle = 0;
+        for(let j = 0;j < 20;j++){
+            angle = (j / 20) * Try3d.MoreMath.S_TWO_PI;
+            let x = Math.sin(angle) * r;
+            let z = Math.cos(angle) * r;
+            let box = new Try3d.Box(scene, {id:'box_' + i + '_' + j, xHalf:0.2, yHalf:0.2, zHalf:0.2});
+            box.setLocalTranslationXYZ(x, 0, z);
+            box.setLocalRotationFromEuler(Math.random() * Try3d.MoreMath.S_TWO_PI, Math.random() * Try3d.MoreMath.S_TWO_PI, Math.random() * Try3d.MoreMath.S_TWO_PI);
+            box.setMaterial(mat[i]);
+            nextNode.addChildren(box);
+        }
+        rootNode.addChildren(nextNode);
+    }
+
+    // 旋转各层boxs
+    let boxs = [rootNode.getChildrenAtName('boxs_0'), rootNode.getChildrenAtName('boxs_1'), rootNode.getChildrenAtName('boxs_2')];
+    let boxsInfo = [{angle:0, v:10.0},{angle:0, v:50.0},{angle:0, v:100.0}];
+    scene.on('update', (exTime)=>{
+        for(let i = 0;i < boxs.length;i++){
+            boxsInfo[i].angle += boxsInfo[i].v * exTime;
+            boxs[i].setLocalRotationFromEuler(0, Try3d.MoreMath.toRadians(boxsInfo[i].angle), 0);
+        }
+    });
+
+    // 创建一个控制器
+    let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
+    sceneControl.lookScene(rootNode);
+    sceneControl.setMinVerticalRotation(0.1);
+    // sceneControl.setTargetDistance(4);
+    initOther(scene, rootNode);
+
+
+    // 创建渲染器
+    let renderEngine = new Try3d.RenderEngine();
+    // 添加要渲染的场景对象
+    renderEngine.addScene(scene);
+    // 启动渲染器
+    renderEngine.launch();
+    showStats(scene);
+</script>
+</body>
+</html>
+

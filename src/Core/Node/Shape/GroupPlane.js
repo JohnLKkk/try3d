@@ -17,6 +17,8 @@ export default class GroupPlane extends Geometry{
      * @param {Number}[cfg.zSize z方向半长,默认1]
      * @param {Number}[cfg.xSegments x方向切片数量,默认1]
      * @param {Number}[cfg.zSegments z方向切片数量,默认1]
+     * @param {Boolean}[cfg.xRepeat x方向重复纹理,必须xSegments大于1.0]
+     * @param {Boolean}[cfg.zRepeat z方向重复纹理,必须zSegments大于1.0]
      */
     constructor(owner, cfg) {
         super(owner, cfg);
@@ -97,8 +99,14 @@ export default class GroupPlane extends Geometry{
 
                 normals[offset + 2] = -1;
 
-                uvs[offset2] = (planeX - ix) / planeX;
-                uvs[offset2 + 1] = ((planeZ - iz) / planeZ);
+                uvs[offset2] = (planeX - ix);
+                uvs[offset2 + 1] = (planeZ - iz);
+                if(!cfg.xRepeat){
+                    uvs[offset2] /= planeX;
+                }
+                if(!cfg.zRepeat){
+                    uvs[offset2 + 1] /= planeZ;
+                }
 
                 offset += 3;
                 offset2 += 2;

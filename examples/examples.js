@@ -1,6 +1,9 @@
 const Examples = {
     'Helloworld':[
-        'HelloScene.html'
+        'HelloScene.html',
+        'HelloNode.html',
+        'HelloMaterial.html',
+        'HelloEvent.html',
     ],
     'Animations':[
 
