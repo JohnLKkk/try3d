@@ -33,4 +33,14 @@ export default class Vars {
             this._m_OwnerFlags[owner.getId()] = {owner, flag};
         }
     }
+
+    /**
+     * 移除持有者。<br/>
+     * @param {Object}[owner]
+     */
+    unowner(owner){
+        if(this._m_OwnerFlags[owner.getId()]){
+            delete this._m_OwnerFlags[owner.getId()];
+        }
+    }
 }

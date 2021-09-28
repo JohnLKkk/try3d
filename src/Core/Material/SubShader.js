@@ -306,6 +306,99 @@ export default class SubShader {
     }
 
     /**
+     * 清除参数定义。<br/>
+     * @param {String}[dparam 参数名]
+     * @param {Boolean}[isContextDefine 表明是否为上下文定义]
+     * @param {Boolean}[globalRefresh 表明刷新同类subShader]
+     */
+    clearDefine(dparam, isContextDefine, globalRefresh){
+        let _new = false;
+        if(this._m_AleadyDefinedParams[dparam]){
+            if(this._m_CanDefineParams[dparam] || isContextDefine){
+                _new = true;
+                // this._m_AleadyDefinedParams[dparam] = false;
+                delete this._m_AleadyDefinedParams[dparam];
+            }
+        }
+        if(_new){
+            this._m_Defines = null;
+            this._m_KeyDefs = null;
+            for(let param in this._m_AleadyDefinedParams){
+                if(!this._m_Defines){
+                    this._m_Defines = {};
+                }
+                // 定义参数
+                let shaderParams = this._m_Def.getShaderParams();
+                let shaderContextDefines = this._m_Def.getShaderContextDefines();
+                if((shaderParams[ShaderSource.VERTEX_SHADER] && shaderParams[ShaderSource.VERTEX_SHADER][param]) || (shaderContextDefines[ShaderSource.VERTEX_SHADER] && shaderContextDefines[ShaderSource.VERTEX_SHADER][param])){
+                    // 加入顶点着色器
+                    if(!this._m_Defines[ShaderSource.VERTEX_SHADER]){
+                        this._m_Defines[ShaderSource.VERTEX_SHADER] = "";
+                    }
+                    if(isContextDefine && param == dparam){
+                        this._m_Defines[ShaderSource.VERTEX_SHADER] += ShaderSource.Context_Data[param] + "\n";
+                    }
+                    else{
+                        // 先判断该参数是否属于contextDefine(因为dparam!=param,但param仍有可能属于contextDefine
+                        if(ShaderSource.Context_Data[param] != null){
+                            this._m_Defines[ShaderSource.VERTEX_SHADER] += ShaderSource.Context_Data[param] + "\n";
+                        }
+                        else{
+                            // 属于材质参数定义
+                            this._m_Defines[ShaderSource.VERTEX_SHADER] += this._m_CanDefineParams[param] + "\n";
+                        }
+                    }
+
+                    if(!this._m_KeyDefs){
+                        this._m_KeyDefs = "";
+                    }
+                    this._m_KeyDefs += param + ",";
+                }
+                else if((shaderParams[ShaderSource.FRAGMENT_SHADER] && shaderParams[ShaderSource.FRAGMENT_SHADER][param]) || (shaderContextDefines[ShaderSource.FRAGMENT_SHADER] && shaderContextDefines[ShaderSource.FRAGMENT_SHADER][param])){
+                    // 加入片段着色器
+                    if(!this._m_Defines[ShaderSource.FRAGMENT_SHADER]){
+                        this._m_Defines[ShaderSource.FRAGMENT_SHADER] = "";
+                    }
+                    if(isContextDefine && param == dparam){
+                        this._m_Defines[ShaderSource.FRAGMENT_SHADER] += ShaderSource.Context_Data[param] + "\n";
+                    }
+                    else{
+                        // 先判断该参数是否属于contextDefine(因为dparam!=param,但param仍有可能属于contextDefine
+                        if(ShaderSource.Context_Data[param] != null){
+                            this._m_Defines[ShaderSource.FRAGMENT_SHADER] += ShaderSource.Context_Data[param] + "\n";
+                        }
+                        else{
+                            // 属于材质参数定义
+                            this._m_Defines[ShaderSource.FRAGMENT_SHADER] += this._m_CanDefineParams[param] + "\n";
+                        }
+                    }
+
+                    if(!this._m_KeyDefs){
+                        this._m_KeyDefs = "";
+                    }
+                    this._m_KeyDefs += param + ",";
+                }
+            }
+            // 当删除最后一个定义时,此时this._m_Defines为空,为了能够重新编译,这里不让它为空
+            if(!this._m_Defines){
+                this._m_Defines = {};
+                this._m_KeyDefs = ",";
+            }
+            if(this._m_Defines != null && globalRefresh){
+                let holds = this._m_ShaderProgram._m_Holds;
+                for(let objId in holds){
+                    if(holds[objId] != this && holds[objId]){
+                        // 其他所有引用同一个shaderProgram的subShader都应该添加这个defines
+                        // 不必担心重复编译,因为一旦其中一个被编译过,其他subShader都会自动引用
+                        holds[objId]._m_KeyDefs = this._m_KeyDefs;
+                        holds[objId]._m_Defines = this._m_Defines;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * 添加参数定义。<br/>
      * @param {String}[dparam 参数名]
      * @param {Boolean}[isContextDefine 表明是否为上下文定义]

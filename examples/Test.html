@@ -5,7 +5,8 @@
     <title>Test</title>
 </head>
 <body>
-    <canvas id="canvas" width="512" height="512"></canvas>
+    <!--<canvas id="canvas" width="512" height="512"></canvas>-->
+    <span><img src="./Assets/Textures/pond/Pond_NRM.png" width="128" height="128"><div style="text-align: center;width: 128px;color: white">sdsd</div></span>
     <script type="module">
         // let arr = ['color','get','test'];
         // var newArr = arr.sort(function(a,b){return a.localeCompare(b)});
@@ -71,60 +72,63 @@
         // let cfg = {value:false};
         // console.log('value:' + (cfg.value || 1));
 
-        let scene = new Scene({cavnas:document.getElementById('canvas')});
-        let shadowCam = new Camera(scene, {id:'shadowCam', parallelProjection:true});
-        console.log('projectMatrix:' + shadowCam.getProjectMatrix().toString());
+        // let scene = new Scene({cavnas:document.getElementById('canvas')});
+        // let shadowCam = new Camera(scene, {id:'shadowCam', parallelProjection:true});
+        // console.log('projectMatrix:' + shadowCam.getProjectMatrix().toString());
+        //
+        //
+        //
+        // shadowCam.setFar(1000.0);
+        // shadowCam.setEye(new Vector3(0, 0, 0));
+        // let e = shadowCam.getEye();
+        // shadowCam.lookAt(e, e.add(new Vector3(-1, -1, -1), new Vector3()), shadowCam.getUp());
+        // console.log('v:' + shadowCam.getViewMatrix().toString());
+        // // 强制更新
+        // shadowCam._updateFrustum();
+        // shadowCam.forceUpdateProjection();
+        // let pv = shadowCam.getProjectViewMatrix(true);
+        // console.log('pv:' + pv.toString());
+        //
+        //
+        //
+        // // 测试calculateLightConeScope
+        // console.log('测试calculateLightConeScope...');
+        // let points = [];
+        // for(let i = 0;i < 8;i++){
+        //     points[i] = new Vector3();
+        // }
+        // let cam = new Camera(scene, {id:'cam'});
+        // cam.setEye(new Vector3(0, 0, 0));
+        // cam.lookAt(new Vector3(0, 0, 0), new Vector3(0, 0, -1), new Vector3(0, 1, 0));
+        // console.log('w:' + cam.getWidth() + ',h:' + cam.getHeight());
+        //
+        // Shadow.calculateLightConeScope(cam, 0.1, 1000.0, 1.0, points);
+        // console.log('points:');
+        // for(let i = 0;i < 8;i++){
+        //     console.log(i + ":" + points[i].toString());
+        // }
+        //
+        // // 测试calculateSplits
+        // let splits = new Array(5);
+        // Shadow.calculateSplits(splits, 0.1, 1000.0, 0.65);
+        // for(let i = 0;i < 5;i++){
+        //     console.log(i + ':' + splits[i]);
+        // }
+        //
+        // async function test() {
+        //     return new Promise(resolve => {
+        //         setTimeout(()=>{
+        //             resolve('ttt');
+        //         }, 5000);
+        //     });
+        // }
+        // console.time('test');
+        // let result = await test();
+        // console.timeEnd('test');
+        // console.log('result:' + result);
 
 
 
-        shadowCam.setFar(1000.0);
-        shadowCam.setEye(new Vector3(0, 0, 0));
-        let e = shadowCam.getEye();
-        shadowCam.lookAt(e, e.add(new Vector3(-1, -1, -1), new Vector3()), shadowCam.getUp());
-        console.log('v:' + shadowCam.getViewMatrix().toString());
-        // 强制更新
-        shadowCam._updateFrustum();
-        shadowCam.forceUpdateProjection();
-        let pv = shadowCam.getProjectViewMatrix(true);
-        console.log('pv:' + pv.toString());
-
-
-
-        // 测试calculateLightConeScope
-        console.log('测试calculateLightConeScope...');
-        let points = [];
-        for(let i = 0;i < 8;i++){
-            points[i] = new Vector3();
-        }
-        let cam = new Camera(scene, {id:'cam'});
-        cam.setEye(new Vector3(0, 0, 0));
-        cam.lookAt(new Vector3(0, 0, 0), new Vector3(0, 0, -1), new Vector3(0, 1, 0));
-        console.log('w:' + cam.getWidth() + ',h:' + cam.getHeight());
-
-        Shadow.calculateLightConeScope(cam, 0.1, 1000.0, 1.0, points);
-        console.log('points:');
-        for(let i = 0;i < 8;i++){
-            console.log(i + ":" + points[i].toString());
-        }
-
-        // 测试calculateSplits
-        let splits = new Array(5);
-        Shadow.calculateSplits(splits, 0.1, 1000.0, 0.65);
-        for(let i = 0;i < 5;i++){
-            console.log(i + ':' + splits[i]);
-        }
-
-        async function test() {
-            return new Promise(resolve => {
-                setTimeout(()=>{
-                    resolve('ttt');
-                }, 5000);
-            });
-        }
-        console.time('test');
-        let result = await test();
-        console.timeEnd('test');
-        console.log('result:' + result);
     </script>
     <!--<script>-->
         <!--function findSrc(str, reg){-->

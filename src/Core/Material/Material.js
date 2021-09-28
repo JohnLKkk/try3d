@@ -359,8 +359,31 @@ export default class Material extends Component{
      * 清楚一个参数。<br/>
      * @param {String}[paramName]
      */
-    clearParams(paramName){
+    clearParams(paramName, value){
         // 待实现
+        // 检测是否有效参数
+        if(this._m_Params[paramName]){
+            // 检测是否已经定义
+            let update = false;
+            if(this._m_AleadyDefinedParams[paramName]){
+                update = true;
+                // this._m_AleadyDefinedParams[paramName] = false;
+                delete this._m_AleadyDefinedParams[paramName];
+            }
+            if(update){
+                // 清除该参数
+                // 重新构建当前技术所有SubShader块
+                let subPass = null;
+                for(let p in this._m_CurrentTechnology.getSubPassList()){
+                    subPass = this._m_CurrentTechnology.getSubPasss(p);
+                    subPass.getSubShaders().forEach(sb=>{
+                        sb.subShader.clearDefine(paramName);
+                    });
+                }
+            }
+            // 将其移除参数列表
+            this._m_ParamValues[paramName].unowner(this);
+        }
     }
 
     /**
@@ -396,6 +419,26 @@ export default class Material extends Component{
      */
     clearDefine(name, globalRefresh){
         // 待实现
+        let update = false;
+        if(this._m_AleadyDefinedParams[name]){
+            update = true;
+            this._m_AleadyDefinedParams[name] = false;
+        }
+        if(update){
+            // 定义该参数
+            // 重新构建当前技术所有SubShader块
+            let subPass = null;
+            for(let paramName in this._m_AleadyDefinedParams){
+                for(let p in this._m_CurrentTechnology.getSubPassList()){
+                    subPass = this._m_CurrentTechnology.getSubPasss(p);
+                    subPass.getSubShaders().forEach(sb=>{
+                        if(name == paramName){
+                            sb.subShader.clearDefine(paramName, name == paramName && ShaderSource.Context_Data[name] != null, globalRefresh);
+                        }
+                    });
+                }
+            }
+        }
     }
 
 }

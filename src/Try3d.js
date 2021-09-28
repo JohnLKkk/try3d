@@ -117,6 +117,8 @@ import RadianceLoader from "./Supp/RadianceLoader.js";
 import hdrpng from "./TPLibs/hdrpng.js";
 import Grid from "./Core/Node/Shape/Grid.js";
 import TextImage from "./Core/Util/TextImage.js";
+import Cylinder from "./Core/Node/Shape/Cylinder.js";
+import Torus from "./Core/Node/Shape/Torus.js";
 
 export default {
     Scene,
@@ -166,6 +168,8 @@ export default {
     Vector3,
     Vector4,
     Box,
+    Cylinder,
+    Torus,
     GroupPlane,
     Grid,
     Sphere,

@@ -20,6 +20,8 @@ export default class Sphere extends Geometry{
      * @param {Number}[cfg.radius 半径,默认为1]
      * @param {Number}[cfg.widthSegments 宽度方向的切片数量,默认18]
      * @param {Number}[cfg.heightSegments 高度方向的切片数量,默认18]
+     * @param {Number}[cfg.widthUVScale 宽度方向的uv缩放,默认0.5]
+     * @param {Number}[cfg.heightUVScale 高度方向的uv缩放,默认0.5]
      */
     constructor(owner, cfg) {
         super(owner, cfg);
@@ -55,6 +57,9 @@ export default class Sphere extends Geometry{
         if (widthSegments < 18) {
             widthSegments = 18;
         }
+
+        let widthUVScale = cfg.widthUVScale || 0.5;
+        let heightUVScale = cfg.heightUVScale || 0.5;
 
         const positions = [];
         const normals = [];
@@ -97,8 +102,8 @@ export default class Sphere extends Geometry{
                 x = cosPhi * sinTheta;
                 y = cosTheta;
                 z = sinPhi * sinTheta;
-                u = 1.0 - j / widthSegments;
-                v = i / heightSegments;
+                u = 1.0 - j / (widthSegments * widthUVScale);
+                v = i / (heightSegments * widthUVScale);
 
                 normals.push(x);
                 normals.push(y);

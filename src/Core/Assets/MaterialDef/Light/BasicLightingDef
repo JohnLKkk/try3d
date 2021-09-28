@@ -9,6 +9,9 @@ Def BasicLightingDef{
         vec4 diffuseColor;
         vec4 specularColor;
         float shininess;
+        // lightMap或AO或OCC
+        sampler2D lightMap;
+        bool lightMapTexCoord;
         // 完全透明剔除因子(0-1),低于该值的透明片段被完全剔除而不进行混合
         float alphaDiscard;
     }
@@ -18,6 +21,7 @@ Def BasicLightingDef{
             vec4 wTangent;
             vec3 wPosition;
             vec2 wUv0;
+            vec2 wUv1;
             // 三种成分用于调和光照,可来自材质颜色的定义,也可以来自vertex_light
             vec3 ambientSumAdjust;
             vec4 diffuseSumAdjust;
@@ -50,6 +54,11 @@ Def BasicLightingDef{
                 //tbnMat = mat3(t, b, norm);
                 wNormal = norm;
                 wUv0 = Context.InUv0;
+
+                // lightMap/AO/OCC
+                #ifdef Params.lightMapTexCoord
+                    wUv1 = Context.InUv1;
+                #endif
 
 
                 // 如果是顶点光照,则在这里将光源变化到切线空间
@@ -158,6 +167,17 @@ Def BasicLightingDef{
                     _shininess = Params.shininess;
                 #endif
 
+                // lightMap/AO/OCC
+                #ifdef Params.lightMap
+                    #ifdef Params.lightMapTexCoord
+                        vec3 lightMapColor = texture(Params.lightMap, wUv1).rgb;
+                    #else
+                        vec3 lightMapColor = texture(Params.lightMap, wUv0).rgb;
+                    #endif
+                    _specularColor.rgb *= lightMapColor;
+                    _diffuseColor.rgb  *= lightMapColor;
+                #endif
+
 
                 Context.OutColor.rgb = _diffuseColor.rgb * ambientSumAdjust;
 
@@ -239,6 +259,7 @@ Def BasicLightingDef{
             vec4 wTangent;
             vec3 wPosition;
             vec2 wUv0;
+            vec2 wUv1;
             // 三种成分用于调和光照,可来自材质颜色的定义,也可以来自vertex_light
             vec3 ambientSumAdjust;
             vec4 diffuseSumAdjust;
@@ -271,6 +292,11 @@ Def BasicLightingDef{
                 //tbnMat = mat3(t, b, norm);
                 wNormal = norm;
                 wUv0 = Context.InUv0;
+
+                // lightMap/AO/OCC
+                #ifdef Params.lightMapTexCoord
+                    wUv1 = Context.InUv1;
+                #endif
 
 
                 // 如果是顶点光照,则在这里将光源变化到切线空间
@@ -382,6 +408,17 @@ Def BasicLightingDef{
                 float _shininess = 32.0;
                 #ifdef Params.shininess
                     _shininess = Params.shininess;
+                #endif
+
+                // lightMap/AO/OCC
+                #ifdef Params.lightMap
+                    #ifdef Params.lightMapTexCoord
+                        vec3 lightMapColor = texture(Params.lightMap, wUv1).rgb;
+                    #else
+                        vec3 lightMapColor = texture(Params.lightMap, wUv0).rgb;
+                    #endif
+                    _specularColor.rgb *= lightMapColor;
+                    _diffuseColor.rgb  *= lightMapColor;
                 #endif
 
 

@@ -2,6 +2,7 @@ const Examples = {
     'Helloworld':[
         'HelloScene.html',
         'HelloNode.html',
+        'HelloTexture.html',
         'HelloMaterial.html',
         'HelloEvent.html',
         'HelloGeometry.html',

@@ -7,7 +7,7 @@ var Stats=function(){var l=Date.now(),m=l,g=0,n=Infinity,o=0,h=0,p=Infinity,q=0,
 function configDefault(){
     var blackColorMaterial = new Try3d.Material(window.scene, {id:"blackColorMaterial", colorDef});
 }
-function initOther(scene, rootNode){
+function initOther(scene, rootNode, fogColor, gridColor){
     // 雾化
     let fogFilter = scene.getMainCamera().addFilterFromMaterial(new Try3d.Material(scene, {id:'fog', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_FOG_FILTER_DEF_DATA)}));
     fogFilter.getMaterial().selectTechnology('LinearFog');
@@ -17,14 +17,29 @@ function initOther(scene, rootNode){
     let d = Math.max(bounding.getXHalf(), Math.max(bounding.getYHalf(), bounding.getZHalf()));
     fogFilter.getMaterial().setParam('fogNear', new Try3d.FloatVars().valueOf(d * 10));
     fogFilter.getMaterial().setParam('fogFar', new Try3d.FloatVars().valueOf(d * 20));
+    if(fogColor){
+        fogFilter.getMaterial().setParam('fogColor', new Try3d.Vec4Vars().valueFromXYZW(fogColor[0], fogColor[1], fogColor[2], fogColor[3]));
+    }
 
     // 轴网
     var colorDef = Try3d.MaterialDef.parse(Try3d.Internal.S_COLOR_DEF_DATA);
     let grid = new Try3d.Grid(scene, {id:'grid', width:500, height:500, widthSegments:250, heightSegments:250});
     let defaultColor = new Try3d.Material(scene, {id:"defaultColor", materialDef:colorDef});
-    defaultColor.setParam('color', new Try3d.Vec4Vars().valueFromXYZW(0.3, 0.3, 0.3, 1.0));
+    if(gridColor){
+        defaultColor.setParam('color', new Try3d.Vec4Vars().valueFromXYZW(gridColor[0], gridColor[1], gridColor[2], gridColor[3]));
+    }
+    else{
+        defaultColor.setParam('color', new Try3d.Vec4Vars().valueFromXYZW(0.3, 0.3, 0.3, 1.0));
+    }
     grid.setMaterial(defaultColor);
     rootNode.addChildren(grid);
+}
+function initDirLight(scene, rootNode, lightColor){
+    let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(-1, -1, 1);
+    lightColor = lightColor || [1.0, 1.0, 1.0, 1.0];
+    dirLight.setColorRGBA(lightColor[0], lightColor[1], lightColor[2], lightColor[3]);
+    rootNode.addChildren(dirLight);
 }
 function showStats(scene){
     // 使用stats.js统计fps
