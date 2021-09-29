@@ -6,6 +6,8 @@ const Examples = {
         'HelloMaterial.html',
         'HelloEvent.html',
         'HelloGeometry.html',
+        'HelloLight.html',
+        'HelloShadow.html',
     ],
     'Animations':[
 

@@ -39,8 +39,6 @@ export default class Render extends Component{
     static DEFAULT_FORWARD_SHADING_FRAMEBUFFER = 'DefaultForwardShadingFrameBuffer';
     // 用于FilterPipeline
     static DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER = 'DefaultPostFilterShadingFrameBuffer';
-    // 交换缓冲
-    static DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER2 = 'DefaultPostFilterShadingFrameBuffer2';
 
     // Event
     // 一帧渲染开始
@@ -74,10 +72,6 @@ export default class Render extends Component{
         this._m_PipelineConfig = {};
         // renderProgram优先技术
         this._m_PriorityTechnology = '';
-
-        // PostFilterPipeline
-        this._m_PostFilterSwap = 0;
-        this._m_PostFilterPipelineSwap = [];
 
         // 帧上下文
         this._m_FrameContext = new FrameContext();
@@ -236,20 +230,12 @@ export default class Render extends Component{
 
         // FilterPipeline
         let filterfb = new FrameBuffer(gl, Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER, w, h);
-        this._m_PostFilterPipelineSwap.push(filterfb);
         this._m_FrameContext.addFrameBuffer(Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER, filterfb);
         // 为了支持HDR和gamma矫正,使用一个RGBA16F ffb
         filterfb.addTexture(gl, ShaderSource.S_IN_SCREEN_SRC, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT0, false);
         filterfb.addTexture(gl, ShaderSource.S_IN_DEPTH_SRC, gl.DEPTH_COMPONENT24 , 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, gl.DEPTH_ATTACHMENT, false);
         filterfb.finish(gl, this._m_Scene, false);
         this._m_FrameContext._m_DefaultPostFilterFrameBuffer = filterfb.getFrameBuffer();
-        let filterfb2 = new FrameBuffer(gl, Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER2, w, h);
-        this._m_PostFilterPipelineSwap.push(filterfb2);
-        this._m_FrameContext.addFrameBuffer(Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER2, filterfb2);
-        // 为了支持HDR和gamma矫正,使用一个RGBA16F ffb
-        filterfb2.addTexture(gl, ShaderSource.S_IN_SCREEN_SRC, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT0, false);
-        filterfb2.addTexture(gl, ShaderSource.S_IN_DEPTH_SRC, gl.DEPTH_COMPONENT24 , 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, gl.DEPTH_ATTACHMENT, false);
-        filterfb2.finish(gl, this._m_Scene, false);
 
         // 加载可用渲染程序
         this._m_RenderPrograms[DefaultRenderProgram.PROGRAM_TYPE] = new DefaultRenderProgram();
@@ -273,7 +259,6 @@ export default class Render extends Component{
             this._m_FrameContext.resize(gl, w, h);
             this._m_FrameContext._m_DefaultFrameBuffer = this._m_FrameContext.getFrameBuffer(Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER).getFrameBuffer();
             this._m_FrameContext._m_DefaultPostFilterFrameBuffer = this._m_FrameContext.getFrameBuffer(Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER).getFrameBuffer();
-            // this._m_FrameContext._m_DefaultPostFilterFrameBuffer = this._m_PostFilterPipelineSwap[0].getFrameBuffer();
         });
     }
 
@@ -288,7 +273,7 @@ export default class Render extends Component{
         gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this._m_FrameContext._m_DefaultPostFilterFrameBuffer);
         gl.blitFramebuffer(0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, gl.NEAREST);
         // 将PostFilter输出结果设置到交换缓存区
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_PostFilterPipelineSwap[1].getFrameBuffer());
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
         if(this._m_FrameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){
             gl.disable(gl.DEPTH_TEST);
         }
@@ -300,23 +285,18 @@ export default class Render extends Component{
     swapPostFilter(){
         const gl = this._m_Scene.getCanvas().getGLContext();
         // 将输出buffer传递到输入buffer以便下一环节的postFilter
-        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this._m_PostFilterPipelineSwap[1].getFrameBuffer());
+        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
         gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this._m_FrameContext._m_DefaultPostFilterFrameBuffer);
         // 这里假设PostFilter不会修改深度缓冲区,所以没有复制深度缓冲区
         gl.blitFramebuffer(0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), gl.COLOR_BUFFER_BIT, gl.NEAREST);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_PostFilterPipelineSwap[1].getFrameBuffer());
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
     }
 
     /**
      * 结束PostFilterPipeline。<br/>
      */
     finishPostFilter(){
-        // 将PostFilter结果复制回默认帧缓冲区（不是真正的默认帧缓冲区，因为还有最后一个环节）
-        const gl = this._m_Scene.getCanvas().getGLContext();
-        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this._m_FrameContext._m_DefaultPostFilterFrameBuffer);
-        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
-        gl.blitFramebuffer(0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, gl.NEAREST);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
+        // 一些额外处理，暂时什么也不做
     }
 
     /**

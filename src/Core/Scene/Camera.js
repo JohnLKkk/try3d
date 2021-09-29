@@ -141,11 +141,15 @@ export default class Camera extends Component{
         this._m_Scene.getRender().on(Render.POST_FRAME, (exTime)=>{
             if(this._m_IsRenderingCamera){
                 if(this.demandFilter()){
+                    let len = this._m_Filters.length;
+                    let i = 0;
                     this._m_Filters.forEach(filter=>{
+                        i++;
                         if(filter.isEnable()){
                             filter.postFilter();
                             // 更新缓冲区
-                            this._m_Scene.getRender().swapPostFilter();
+                            if(i < len)
+                                this._m_Scene.getRender().swapPostFilter();
                         }
                     });
                 }

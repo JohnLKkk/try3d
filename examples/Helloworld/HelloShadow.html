@@ -6,6 +6,7 @@
 </head>
 <script src="../../build/try3d.min.js"></script>
 <script src="../helpers.js"></script>
+<script src="./../dat.gui.min.js"></script>
 <body>
     <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;margin: 0px;">
         <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
@@ -31,14 +32,32 @@
             let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
             sceneControl.lookScene(rootNode);
             sceneControl.setTargetDistance(25);
+            sceneControl.setMinVerticalRotation(Try3d.MoreMath.toRadians(-1));
 
-            // dirLight
+            // 创建一个directionalLight
             let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
             dirLight.setDirectionXYZ(-1, -1, 1);
             dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+            // 开启阴影
             dirLight.proShadow(true);
+            // 添加雾化
             initFog(scene, 5, 100, [0.12, 0.12, 0.12, 1.0]);
             rootNode.addChildren(dirLight);
+
+
+            // gui
+            // 使用dat gui
+            let gui = new dat.GUI();
+            let settings = {
+                x: -1,
+                z: 1,
+            };
+            gui.add(settings, 'x', -1, 1).step(0.1).onChange(function(value) {
+                dirLight.setDirectionXYZ(value, -1, settings.z);
+            });
+            gui.add(settings, 'z', -1, 1).step(0.1).onChange(function(value) {
+                dirLight.setDirectionXYZ(settings.x, -1, value);
+            });
         }, {batch:true});
 
 
