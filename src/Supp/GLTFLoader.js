@@ -508,7 +508,12 @@ export default class GLTFLoader {
             else{
                 // 添加一个默认材质
                 if(!this._m_DefaultMatDef){
-                    this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "ColorDef");
+                    if(this._m_AssetsPath){
+                        this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "ColorDef");
+                    }
+                    else{
+                        this._m_DefaultMatDef = MaterialDef.parse(Internal.S_PRINCIPLED_LIGHTING_DEF);
+                    }
                 }
                 matId = 'default_gltf_mat';
                 let material = null;
@@ -773,7 +778,12 @@ export default class GLTFLoader {
                 // 后续完善时,这里单独到一个函数中进行,因为解析PBR材质参数最好独立到一个解析函数中
 
                 if(!this._m_PrincipledMatDef){
-                    this._m_PrincipledMatDef = MaterialDef.load(this._m_AssetsPath + "PrincipledLightingDef");
+                    if(this._m_AssetsPath){
+                        this._m_PrincipledMatDef = MaterialDef.load(this._m_AssetsPath + "PrincipledLightingDef");
+                    }
+                    else{
+                        this._m_PrincipledMatDef = MaterialDef.parse(Internal.S_PRINCIPLED_LIGHTING_DEF);
+                    }
                 }
                 let matId = this._getName(gltf.materials[_primitive.material].name);
                 let material = null;
