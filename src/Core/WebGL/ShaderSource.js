@@ -9,6 +9,7 @@ export default class ShaderSource {
 
 
     // 枚举,这些是作为引擎内置可能存在的输入属性，变量
+    static S_BARYCENTRIC = 0x000;
     static S_POSITION = 0x001;
     static S_COLOR = 0x002;
     static S_NORMAL = 0x003;
@@ -32,6 +33,7 @@ export default class ShaderSource {
     static S_G_DEPTH = 3;
 
 
+    static S_BARYCENTRIC_SRC = "_barycentric";
     static S_POSITION_SRC = "_position";
     static S_COLOR_SRC = "_color";
     static S_NORMAL_SRC = "_normal";
@@ -192,6 +194,7 @@ export default class ShaderSource {
     // 上下文数据
     static Context_Data = {
         "Context.InPosition":{src:ShaderSource.S_POSITION_SRC, loc:ShaderSource.S_POSITION, pattern:/Context.InPosition/, pattern2:/Context.InPosition[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InPosition/g, tag:ShaderSource.S_POSITION_SRC, type:"vec3"},
+        "Context.InBarycentric":{src:ShaderSource.S_BARYCENTRIC_SRC, loc:ShaderSource.S_BARYCENTRIC, pattern:/Context.InBarycentric/, pattern2:/Context.InBarycentric[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InBarycentric/g, tag:ShaderSource.S_BARYCENTRIC_SRC, type:"vec3"},
         "Context.InNormal":{src:ShaderSource.S_NORMAL_SRC, loc:ShaderSource.S_NORMAL, pattern:/Context.InNormal/, pattern2:/Context.InNormal[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InNormal/g, tag:ShaderSource.S_NORMAL_SRC, type:"vec3"},
         "Context.InTangent":{src:ShaderSource.S_TANGENT_SRC, loc:ShaderSource.S_TANGENT, pattern:/Context.InTangent/, pattern2:/Context.InTangent[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InTangent/g, tag:ShaderSource.S_TANGENT_SRC, type:"vec4"},
         "Context.InUv0":{src:ShaderSource.S_UV0_SRC, loc:ShaderSource.S_UV0, pattern:/Context.InUv0/, pattern2:/Context.InUv0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InUv0/g, tag:ShaderSource.S_UV0_SRC, type:"vec2"},

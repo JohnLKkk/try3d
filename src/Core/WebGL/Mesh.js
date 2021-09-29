@@ -10,6 +10,8 @@ import SizeOf from "./SizeOf.js";
 
 export default class Mesh {
     // 以下属性表明引擎的Mesh数据块仅支持这些属性(不要设计自定义属性,这样会加大复杂度)
+    // 重心坐标属性(用于实现webGL上线框模式)
+    static S_BARYCENTRICS = "barycentrics";
     // 位置属性
     static S_POSITIONS = "positions";
     // 顶点颜色属性
@@ -36,6 +38,7 @@ export default class Mesh {
     // skin weight
     static S_WEIGHTS_0 = "weights_0";
     static S_DATAS = {
+        "barycentrics":"barycentrics",
         "positions":"positions",
         "colors":"colors",
         "normals":"normals",
@@ -161,6 +164,9 @@ export default class Mesh {
             }
             for(let key in this._m_Datas){
                 switch (key) {
+                    case Mesh.S_BARYCENTRICS:
+                        ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_BARYCENTRIC, 3, gl.FLOAT, 0, 0);
+                        break;
                     case Mesh.S_POSITIONS:
                         ArrayBuf.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, ShaderSource.S_POSITION, 3, gl.FLOAT, 0, 0);
                         break;

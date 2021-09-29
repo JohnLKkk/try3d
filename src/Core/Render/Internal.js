@@ -1,4 +1,62 @@
 export default class Internal {
+    static S_WIREFRAME_DEF_DATA = "// 由于webGL基于openGLES3.x,其不存在openGL线框模式,所以在这里通过shader实现线框\n" +
+        "Def WireframeDef{\n" +
+        "    Params{\n" +
+        "        vec4 color;\n" +
+        "        float wireframeWidth;\n" +
+        "    }\n" +
+        "    SubTechnology Wireframe{\n" +
+        "        Vars{\n" +
+        "            vec3 bary;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                #ifdef Context.Skins\n" +
+        "                    mat4 skinMat =\n" +
+        "                            Context.InWeight0.x * Context.Joints[int(Context.InJoint0.x)] +\n" +
+        "                            Context.InWeight0.y * Context.Joints[int(Context.InJoint0.y)] +\n" +
+        "                            Context.InWeight0.z * Context.Joints[int(Context.InJoint0.z)] +\n" +
+        "                            Context.InWeight0.w * Context.Joints[int(Context.InJoint0.w)];\n" +
+        "                    // vec4 pos = Context.ModelMatrix * skinMat * vec4(Context.InPosition, 1.0f);\n" +
+        "                    vec4 pos = skinMat * vec4(Context.InPosition, 1.0f);\n" +
+        "                #else\n" +
+        "                    vec4 pos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);\n" +
+        "                #endif\n" +
+        "                bary = Context.InBarycentric;\n" +
+        "\n" +
+        "\n" +
+        "\n" +
+        "                Context.OutPosition = Context.ProjectViewMatrix * pos;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            void main(){\n" +
+        "                #ifdef Params.color\n" +
+        "                    vec4 _wireframeColor = Params.color;\n" +
+        "                #else\n" +
+        "                    vec4 _wireframeColor = vec4(0.2f, 0.2f, 0.2f, 1.0f);\n" +
+        "                #endif\n" +
+        "                #ifdef Params.wireframeWidth\n" +
+        "                    float _wireframeWidth = Params.wireframeWidth;\n" +
+        "                #else\n" +
+        "                    float _wireframeWidth = 0.01f;\n" +
+        "                #endif\n" +
+        "                if(any(lessThan(bary, vec3(_wireframeWidth)))){\n" +
+        "                    Context.OutColor = _wireframeColor;\n" +
+        "                }\n" +
+        "                else{\n" +
+        "                    discard;\n" +
+        "                }\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology{\n" +
+        "        Sub_Pass{\n" +
+        "            Pass Wireframe{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "}\n";
     static S_COLOR_DEF_DATA = "// 颜色材质,提供指定颜色或颜色纹理并渲染\n" +
         "Def ColorDef{\n" +
         "    Params{\n" +

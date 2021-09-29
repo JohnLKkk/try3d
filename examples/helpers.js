@@ -7,6 +7,18 @@ var Stats=function(){var l=Date.now(),m=l,g=0,n=Infinity,o=0,h=0,p=Infinity,q=0,
 function configDefault(){
     var blackColorMaterial = new Try3d.Material(window.scene, {id:"blackColorMaterial", colorDef});
 }
+function initFog(scene, fogNear, fogFar, fogColor){
+    // 雾化
+    let fogFilter = scene.getMainCamera().addFilterFromMaterial(new Try3d.Material(scene, {id:'fog', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_FOG_FILTER_DEF_DATA)}));
+    fogFilter.getMaterial().selectTechnology('LinearFog');
+    fogFilter.getMaterial().setParam('vNear', new Try3d.FloatVars().valueOf(scene.getMainCamera().getNear()));
+    fogFilter.getMaterial().setParam('vFar', new Try3d.FloatVars().valueOf(scene.getMainCamera().getFar()));
+    fogFilter.getMaterial().setParam('fogNear', new Try3d.FloatVars().valueOf(fogNear));
+    fogFilter.getMaterial().setParam('fogFar', new Try3d.FloatVars().valueOf(fogFar));
+    if(fogColor){
+        fogFilter.getMaterial().setParam('fogColor', new Try3d.Vec4Vars().valueFromXYZW(fogColor[0], fogColor[1], fogColor[2], fogColor[3]));
+    }
+}
 function initOther(scene, rootNode, fogColor, gridColor){
     // 雾化
     let fogFilter = scene.getMainCamera().addFilterFromMaterial(new Try3d.Material(scene, {id:'fog', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_FOG_FILTER_DEF_DATA)}));

@@ -40,6 +40,7 @@ o.uniqueId = function( s, bres )
     else { var i = o.getHashCode( s ); }
     return ((bres)?'res:':'')+i.toString(32)+'-'+o.lz((s.length*4).toString(16),3);
 };
+const BS = [[0, 1, 0], [1, 0, 0], [0, 0, 1]];
 /**
  * 提供一些常见工具函数。<br/>
  * @author Kkk
@@ -494,5 +495,111 @@ export default class Tools {
         result[2] = -du2 * t;
         result[3] = du1 * t;
         return result;
+    }
+
+    /**
+     * 根据positions属性与indices数组创建重心坐标属性数据。<br/>
+     * @param {Number[]}[positions]
+     * @param {Number[]}[indices]
+     * @return {Number[]}
+     */
+    static generatorBaryCentrics(positions, indices){
+        let barycentricMaps = {};
+        let a, b, c;
+        let calc = [];
+        let result = null;
+        let t = 0;
+        for(let i = 0;i < indices.length;i+=3){
+            calc.length = 0;
+            a = indices[i];
+            b = indices[i + 1];
+            c = indices[i + 2];
+            if(barycentricMaps[a]){
+                calc.push(barycentricMaps[a]);
+            }
+            if(barycentricMaps[b]){
+                calc.push(barycentricMaps[b]);
+            }
+            if(barycentricMaps[c]){
+                calc.push(barycentricMaps[c]);
+            }
+            result = Tools._nextBarycentrics(calc);
+            if(result){
+                t = 0;
+                if(!barycentricMaps[a]){
+                    barycentricMaps[a] = result[t++];
+                }
+                if(!barycentricMaps[b]){
+                    barycentricMaps[b] = result[t++];
+                }
+                if(!barycentricMaps[c]){
+                    barycentricMaps[c] = result[t++];
+                }
+            }
+        }
+        // 这里，positions属性的长度不一定与barcentricMaps长度一致（但是，正常情况下，positions属性与barcentricMaps数据长度一致）
+        // 原因是存在可能未被indices使用的position,所以这里以positions长度为数据填充
+        let bs = new Array(positions.length).fill(0);
+        for(let i in barycentricMaps){
+            bs[i * 3] = barycentricMaps[i][0];
+            bs[i * 3 + 1] = barycentricMaps[i][1];
+            bs[i * 3 + 2] = barycentricMaps[i][2];
+        }
+        return bs;
+    }
+
+    /**
+     * 计算合适的重心坐标。<br/>
+     * @param {Number[]}[calc]
+     * @return {Number[]}
+     * @private
+     */
+    static _nextBarycentrics(calc){
+        if(calc.length == 3){
+            // 检测三个重心坐标是否有重
+            // 因为存在金字塔索引绘制的情况，所以会存在相冲重心坐标
+            // 一旦相冲，就使用第4个重心坐标（D(0,0,0)）替换其中一个
+            if(calc[0][0] == calc[1][0] && calc[0][1] == calc[1][1] && calc[0][2] == calc[1][2]){
+                calc[0] = [0, 0, 0];
+            }else if(calc[1][0] == calc[2][0] && calc[1][1] == calc[2][1] && calc[1][2] == calc[2][2]){
+                calc[1] = [0, 0, 0];
+            }else if(calc[2][0] == calc[0][0] && calc[2][1] == calc[0][1] && calc[2][2] == calc[0][2]){
+                calc[2] = [0, 0, 0];
+            }
+            return null;
+        }
+        else if(calc.length == 0){
+            // 返回三个重心坐标
+            return [[0, 1, 0], [1, 0, 0], [0, 0, 1]];
+        }
+        else{
+            // 计算余下重心坐标
+            let c = [true, true, true];
+            let result = [];
+
+            if(calc.length == 2){
+                // 检测是否相冲
+                if(calc[0][0] == calc[1][0] && calc[0][1] == calc[1][1] && calc[0][2] == calc[1][2]){
+                    calc[0] = [0, 0, 0];
+                }else if(calc[1][0] == calc[2][0] && calc[1][1] == calc[2][1] && calc[1][2] == calc[2][2]){
+                    calc[1] = [0, 0, 0];
+                }
+            }
+            calc.forEach(cc=>{
+                if(cc[0] == calc[1][0] && cc[1] == calc[1][1] && cc[2] == calc[1][2]){
+                    c[1] = false;
+                }else if(cc[0] == calc[2][0] && cc[1] == calc[2][1] && cc[2] == calc[2][2]){
+                    c[2] = false;
+                }else if(cc[0] == calc[0][0] && cc[1] == calc[0][1] && cc[2] == calc[0][2]){
+                    c[0] = false;
+                }
+            });
+            for(let i = 0;i < 3;i++){
+                if(c[i]){
+                    result.push(BS[i]);
+                }
+            }
+            return result;
+        }
     }
 }

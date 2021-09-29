@@ -6035,7 +6035,35 @@ var Material = /*#__PURE__*/function (_Component) {
 
   }, {
     key: "clearParams",
-    value: function clearParams(paramName) {// 待实现
+    value: function clearParams(paramName, value) {
+      // 待实现
+      // 检测是否有效参数
+      if (this._m_Params[paramName]) {
+        // 检测是否已经定义
+        var update = false;
+
+        if (this._m_AleadyDefinedParams[paramName]) {
+          update = true; // this._m_AleadyDefinedParams[paramName] = false;
+
+          delete this._m_AleadyDefinedParams[paramName];
+        }
+
+        if (update) {
+          // 清除该参数
+          // 重新构建当前技术所有SubShader块
+          var subPass = null;
+
+          for (var p in this._m_CurrentTechnology.getSubPassList()) {
+            subPass = this._m_CurrentTechnology.getSubPasss(p);
+            subPass.getSubShaders().forEach(function (sb) {
+              sb.subShader.clearDefine(paramName);
+            });
+          }
+        } // 将其移除参数列表
+
+
+        this._m_ParamValues[paramName].unowner(this);
+      }
     }
     /**
      * 添加一个定义。<br/>
@@ -6082,7 +6110,37 @@ var Material = /*#__PURE__*/function (_Component) {
 
   }, {
     key: "clearDefine",
-    value: function clearDefine(name, globalRefresh) {// 待实现
+    value: function clearDefine(name, globalRefresh) {
+      var _this7 = this;
+
+      // 待实现
+      var update = false;
+
+      if (this._m_AleadyDefinedParams[name]) {
+        update = true;
+        this._m_AleadyDefinedParams[name] = false;
+      }
+
+      if (update) {
+        // 定义该参数
+        // 重新构建当前技术所有SubShader块
+        var subPass = null;
+
+        var _loop5 = function _loop5(paramName) {
+          for (var p in _this7._m_CurrentTechnology.getSubPassList()) {
+            subPass = _this7._m_CurrentTechnology.getSubPasss(p);
+            subPass.getSubShaders().forEach(function (sb) {
+              if (name == paramName) {
+                sb.subShader.clearDefine(paramName, name == paramName && _ShaderSource.default.Context_Data[name] != null, globalRefresh);
+              }
+            });
+          }
+        };
+
+        for (var paramName in this._m_AleadyDefinedParams) {
+          _loop5(paramName);
+        }
+      }
     }
   }]);
 
@@ -8252,6 +8310,109 @@ var SubShader = /*#__PURE__*/function () {
     key: "getRefRenderDataFBs",
     value: function getRefRenderDataFBs() {
       return this._m_RefRenderDataFBs;
+    }
+    /**
+     * 清除参数定义。<br/>
+     * @param {String}[dparam 参数名]
+     * @param {Boolean}[isContextDefine 表明是否为上下文定义]
+     * @param {Boolean}[globalRefresh 表明刷新同类subShader]
+     */
+
+  }, {
+    key: "clearDefine",
+    value: function clearDefine(dparam, isContextDefine, globalRefresh) {
+      var _new = false;
+
+      if (this._m_AleadyDefinedParams[dparam]) {
+        if (this._m_CanDefineParams[dparam] || isContextDefine) {
+          _new = true; // this._m_AleadyDefinedParams[dparam] = false;
+
+          delete this._m_AleadyDefinedParams[dparam];
+        }
+      }
+
+      if (_new) {
+        this._m_Defines = null;
+        this._m_KeyDefs = null;
+
+        for (var param in this._m_AleadyDefinedParams) {
+          if (!this._m_Defines) {
+            this._m_Defines = {};
+          } // 定义参数
+
+
+          var shaderParams = this._m_Def.getShaderParams();
+
+          var shaderContextDefines = this._m_Def.getShaderContextDefines();
+
+          if (shaderParams[_ShaderSource.default.VERTEX_SHADER] && shaderParams[_ShaderSource.default.VERTEX_SHADER][param] || shaderContextDefines[_ShaderSource.default.VERTEX_SHADER] && shaderContextDefines[_ShaderSource.default.VERTEX_SHADER][param]) {
+            // 加入顶点着色器
+            if (!this._m_Defines[_ShaderSource.default.VERTEX_SHADER]) {
+              this._m_Defines[_ShaderSource.default.VERTEX_SHADER] = "";
+            }
+
+            if (isContextDefine && param == dparam) {
+              this._m_Defines[_ShaderSource.default.VERTEX_SHADER] += _ShaderSource.default.Context_Data[param] + "\n";
+            } else {
+              // 先判断该参数是否属于contextDefine(因为dparam!=param,但param仍有可能属于contextDefine
+              if (_ShaderSource.default.Context_Data[param] != null) {
+                this._m_Defines[_ShaderSource.default.VERTEX_SHADER] += _ShaderSource.default.Context_Data[param] + "\n";
+              } else {
+                // 属于材质参数定义
+                this._m_Defines[_ShaderSource.default.VERTEX_SHADER] += this._m_CanDefineParams[param] + "\n";
+              }
+            }
+
+            if (!this._m_KeyDefs) {
+              this._m_KeyDefs = "";
+            }
+
+            this._m_KeyDefs += param + ",";
+          } else if (shaderParams[_ShaderSource.default.FRAGMENT_SHADER] && shaderParams[_ShaderSource.default.FRAGMENT_SHADER][param] || shaderContextDefines[_ShaderSource.default.FRAGMENT_SHADER] && shaderContextDefines[_ShaderSource.default.FRAGMENT_SHADER][param]) {
+            // 加入片段着色器
+            if (!this._m_Defines[_ShaderSource.default.FRAGMENT_SHADER]) {
+              this._m_Defines[_ShaderSource.default.FRAGMENT_SHADER] = "";
+            }
+
+            if (isContextDefine && param == dparam) {
+              this._m_Defines[_ShaderSource.default.FRAGMENT_SHADER] += _ShaderSource.default.Context_Data[param] + "\n";
+            } else {
+              // 先判断该参数是否属于contextDefine(因为dparam!=param,但param仍有可能属于contextDefine
+              if (_ShaderSource.default.Context_Data[param] != null) {
+                this._m_Defines[_ShaderSource.default.FRAGMENT_SHADER] += _ShaderSource.default.Context_Data[param] + "\n";
+              } else {
+                // 属于材质参数定义
+                this._m_Defines[_ShaderSource.default.FRAGMENT_SHADER] += this._m_CanDefineParams[param] + "\n";
+              }
+            }
+
+            if (!this._m_KeyDefs) {
+              this._m_KeyDefs = "";
+            }
+
+            this._m_KeyDefs += param + ",";
+          }
+        } // 当删除最后一个定义时,此时this._m_Defines为空,为了能够重新编译,这里不让它为空
+
+
+        if (!this._m_Defines) {
+          this._m_Defines = {};
+          this._m_KeyDefs = ",";
+        }
+
+        if (this._m_Defines != null && globalRefresh) {
+          var holds = this._m_ShaderProgram._m_Holds;
+
+          for (var objId in holds) {
+            if (holds[objId] != this && holds[objId]) {
+              // 其他所有引用同一个shaderProgram的subShader都应该添加这个defines
+              // 不必担心重复编译,因为一旦其中一个被编译过,其他subShader都会自动引用
+              holds[objId]._m_KeyDefs = this._m_KeyDefs;
+              holds[objId]._m_Defines = this._m_Defines;
+            }
+          }
+        }
+      }
     }
     /**
      * 添加参数定义。<br/>
@@ -13590,6 +13751,236 @@ exports["default"] = Box;
 
 /***/ }),
 
+/***/ 4992:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _Geometry2 = _interopRequireDefault(__webpack_require__(4720));
+
+var _Mesh = _interopRequireDefault(__webpack_require__(307));
+
+var _Tools = _interopRequireDefault(__webpack_require__(5397));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } else if (call !== void 0) { throw new TypeError("Derived constructors may only return object or undefined"); } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+/**
+ * Cylinder。<br/>
+ * 一个基础圆柱体，锥体形体几何。<br/>
+ * 参考:http://www.e-reading-lib.com/bookreader.php/143437/Pike_-_DirectX_8_Programming_Tutorial.html。<br/>
+ * @author Kkk
+ * @date 2021年9月28日15点31分
+ */
+var Cylinder = /*#__PURE__*/function (_Geometry) {
+  _inherits(Cylinder, _Geometry);
+
+  var _super = _createSuper(Cylinder);
+
+  /**
+   * 创建一个Cylinder。<br/>
+   * @param {Component}[owner]
+   * @param {String}[cfg.id]
+   * @param {Number}[cfg.radiusTop 顶部圆盖半径,最小为1,此时接近点]
+   * @param {Number}[cfg.radiusBottom 底部圆盖半径,最小为1,此时接近点]
+   * @param {Number}[cfg.height 柱体高度,默认1]
+   * @param {Number}[cfg.radialSegments 半径切片数目,默认60]
+   * @param {Vector3}[cfg.heightSegments 柱体切片数目,默认1]
+   * @param {Vector3}[cfg.openEnded 开口,默认false]
+   */
+  function Cylinder(owner, cfg) {
+    var _this;
+
+    _classCallCheck(this, Cylinder);
+
+    _this = _super.call(this, owner, cfg);
+    /* config */
+
+    var radiusTop = cfg.radiusTop !== undefined ? cfg.radiusTop : 1;
+    var radiusBottom = cfg.radiusBottom !== undefined ? cfg.radiusBottom : 1;
+    var height = cfg.height !== undefined ? cfg.height : 1;
+    var radialSegments = cfg.radialSegments || 60;
+    var heightSegments = cfg.heightSegments || 1;
+    var openEnded = cfg.openEnded || false;
+    /* config end */
+
+    var heightHalf = height / 2;
+    var heightLength = height / heightSegments;
+    var radialAngle = 2.0 * Math.PI / radialSegments;
+    var radialLength = 1.0 / radialSegments;
+    var nextRadius = _this.radiusBottom;
+    var radiusChange = (radiusTop - radiusBottom) / heightSegments;
+    var positions = [];
+    var normals = [];
+    var uvs = [];
+    var indices = []; // 创建顶点属性
+
+    var normalY = (90.0 - Math.atan(height / (radiusBottom - radiusTop)) * 180 / Math.PI) / 90.0;
+
+    for (var h = 0; h <= heightSegments; h++) {
+      var currentRadius = radiusTop - h * radiusChange;
+      var currentHeight = heightHalf - h * heightLength;
+
+      for (var i = 0; i <= radialSegments; i++) {
+        var x = Math.sin(i * radialAngle);
+        var z = Math.cos(i * radialAngle);
+        normals.push(currentRadius * x);
+        normals.push(normalY); //todo
+
+        normals.push(currentRadius * z);
+        uvs.push(1 - i * radialLength);
+        uvs.push(0 + h * 1 / heightSegments);
+        positions.push(currentRadius * x);
+        positions.push(currentHeight);
+        positions.push(currentRadius * z);
+      }
+    } // indices部分
+
+
+    for (var _h = 0; _h < heightSegments; _h++) {
+      for (var _i = 0; _i <= radialSegments; _i++) {
+        var first = _h * (radialSegments + 1) + _i;
+        var second = first + radialSegments;
+        indices.push(first);
+        indices.push(second);
+        indices.push(second + 1);
+        indices.push(first);
+        indices.push(second + 1);
+        indices.push(first + 1);
+      }
+    } // 创建顶部圆盖
+
+
+    if (!openEnded && radiusTop > 0) {
+      var startIndex = positions.length / 3; // 顶部中心
+
+      normals.push(0.0);
+      normals.push(1.0);
+      normals.push(0.0);
+      uvs.push(0.5);
+      uvs.push(0.5);
+      positions.push(0);
+      positions.push(heightHalf);
+      positions.push(0); // 顶部三角形面
+
+      for (var _i2 = 0; _i2 <= radialSegments; _i2++) {
+        var _x = Math.sin(_i2 * radialAngle);
+
+        var _z = Math.cos(_i2 * radialAngle);
+
+        var tu = 0.5 * Math.sin(_i2 * radialAngle) + 0.5;
+        var tv = 0.5 * Math.cos(_i2 * radialAngle) + 0.5;
+        normals.push(radiusTop * _x);
+        normals.push(1.0);
+        normals.push(radiusTop * _z);
+        uvs.push(tu);
+        uvs.push(tv);
+        positions.push(radiusTop * _x);
+        positions.push(heightHalf);
+        positions.push(radiusTop * _z);
+      }
+
+      for (var _i3 = 0; _i3 < radialSegments; _i3++) {
+        var center = startIndex;
+
+        var _first = startIndex + 1 + _i3;
+
+        indices.push(_first);
+        indices.push(_first + 1);
+        indices.push(center);
+      }
+    } // 创建底部圆盖
+
+
+    if (!openEnded && radiusBottom > 0) {
+      var _startIndex = positions.length / 3; // 底部中心
+
+
+      normals.push(0.0);
+      normals.push(-1.0);
+      normals.push(0.0);
+      uvs.push(0.5);
+      uvs.push(0.5);
+      positions.push(0);
+      positions.push(0 - heightHalf);
+      positions.push(0); // 底部三角形面
+
+      for (var _i4 = 0; _i4 <= radialSegments; _i4++) {
+        var _x2 = Math.sin(_i4 * radialAngle);
+
+        var _z2 = Math.cos(_i4 * radialAngle);
+
+        var _tu = 0.5 * Math.sin(_i4 * radialAngle) + 0.5;
+
+        var _tv = 0.5 * Math.cos(_i4 * radialAngle) + 0.5;
+
+        normals.push(radiusBottom * _x2);
+        normals.push(-1.0);
+        normals.push(radiusBottom * _z2);
+        uvs.push(_tu);
+        uvs.push(_tv);
+        positions.push(radiusBottom * _x2);
+        positions.push(0 - heightHalf);
+        positions.push(radiusBottom * _z2);
+      }
+
+      for (var _i5 = 0; _i5 < radialSegments; _i5++) {
+        var _center = _startIndex;
+
+        var _first2 = _startIndex + 1 + _i5;
+
+        indices.push(_center);
+        indices.push(_first2 + 1);
+        indices.push(_first2);
+      }
+    }
+
+    var mesh = new _Mesh.default();
+    mesh.setData(_Mesh.default.S_POSITIONS, positions);
+    mesh.setData(_Mesh.default.S_NORMALS, normals);
+    mesh.setData(_Mesh.default.S_UV0, uvs);
+    mesh.setData(_Mesh.default.S_INDICES, indices); // 切线数据
+
+    var tangents = _Tools.default.generatorTangents2(mesh.getData(_Mesh.default.S_INDICES), mesh.getData(_Mesh.default.S_POSITIONS), mesh.getData(_Mesh.default.S_UV0), mesh.getData(_Mesh.default.S_NORMALS));
+
+    mesh.setData(_Mesh.default.S_TANGENTS, tangents);
+
+    _this.setMesh(mesh);
+
+    _this.updateBound();
+
+    return _this;
+  }
+
+  return Cylinder;
+}(_Geometry2.default);
+
+exports["default"] = Cylinder;
+
+/***/ }),
+
 /***/ 7698:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -13983,6 +14374,8 @@ var Sphere = /*#__PURE__*/function (_Geometry) {
    * @param {Number}[cfg.radius 半径,默认为1]
    * @param {Number}[cfg.widthSegments 宽度方向的切片数量,默认18]
    * @param {Number}[cfg.heightSegments 高度方向的切片数量,默认18]
+   * @param {Number}[cfg.widthUVScale 宽度方向的uv缩放,默认0.5]
+   * @param {Number}[cfg.heightUVScale 高度方向的uv缩放,默认0.5]
    */
   function Sphere(owner, cfg) {
     var _this;
@@ -14028,6 +14421,8 @@ var Sphere = /*#__PURE__*/function (_Geometry) {
       widthSegments = 18;
     }
 
+    var widthUVScale = cfg.widthUVScale || 0.5;
+    var heightUVScale = cfg.heightUVScale || 0.5;
     var positions = [];
     var normals = [];
     var uvs = [];
@@ -14060,8 +14455,8 @@ var Sphere = /*#__PURE__*/function (_Geometry) {
         x = cosPhi * sinTheta;
         y = cosTheta;
         z = sinPhi * sinTheta;
-        u = 1.0 - j / widthSegments;
-        v = i / heightSegments;
+        u = 1.0 - j / (widthSegments * widthUVScale);
+        v = i / (heightSegments * widthUVScale);
         normals.push(x);
         normals.push(y);
         normals.push(z);
@@ -14114,6 +14509,195 @@ var Sphere = /*#__PURE__*/function (_Geometry) {
 }(_Geometry2.default);
 
 exports["default"] = Sphere;
+
+/***/ }),
+
+/***/ 8011:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _Geometry2 = _interopRequireDefault(__webpack_require__(4720));
+
+var _Mesh = _interopRequireDefault(__webpack_require__(307));
+
+var _Tools = _interopRequireDefault(__webpack_require__(5397));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } else if (call !== void 0) { throw new TypeError("Derived constructors may only return object or undefined"); } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+/**
+ * Torus。<br/>
+ * 一个圆环形体。<br/>
+ * @author Kkk
+ * @date 2021年9月28日15点50分
+ */
+var Torus = /*#__PURE__*/function (_Geometry) {
+  _inherits(Torus, _Geometry);
+
+  var _super = _createSuper(Torus);
+
+  /**
+   * @param {Component}[owner]
+   * @param {Number}[cfg.tube 管宽,默认0.3]
+   * @param {Vector3}[cfg.center 中心点]
+   * @param {Number}[cfg.radius 半径,默认为1]
+   * @param {Number}[cfg.segmentsR R切片数目默认32]
+   * @param {Number}[cfg.segmentsT T切片数目默认24
+   * @param {Number}[cfg.arc 弧度,默认pi/2]
+   */
+  function Torus(owner, cfg) {
+    var _this;
+
+    _classCallCheck(this, Torus);
+
+    _this = _super.call(this, owner, cfg);
+    var radius = cfg.radius || 1;
+    var tube = cfg.tube || 0.3;
+    var segmentsR = cfg.segmentsR || 32;
+    var segmentsT = cfg.segmentsT || 24;
+    var arc = cfg.arc || Math.PI * 2;
+    var positions = [];
+    var normals = [];
+    var uvs = [];
+    var indices = [];
+    var u;
+    var v;
+    var centerX;
+    var centerY;
+    var centerZ = 0;
+    var x;
+    var y;
+    var z;
+    var vec;
+
+    for (var j = 0; j <= segmentsR; j++) {
+      for (var i = 0; i <= segmentsT; i++) {
+        u = i / segmentsT * arc;
+        v = j / segmentsR * Math.PI * 2;
+        centerX = radius * Math.cos(u);
+        centerY = radius * Math.sin(u);
+        x = (radius + tube * Math.cos(v)) * Math.cos(u);
+        y = (radius + tube * Math.cos(v)) * Math.sin(u);
+        z = tube * Math.sin(v);
+        positions.push(x);
+        positions.push(y);
+        positions.push(z);
+        uvs.push(i / segmentsT);
+        uvs.push(1 - j / segmentsR);
+        vec = _this.normalize(_this.sub([x, y, z], [centerX, centerY, centerZ], []), []);
+        normals.push(vec[0]);
+        normals.push(vec[1]);
+        normals.push(vec[2]);
+      }
+    }
+
+    var a;
+    var b;
+    var c;
+    var d;
+
+    for (var _j = 1; _j <= segmentsR; _j++) {
+      for (var _i = 1; _i <= segmentsT; _i++) {
+        a = (segmentsT + 1) * _j + _i - 1;
+        b = (segmentsT + 1) * (_j - 1) + _i - 1;
+        c = (segmentsT + 1) * (_j - 1) + _i;
+        d = (segmentsT + 1) * _j + _i;
+        indices.push(a);
+        indices.push(b);
+        indices.push(c);
+        indices.push(c);
+        indices.push(d);
+        indices.push(a);
+      }
+    }
+
+    var mesh = new _Mesh.default();
+    mesh.setData(_Mesh.default.S_POSITIONS, positions);
+    mesh.setData(_Mesh.default.S_NORMALS, normals);
+    mesh.setData(_Mesh.default.S_UV0, uvs);
+    mesh.setData(_Mesh.default.S_INDICES, indices); // 切线数据
+
+    var tangents = _Tools.default.generatorTangents2(mesh.getData(_Mesh.default.S_INDICES), mesh.getData(_Mesh.default.S_POSITIONS), mesh.getData(_Mesh.default.S_UV0), mesh.getData(_Mesh.default.S_NORMALS));
+
+    mesh.setData(_Mesh.default.S_TANGENTS, tangents);
+
+    _this.setMesh(mesh);
+
+    _this.updateBound();
+
+    return _this;
+  }
+
+  _createClass(Torus, [{
+    key: "normalize",
+    value: function normalize(v, dest) {
+      var f = 1.0 / len(v);
+      return this.mul(v, f, dest);
+    }
+  }, {
+    key: "len",
+    value: function len(v) {
+      return Math.sqrt(this.sqLen(v));
+    }
+  }, {
+    key: "sqLen",
+    value: function sqLen(v) {
+      return this.dot(v, v);
+    }
+  }, {
+    key: "dot",
+    value: function dot(u, v) {
+      return u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
+    }
+  }, {
+    key: "mul",
+    value: function mul(v, s, dest) {
+      dest[0] = v[0] * s;
+      dest[1] = v[1] * s;
+      dest[2] = v[2] * s;
+      return dest;
+    }
+  }, {
+    key: "sub",
+    value: function sub(u, v, dest) {
+      dest[0] = u[0] - v[0];
+      dest[1] = u[1] - v[1];
+      dest[2] = u[2] - v[2];
+      return dest;
+    }
+  }]);
+
+  return Torus;
+}(_Geometry2.default);
+
+exports["default"] = Torus;
 
 /***/ }),
 
@@ -15223,6 +15807,8 @@ var Internal = function Internal() {
 };
 
 exports["default"] = Internal;
+
+_defineProperty(Internal, "S_WIREFRAME_DEF_DATA", "// 由于webGL基于openGLES3.x,其不存在openGL线框模式,所以在这里通过shader实现线框\n" + "Def WireframeDef{\n" + "    Params{\n" + "        vec4 color;\n" + "        float wireframeWidth;\n" + "    }\n" + "    SubTechnology Wireframe{\n" + "        Vars{\n" + "            vec3 bary;\n" + "        }\n" + "        Vs_Shader{\n" + "            void main(){\n" + "                #ifdef Context.Skins\n" + "                    mat4 skinMat =\n" + "                            Context.InWeight0.x * Context.Joints[int(Context.InJoint0.x)] +\n" + "                            Context.InWeight0.y * Context.Joints[int(Context.InJoint0.y)] +\n" + "                            Context.InWeight0.z * Context.Joints[int(Context.InJoint0.z)] +\n" + "                            Context.InWeight0.w * Context.Joints[int(Context.InJoint0.w)];\n" + "                    // vec4 pos = Context.ModelMatrix * skinMat * vec4(Context.InPosition, 1.0f);\n" + "                    vec4 pos = skinMat * vec4(Context.InPosition, 1.0f);\n" + "                #else\n" + "                    vec4 pos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);\n" + "                #endif\n" + "                bary = Context.InBarycentric;\n" + "\n" + "\n" + "\n" + "                Context.OutPosition = Context.ProjectViewMatrix * pos;\n" + "            }\n" + "        }\n" + "        Fs_Shader{\n" + "            void main(){\n" + "                #ifdef Params.color\n" + "                    vec4 _wireframeColor = Params.color;\n" + "                #else\n" + "                    vec4 _wireframeColor = vec4(0.2f, 0.2f, 0.2f, 1.0f);\n" + "                #endif\n" + "                #ifdef Params.wireframeWidth\n" + "                    float _wireframeWidth = Params.wireframeWidth;\n" + "                #else\n" + "                    float _wireframeWidth = 0.01f;\n" + "                #endif\n" + "                if(any(lessThan(bary, vec3(_wireframeWidth)))){\n" + "                    Context.OutColor = _wireframeColor;\n" + "                }\n" + "                else{\n" + "                    discard;\n" + "                }\n" + "            }\n" + "        }\n" + "    }\n" + "    Technology{\n" + "        Sub_Pass{\n" + "            Pass Wireframe{\n" + "            }\n" + "        }\n" + "    }\n" + "}\n");
 
 _defineProperty(Internal, "S_COLOR_DEF_DATA", "// 颜色材质,提供指定颜色或颜色纹理并渲染\n" + "Def ColorDef{\n" + "    Params{\n" + "        vec4 color;\n" + "        sampler2D colorMap;\n" + "        float alphaDiscard;\n" + "    }\n" + "    SubTechnology ScalePass{\n" + "        Vars{\n" + "            vec4 wordPosition;\n" + "        }\n" + "        Vs_Shader{\n" + "            void main(){\n" + "                //Context.OutPosition = Context.ProjectViewModelMatrix * vec4(Context.InPosition, 1.0f);\n" + "                mat4 scaleMat4 = mat4(\n" + "                    0.2f, 0.0f, 0.0f, 0.0f,\n" + "                    0.0f, 0.2f, 0.0f, 0.0f,\n" + "                    0.0f, 0.0f, 0.2f, 0.0f,\n" + "                    0.0f, 0.0f, 0.0f, 1.0f\n" + "                );\n" + "                Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);\n" + "                wordPosition = Context.OutPosition;\n" + "            }\n" + "        }\n" + "        Fs_Shader{\n" + "            void main(){\n" + "                // 使用自定义颜色输出\n" + "                #ifdef Params.color\n" + "                    Context.OutColor = Params.color;\n" + "                #else\n" + "                    // 使用纹理\n" + "                    #ifdef Params.colorMap\n" + "                        Context.OutColor = texture(Params.colorMap, Context.InUv0);\n" + "                        #ifdef Params.alphaDiscard\n" + "                            if(Context.OutColor.a < Params.alphaDiscard){\n" + "                                discard;\n" + "                            }\n" + "                        #endif\n" + "                    #else\n" + "                        Context.OutColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n" + "                    #endif\n" + "                #endif\n" + "                vec4 wPosition = wordPosition;\n" + "            }\n" + "        }\n" + "    }\n" + "    SubTechnology ColorPass{\n" + "        Vars{\n" + "            vec4 wordPosition;\n" + "            vec2 uv0;\n" + "        }\n" + "        Vs_Shader{\n" + "            void main(){\n" + "                //Context.OutPosition = Context.ProjectViewModelMatrix * vec4(Context.InPosition, 1.0f);\n" + "                Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);\n" + "                wordPosition = Context.OutPosition;\n" + "                uv0 = Context.InUv0;\n" + "            }\n" + "        }\n" + "        Fs_Shader{\n" + "            void main(){\n" + "                // 使用自定义颜色输出\n" + "                #ifdef Params.color\n" + "                    Context.OutColor = Params.color;\n" + "                #else\n" + "                    // 使用纹理\n" + "                    #ifdef Params.colorMap\n" + "                        Context.OutColor = texture(Params.colorMap, uv0);\n" + "                        #ifdef Params.alphaDiscard\n" + "                            if(Context.OutColor.a < Params.alphaDiscard){\n" + "                                discard;\n" + "                            }\n" + "                        #endif\n" + "                    #else\n" + "                        Context.OutColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);\n" + "                    #endif\n" + "                #endif\n" + "            }\n" + "        }\n" + "    }\n" + "    SubTechnology GreenPass{\n" + "        Vars{\n" + "            vec4 wordPosition;\n" + "        }\n" + "        Vs_Shader{\n" + "            void main(){\n" + "                Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);\n" + "                wordPosition = Context.OutPosition;\n" + "            }\n" + "        }\n" + "        Fs_Shader{\n" + "            void main(){\n" + "                // 先判断Params.color是否有值\n" + "                #ifdef Params.color\n" + "                    Context.OutColor = Params.color;\n" + "                #else\n" + "                    Context.OutColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);\n" + "                #endif\n" + "            }\n" + "        }\n" + "    }\n" + "    Technology{\n" + "        Sub_Pass{\n" + "            Pass ColorPass{\n" + "            }\n" + "        }\n" + "    }\n" + "    Technology Green{\n" + "        Sub_Pass{\n" + "            Pass GreenPass{\n" + "            }\n" + "        }\n" + "    }\n" + "    // ScaleColorPass\n" + "    Technology ScaleColor{\n" + "        Sub_Pass{\n" + "            //第一个pass不应该写入深度,否则第二个pass被剔除\n" + "            //可以指定每个pass的写入状态,比如关闭深度,开启深度之类的\n" + "            Pass ScalePass{\n" + "                // 这个pass剔除前面\n" + "                FaceCull Front;\n" + "            }\n" + "            Pass ColorPass{\n" + "                // 这个pass剔除背面\n" + "                FaceCull Back;\n" + "            }\n" + "        }\n" + "    }\n" + "}\n");
 
@@ -19935,7 +20521,10 @@ var Render = /*#__PURE__*/function (_Component) {
     _this._m_Pipeline = {};
     _this._m_PipelineConfig = {}; // renderProgram优先技术
 
-    _this._m_PriorityTechnology = ''; // 帧上下文
+    _this._m_PriorityTechnology = ''; // PostFilterPipeline
+
+    _this._m_PostFilterSwap = 0;
+    _this._m_PostFilterPipelineSwap = []; // 帧上下文
 
     _this._m_FrameContext = new _FrameContext.default(); // 所有可用渲染程序
 
@@ -19990,6 +20579,7 @@ var Render = /*#__PURE__*/function (_Component) {
     // 默认延迟着色渲染路径frameBuffer
     // 如果启用了多渲染路径,则创建默认forwardFrameBuffer而不是使用内置frameBuffer(这是因为webGL不支持从多fbo.blit到内置fbo)
     // 用于FilterPipeline
+    // 交换缓冲
     // Event
     // 一帧渲染开始
     // 获得待渲染列表后
@@ -20141,13 +20731,25 @@ var Render = /*#__PURE__*/function (_Component) {
 
       var filterfb = new _FrameBuffer.default(gl, Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER, w, h);
 
+      this._m_PostFilterPipelineSwap.push(filterfb);
+
       this._m_FrameContext.addFrameBuffer(Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER, filterfb); // 为了支持HDR和gamma矫正,使用一个RGBA16F ffb
 
 
       filterfb.addTexture(gl, _ShaderSource.default.S_IN_SCREEN_SRC, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT0, false);
       filterfb.addTexture(gl, _ShaderSource.default.S_IN_DEPTH_SRC, gl.DEPTH_COMPONENT24, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, gl.DEPTH_ATTACHMENT, false);
       filterfb.finish(gl, this._m_Scene, false);
-      this._m_FrameContext._m_DefaultPostFilterFrameBuffer = filterfb.getFrameBuffer(); // 加载可用渲染程序
+      this._m_FrameContext._m_DefaultPostFilterFrameBuffer = filterfb.getFrameBuffer();
+      var filterfb2 = new _FrameBuffer.default(gl, Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER2, w, h);
+
+      this._m_PostFilterPipelineSwap.push(filterfb2);
+
+      this._m_FrameContext.addFrameBuffer(Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER2, filterfb2); // 为了支持HDR和gamma矫正,使用一个RGBA16F ffb
+
+
+      filterfb2.addTexture(gl, _ShaderSource.default.S_IN_SCREEN_SRC, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT0, false);
+      filterfb2.addTexture(gl, _ShaderSource.default.S_IN_DEPTH_SRC, gl.DEPTH_COMPONENT24, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, gl.DEPTH_ATTACHMENT, false);
+      filterfb2.finish(gl, this._m_Scene, false); // 加载可用渲染程序
 
       this._m_RenderPrograms[_DefaultRenderProgram.default.PROGRAM_TYPE] = new _DefaultRenderProgram.default();
       this._m_RenderPrograms[_SinglePassLightingRenderProgram.default.PROGRAM_TYPE] = new _SinglePassLightingRenderProgram.default();
@@ -20173,8 +20775,60 @@ var Render = /*#__PURE__*/function (_Component) {
         _this2._m_FrameContext.resize(gl, w, h);
 
         _this2._m_FrameContext._m_DefaultFrameBuffer = _this2._m_FrameContext.getFrameBuffer(Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER).getFrameBuffer();
-        _this2._m_FrameContext._m_DefaultPostFilterFrameBuffer = _this2._m_FrameContext.getFrameBuffer(Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER).getFrameBuffer();
+        _this2._m_FrameContext._m_DefaultPostFilterFrameBuffer = _this2._m_FrameContext.getFrameBuffer(Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER).getFrameBuffer(); // this._m_FrameContext._m_DefaultPostFilterFrameBuffer = this._m_PostFilterPipelineSwap[0].getFrameBuffer();
       });
+    }
+    /**
+     * 准备进入PostFilterPipeline。<br/>
+     */
+
+  }, {
+    key: "beginPostFilter",
+    value: function beginPostFilter() {
+      // 准备进入PostFilterPipeline
+      // 将当前帧结果复制到PostFilterFrameBuffer以便进行PostFilter
+      var gl = this._m_Scene.getCanvas().getGLContext();
+
+      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this._m_FrameContext._m_DefaultPostFilterFrameBuffer);
+      gl.blitFramebuffer(0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, gl.NEAREST); // 将PostFilter输出结果设置到交换缓存区
+
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_PostFilterPipelineSwap[1].getFrameBuffer());
+
+      if (this._m_FrameContext.getRenderState().getFlag(_RenderState.default.S_STATES[3]) == 'On') {
+        gl.disable(gl.DEPTH_TEST);
+      }
+    }
+    /**
+     * 交换PostFilter处理结果以便缓冲区进行正确的渲染。<br/>
+     */
+
+  }, {
+    key: "swapPostFilter",
+    value: function swapPostFilter() {
+      var gl = this._m_Scene.getCanvas().getGLContext(); // 将输出buffer传递到输入buffer以便下一环节的postFilter
+
+
+      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this._m_PostFilterPipelineSwap[1].getFrameBuffer());
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this._m_FrameContext._m_DefaultPostFilterFrameBuffer); // 这里假设PostFilter不会修改深度缓冲区,所以没有复制深度缓冲区
+
+      gl.blitFramebuffer(0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), gl.COLOR_BUFFER_BIT, gl.NEAREST);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_PostFilterPipelineSwap[1].getFrameBuffer());
+    }
+    /**
+     * 结束PostFilterPipeline。<br/>
+     */
+
+  }, {
+    key: "finishPostFilter",
+    value: function finishPostFilter() {
+      // 将PostFilter结果复制回默认帧缓冲区（不是真正的默认帧缓冲区，因为还有最后一个环节）
+      var gl = this._m_Scene.getCanvas().getGLContext();
+
+      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this._m_FrameContext._m_DefaultPostFilterFrameBuffer);
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
+      gl.blitFramebuffer(0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, gl.NEAREST);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
     }
     /**
      * 激活指定的pipeline。<br/>
@@ -20591,23 +21245,18 @@ var Render = /*#__PURE__*/function (_Component) {
       } // 一帧结束后
 
 
-      if (pfilter || true) {
-        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
-        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this._m_FrameContext._m_DefaultPostFilterFrameBuffer);
-        gl.blitFramebuffer(0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, gl.NEAREST);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
-
-        if (this._m_FrameContext.getRenderState().getFlag(_RenderState.default.S_STATES[3]) == 'On') {
-          gl.disable(gl.DEPTH_TEST);
-        }
+      if (pfilter) {
+        this.beginPostFilter();
       }
 
       this.fire(Render.POST_FRAME, [exTime]);
 
-      if (pfilter || true) {
+      if (pfilter) {
         if (this._m_FrameContext.getRenderState().getFlag(_RenderState.default.S_STATES[3]) == 'On') {
           gl.enable(gl.DEPTH_TEST);
         }
+
+        this.finishPostFilter();
       } // 然后是GUI层(这里需要注意的是，这里需要完善，目前暂时使用opaque渲染)
       // 这里，GUI层比较特殊，应该在最后进行渲染（事实上，应该在默认gamma矫正之后，但可能gui本身也是在sRGB空间，所以这里在默认gamma矫正之前进行渲染）
 
@@ -20913,6 +21562,8 @@ _defineProperty(Render, "DEFAULT_FORWARD_SHADING_FRAMEBUFFER", 'DefaultForwardSh
 
 _defineProperty(Render, "DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER", 'DefaultPostFilterShadingFrameBuffer');
 
+_defineProperty(Render, "DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER2", 'DefaultPostFilterShadingFrameBuffer2');
+
 _defineProperty(Render, "PRE_FRAME", "preFrame");
 
 _defineProperty(Render, "POST_QUEUE", "postQueue");
@@ -21180,7 +21831,9 @@ var Camera = /*#__PURE__*/function (_Component) {
         if (_this.demandFilter()) {
           _this._m_Filters.forEach(function (filter) {
             if (filter.isEnable()) {
-              filter.postFilter();
+              filter.postFilter(); // 更新缓冲区
+
+              _this._m_Scene.getRender().swapPostFilter();
             }
           });
         }
@@ -26776,12 +27429,13 @@ o.uniqueId = function (s, bres) {
 
   return (bres ? 'res:' : '') + i.toString(32) + '-' + o.lz((s.length * 4).toString(16), 3);
 };
+
+var BS = [[0, 1, 0], [1, 0, 0], [0, 0, 1]];
 /**
  * 提供一些常见工具函数。<br/>
  * @author Kkk
  * @date 2021年2月5日16点48分
  */
-
 
 var Tools = /*#__PURE__*/function () {
   function Tools() {
@@ -27271,6 +27925,130 @@ var Tools = /*#__PURE__*/function () {
       result[2] = -du2 * t;
       result[3] = du1 * t;
       return result;
+    }
+    /**
+     * 根据positions属性与indices数组创建重心坐标属性数据。<br/>
+     * @param {Number[]}[positions]
+     * @param {Number[]}[indices]
+     * @return {Number[]}
+     */
+
+  }, {
+    key: "generatorBaryCentrics",
+    value: function generatorBaryCentrics(positions, indices) {
+      var barycentricMaps = {};
+      var a, b, c;
+      var calc = [];
+      var result = null;
+      var t = 0;
+
+      for (var i = 0; i < indices.length; i += 3) {
+        calc.length = 0;
+        a = indices[i];
+        b = indices[i + 1];
+        c = indices[i + 2];
+
+        if (barycentricMaps[a]) {
+          calc.push(barycentricMaps[a]);
+        }
+
+        if (barycentricMaps[b]) {
+          calc.push(barycentricMaps[b]);
+        }
+
+        if (barycentricMaps[c]) {
+          calc.push(barycentricMaps[c]);
+        }
+
+        result = Tools._nextBarycentrics(calc);
+
+        if (result) {
+          t = 0;
+
+          if (!barycentricMaps[a]) {
+            barycentricMaps[a] = result[t++];
+          }
+
+          if (!barycentricMaps[b]) {
+            barycentricMaps[b] = result[t++];
+          }
+
+          if (!barycentricMaps[c]) {
+            barycentricMaps[c] = result[t++];
+          }
+        }
+      } // 这里，positions属性的长度不一定与barcentricMaps长度一致（但是，正常情况下，positions属性与barcentricMaps数据长度一致）
+      // 原因是存在可能未被indices使用的position,所以这里以positions长度为数据填充
+
+
+      var bs = new Array(positions.length).fill(0);
+
+      for (var _i4 in barycentricMaps) {
+        bs[_i4 * 3] = barycentricMaps[_i4][0];
+        bs[_i4 * 3 + 1] = barycentricMaps[_i4][1];
+        bs[_i4 * 3 + 2] = barycentricMaps[_i4][2];
+      }
+
+      return bs;
+    }
+    /**
+     * 计算合适的重心坐标。<br/>
+     * @param {Number[]}[calc]
+     * @return {Number[]}
+     * @private
+     */
+
+  }, {
+    key: "_nextBarycentrics",
+    value: function _nextBarycentrics(calc) {
+      if (calc.length == 3) {
+        // 检测三个重心坐标是否有重
+        // 因为存在金字塔索引绘制的情况，所以会存在相冲重心坐标
+        // 一旦相冲，就使用第4个重心坐标（D(0,0,0)）替换其中一个
+        if (calc[0][0] == calc[1][0] && calc[0][1] == calc[1][1] && calc[0][2] == calc[1][2]) {
+          calc[0] = [0, 0, 0];
+        } else if (calc[1][0] == calc[2][0] && calc[1][1] == calc[2][1] && calc[1][2] == calc[2][2]) {
+          calc[1] = [0, 0, 0];
+        } else if (calc[2][0] == calc[0][0] && calc[2][1] == calc[0][1] && calc[2][2] == calc[0][2]) {
+          calc[2] = [0, 0, 0];
+        }
+
+        return null;
+      } else if (calc.length == 0) {
+        // 返回三个重心坐标
+        return [[0, 1, 0], [1, 0, 0], [0, 0, 1]];
+      } else {
+        // 计算余下重心坐标
+        var c = [true, true, true];
+        var result = [];
+
+        if (calc.length == 2) {
+          // 检测是否相冲
+          if (calc[0][0] == calc[1][0] && calc[0][1] == calc[1][1] && calc[0][2] == calc[1][2]) {
+            calc[0] = [0, 0, 0];
+          } else if (calc[1][0] == calc[2][0] && calc[1][1] == calc[2][1] && calc[1][2] == calc[2][2]) {
+            calc[1] = [0, 0, 0];
+          }
+        }
+
+        calc.forEach(function (cc) {
+          if (cc[0] == calc[1][0] && cc[1] == calc[1][1] && cc[2] == calc[1][2]) {
+            c[1] = false;
+          } else if (cc[0] == calc[2][0] && cc[1] == calc[2][1] && cc[2] == calc[2][2]) {
+            c[2] = false;
+          } else if (cc[0] == calc[0][0] && cc[1] == calc[0][1] && cc[2] == calc[0][2]) {
+            c[0] = false;
+          }
+        });
+
+        for (var i = 0; i < 3; i++) {
+          if (c[i]) {
+            result.push(BS[i]);
+          }
+        }
+
+        return result;
+      }
     }
   }]);
 
@@ -28172,6 +28950,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 var Mesh = /*#__PURE__*/function () {
   // 以下属性表明引擎的Mesh数据块仅支持这些属性(不要设计自定义属性,这样会加大复杂度)
+  // 重心坐标属性(用于实现webGL上线框模式)
   // 位置属性
   // 顶点颜色属性
   // 法线属性
@@ -28322,6 +29101,11 @@ var Mesh = /*#__PURE__*/function () {
 
         for (var key in this._m_Datas) {
           switch (key) {
+            case Mesh.S_BARYCENTRICS:
+              _ArrayBuf.default.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, _ShaderSource.default.S_BARYCENTRIC, 3, gl.FLOAT, 0, 0);
+
+              break;
+
             case Mesh.S_POSITIONS:
               _ArrayBuf.default.setVertexBuf(gl, this._m_VAO, gl.ARRAY_BUFFER, new Float32Array(this._m_Datas[key]), gl.STATIC_DRAW, _ShaderSource.default.S_POSITION, 3, gl.FLOAT, 0, 0);
 
@@ -28546,6 +29330,8 @@ var Mesh = /*#__PURE__*/function () {
 
 exports["default"] = Mesh;
 
+_defineProperty(Mesh, "S_BARYCENTRICS", "barycentrics");
+
 _defineProperty(Mesh, "S_POSITIONS", "positions");
 
 _defineProperty(Mesh, "S_COLORS", "colors");
@@ -28573,6 +29359,7 @@ _defineProperty(Mesh, "S_JOINTS_0_32", "joints_0");
 _defineProperty(Mesh, "S_WEIGHTS_0", "weights_0");
 
 _defineProperty(Mesh, "S_DATAS", {
+  "barycentrics": "barycentrics",
   "positions": "positions",
   "colors": "colors",
   "normals": "normals",
@@ -29045,6 +29832,8 @@ _defineProperty(ShaderSource, "SOURCE_ENUM", {
   "fragment_shader": "fragment_shader"
 });
 
+_defineProperty(ShaderSource, "S_BARYCENTRIC", 0x000);
+
 _defineProperty(ShaderSource, "S_POSITION", 0x001);
 
 _defineProperty(ShaderSource, "S_COLOR", 0x002);
@@ -29086,6 +29875,8 @@ _defineProperty(ShaderSource, "S_G_BUFFER1", 1);
 _defineProperty(ShaderSource, "S_G_BUFFER2", 2);
 
 _defineProperty(ShaderSource, "S_G_DEPTH", 3);
+
+_defineProperty(ShaderSource, "S_BARYCENTRIC_SRC", "_barycentric");
 
 _defineProperty(ShaderSource, "S_POSITION_SRC", "_position");
 
@@ -29290,6 +30081,15 @@ _defineProperty(ShaderSource, "Context_Data", {
     pattern2: /Context.InPosition[\s+-;.,\*\\]{1,}/,
     tagPattern: /Context.InPosition/g,
     tag: ShaderSource.S_POSITION_SRC,
+    type: "vec3"
+  },
+  "Context.InBarycentric": {
+    src: ShaderSource.S_BARYCENTRIC_SRC,
+    loc: ShaderSource.S_BARYCENTRIC,
+    pattern: /Context.InBarycentric/,
+    pattern2: /Context.InBarycentric[\s+-;.,\*\\]{1,}/,
+    tagPattern: /Context.InBarycentric/g,
+    tag: ShaderSource.S_BARYCENTRIC_SRC,
     type: "vec3"
   },
   "Context.InNormal": {
@@ -32145,6 +32945,18 @@ var Vars = /*#__PURE__*/function () {
         };
       }
     }
+    /**
+     * 移除持有者。<br/>
+     * @param {Object}[owner]
+     */
+
+  }, {
+    key: "unowner",
+    value: function unowner(owner) {
+      if (this._m_OwnerFlags[owner.getId()]) {
+        delete this._m_OwnerFlags[owner.getId()];
+      }
+    }
   }]);
 
   return Vars;
@@ -32398,6 +33210,8 @@ var _BoolVars = _interopRequireDefault(__webpack_require__(1491));
 var _Vector = _interopRequireDefault(__webpack_require__(7141));
 
 var _Matrix = _interopRequireDefault(__webpack_require__(2320));
+
+var _Internal = _interopRequireDefault(__webpack_require__(3370));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -32993,7 +33807,11 @@ var GLTFLoader = /*#__PURE__*/function () {
         if (_Tools.default.checkIsNull(_primitive.material)) {
           // 后续完善时,这里单独到一个函数中进行,因为解析PBR材质参数最好独立到一个解析函数中
           if (!this._m_PrincipledMatDef) {
-            this._m_PrincipledMatDef = _MaterialDef.default.load(this._m_AssetsPath + this._m_CustomMatDef);
+            if (this._m_AssetsPath && this._m_CustomMatDef) {
+              this._m_PrincipledMatDef = _MaterialDef.default.load(this._m_AssetsPath + this._m_CustomMatDef);
+            } else {
+              this._m_PrincipledMatDef = _MaterialDef.default.parse(_Internal.default.S_PRINCIPLED_LIGHTING_DEF);
+            }
           }
 
           matId = this._getName(gltf.materials[_primitive.material].name);
@@ -35521,6 +36339,10 @@ var _Grid = _interopRequireDefault(__webpack_require__(7698));
 
 var _TextImage = _interopRequireDefault(__webpack_require__(6552));
 
+var _Cylinder = _interopRequireDefault(__webpack_require__(4992));
+
+var _Torus = _interopRequireDefault(__webpack_require__(8011));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var _default = {
@@ -35571,6 +36393,8 @@ var _default = {
   Vector3: _Vector2.default,
   Vector4: _Vector3.default,
   Box: _Box.default,
+  Cylinder: _Cylinder.default,
+  Torus: _Torus.default,
   GroupPlane: _GroupPlane.default,
   Grid: _Grid.default,
   Sphere: _Sphere.default,

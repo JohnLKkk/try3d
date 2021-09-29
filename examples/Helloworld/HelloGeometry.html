@@ -4,13 +4,10 @@
     <meta charset="UTF-8">
     <title>HelloGeometry</title>
 </head>
-<!--<script src="../../build/try3d.min.js"></script>-->
-<script type="module">
-    import Try3d from '../../src/Try3d.js';
-    window.Try3d = Try3d;
-</script>
+<script src="../../build/try3d.min.js"></script>
 <script src="../helpers.js"></script>
 <script src="./MeshData.js"></script>
+<script src="./../dat.gui.min.js"></script>
 <body>
 <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;margin: 0px;">
     <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
@@ -36,15 +33,18 @@
     mesh.setData(Try3d.Mesh.S_POSITIONS, positions);
     mesh.setData(Try3d.Mesh.S_NORMALS, normals);
     mesh.setData(Try3d.Mesh.S_INDICES, indices);
-    mesh.setPrimitive(Try3d.Mesh.S_PRIMITIVE_LINES);
+    mesh.setData(Try3d.Mesh.S_BARYCENTRICS, Try3d.Tools.generatorBaryCentrics(positions, indices));
     geometry.setMesh(mesh);
     geometry.updateBound();
     // 定义material
-    let material = new Try3d.Material(scene, {id:'material', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_BASIC_LIGHTING_DEF_DATA)});
-    material.setParam('ambientColor', new Try3d.Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
-    material.setParam('diffuseColor', new Try3d.Vec4Vars().valueFromXYZW(0.2, 1.0, 0.5, 1.0));
-    material.setParam('specularColor', new Try3d.Vec4Vars().valueFromXYZW(0.8, 0.8, 0.8, 1.0));
-    geometry.setMaterial(material);
+    let material = new Try3d.Material(scene, {id:'materialMat', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_BASIC_LIGHTING_DEF_DATA)});
+    material.setParam('ambientColor', new Try3d.Vec4Vars().valueFromXYZW(0.1, 0.1, 0.1, 1.0));
+    material.setParam('diffuseColor', new Try3d.Vec4Vars().valueFromXYZW(0.2, 1.0, 0.2, 1.0));
+    material.setParam('specularColor', new Try3d.Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
+    let wireframeMat = new Try3d.Material(scene, {id:'wireframeMat', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_WIREFRAME_DEF_DATA)});
+    wireframeMat.setParam('color', new Try3d.Vec4Vars().valueFromXYZW(0.2, 1.0, 0.2, 1.0));
+    wireframeMat.setParam('wireframeWidth', new Try3d.FloatVars().valueOf(0.015));
+    geometry.setMaterial(wireframeMat);
 
     // 加入场景图
     rootNode.addChildren(geometry);
@@ -63,6 +63,17 @@
     // 启动渲染器
     renderEngine.launch();
     showStats(scene);
+
+    // gui
+    // 使用dat gui
+    let gui = new dat.GUI();
+    let currentShape = 'ball';
+    let settings = {
+        wireFrame:true,
+    };
+    gui.add(settings, 'wireFrame').onChange(function(value) {
+        geometry.setMaterial(value ? wireframeMat : material);
+    });
 </script>
 </body>
 </html>

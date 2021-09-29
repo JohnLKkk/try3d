@@ -23,6 +23,7 @@ import Texture2DVars from "../Core/WebGL/Vars/Texture2DVars.js";
 import BoolVars from "../Core/WebGL/Vars/BoolVars.js";
 import Vector4 from "../Core/Math3d/Vector4.js";
 import Matrix44 from "../Core/Math3d/Matrix44.js";
+import Internal from "../Core/Render/Internal.js";
 
 /**
  * GLTFLoader。<br/>
@@ -486,7 +487,12 @@ export default class GLTFLoader {
                 // 后续完善时,这里单独到一个函数中进行,因为解析PBR材质参数最好独立到一个解析函数中
 
                 if(!this._m_PrincipledMatDef){
-                    this._m_PrincipledMatDef = MaterialDef.load(this._m_AssetsPath + this._m_CustomMatDef);
+                    if(this._m_AssetsPath && this._m_CustomMatDef){
+                        this._m_PrincipledMatDef = MaterialDef.load(this._m_AssetsPath + this._m_CustomMatDef);
+                    }
+                    else{
+                        this._m_PrincipledMatDef = MaterialDef.parse(Internal.S_PRINCIPLED_LIGHTING_DEF);
+                    }
                 }
                 matId = this._getName(gltf.materials[_primitive.material].name);
                 let material = null;

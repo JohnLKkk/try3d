@@ -1,0 +1,58 @@
+// 由于webGL基于openGLES3.x,其不存在openGL线框模式,所以在这里通过shader实现线框
+Def WireframeDef{
+    Params{
+        vec4 color;
+        float wireframeWidth;
+    }
+    SubTechnology Wireframe{
+        Vars{
+            vec3 bary;
+        }
+        Vs_Shader{
+            void main(){
+                #ifdef Context.Skins
+                    mat4 skinMat =
+                            Context.InWeight0.x * Context.Joints[int(Context.InJoint0.x)] +
+                            Context.InWeight0.y * Context.Joints[int(Context.InJoint0.y)] +
+                            Context.InWeight0.z * Context.Joints[int(Context.InJoint0.z)] +
+                            Context.InWeight0.w * Context.Joints[int(Context.InJoint0.w)];
+                    // vec4 pos = Context.ModelMatrix * skinMat * vec4(Context.InPosition, 1.0f);
+                    vec4 pos = skinMat * vec4(Context.InPosition, 1.0f);
+                #else
+                    vec4 pos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                #endif
+                bary = Context.InBarycentric;
+
+
+
+                Context.OutPosition = Context.ProjectViewMatrix * pos;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                #ifdef Params.color
+                    vec4 _wireframeColor = Params.color;
+                #else
+                    vec4 _wireframeColor = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+                #endif
+                #ifdef Params.wireframeWidth
+                    float _wireframeWidth = Params.wireframeWidth;
+                #else
+                    float _wireframeWidth = 0.01f;
+                #endif
+                if(any(lessThan(bary, vec3(_wireframeWidth)))){
+                    Context.OutColor = _wireframeColor;
+                }
+                else{
+                    discard;
+                }
+            }
+        }
+    }
+    Technology{
+        Sub_Pass{
+            Pass Wireframe{
+            }
+        }
+    }
+}

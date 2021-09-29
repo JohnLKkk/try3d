@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HelloLight</title>
+</head>
+<script src="../../build/try3d.min.js"></script>
+<script src="../helpers.js"></script>
+<body>
+    <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;margin: 0px;">
+        <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+    </div>
+    <script type="module">
+
+        // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
+        let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+        scene.getCanvas().setClearColor(1.0, 1.0, 1.0, 1.0);
+        // 内置ColorDef
+        let colorDef = Try3d.MaterialDef.parse(Try3d.Internal.S_COLOR_DEF_DATA);
+
+        // 定义一个根节点
+        let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+        scene.addSceneNode(rootNode);
+
+        // wall
+        let wall = new Try3d.GroupPlane(scene, {id:'wall', xSize:5, zSize:2});
+        let wallMat = new Try3d.Material(scene, {id:'wallMat', materialDef:colorDef});
+        wall.setMaterial(wallMat);
+        let wallMap = new Try3d.Texture2DVars(scene);
+        wallMap.setImageSrc(scene, '../Assets/Textures/wall.jpg');
+        wallMat.setParam('colorMap', wallMap);
+        wall.setLocalRotationFromEuler(Try3d.MoreMath.toRadians(90), Try3d.MoreMath.toRadians(90), 0);
+        rootNode.addChildren(wall);
+
+        // 创建一个控制器
+        let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
+        sceneControl.lookScene(rootNode);
+        sceneControl.setTargetDistance(2);
+        sceneControl.setMinDistance(2);
+        sceneControl.setMaxDistance(2);
+        initOther(scene, rootNode);
+
+
+        // 创建渲染器
+        let renderEngine = new Try3d.RenderEngine();
+        // 添加要渲染的场景对象
+        renderEngine.addScene(scene);
+        // 启动渲染器
+        renderEngine.launch();
+        showStats(scene);
+    </script>
+</body>
+</html>

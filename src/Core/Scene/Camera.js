@@ -144,6 +144,8 @@ export default class Camera extends Component{
                     this._m_Filters.forEach(filter=>{
                         if(filter.isEnable()){
                             filter.postFilter();
+                            // 更新缓冲区
+                            this._m_Scene.getRender().swapPostFilter();
                         }
                     });
                 }
