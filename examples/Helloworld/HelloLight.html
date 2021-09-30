@@ -4,11 +4,7 @@
     <meta charset="UTF-8">
     <title>HelloLight</title>
 </head>
-<!--<script src="../../build/try3d.min.js"></script>-->
-<script type="module">
-    import Try3d from '../../src/Try3d.js';
-    window.Try3d = Try3d;
-</script>
+<script src="../../build/try3d.min.js"></script>
 <script src="../helpers.js"></script>
 <script src="./../dat.gui.min.js"></script>
 <body>
@@ -20,8 +16,6 @@
         // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
         let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
         scene.getCanvas().setClearColor(0.12, 0.12, 0.12, 1.0);
-        // 内置ColorDef
-        let colorDef = Try3d.MaterialDef.parse(Try3d.Internal.S_COLOR_DEF_DATA);
 
         // 定义一个根节点
         let rootNode = new Try3d.Node(scene, {id:'rootNode'});
@@ -35,15 +29,17 @@
             // 创建一个控制器
             let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
             sceneControl.lookScene(rootNode);
-            // sceneControl.setTargetDistance(25);
+            sceneControl.setTargetDistance(15);
             sceneControl.setMinVerticalRotation(Try3d.MoreMath.toRadians(-1));
 
             // 创建一个directionalLight
             let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
             dirLight.setDirectionXYZ(-1, -1, 1);
             dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+            // 添加辉光
+            addBloom(scene);
             // 添加雾化
-            initFog(scene, 5, 80, [0.12, 0.12, 0.12, 1.0]);
+            addFog(scene, 5, 80, [0.12, 0.12, 0.12, 1.0]);
             rootNode.addChildren(dirLight);
 
 

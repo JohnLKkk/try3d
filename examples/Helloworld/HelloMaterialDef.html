@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HelloMaterialDef</title>
+    <style>
+        .innerbox{
+            overflow: auto;
+            background-color: #f8f8f8;
+            height: 200px;
+            padding: 10px;
+        }
+        .innerbox::-webkit-scrollbar {/*滚动条整体样式*/
+            width: 4px;     /*高宽分别对应横竖滚动条的尺寸*/
+            height: 15px;
+            scrollbar-arrow-color:red;
+
+        }
+        .innerbox::-webkit-scrollbar-thumb {/*滚动条里面小方块*/
+            border-radius: 5px;
+            -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+            background: rgba(0,0,0,0.2);
+            scrollbar-arrow-color:red;
+        }
+        .innerbox::-webkit-scrollbar-track {/*滚动条里面轨道*/
+            -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+            border-radius: 0;
+            background: rgba(0,0,0,0.1);
+        }
+
+    </style>
+</head>
+<script src="../../build/try3d.min.js"></script>
+<script src="../helpers.js"></script>
+<body>
+    <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;margin: 0px;">
+        <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+        <div class="innerbox" style="top: 0px;right: 0px;background-color: rgba(128,128,128,0.31);color: white;position: fixed;width: 50%;height: 100%;padding: 5px;overflow-y:auto;">
+            <pre>
+// SimpleLightingDef
+// 作者:Kkk
+// 一个简单的光照材质定义
+Def SimpleLightingDef{
+    // 材质参数
+    Params{
+        vec4 diffuseColor;
+        vec4 specularColor;
+        float shininess;
+    }
+    SubTechnology Lighting{
+        Vars{
+            vec3 wNormal;
+            vec3 wPosition;
+        }
+        Advanced{
+            RenderProgram MultiPassLighting;
+        }
+        Vs_Shader{
+            void main(){
+                // 世界空间
+                vec4 pos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+
+                // 传递给fragmentShader计算光照的数据
+                // 案例演示,简单起见,在世界空间进行光照
+                wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;
+                mat3 nMat = mat3(transpose(inverse(Context.ModelMatrix)));
+                wNormal = normalize(nMat * Context.InNormal);
+
+
+                Context.OutPosition = Context.ProjectViewMatrix * pos;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                // 计算光照
+                // 作为例子,简单起见,这里不使用上下文API计算光照,而是完全自己编写光照逻辑
+                // 但是如果为了系统性完善化,建议自定义材质最好使用上下文封装的API获取光照而不是
+                // 直接自己编写光照逻辑
+
+                // 光源方向
+                vec3 viewDir = normalize(Context.CameraPosition.xyz - wPosition.xyz);
+                // 法线
+                vec3 normal = normalize( wNormal );
+
+                // 默认值(当然,这里也可以在参数定义处进行默认值设置)
+                vec4 _diffuseColor = vec4(1.0f);
+                vec4 _specularColor = vec4(1.0f);
+                float _shininess = 32.0f;
+
+                // 使用材质参数值
+                #ifdef Params.diffuseColor
+                    _diffuseColor = Params.diffuseColor;
+                #endif
+                #ifdef Params.specularColor
+                    _specularColor = Params.specularColor;
+                #endif
+                #ifdef Params.shininess
+                    _shininess = Params.shininess;
+                #endif
+
+                // 恒定间接光照为环境光
+                Context.OutColor.rgb = _diffuseColor.rgb * Context.AmbientLightColor;
+
+                // 这里,因为我们的案例使用了directionalLight
+                // 所以可以直接将其转为lightDir
+                vec4 lightColor = Context.WLightData[0];
+                vec3 lightDir = -Context.WLightData[1].xyz;
+
+
+                // 光照方程--我使用的化简后的光照方程如下：
+                // lightColor = Ambient color+ Minnaertdiffuse color+ Specular highlights
+                // 当然,Ad-hoc经常使用的光照模型使用经典Lambert
+
+                // brdf
+                float ndotl = max(0.0f, dot(normal, lightDir));
+                float ndotv = max(0.0f, dot(normal, viewDir));
+                float diffuseBRDF = ndotl * pow(max(ndotl * ndotv, 0.1f), -1.0f) * 0.5f;
+
+                vec3 H = normalize(viewDir + lightDir);
+                float specularBRDF = pow(max(dot(H, normal), 0.0f), _shininess);
+                Context.OutColor.rgb += lightColor.rgb * ( _diffuseColor.rgb * vec3( diffuseBRDF ) +
+                _specularColor.rgb * vec3( specularBRDF ));
+            }
+        }
+    }
+    Technology {
+        Sub_Pass Forward{
+            Pass Lighting{
+            }
+        }
+    }
+}
+            </pre>
+        </div>
+    </div>
+    <script type="module">
+
+        // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
+        let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+        scene.setAmbientLightColor(0.2, 0.2, 0.2, 1.0);
+        scene.getCanvas().setClearColor(0.1, 0.1, 0.1, 1.0);
+        // 内置ColorDef
+        let colorDef = Try3d.MaterialDef.parse(Try3d.Internal.S_COLOR_DEF_DATA);
+
+        // 定义一个根节点
+        let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+        scene.addSceneNode(rootNode);
+        // addEnv(scene, rootNode);
+
+        // 定义一个testBox
+        let testBox = new Try3d.Box(scene, {id:'testBox', xHalf:0.5, yHalf:0.5, zHalf:0.5});
+        // 创建redBox材质
+        let simpleLightMat = new Try3d.Material(scene, {id:'simpleLightMat', materialDef:Try3d.MaterialDef.load('./SimpleLightingDef')});
+        simpleLightMat.setParam("diffuseColor", new Try3d.Vec4Vars().valueFromXYZW(1.0, 0.07, 0.57, 1));
+        simpleLightMat.setParam("specularColor", new Try3d.Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1));
+        testBox.setMaterial(simpleLightMat);
+        rootNode.addChildren(testBox);
+
+        // 创建一个控制器
+        let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
+        sceneControl.lookScene(rootNode);
+        sceneControl.setTargetDistance(2);
+        // 创建一个directionalLight
+        let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
+        dirLight.setDirectionXYZ(-1, -1, 1);
+        dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+        rootNode.addChildren(dirLight);
+
+        // add Bloom
+        addBloom(scene, 0.1);
+
+
+        // 创建渲染器
+        let renderEngine = new Try3d.RenderEngine();
+        // 添加要渲染的场景对象
+        renderEngine.addScene(scene);
+        // 启动渲染器
+        renderEngine.launch();
+        showStats(scene);
+
+
+        // rotate testBox
+        let angle = 0;
+        let radians = 0;
+        scene.on('update', (tpf)=>{
+            angle += tpf * 10.0;
+            radians = Try3d.MoreMath.toRadians(angle);
+            testBox.setLocalRotationFromEuler(radians, radians, radians);
+        });
+    </script>
+</body>
+</html>

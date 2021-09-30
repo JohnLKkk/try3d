@@ -1,4 +1,391 @@
 export default class Internal {
+    static S_FXAA_FILTER_DEF_DATA = "// Fast Approximate Anti-Aliasing (FXAA)\n" +
+        "// 来自https://www.geeks3d.com/20110405/fxaa-fast-approximate-anti-aliasing-demo-glsl-opengl-test-radeon-geforce/3/\n" +
+        "Def FxaaFilterDef{\n" +
+        "    Params{\n" +
+        "        float spanMax;\n" +
+        "        float reduceMul;\n" +
+        "        float subPixelShift;\n" +
+        "    }\n" +
+        "    SubTechnology Fxaa{\n" +
+        "        Vars{\n" +
+        "            vec4 pos;\n" +
+        "            vec2 resolutionInverse;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" +
+        "                pos.xy = Context.InUv0;\n" +
+        "                #ifdef Params.subPixelShift\n" +
+        "                    float _subPixelShift = Params.subPixelShift;\n" +
+        "                #else\n" +
+        "                    float _subPixelShift = 1.0f / 4.0f;\n" +
+        "                #endif\n" +
+        "                resolutionInverse = Context.ResolutionInverse;\n" +
+        "                pos.zw = Context.InUv0 - (resolutionInverse * vec2(0.5f + _subPixelShift));\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            #define FxaaTex(t, p) texture(t, p)\n" +
+        "            #define OffsetVec(a, b) ivec2(a, b)\n" +
+        "            #define FxaaTexOff(t, p, o, r) textureOffset(t, p, o)\n" +
+        "            vec3 FXAA(vec4 posPos,sampler2D tex,vec2 rcpFrame){\n" +
+        "\n" +
+        "                #define FXAA_REDUCE_MIN   (1.0f/128.0f)\n" +
+        "                //#define FXAA_REDUCE_MUL   (1.0/8.0)\n" +
+        "                //#define FXAA_SPAN_MAX     8.0\n" +
+        "\n" +
+        "                vec3 rgbNW = FxaaTex(tex, posPos.zw).xyz;\n" +
+        "                vec3 rgbNE = FxaaTexOff(tex, posPos.zw, OffsetVec(1,0), rcpFrame.xy).xyz;\n" +
+        "                vec3 rgbSW = FxaaTexOff(tex, posPos.zw, OffsetVec(0,1), rcpFrame.xy).xyz;\n" +
+        "                vec3 rgbSE = FxaaTexOff(tex, posPos.zw, OffsetVec(1,1), rcpFrame.xy).xyz;\n" +
+        "\n" +
+        "                vec3 rgbM  = FxaaTex(tex, posPos.xy).xyz;\n" +
+        "\n" +
+        "                vec3 luma = vec3(0.299f, 0.587f, 0.114f);\n" +
+        "                float lumaNW = dot(rgbNW, luma);\n" +
+        "                float lumaNE = dot(rgbNE, luma);\n" +
+        "                float lumaSW = dot(rgbSW, luma);\n" +
+        "                float lumaSE = dot(rgbSE, luma);\n" +
+        "                float lumaM  = dot(rgbM,  luma);\n" +
+        "\n" +
+        "                float lumaMin = min(lumaM, min(min(lumaNW, lumaNE), min(lumaSW, lumaSE)));\n" +
+        "                float lumaMax = max(lumaM, max(max(lumaNW, lumaNE), max(lumaSW, lumaSE)));\n" +
+        "\n" +
+        "                vec2 dir;\n" +
+        "                dir.x = -((lumaNW + lumaNE) - (lumaSW + lumaSE));\n" +
+        "                dir.y =  ((lumaNW + lumaSW) - (lumaNE + lumaSE));\n" +
+        "\n" +
+        "                #ifdef Params.reduceMul\n" +
+        "                    float _reduceMul = Params.reduceMul;\n" +
+        "                #else\n" +
+        "                    float _reduceMul = 1.0f / 8.0f;\n" +
+        "                #endif\n" +
+        "                float dirReduce = max(\n" +
+        "                    (lumaNW + lumaNE + lumaSW + lumaSE) * (0.25f * _reduceMul),FXAA_REDUCE_MIN);\n" +
+        "                float rcpDirMin = 1.0f/(min(abs(dir.x), abs(dir.y)) + dirReduce);\n" +
+        "                #ifdef Params.spanMax\n" +
+        "                    float _spanMax = Params.spanMax;\n" +
+        "                #else\n" +
+        "                    float _spanMax = 8.0f;\n" +
+        "                #endif\n" +
+        "                dir = min(vec2( _spanMax,  spanMax),max(vec2(-spanMax, -spanMax),dir * rcpDirMin)) * rcpFrame.xy;\n" +
+        "\n" +
+        "                vec3 rgbA = (1.0f/2.0f) * (FxaaTex(tex, posPos.xy + dir * vec2(1.0f/3.0f - 0.5f)).xyz +FxaaTex(tex, posPos.xy + dir * vec2(2.0f/3.0f - 0.5f)).xyz);\n" +
+        "                vec3 rgbB = rgbA * (1.0f/2.0f) + (1.0f/4.0f) * (FxaaTex(tex, posPos.xy + dir * vec2(0.0f/3.0f - 0.5f)).xyz +FxaaTex(tex, posPos.xy + dir * vec2(3.0f/3.0f - 0.5f)).xyz);\n" +
+        "\n" +
+        "                float lumaB = dot(rgbB, luma);\n" +
+        "\n" +
+        "                if ((lumaB < lumaMin) || (lumaB > lumaMax))\n" +
+        "                {\n" +
+        "                    return rgbA;\n" +
+        "                }\n" +
+        "                else\n" +
+        "                {\n" +
+        "                    return rgbB;\n" +
+        "                }\n" +
+        "            }\n" +
+        "            void main(){\n" +
+        "                Context.OutColor = vec4(FXAA(pos, Context.InScreen, resolutionInverse), 1.0f);\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology{\n" +
+        "        Sub_Pass PostFilter{\n" +
+        "            Pass Fxaa{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "}\n";
+    static S_BLOOM_FILTER_DEF_DATA = "// Bloom\n" +
+        "Def BloomFilterDef{\n" +
+        "    Globals BloomExtract{\n" +
+        "        color0 vec4 extractTexture;\n" +
+        "        depth24_stencil8 inner depthAndStencil;\n" +
+        "    }\n" +
+        "    Globals VBlur{\n" +
+        "        color0 vec4 color;\n" +
+        "        depth24_stencil8 inner depthAndStencil;\n" +
+        "    }\n" +
+        "    Globals HBlur{\n" +
+        "        color0 vec4 color;\n" +
+        "        depth24_stencil8 inner depthAndStencil;\n" +
+        "    }\n" +
+        "    Params{\n" +
+        "        // 辉光阈值\n" +
+        "        float extractThreshold;\n" +
+        "        // 曝光程度(默认2)\n" +
+        "        float exposurePower;\n" +
+        "        // 辉光强度\n" +
+        "        float bloomIntensity;\n" +
+        "        // 模糊缩放(默认1.5)\n" +
+        "        float blurScale;\n" +
+        "\n" +
+        "\n" +
+        "        // 使用辉光纹理(应该继承具体的Def下只需,后续完善)\n" +
+        "        bool useGlowMap;\n" +
+        "    }\n" +
+        "    SubTechnology ExtractPass{\n" +
+        "        Vars{\n" +
+        "            vec2 uv0;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" +
+        "                uv0 = Context.InUv0;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            const vec3 DEFAULT_GRAY = vec3(0.2126f, 0.7152f, 0.0722f);\n" +
+        "            #define DEFAULT_EXTRACT_THRESHOLD 0.5f\n" +
+        "            #define GAMMA 2.2f\n" +
+        "            #define GAMMA_T 1.0f / GAMMA\n" +
+        "            void main(){\n" +
+        "                ivec2 iTexC = ivec2(uv0 * vec2(textureSize(Context.InScreen, 0)));\n" +
+        "                vec4 screenColor = texelFetch(Context.InScreen, iTexC, 0);\n" +
+        "\n" +
+        "                float threshold = 0.0f;\n" +
+        "                float power = 2.0f;\n" +
+        "                #ifdef Params.extractThreshold\n" +
+        "                    threshold = Params.extractThreshold;\n" +
+        "                #else\n" +
+        "                    threshold = DEFAULT_EXTRACT_THRESHOLD;\n" +
+        "                #endif\n" +
+        "                #ifdef Params.exposurePower\n" +
+        "                    power = Params.exposurePower;\n" +
+        "                #endif\n" +
+        "\n" +
+        "                if( (screenColor.r + screenColor.g + screenColor.b) / 3.0f < threshold ){\n" +
+        "                    GlobalsBloomExtract.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);\n" +
+        "                }\n" +
+        "                else{\n" +
+        "                    GlobalsBloomExtract.OutextractTexture = pow( screenColor, vec4(power) );\n" +
+        "                }\n" +
+        "\n" +
+        "                //vec4 screenColor = texture(Context.InScreen, uv0);\n" +
+        "                //screenColor.rgb = pow(screenColor.rgb, vec3(GAMMA));\n" +
+        "                // 记住我们在线性空间计算,所以这里需要映射回来\n" +
+        "                //float threshold = dot(screenColor.rgb, DEFAULT_GRAY);\n" +
+        "                //#ifdef Params.extractThreshold\n" +
+        "                //    if(threshold > Params.extractThreshold){\n" +
+        "                //        GlobalsBloomExtract.OutextractTexture = screenColor;\n" +
+        "                //    }\n" +
+        "                //    else{\n" +
+        "                //        GlobalsBloomExtract.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);\n" +
+        "                //    }\n" +
+        "                //#else\n" +
+        "                //    if(threshold > DEFAULT_EXTRACT_THRESHOLD){\n" +
+        "                //        GlobalsBloomExtract.OutextractTexture = screenColor;\n" +
+        "                //    }\n" +
+        "                //    else{\n" +
+        "                //        GlobalsBloomExtract.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);\n" +
+        "                //    }\n" +
+        "                //#endif\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    SubTechnology FirstHBlurPass{\n" +
+        "            Vars{\n" +
+        "                vec2 uv0;\n" +
+        "            }\n" +
+        "            Vs_Shader{\n" +
+        "                void main(){\n" +
+        "                    Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" +
+        "                    uv0 = Context.InUv0;\n" +
+        "                }\n" +
+        "            }\n" +
+        "            Fs_Shader{\n" +
+        "                #define DEFAULT_BLUR_SCALE 1.5f\n" +
+        "                void main(){\n" +
+        "                    #ifdef Params.blurScale\n" +
+        "                        float blurSize = Params.blurScale / float(textureSize(GlobalsBloomExtract.InextractTexture, 0).x);\n" +
+        "                    #else\n" +
+        "                        float blurSize = DEFAULT_BLUR_SCALE / float(textureSize(GlobalsBloomExtract.InextractTexture, 0).x);\n" +
+        "                    #endif\n" +
+        "                    vec4 sum = vec4(0.0f);\n" +
+        "\n" +
+        "                    // 水平方向模糊\n" +
+        "                    // 采样9个部分\n" +
+        "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x - 4.0f*blurSize, uv0.y )) * 0.06f;\n" +
+        "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x - 3.0f*blurSize, uv0.y )) * 0.09f;\n" +
+        "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x - 2.0f*blurSize, uv0.y)) * 0.12f;\n" +
+        "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x - blurSize, uv0.y )) * 0.15f;\n" +
+        "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x, uv0.y)) * 0.16f;\n" +
+        "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x + blurSize, uv0.y )) * 0.15f;\n" +
+        "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x + 2.0f*blurSize, uv0.y )) * 0.12f;\n" +
+        "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x + 3.0f*blurSize, uv0.y )) * 0.09f;\n" +
+        "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x + 4.0f*blurSize, uv0.y )) * 0.06f;\n" +
+        "\n" +
+        "                    GlobalsHBlur.Outcolor = sum;\n" +
+        "                }\n" +
+        "            }\n" +
+        "        }\n" +
+        "    SubTechnology HBlurPass{\n" +
+        "        Vars{\n" +
+        "            vec2 uv0;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" +
+        "                uv0 = Context.InUv0;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            #define DEFAULT_BLUR_SCALE 1.5f\n" +
+        "            void main(){\n" +
+        "                #ifdef Params.blurScale\n" +
+        "                    float blurSize = Params.blurScale / float(textureSize(GlobalsVBlur.Incolor, 0).x);\n" +
+        "                #else\n" +
+        "                    float blurSize = DEFAULT_BLUR_SCALE / float(textureSize(GlobalsVBlur.Incolor, 0).x);\n" +
+        "                #endif\n" +
+        "\n" +
+        "                vec4 sum = vec4(0.0f);\n" +
+        "\n" +
+        "                // 水平方向模糊\n" +
+        "                // 采样9个部分\n" +
+        "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x - 4.0f*blurSize, uv0.y )) * 0.06f;\n" +
+        "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x - 3.0f*blurSize, uv0.y )) * 0.09f;\n" +
+        "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x - 2.0f*blurSize, uv0.y)) * 0.12f;\n" +
+        "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x - blurSize, uv0.y )) * 0.15f;\n" +
+        "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x, uv0.y)) * 0.16f;\n" +
+        "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x + blurSize, uv0.y )) * 0.15f;\n" +
+        "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x + 2.0f*blurSize, uv0.y )) * 0.12f;\n" +
+        "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x + 3.0f*blurSize, uv0.y )) * 0.09f;\n" +
+        "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x + 4.0f*blurSize, uv0.y )) * 0.06f;\n" +
+        "\n" +
+        "                GlobalsHBlur.Outcolor = sum;\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    SubTechnology VBlurPass{\n" +
+        "        Vars{\n" +
+        "            vec2 uv0;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" +
+        "                uv0 = Context.InUv0;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            #define DEFAULT_BLUR_SCALE 1.5f\n" +
+        "            void main(){\n" +
+        "                #ifdef Params.blurScale\n" +
+        "                    float blurSize = Params.blurScale / float(textureSize(GlobalsHBlur.Incolor, 0).y);\n" +
+        "                #else\n" +
+        "                    float blurSize = DEFAULT_BLUR_SCALE / float(textureSize(GlobalsHBlur.Incolor, 0).y);\n" +
+        "                #endif\n" +
+        "                vec4 sum = vec4(0.0f);\n" +
+        "\n" +
+        "                // 垂直方向模糊\n" +
+        "                // 采样9个部分\n" +
+        "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y - 4.0f*blurSize)) * 0.06f;\n" +
+        "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y - 3.0f*blurSize)) * 0.09f;\n" +
+        "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y - 2.0f*blurSize)) * 0.12f;\n" +
+        "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y - blurSize)) * 0.15f;\n" +
+        "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y)) * 0.16f;\n" +
+        "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y + blurSize)) * 0.15f;\n" +
+        "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y + 2.0f*blurSize)) * 0.12f;\n" +
+        "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y + 3.0f*blurSize)) * 0.09f;\n" +
+        "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y + 4.0f*blurSize)) * 0.06f;\n" +
+        "\n" +
+        "                GlobalsVBlur.Outcolor = sum;\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    SubTechnology BloomPass{\n" +
+        "        Vars{\n" +
+        "            vec2 uv0;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" +
+        "                uv0 = Context.InUv0;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            #define GAMMA 2.2f\n" +
+        "            #define GAMMA_T 1.0f / GAMMA\n" +
+        "            void main(){\n" +
+        "                // 1.对ExtractTexture应用某种模糊(Blur)处理\n" +
+        "                // 2.结合ExtractTexture和ScreenColor实现bloom\n" +
+        "                vec4 screenColor = texture(Context.InScreen, uv0);\n" +
+        "                vec3 blurColor = texture(GlobalsVBlur.Incolor, uv0).rgb;\n" +
+        "                screenColor.rgb += blurColor;\n" +
+        "                const float exposure = 0.5f;\n" +
+        "                //vec3 result = vec3(1.0f) - exp(-screenColor.rgb * exposure);\n" +
+        "                //result = pow(result, vec3(GAMMA_T));\n" +
+        "                //Context.OutColor = vec4(result, screenColor.a);\n" +
+        "                Context.OutColor = screenColor;\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    SubTechnology FastBloomPass{\n" +
+        "        Vars{\n" +
+        "            vec2 uv0;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" +
+        "                uv0 = Context.InUv0;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            void main(){\n" +
+        "                vec4 screenColor = texture(Context.InScreen, uv0);\n" +
+        "                //vec3 blurColor = pow(texture(GlobalsVBlur.Incolor, uv0).rgb, vec3(1.0f / 2.0f));\n" +
+        "                //blurColor = vec3(1.0f) - exp(-blurColor.rgb * 0.5f);\n" +
+        "                vec3 blurColor = texture(GlobalsVBlur.Incolor, uv0).rgb;\n" +
+        "\n" +
+        "                float _bInd = 2.0f;\n" +
+        "                #ifdef Params.bloomIntensity\n" +
+        "                    _bInd = Params.bloomIntensity;\n" +
+        "                #endif\n" +
+        "\n" +
+        "                screenColor.rgb += blurColor * _bInd;\n" +
+        "                Context.OutColor = screenColor;\n" +
+        "                //测试\n" +
+        "                //Context.OutColor = vec4(blurColor, 1.0f);\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology{\n" +
+        "        Sub_Pass PostFilter{\n" +
+        "            Pass ExtractPass{\n" +
+        "            }\n" +
+        "            Pass FirstHBlurPass{\n" +
+        "            }\n" +
+        "            Pass VBlurPass{\n" +
+        "            }\n" +
+        "            Pass FastBloomPass{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology MultiBloom{\n" +
+        "        //Sub_Pass PreFrame{\n" +
+        "        //    Pass ExtractPass{\n" +
+        "        //    }\n" +
+        "        //}\n" +
+        "        Sub_Pass PostFilter{\n" +
+        "            Pass ExtractPass{\n" +
+        "            }\n" +
+        "            Pass FirstHBlurPass{\n" +
+        "            }\n" +
+        "            Pass VBlurPass{\n" +
+        "            }\n" +
+        "            Pass HBlurPass{\n" +
+        "            }\n" +
+        "            Pass VBlurPass{\n" +
+        "            }\n" +
+        "            Pass HBlurPass{\n" +
+        "            }\n" +
+        "            Pass VBlurPass{\n" +
+        "            }\n" +
+        "            Pass BloomPass{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "}\n";
     static S_WIREFRAME_DEF_DATA = "// 由于webGL基于openGLES3.x,其不存在openGL线框模式,所以在这里通过shader实现线框\n" +
         "Def WireframeDef{\n" +
         "    Params{\n" +

@@ -4,10 +4,14 @@ const Examples = {
         'HelloNode.html',
         'HelloTexture.html',
         'HelloMaterial.html',
+        'HelloMaterialDef.html',
         'HelloEvent.html',
         'HelloGeometry.html',
         'HelloLight.html',
         'HelloShadow.html',
+        'HelloTransform.html',
+        'HelloSky.html',
+        'HelloPicture.html',
     ],
     'Animations':[
 

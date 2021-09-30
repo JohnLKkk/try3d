@@ -1,0 +1,93 @@
+// SimpleLightingDef
+// 作者:Kkk
+// 一个简单的光照材质定义
+Def SimpleLightingDef{
+    // 材质参数
+    Params{
+        vec4 diffuseColor;
+        vec4 specularColor;
+        float shininess;
+    }
+    SubTechnology Lighting{
+        Vars{
+            vec3 wNormal;
+            vec4 wTangent;
+            vec3 wPosition;
+        }
+        Advanced{
+            RenderProgram MultiPassLighting;
+        }
+        Vs_Shader{
+            void main(){
+                // 世界空间
+                vec4 pos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+
+                // 传递给fragmentShader计算光照的数据
+                // 案例演示,简单起见,在世界空间进行光照
+                wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;
+                mat3 nMat = mat3(transpose(inverse(Context.ModelMatrix)));
+                wNormal = normalize(nMat * Context.InNormal);
+
+
+                Context.OutPosition = Context.ProjectViewMatrix * pos;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                // 计算光照
+                // 作为例子,简单起见,这里不使用上下文API计算光照,而是完全自己编写光照逻辑
+                // 但是如果为了系统性完善化,建议自定义材质最好使用上下文封装的API获取光照而不是
+                // 直接自己编写光照逻辑
+
+                // 光源方向
+                vec3 viewDir = normalize(Context.CameraPosition.xyz - wPosition.xyz);
+                // 法线
+                vec3 normal = normalize( wNormal );
+
+                // 默认值(当然,这里也可以在参数定义处进行默认值设置)
+                vec4 _diffuseColor = vec4(1.0f);
+                vec4 _specularColor = vec4(1.0f);
+                float _shininess = 32.0f;
+
+                // 使用材质参数值
+                #ifdef Params.diffuseColor
+                    _diffuseColor = Params.diffuseColor;
+                #endif
+                #ifdef Params.specularColor
+                    _specularColor = Params.specularColor;
+                #endif
+                #ifdef Params.shininess
+                    _shininess = Params.shininess;
+                #endif
+
+                // 恒定间接光照为环境光
+                Context.OutColor.rgb = _diffuseColor.rgb * Context.AmbientLightColor;
+
+                // 这里,因为我们的案例使用了directionalLight
+                // 所以可以直接将其转为lightDir
+                vec4 lightColor = Context.WLightData[0];
+                vec3 lightDir = -Context.WLightData[1].xyz;
+
+
+                // 光照方程--我使用的化简后的光照方程如下：
+                // lightColor = Ambient color+ Minnaertdiffuse color+ Specular highlights
+                // 当然,Ad-hoc经常使用的光照模型使用经典Lambert
+
+                // brdf
+                float ndotl = max(0.0f, dot(normal, lightDir));
+                float ndotv = max(0.0f, dot(normal, viewDir));
+                float diffuseBRDF = ndotl * pow(max(ndotl * ndotv, 0.1f), -1.0f) * 0.5f;
+
+                vec3 H = normalize(viewDir + lightDir);
+                float specularBRDF = pow(max(dot(H, normal), 0.0f), _shininess);
+                Context.OutColor.rgb += lightColor.rgb * ( _diffuseColor.rgb * vec3( diffuseBRDF ) + _specularColor.rgb * vec3( specularBRDF ));
+            }
+        }
+    }
+    Technology {
+        Sub_Pass Forward{
+            Pass Lighting{
+            }
+        }
+    }
+}

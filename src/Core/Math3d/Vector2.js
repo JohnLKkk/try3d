@@ -2,6 +2,11 @@ export default class Vector2 {
     constructor(x,y) {
         this._m_X = x || 0;
         this._m_Y = y || 0;
+        this.bufferData = new Float32Array(2);
+    }
+    getBufferData(){
+        this.bufferData.set([this._m_X, this._m_Y]);
+        return this.bufferData;
     }
     setTo(vec2){
         this._m_X = vec2._m_X;

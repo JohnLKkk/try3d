@@ -11243,9 +11243,16 @@ var Vector2 = /*#__PURE__*/function () {
 
     this._m_X = x || 0;
     this._m_Y = y || 0;
+    this.bufferData = new Float32Array(2);
   }
 
   _createClass(Vector2, [{
+    key: "getBufferData",
+    value: function getBufferData() {
+      this.bufferData.set([this._m_X, this._m_Y]);
+      return this.bufferData;
+    }
+  }, {
     key: "setTo",
     value: function setTo(vec2) {
       this._m_X = vec2._m_X;
@@ -15807,6 +15814,10 @@ var Internal = function Internal() {
 };
 
 exports["default"] = Internal;
+
+_defineProperty(Internal, "S_FXAA_FILTER_DEF_DATA", "// Fast Approximate Anti-Aliasing (FXAA)\n" + "// 来自https://www.geeks3d.com/20110405/fxaa-fast-approximate-anti-aliasing-demo-glsl-opengl-test-radeon-geforce/3/\n" + "Def FxaaFilterDef{\n" + "    Params{\n" + "        float spanMax;\n" + "        float reduceMul;\n" + "        float subPixelShift;\n" + "    }\n" + "    SubTechnology Fxaa{\n" + "        Vars{\n" + "            vec4 pos;\n" + "            vec2 resolutionInverse;\n" + "        }\n" + "        Vs_Shader{\n" + "            void main(){\n" + "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" + "                pos.xy = Context.InUv0.xy;\n" + "                #ifdef Params.subPixelShift\n" + "                    float _subPixelShift = Params.subPixelShift;\n" + "                #else\n" + "                    float _subPixelShift = 1.0f / 4.0f;\n" + "                #endif\n" + "                resolutionInverse = Context.ResolutionInverse;\n" + "                pos.zw = Context.InUv0.xy - (resolutionInverse * vec2(0.5f + _subPixelShift));\n" + "            }\n" + "        }\n" + "        Fs_Shader{\n" + "            #define FxaaTex(t, p) texture(t, p)\n" + "            #define OffsetVec(a, b) vec2(a, b)\n" + "            #define FxaaTexOff(t, p, o, r) texture(t, p + o * r)\n" + "            vec3 FXAA(\n" + "              vec4 posPos,   // Output of FxaaVertexShader interpolated across screen.\n" + "              sampler2D tex, // 输入采样纹理\n" + "              vec2 rcpFrame) // 分辨率倒数\n" + "            {\n" + "\n" + "                #define FXAA_REDUCE_MIN   (1.0/128.0)\n" + "                //#define FXAA_REDUCE_MUL   (1.0/8.0)\n" + "                //#define FXAA_SPAN_MAX     8.0\n" + "\n" + "                vec3 rgbNW = FxaaTex(tex, posPos.zw).xyz;\n" + "                vec3 rgbNE = FxaaTexOff(tex, posPos.zw, OffsetVec(1,0), rcpFrame.xy).xyz;\n" + "                vec3 rgbSW = FxaaTexOff(tex, posPos.zw, OffsetVec(0,1), rcpFrame.xy).xyz;\n" + "                vec3 rgbSE = FxaaTexOff(tex, posPos.zw, OffsetVec(1,1), rcpFrame.xy).xyz;\n" + "\n" + "                vec3 rgbM  = FxaaTex(tex, posPos.xy).xyz;\n" + "\n" + "                vec3 luma = vec3(0.299, 0.587, 0.114);\n" + "                float lumaNW = dot(rgbNW, luma);\n" + "                float lumaNE = dot(rgbNE, luma);\n" + "                float lumaSW = dot(rgbSW, luma);\n" + "                float lumaSE = dot(rgbSE, luma);\n" + "                float lumaM  = dot(rgbM,  luma);\n" + "\n" + "                float lumaMin = min(lumaM, min(min(lumaNW, lumaNE), min(lumaSW, lumaSE)));\n" + "                float lumaMax = max(lumaM, max(max(lumaNW, lumaNE), max(lumaSW, lumaSE)));\n" + "\n" + "                vec2 dir;\n" + "                dir.x = -((lumaNW + lumaNE) - (lumaSW + lumaSE));\n" + "                dir.y =  ((lumaNW + lumaSW) - (lumaNE + lumaSE));\n" + "\n" + "                #ifdef Params.reduceMul\n" + "                    float _reduceMul = Params.reduceMul;\n" + "                #else\n" + "                    float _reduceMul = 1.0f / 8.0f;\n" + "                #endif\n" + "                float dirReduce = max(\n" + "                    (lumaNW + lumaNE + lumaSW + lumaSE) * (0.25 * _reduceMul),\n" + "                    FXAA_REDUCE_MIN);\n" + "                float rcpDirMin = 1.0/(min(abs(dir.x), abs(dir.y)) + dirReduce);\n" + "                #ifdef Params.spanMax\n" + "                    float _spanMax = Params.spanMax;\n" + "                #else\n" + "                    float _spanMax = 8.0f;\n" + "                #endif\n" + "                dir = min(vec2( _spanMax,  spanMax),\n" + "                      max(vec2(-spanMax, -spanMax),\n" + "                      dir * rcpDirMin)) * rcpFrame.xy;\n" + "\n" + "                vec3 rgbA = (1.0/2.0) * (\n" + "                    FxaaTex(tex, posPos.xy + dir * vec2(1.0/3.0 - 0.5)).xyz +\n" + "                    FxaaTex(tex, posPos.xy + dir * vec2(2.0/3.0 - 0.5)).xyz);\n" + "                vec3 rgbB = rgbA * (1.0/2.0) + (1.0/4.0) * (\n" + "                    FxaaTex(tex, posPos.xy + dir * vec2(0.0/3.0 - 0.5)).xyz +\n" + "                    FxaaTex(tex, posPos.xy + dir * vec2(3.0/3.0 - 0.5)).xyz);\n" + "\n" + "                float lumaB = dot(rgbB, luma);\n" + "\n" + "                if ((lumaB < lumaMin) || (lumaB > lumaMax))\n" + "                {\n" + "                    return rgbA;\n" + "                }\n" + "                else\n" + "                {\n" + "                    return rgbB;\n" + "                }\n" + "            }\n" + "            void main(){\n" + "                Context.OutColor = vec4(FXAA(pos, Context.InScreen, resolutionInverse), 1.0f);\n" + "            }\n" + "        }\n" + "    }\n" + "    Technology{\n" + "        Sub_Pass PostFilter{\n" + "            Pass Fxaa{\n" + "            }\n" + "        }\n" + "    }\n" + "}\n");
+
+_defineProperty(Internal, "S_BLOOM_FILTER_DEF_DATA", "// Bloom\n" + "Def BloomFilterDef{\n" + "    Globals BloomExtract{\n" + "        color0 vec4 extractTexture;\n" + "        depth24_stencil8 inner depthAndStencil;\n" + "    }\n" + "    Globals VBlur{\n" + "        color0 vec4 color;\n" + "        depth24_stencil8 inner depthAndStencil;\n" + "    }\n" + "    Globals HBlur{\n" + "        color0 vec4 color;\n" + "        depth24_stencil8 inner depthAndStencil;\n" + "    }\n" + "    Params{\n" + "        // 辉光阈值\n" + "        float extractThreshold;\n" + "        // 曝光程度(默认2)\n" + "        float exposurePower;\n" + "        // 辉光强度\n" + "        float bloomIntensity;\n" + "        // 模糊缩放(默认1.5)\n" + "        float blurScale;\n" + "\n" + "\n" + "        // 使用辉光纹理(应该继承具体的Def下只需,后续完善)\n" + "        bool useGlowMap;\n" + "    }\n" + "    SubTechnology ExtractPass{\n" + "        Vars{\n" + "            vec2 uv0;\n" + "        }\n" + "        Vs_Shader{\n" + "            void main(){\n" + "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" + "                uv0 = Context.InUv0;\n" + "            }\n" + "        }\n" + "        Fs_Shader{\n" + "            const vec3 DEFAULT_GRAY = vec3(0.2126f, 0.7152f, 0.0722f);\n" + "            #define DEFAULT_EXTRACT_THRESHOLD 0.5f\n" + "            #define GAMMA 2.2f\n" + "            #define GAMMA_T 1.0f / GAMMA\n" + "            void main(){\n" + "                ivec2 iTexC = ivec2(uv0 * vec2(textureSize(Context.InScreen, 0)));\n" + "                vec4 screenColor = texelFetch(Context.InScreen, iTexC, 0);\n" + "\n" + "                float threshold = 0.0f;\n" + "                float power = 2.0f;\n" + "                #ifdef Params.extractThreshold\n" + "                    threshold = Params.extractThreshold;\n" + "                #else\n" + "                    threshold = DEFAULT_EXTRACT_THRESHOLD;\n" + "                #endif\n" + "                #ifdef Params.exposurePower\n" + "                    power = Params.exposurePower;\n" + "                #endif\n" + "\n" + "                if( (screenColor.r + screenColor.g + screenColor.b) / 3.0f < threshold ){\n" + "                    GlobalsBloomExtract.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);\n" + "                }\n" + "                else{\n" + "                    GlobalsBloomExtract.OutextractTexture = pow( screenColor, vec4(power) );\n" + "                }\n" + "\n" + "                //vec4 screenColor = texture(Context.InScreen, uv0);\n" + "                //screenColor.rgb = pow(screenColor.rgb, vec3(GAMMA));\n" + "                // 记住我们在线性空间计算,所以这里需要映射回来\n" + "                //float threshold = dot(screenColor.rgb, DEFAULT_GRAY);\n" + "                //#ifdef Params.extractThreshold\n" + "                //    if(threshold > Params.extractThreshold){\n" + "                //        GlobalsBloomExtract.OutextractTexture = screenColor;\n" + "                //    }\n" + "                //    else{\n" + "                //        GlobalsBloomExtract.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);\n" + "                //    }\n" + "                //#else\n" + "                //    if(threshold > DEFAULT_EXTRACT_THRESHOLD){\n" + "                //        GlobalsBloomExtract.OutextractTexture = screenColor;\n" + "                //    }\n" + "                //    else{\n" + "                //        GlobalsBloomExtract.OutextractTexture = vec4(0.0f, 0.0f, 0.0f, 1.0f);\n" + "                //    }\n" + "                //#endif\n" + "            }\n" + "        }\n" + "    }\n" + "    SubTechnology FirstHBlurPass{\n" + "            Vars{\n" + "                vec2 uv0;\n" + "            }\n" + "            Vs_Shader{\n" + "                void main(){\n" + "                    Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" + "                    uv0 = Context.InUv0;\n" + "                }\n" + "            }\n" + "            Fs_Shader{\n" + "                #define DEFAULT_BLUR_SCALE 1.5f\n" + "                void main(){\n" + "                    #ifdef Params.blurScale\n" + "                        float blurSize = Params.blurScale / float(textureSize(GlobalsBloomExtract.InextractTexture, 0).x);\n" + "                    #else\n" + "                        float blurSize = DEFAULT_BLUR_SCALE / float(textureSize(GlobalsBloomExtract.InextractTexture, 0).x);\n" + "                    #endif\n" + "                    vec4 sum = vec4(0.0f);\n" + "\n" + "                    // 水平方向模糊\n" + "                    // 采样9个部分\n" + "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x - 4.0f*blurSize, uv0.y )) * 0.06f;\n" + "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x - 3.0f*blurSize, uv0.y )) * 0.09f;\n" + "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x - 2.0f*blurSize, uv0.y)) * 0.12f;\n" + "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x - blurSize, uv0.y )) * 0.15f;\n" + "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x, uv0.y)) * 0.16f;\n" + "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x + blurSize, uv0.y )) * 0.15f;\n" + "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x + 2.0f*blurSize, uv0.y )) * 0.12f;\n" + "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x + 3.0f*blurSize, uv0.y )) * 0.09f;\n" + "                    sum += texture(GlobalsBloomExtract.InextractTexture, vec2(uv0.x + 4.0f*blurSize, uv0.y )) * 0.06f;\n" + "\n" + "                    GlobalsHBlur.Outcolor = sum;\n" + "                }\n" + "            }\n" + "        }\n" + "    SubTechnology HBlurPass{\n" + "        Vars{\n" + "            vec2 uv0;\n" + "        }\n" + "        Vs_Shader{\n" + "            void main(){\n" + "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" + "                uv0 = Context.InUv0;\n" + "            }\n" + "        }\n" + "        Fs_Shader{\n" + "            #define DEFAULT_BLUR_SCALE 1.5f\n" + "            void main(){\n" + "                #ifdef Params.blurScale\n" + "                    float blurSize = Params.blurScale / float(textureSize(GlobalsVBlur.Incolor, 0).x);\n" + "                #else\n" + "                    float blurSize = DEFAULT_BLUR_SCALE / float(textureSize(GlobalsVBlur.Incolor, 0).x);\n" + "                #endif\n" + "\n" + "                vec4 sum = vec4(0.0f);\n" + "\n" + "                // 水平方向模糊\n" + "                // 采样9个部分\n" + "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x - 4.0f*blurSize, uv0.y )) * 0.06f;\n" + "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x - 3.0f*blurSize, uv0.y )) * 0.09f;\n" + "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x - 2.0f*blurSize, uv0.y)) * 0.12f;\n" + "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x - blurSize, uv0.y )) * 0.15f;\n" + "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x, uv0.y)) * 0.16f;\n" + "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x + blurSize, uv0.y )) * 0.15f;\n" + "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x + 2.0f*blurSize, uv0.y )) * 0.12f;\n" + "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x + 3.0f*blurSize, uv0.y )) * 0.09f;\n" + "                sum += texture(GlobalsVBlur.Incolor, vec2(uv0.x + 4.0f*blurSize, uv0.y )) * 0.06f;\n" + "\n" + "                GlobalsHBlur.Outcolor = sum;\n" + "            }\n" + "        }\n" + "    }\n" + "    SubTechnology VBlurPass{\n" + "        Vars{\n" + "            vec2 uv0;\n" + "        }\n" + "        Vs_Shader{\n" + "            void main(){\n" + "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" + "                uv0 = Context.InUv0;\n" + "            }\n" + "        }\n" + "        Fs_Shader{\n" + "            #define DEFAULT_BLUR_SCALE 1.5f\n" + "            void main(){\n" + "                #ifdef Params.blurScale\n" + "                    float blurSize = Params.blurScale / float(textureSize(GlobalsHBlur.Incolor, 0).y);\n" + "                #else\n" + "                    float blurSize = DEFAULT_BLUR_SCALE / float(textureSize(GlobalsHBlur.Incolor, 0).y);\n" + "                #endif\n" + "                vec4 sum = vec4(0.0f);\n" + "\n" + "                // 垂直方向模糊\n" + "                // 采样9个部分\n" + "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y - 4.0f*blurSize)) * 0.06f;\n" + "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y - 3.0f*blurSize)) * 0.09f;\n" + "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y - 2.0f*blurSize)) * 0.12f;\n" + "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y - blurSize)) * 0.15f;\n" + "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y)) * 0.16f;\n" + "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y + blurSize)) * 0.15f;\n" + "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y + 2.0f*blurSize)) * 0.12f;\n" + "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y + 3.0f*blurSize)) * 0.09f;\n" + "                sum += texture(GlobalsHBlur.Incolor, vec2(uv0.x, uv0.y + 4.0f*blurSize)) * 0.06f;\n" + "\n" + "                GlobalsVBlur.Outcolor = sum;\n" + "            }\n" + "        }\n" + "    }\n" + "    SubTechnology BloomPass{\n" + "        Vars{\n" + "            vec2 uv0;\n" + "        }\n" + "        Vs_Shader{\n" + "            void main(){\n" + "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" + "                uv0 = Context.InUv0;\n" + "            }\n" + "        }\n" + "        Fs_Shader{\n" + "            #define GAMMA 2.2f\n" + "            #define GAMMA_T 1.0f / GAMMA\n" + "            void main(){\n" + "                // 1.对ExtractTexture应用某种模糊(Blur)处理\n" + "                // 2.结合ExtractTexture和ScreenColor实现bloom\n" + "                vec4 screenColor = texture(Context.InScreen, uv0);\n" + "                vec3 blurColor = texture(GlobalsVBlur.Incolor, uv0).rgb;\n" + "                screenColor.rgb += blurColor;\n" + "                const float exposure = 0.5f;\n" + "                //vec3 result = vec3(1.0f) - exp(-screenColor.rgb * exposure);\n" + "                //result = pow(result, vec3(GAMMA_T));\n" + "                //Context.OutColor = vec4(result, screenColor.a);\n" + "                Context.OutColor = screenColor;\n" + "            }\n" + "        }\n" + "    }\n" + "    SubTechnology FastBloomPass{\n" + "        Vars{\n" + "            vec2 uv0;\n" + "        }\n" + "        Vs_Shader{\n" + "            void main(){\n" + "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" + "                uv0 = Context.InUv0;\n" + "            }\n" + "        }\n" + "        Fs_Shader{\n" + "            void main(){\n" + "                vec4 screenColor = texture(Context.InScreen, uv0);\n" + "                //vec3 blurColor = pow(texture(GlobalsVBlur.Incolor, uv0).rgb, vec3(1.0f / 2.0f));\n" + "                //blurColor = vec3(1.0f) - exp(-blurColor.rgb * 0.5f);\n" + "                vec3 blurColor = texture(GlobalsVBlur.Incolor, uv0).rgb;\n" + "\n" + "                float _bInd = 2.0f;\n" + "                #ifdef Params.bloomIntensity\n" + "                    _bInd = Params.bloomIntensity;\n" + "                #endif\n" + "\n" + "                screenColor.rgb += blurColor * _bInd;\n" + "                Context.OutColor = screenColor;\n" + "                //测试\n" + "                //Context.OutColor = vec4(blurColor, 1.0f);\n" + "            }\n" + "        }\n" + "    }\n" + "    Technology{\n" + "        Sub_Pass PostFilter{\n" + "            Pass ExtractPass{\n" + "            }\n" + "            Pass FirstHBlurPass{\n" + "            }\n" + "            Pass VBlurPass{\n" + "            }\n" + "            Pass FastBloomPass{\n" + "            }\n" + "        }\n" + "    }\n" + "    Technology MultiBloom{\n" + "        //Sub_Pass PreFrame{\n" + "        //    Pass ExtractPass{\n" + "        //    }\n" + "        //}\n" + "        Sub_Pass PostFilter{\n" + "            Pass ExtractPass{\n" + "            }\n" + "            Pass FirstHBlurPass{\n" + "            }\n" + "            Pass VBlurPass{\n" + "            }\n" + "            Pass HBlurPass{\n" + "            }\n" + "            Pass VBlurPass{\n" + "            }\n" + "            Pass HBlurPass{\n" + "            }\n" + "            Pass VBlurPass{\n" + "            }\n" + "            Pass BloomPass{\n" + "            }\n" + "        }\n" + "    }\n" + "}\n");
 
 _defineProperty(Internal, "S_WIREFRAME_DEF_DATA", "// 由于webGL基于openGLES3.x,其不存在openGL线框模式,所以在这里通过shader实现线框\n" + "Def WireframeDef{\n" + "    Params{\n" + "        vec4 color;\n" + "        float wireframeWidth;\n" + "    }\n" + "    SubTechnology Wireframe{\n" + "        Vars{\n" + "            vec3 bary;\n" + "        }\n" + "        Vs_Shader{\n" + "            void main(){\n" + "                #ifdef Context.Skins\n" + "                    mat4 skinMat =\n" + "                            Context.InWeight0.x * Context.Joints[int(Context.InJoint0.x)] +\n" + "                            Context.InWeight0.y * Context.Joints[int(Context.InJoint0.y)] +\n" + "                            Context.InWeight0.z * Context.Joints[int(Context.InJoint0.z)] +\n" + "                            Context.InWeight0.w * Context.Joints[int(Context.InJoint0.w)];\n" + "                    // vec4 pos = Context.ModelMatrix * skinMat * vec4(Context.InPosition, 1.0f);\n" + "                    vec4 pos = skinMat * vec4(Context.InPosition, 1.0f);\n" + "                #else\n" + "                    vec4 pos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);\n" + "                #endif\n" + "                bary = Context.InBarycentric;\n" + "\n" + "\n" + "\n" + "                Context.OutPosition = Context.ProjectViewMatrix * pos;\n" + "            }\n" + "        }\n" + "        Fs_Shader{\n" + "            void main(){\n" + "                #ifdef Params.color\n" + "                    vec4 _wireframeColor = Params.color;\n" + "                #else\n" + "                    vec4 _wireframeColor = vec4(0.2f, 0.2f, 0.2f, 1.0f);\n" + "                #endif\n" + "                #ifdef Params.wireframeWidth\n" + "                    float _wireframeWidth = Params.wireframeWidth;\n" + "                #else\n" + "                    float _wireframeWidth = 0.01f;\n" + "                #endif\n" + "                if(any(lessThan(bary, vec3(_wireframeWidth)))){\n" + "                    Context.OutColor = _wireframeColor;\n" + "                }\n" + "                else{\n" + "                    discard;\n" + "                }\n" + "            }\n" + "        }\n" + "    }\n" + "    Technology{\n" + "        Sub_Pass{\n" + "            Pass Wireframe{\n" + "            }\n" + "        }\n" + "    }\n" + "}\n");
 
@@ -20521,10 +20532,7 @@ var Render = /*#__PURE__*/function (_Component) {
     _this._m_Pipeline = {};
     _this._m_PipelineConfig = {}; // renderProgram优先技术
 
-    _this._m_PriorityTechnology = ''; // PostFilterPipeline
-
-    _this._m_PostFilterSwap = 0;
-    _this._m_PostFilterPipelineSwap = []; // 帧上下文
+    _this._m_PriorityTechnology = ''; // 帧上下文
 
     _this._m_FrameContext = new _FrameContext.default(); // 所有可用渲染程序
 
@@ -20579,7 +20587,6 @@ var Render = /*#__PURE__*/function (_Component) {
     // 默认延迟着色渲染路径frameBuffer
     // 如果启用了多渲染路径,则创建默认forwardFrameBuffer而不是使用内置frameBuffer(这是因为webGL不支持从多fbo.blit到内置fbo)
     // 用于FilterPipeline
-    // 交换缓冲
     // Event
     // 一帧渲染开始
     // 获得待渲染列表后
@@ -20731,25 +20738,13 @@ var Render = /*#__PURE__*/function (_Component) {
 
       var filterfb = new _FrameBuffer.default(gl, Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER, w, h);
 
-      this._m_PostFilterPipelineSwap.push(filterfb);
-
       this._m_FrameContext.addFrameBuffer(Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER, filterfb); // 为了支持HDR和gamma矫正,使用一个RGBA16F ffb
 
 
       filterfb.addTexture(gl, _ShaderSource.default.S_IN_SCREEN_SRC, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT0, false);
       filterfb.addTexture(gl, _ShaderSource.default.S_IN_DEPTH_SRC, gl.DEPTH_COMPONENT24, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, gl.DEPTH_ATTACHMENT, false);
       filterfb.finish(gl, this._m_Scene, false);
-      this._m_FrameContext._m_DefaultPostFilterFrameBuffer = filterfb.getFrameBuffer();
-      var filterfb2 = new _FrameBuffer.default(gl, Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER2, w, h);
-
-      this._m_PostFilterPipelineSwap.push(filterfb2);
-
-      this._m_FrameContext.addFrameBuffer(Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER2, filterfb2); // 为了支持HDR和gamma矫正,使用一个RGBA16F ffb
-
-
-      filterfb2.addTexture(gl, _ShaderSource.default.S_IN_SCREEN_SRC, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT0, false);
-      filterfb2.addTexture(gl, _ShaderSource.default.S_IN_DEPTH_SRC, gl.DEPTH_COMPONENT24, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, gl.DEPTH_ATTACHMENT, false);
-      filterfb2.finish(gl, this._m_Scene, false); // 加载可用渲染程序
+      this._m_FrameContext._m_DefaultPostFilterFrameBuffer = filterfb.getFrameBuffer(); // 加载可用渲染程序
 
       this._m_RenderPrograms[_DefaultRenderProgram.default.PROGRAM_TYPE] = new _DefaultRenderProgram.default();
       this._m_RenderPrograms[_SinglePassLightingRenderProgram.default.PROGRAM_TYPE] = new _SinglePassLightingRenderProgram.default();
@@ -20775,7 +20770,7 @@ var Render = /*#__PURE__*/function (_Component) {
         _this2._m_FrameContext.resize(gl, w, h);
 
         _this2._m_FrameContext._m_DefaultFrameBuffer = _this2._m_FrameContext.getFrameBuffer(Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER).getFrameBuffer();
-        _this2._m_FrameContext._m_DefaultPostFilterFrameBuffer = _this2._m_FrameContext.getFrameBuffer(Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER).getFrameBuffer(); // this._m_FrameContext._m_DefaultPostFilterFrameBuffer = this._m_PostFilterPipelineSwap[0].getFrameBuffer();
+        _this2._m_FrameContext._m_DefaultPostFilterFrameBuffer = _this2._m_FrameContext.getFrameBuffer(Render.DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER).getFrameBuffer();
       });
     }
     /**
@@ -20793,7 +20788,7 @@ var Render = /*#__PURE__*/function (_Component) {
       gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this._m_FrameContext._m_DefaultPostFilterFrameBuffer);
       gl.blitFramebuffer(0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, gl.NEAREST); // 将PostFilter输出结果设置到交换缓存区
 
-      gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_PostFilterPipelineSwap[1].getFrameBuffer());
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
 
       if (this._m_FrameContext.getRenderState().getFlag(_RenderState.default.S_STATES[3]) == 'On') {
         gl.disable(gl.DEPTH_TEST);
@@ -20809,11 +20804,11 @@ var Render = /*#__PURE__*/function (_Component) {
       var gl = this._m_Scene.getCanvas().getGLContext(); // 将输出buffer传递到输入buffer以便下一环节的postFilter
 
 
-      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this._m_PostFilterPipelineSwap[1].getFrameBuffer());
+      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
       gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this._m_FrameContext._m_DefaultPostFilterFrameBuffer); // 这里假设PostFilter不会修改深度缓冲区,所以没有复制深度缓冲区
 
       gl.blitFramebuffer(0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), gl.COLOR_BUFFER_BIT, gl.NEAREST);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_PostFilterPipelineSwap[1].getFrameBuffer());
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
     }
     /**
      * 结束PostFilterPipeline。<br/>
@@ -20821,14 +20816,7 @@ var Render = /*#__PURE__*/function (_Component) {
 
   }, {
     key: "finishPostFilter",
-    value: function finishPostFilter() {
-      // 将PostFilter结果复制回默认帧缓冲区（不是真正的默认帧缓冲区，因为还有最后一个环节）
-      var gl = this._m_Scene.getCanvas().getGLContext();
-
-      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this._m_FrameContext._m_DefaultPostFilterFrameBuffer);
-      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
-      gl.blitFramebuffer(0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight(), gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, gl.NEAREST);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, this._m_FrameContext._m_DefaultFrameBuffer);
+    value: function finishPostFilter() {// 一些额外处理，暂时什么也不做
     }
     /**
      * 激活指定的pipeline。<br/>
@@ -21562,8 +21550,6 @@ _defineProperty(Render, "DEFAULT_FORWARD_SHADING_FRAMEBUFFER", 'DefaultForwardSh
 
 _defineProperty(Render, "DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER", 'DefaultPostFilterShadingFrameBuffer');
 
-_defineProperty(Render, "DEFAULT_POST_FILTER_SHADING_FRAMEBUFFER2", 'DefaultPostFilterShadingFrameBuffer2');
-
 _defineProperty(Render, "PRE_FRAME", "preFrame");
 
 _defineProperty(Render, "POST_QUEUE", "postQueue");
@@ -21683,6 +21669,8 @@ var _Render = _interopRequireDefault(__webpack_require__(3061));
 
 var _Filter = _interopRequireDefault(__webpack_require__(7120));
 
+var _Vector2 = _interopRequireDefault(__webpack_require__(9271));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -21764,7 +21752,9 @@ var Camera = /*#__PURE__*/function (_Component) {
 
     _this._m_FrustumTop = 0; // 相机到Bottom截面的距离
 
-    _this._m_FrustumBottom = 0; // 缓存变量
+    _this._m_FrustumBottom = 0; // 分辨率倒数
+
+    _this._m_ResolutionInverse = new _Vector2.default(); // 缓存变量
 
     _this._m_CoeffLeft = new Array(2).fill(0);
     _this._m_CoeffRight = new Array(2).fill(0);
@@ -21797,6 +21787,17 @@ var Camera = /*#__PURE__*/function (_Component) {
 
         if (_this._m_IsRenderingCamera) {
           gl.viewport(0, 0, _this._m_Width, _this._m_Height);
+
+          _this._m_ResolutionInverse.setToInXY(1.0 / _this._m_Width, 1.0 / _this._m_Height);
+
+          var frameContext = _this._m_Scene.getRender().getFrameContext();
+
+          if (frameContext.getContext(_ShaderSource.default.S_RESOLUTION_INVERSE)) {
+            // viewport相关信息(理论上,viewport应该独立封装一个类,但是这里简单包装在camera中)
+            gl.bindBuffer(gl.UNIFORM_BUFFER, _this.VIEW_PORT);
+            gl.bufferSubData(gl.UNIFORM_BUFFER, 0, _this._m_ResolutionInverse.getBufferData());
+            gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+          }
         } // 直接展开而非函数调用,减少开销
 
 
@@ -21829,11 +21830,16 @@ var Camera = /*#__PURE__*/function (_Component) {
     _this._m_Scene.getRender().on(_Render.default.POST_FRAME, function (exTime) {
       if (_this._m_IsRenderingCamera) {
         if (_this.demandFilter()) {
+          var len = _this._m_Filters.length;
+          var _i = 0;
+
           _this._m_Filters.forEach(function (filter) {
+            _i++;
+
             if (filter.isEnable()) {
               filter.postFilter(); // 更新缓冲区
 
-              _this._m_Scene.getRender().swapPostFilter();
+              if (_i < len) _this._m_Scene.getRender().swapPostFilter();
             }
           });
         }
@@ -21907,6 +21913,27 @@ var Camera = /*#__PURE__*/function (_Component) {
         frameContext.addContextBlock('VIEW', this.VIEW);
       } else {
         this.VIEW = frameContext.getContextBlock('VIEW');
+      }
+
+      if (!frameContext.getContextBlock('VIEW_PORT')) {
+        var VIEW_PORT = gl.createBuffer();
+        this.VIEW_PORT = VIEW_PORT;
+        gl.bindBuffer(gl.UNIFORM_BUFFER, VIEW_PORT);
+        gl.bufferData(gl.UNIFORM_BUFFER, 2 * 4, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+        gl.bindBufferRange(gl.UNIFORM_BUFFER, _ShaderSource.default.BLOCKS['VIEW_PORT'].blockIndex, VIEW_PORT, 0, 2 * 4);
+        frameContext.addContextBlock('VIEW_PORT', this.VIEW_PORT);
+      } else {
+        this.VIEW_PORT = frameContext.getContextBlock('VIEW_PORT');
+      }
+
+      this._m_ResolutionInverse.setToInXY(1.0 / this._m_Width, 1.0 / this._m_Height);
+
+      if (frameContext.getContext(_ShaderSource.default.S_RESOLUTION_INVERSE)) {
+        // viewport相关信息(理论上,viewport应该独立封装一个类,但是这里简单包装在camera中)
+        gl.bindBuffer(gl.UNIFORM_BUFFER, this.VIEW_PORT);
+        gl.bufferSubData(gl.UNIFORM_BUFFER, 0, this._m_ResolutionInverse.getBufferData());
+        gl.bindBuffer(gl.UNIFORM_BUFFER, null);
       }
 
       this._doUpdate();
@@ -22431,6 +22458,7 @@ var Camera = /*#__PURE__*/function (_Component) {
       if (this._m_UpdateCameraPosition) {
         if (frameContext.getContext(_ShaderSource.default.S_CAMERA_POSITION_SRC)) {
           if (this._m_IsRenderingCamera) {
+            // camera相关信息
             gl.bindBuffer(gl.UNIFORM_BUFFER, this.VIEW);
             gl.bufferSubData(gl.UNIFORM_BUFFER, 0, this._m_Eye.getBufferData());
             gl.bindBuffer(gl.UNIFORM_BUFFER, null);
@@ -22438,6 +22466,14 @@ var Camera = /*#__PURE__*/function (_Component) {
 
           this._m_UpdateCameraPosition = false;
         }
+      } // viewport
+
+
+      if (frameContext.getContext(_ShaderSource.default.S_RESOLUTION_INVERSE)) {
+        // viewport相关信息(理论上,viewport应该独立封装一个类,但是这里简单包装在camera中)
+        gl.bindBuffer(gl.UNIFORM_BUFFER, this.VIEW_PORT);
+        gl.bufferSubData(gl.UNIFORM_BUFFER, 0, this._m_ResolutionInverse.getBufferData());
+        gl.bindBuffer(gl.UNIFORM_BUFFER, null);
       }
 
       if (this._m_ViewMatrixUpdate || this._m_ProjectMatrixUpdate || this._m_ProjectViewMatrixUpdate) {
@@ -23623,19 +23659,15 @@ var BasicShadowProcess = /*#__PURE__*/function (_Component) {
 
     _this._m_PostShadowMat.setParam('shadowIntensity', new _FloatVars.default().valueOf(_this._m_ShadowIntensity));
 
-    _this._m_ShadowMapSizeInverse.setToInXY(1.0 / _this._m_ShadowMapSize, 1.0 / _this._m_ShadowMapSize);
+    _this._m_ShadowMapSizeInverse.setToInXY(1.0 / _this._m_ShadowMapSize, 1.0 / _this._m_ShadowMapSize); // let w = this._m_Scene.getCanvas().getWidth();
+    // let h = this._m_Scene.getCanvas().getHeight();
+    // this._m_ResolutionInverse.setToInXY(1.0/w, 1.0/h);
 
-    var w = _this._m_Scene.getCanvas().getWidth();
 
-    var h = _this._m_Scene.getCanvas().getHeight();
+    _this._m_PostShadowMat.setParam('backfaceShadows', new _BoolVars.default().valueOf(_this._m_BackfaceShadows)); // this._m_Scene.getCanvas().on('resize', (w, h)=>{
+    //     this._m_ResolutionInverse.setToInXY(1.0/w, 1.0/h);
+    // });
 
-    _this._m_ResolutionInverse.setToInXY(1.0 / w, 1.0 / h);
-
-    _this._m_PostShadowMat.setParam('backfaceShadows', new _BoolVars.default().valueOf(_this._m_BackfaceShadows));
-
-    _this._m_Scene.getCanvas().on('resize', function (w, h) {
-      _this._m_ResolutionInverse.setToInXY(1.0 / w, 1.0 / h);
-    });
 
     _this.initMat();
 
@@ -23991,12 +24023,10 @@ var BasicShadowProcess = /*#__PURE__*/function (_Component) {
         }
       }
 
-      if (!this._m_BackfaceShadows) {
-        rd = conVars[BasicShadowProcess.S_RESOLUTION_INVERSE];
-
-        if (rd != null) {
-          gl.uniform2f(rd.loc, this._m_ResolutionInverse._m_X, this._m_ResolutionInverse._m_Y);
-        }
+      if (!this._m_BackfaceShadows) {// rd = conVars[BasicShadowProcess.S_RESOLUTION_INVERSE];
+        // if(rd != null){
+        //     gl.uniform2f(rd.loc, this._m_ResolutionInverse._m_X, this._m_ResolutionInverse._m_Y);
+        // }
       }
 
       rd = conVars[BasicShadowProcess.S_SHADOW_MAP_SIZE];
@@ -30052,6 +30082,8 @@ _defineProperty(ShaderSource, "MAT", 'layout (std140) uniform MAT\n' + '{\n' + '
 
 _defineProperty(ShaderSource, "VIEW", 'layout (std140) uniform VIEW\n' + '{\n' + 'vec3 ' + ShaderSource.S_CAMERA_POSITION_SRC + ';\n' + '};\n');
 
+_defineProperty(ShaderSource, "VIEW_PORT", "layout (std140) uniform VIEW_PORT\n" + "{\n" + "vec2 " + ShaderSource.S_RESOLUTION_INVERSE + ';\n' + '};\n');
+
 _defineProperty(ShaderSource, "BLOCKS", {
   'MAT': {
     blockIndex: 0x001,
@@ -30060,6 +30092,10 @@ _defineProperty(ShaderSource, "BLOCKS", {
   'VIEW': {
     blockIndex: 0x002,
     blockDef: ShaderSource.VIEW
+  },
+  'VIEW_PORT': {
+    blockIndex: 0x003,
+    blockDef: ShaderSource.VIEW_PORT
   }
 });
 
@@ -30679,8 +30715,7 @@ _defineProperty(ShaderSource, "Context_Data", {
     pattern2: /Context.ResolutionInverse[\s+-;.,\*\\]{1,}/,
     tagPattern: /Context.ResolutionInverse/g,
     tag: ShaderSource.S_RESOLUTION_INVERSE,
-    type: "vec2",
-    utype: "uniform vec2"
+    def: 'VIEW_PORT'
   },
   "Context.ShadowMapSize": {
     src: ShaderSource.S_SHADOW_MAP_SIZE,
@@ -33832,7 +33867,11 @@ var GLTFLoader = /*#__PURE__*/function () {
         } else {
           // 添加一个默认材质
           if (!this._m_DefaultMatDef) {
-            this._m_DefaultMatDef = _MaterialDef.default.load(this._m_AssetsPath + "ColorDef");
+            if (this._m_AssetsPath) {
+              this._m_DefaultMatDef = _MaterialDef.default.load(this._m_AssetsPath + "ColorDef");
+            } else {
+              this._m_DefaultMatDef = _MaterialDef.default.parse(_Internal.default.S_PRINCIPLED_LIGHTING_DEF);
+            }
           }
 
           matId = 'default_gltf_mat';
@@ -34176,7 +34215,11 @@ var GLTFLoader = /*#__PURE__*/function () {
         if (_Tools.default.checkIsNull(_primitive.material)) {
           // 后续完善时,这里单独到一个函数中进行,因为解析PBR材质参数最好独立到一个解析函数中
           if (!this._m_PrincipledMatDef) {
-            this._m_PrincipledMatDef = _MaterialDef.default.load(this._m_AssetsPath + "PrincipledLightingDef");
+            if (this._m_AssetsPath) {
+              this._m_PrincipledMatDef = _MaterialDef.default.load(this._m_AssetsPath + "PrincipledLightingDef");
+            } else {
+              this._m_PrincipledMatDef = _MaterialDef.default.parse(_Internal.default.S_PRINCIPLED_LIGHTING_DEF);
+            }
           }
 
           var matId = this._getName(gltf.materials[_primitive.material].name);

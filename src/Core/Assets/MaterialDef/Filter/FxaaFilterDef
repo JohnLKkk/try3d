@@ -1,0 +1,98 @@
+// Fast Approximate Anti-Aliasing (FXAA)
+// 来自https://www.geeks3d.com/20110405/fxaa-fast-approximate-anti-aliasing-demo-glsl-opengl-test-radeon-geforce/3/
+Def FxaaFilterDef{
+    Params{
+        float spanMax;
+        float reduceMul;
+        float subPixelShift;
+    }
+    SubTechnology Fxaa{
+        Vars{
+            vec4 pos;
+            vec2 resolutionInverse;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = vec4(Context.InPosition, 1.0f);
+                pos.xy = Context.InUv0;
+                #ifdef Params.subPixelShift
+                    float _subPixelShift = Params.subPixelShift;
+                #else
+                    float _subPixelShift = 1.0f / 4.0f;
+                #endif
+                resolutionInverse = Context.ResolutionInverse;
+                pos.zw = Context.InUv0 - (resolutionInverse * vec2(0.5f + _subPixelShift));
+            }
+        }
+        Fs_Shader{
+            #define FxaaTex(t, p) texture(t, p)
+            #define OffsetVec(a, b) ivec2(a, b)
+            #define FxaaTexOff(t, p, o, r) textureOffset(t, p, o)
+            vec3 FXAA(vec4 posPos,sampler2D tex,vec2 rcpFrame){
+
+                #define FXAA_REDUCE_MIN   (1.0f/128.0f)
+                //#define FXAA_REDUCE_MUL   (1.0/8.0)
+                //#define FXAA_SPAN_MAX     8.0
+
+                vec3 rgbNW = FxaaTex(tex, posPos.zw).xyz;
+                vec3 rgbNE = FxaaTexOff(tex, posPos.zw, OffsetVec(1,0), rcpFrame.xy).xyz;
+                vec3 rgbSW = FxaaTexOff(tex, posPos.zw, OffsetVec(0,1), rcpFrame.xy).xyz;
+                vec3 rgbSE = FxaaTexOff(tex, posPos.zw, OffsetVec(1,1), rcpFrame.xy).xyz;
+
+                vec3 rgbM  = FxaaTex(tex, posPos.xy).xyz;
+
+                vec3 luma = vec3(0.299f, 0.587f, 0.114f);
+                float lumaNW = dot(rgbNW, luma);
+                float lumaNE = dot(rgbNE, luma);
+                float lumaSW = dot(rgbSW, luma);
+                float lumaSE = dot(rgbSE, luma);
+                float lumaM  = dot(rgbM,  luma);
+
+                float lumaMin = min(lumaM, min(min(lumaNW, lumaNE), min(lumaSW, lumaSE)));
+                float lumaMax = max(lumaM, max(max(lumaNW, lumaNE), max(lumaSW, lumaSE)));
+
+                vec2 dir;
+                dir.x = -((lumaNW + lumaNE) - (lumaSW + lumaSE));
+                dir.y =  ((lumaNW + lumaSW) - (lumaNE + lumaSE));
+
+                #ifdef Params.reduceMul
+                    float _reduceMul = Params.reduceMul;
+                #else
+                    float _reduceMul = 1.0f / 8.0f;
+                #endif
+                float dirReduce = max(
+                    (lumaNW + lumaNE + lumaSW + lumaSE) * (0.25f * _reduceMul),FXAA_REDUCE_MIN);
+                float rcpDirMin = 1.0f/(min(abs(dir.x), abs(dir.y)) + dirReduce);
+                #ifdef Params.spanMax
+                    float _spanMax = Params.spanMax;
+                #else
+                    float _spanMax = 8.0f;
+                #endif
+                dir = min(vec2( _spanMax,  spanMax),max(vec2(-spanMax, -spanMax),dir * rcpDirMin)) * rcpFrame.xy;
+
+                vec3 rgbA = (1.0f/2.0f) * (FxaaTex(tex, posPos.xy + dir * vec2(1.0f/3.0f - 0.5f)).xyz +FxaaTex(tex, posPos.xy + dir * vec2(2.0f/3.0f - 0.5f)).xyz);
+                vec3 rgbB = rgbA * (1.0f/2.0f) + (1.0f/4.0f) * (FxaaTex(tex, posPos.xy + dir * vec2(0.0f/3.0f - 0.5f)).xyz +FxaaTex(tex, posPos.xy + dir * vec2(3.0f/3.0f - 0.5f)).xyz);
+
+                float lumaB = dot(rgbB, luma);
+
+                if ((lumaB < lumaMin) || (lumaB > lumaMax))
+                {
+                    return rgbA;
+                }
+                else
+                {
+                    return rgbB;
+                }
+            }
+            void main(){
+                Context.OutColor = vec4(FXAA(pos, Context.InScreen, resolutionInverse), 1.0f);
+            }
+        }
+    }
+    Technology{
+        Sub_Pass PostFilter{
+            Pass Fxaa{
+            }
+        }
+    }
+}

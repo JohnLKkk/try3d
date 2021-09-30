@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HelloTransform</title>
+</head>
+<script src="../../build/try3d.min.js"></script>
+<script src="../helpers.js"></script>
+<body>
+    <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;margin: 0px;">
+        <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+    </div>
+    <script type="module">
+
+        // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
+
+        let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+        scene.setAmbientLightColor(0.1, 0.1, 0.1);
+        scene.getCanvas().setClearColor(0.05, 0.05, 0.05, 1.0);
+        // 内置ColorDef
+        let lightingDef = Try3d.MaterialDef.parse(Try3d.Internal.S_BASIC_LIGHTING_DEF_DATA);
+
+        // 定义一个根节点
+        let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+        scene.addSceneNode(rootNode);
+        // 定义一个redBox(用于移动)
+        let redBox = new Try3d.Box(scene, {id:'redBox', xHalf:1, yHalf:1, zHalf:1});
+        // 创建redBox材质
+        let redMat = new Try3d.Material(scene, {id:'redMat', materialDef:lightingDef});
+        redMat.setParam('ambientColor', new Try3d.Vec4Vars().valueFromXYZW(0.8, 0.8, 0.8, 1.0));
+        redMat.setParam('diffuseColor', new Try3d.Vec4Vars().valueFromXYZW(1, 0, 0, 1));
+        redMat.setParam('specularColor', new Try3d.Vec4Vars().valueFromXYZW(0.8, 0.8, 0.8, 1.0));
+        redMat.setParam('shininess', new Try3d.FloatVars().valueOf(25.0));
+        redBox.setLocalTranslationXYZ(-5, 0, 0);
+        redBox.setMaterial(redMat);
+        rootNode.addChildren(redBox);
+
+        // 定义一个greenBox(用于移动)
+        let greenBox = new Try3d.Box(scene, {id:'greenBox', xHalf:1, yHalf:1, zHalf:1});
+        // 创建redBox材质
+        let greenMat = new Try3d.Material(scene, {id:'greenMat', materialDef:lightingDef});
+        greenMat.setParam('ambientColor', new Try3d.Vec4Vars().valueFromXYZW(0.8, 0.8, 0.8, 1.0));
+        greenMat.setParam('diffuseColor', new Try3d.Vec4Vars().valueFromXYZW(0, 1, 0, 1));
+        greenMat.setParam('specularColor', new Try3d.Vec4Vars().valueFromXYZW(0.8, 0.8, 0.8, 1.0));
+        greenMat.setParam('shininess', new Try3d.FloatVars().valueOf(25.0));
+        greenBox.setLocalTranslationXYZ(0, 0, 0);
+        greenBox.setMaterial(greenMat);
+        rootNode.addChildren(greenBox);
+
+        // 定义一个blueBox(用于旋转)
+        let blueBox = new Try3d.Box(scene, {id:'blueBox', xHalf:1, yHalf:1, zHalf:1});
+        // 创建blueBox材质
+        let blueMat = new Try3d.Material(scene, {id:'blueMat', materialDef:lightingDef});
+        blueMat.setParam('ambientColor', new Try3d.Vec4Vars().valueFromXYZW(0.8, 0.8, 0.8, 1.0));
+        blueMat.setParam('diffuseColor', new Try3d.Vec4Vars().valueFromXYZW(0, 0, 1, 1));
+        blueMat.setParam('specularColor', new Try3d.Vec4Vars().valueFromXYZW(0.8, 0.8, 0.8, 1.0));
+        blueMat.setParam('shininess', new Try3d.FloatVars().valueOf(25.0));
+        blueBox.setMaterial(blueMat);
+        blueBox.setLocalTranslationXYZ(8, 0, 0);
+        rootNode.addChildren(blueBox);
+
+
+        // 创建一个directionalLight
+        let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
+        dirLight.setDirectionXYZ(-1, -1, 1);
+        dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+
+        let mainCamera = scene.getMainCamera();
+        mainCamera.lookAt(new Try3d.Vector3(0, 15, 15), new Try3d.Vector3(0, 1, 0), Try3d.Vector3.S_UNIT_AXIS_Y);
+        addBloom(scene, 0.02);
+
+        let redBoxTranslateY = 0;
+        let translate = 4;
+        let greenBoxRotationAngle = 0;
+        let rotation = 2;
+        let blueBoxScale = 0;
+        let scale = 1;
+        scene.on('update', (tpf)=>{
+            // redBox
+            redBoxTranslateY+=tpf * translate;
+            if(redBoxTranslateY >= 2 || (translate < 1 && redBoxTranslateY <= -2)){
+                translate *= -1;
+            }
+            redBox.setLocalTranslationXYZ(-8, redBoxTranslateY, 0);
+
+            // greenBox
+            greenBoxRotationAngle+=tpf * 15;
+            rotation = Try3d.MoreMath.toRadians(greenBoxRotationAngle);
+            greenBox.setLocalRotationFromEuler(rotation, rotation, rotation);
+
+            // blueBox
+            blueBoxScale+=tpf * scale;
+            if(blueBoxScale >= 2 || (scale < 1 && blueBoxScale <= 0.5)){
+                scale *= -1;
+            }
+            blueBox.setLocalScaleXYZ(blueBoxScale, blueBoxScale, blueBoxScale);
+        });
+
+
+        // 创建渲染器
+        let renderEngine = new Try3d.RenderEngine();
+        // 添加要渲染的场景对象
+        renderEngine.addScene(scene);
+        // 启动渲染器
+        renderEngine.launch();
+        showStats(scene);
+    </script>
+</body>
+</html>

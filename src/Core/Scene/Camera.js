@@ -8,6 +8,7 @@ import MoreMath from "../Math3d/MoreMath.js";
 import Log from "../Util/Log.js";
 import Render from "../Render/Render.js";
 import Filter from "../Filters/Filter.js";
+import Vector2 from "../Math3d/Vector2.js";
 
 /**
  * Camera定义了3D空间中的观察者,渲染3D世界时,3D世界中必须有一个Camera,否则无法渲染。<br/>
@@ -79,6 +80,8 @@ export default class Camera extends Component{
         this._m_FrustumTop = 0;
         // 相机到Bottom截面的距离
         this._m_FrustumBottom = 0;
+        // 分辨率倒数
+        this._m_ResolutionInverse = new Vector2();
 
         // 缓存变量
         this._m_CoeffLeft = new Array(2).fill(0);
@@ -110,6 +113,14 @@ export default class Camera extends Component{
                 this._m_Height = canvas.getHeight();
                 if(this._m_IsRenderingCamera){
                     gl.viewport(0, 0, this._m_Width, this._m_Height);
+                    this._m_ResolutionInverse.setToInXY(1.0 / this._m_Width, 1.0 / this._m_Height);
+                    let frameContext = this._m_Scene.getRender().getFrameContext();
+                    if(frameContext.getContext(ShaderSource.S_RESOLUTION_INVERSE)){
+                        // viewport相关信息(理论上,viewport应该独立封装一个类,但是这里简单包装在camera中)
+                        gl.bindBuffer(gl.UNIFORM_BUFFER, this.VIEW_PORT);
+                        gl.bufferSubData(gl.UNIFORM_BUFFER, 0, this._m_ResolutionInverse.getBufferData());
+                        gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+                    }
                 }
                 // 直接展开而非函数调用,减少开销
                 if(this._m_ParallelProjection){
@@ -217,6 +228,26 @@ export default class Camera extends Component{
         }
         else{
             this.VIEW = frameContext.getContextBlock('VIEW');
+        }
+        if(!frameContext.getContextBlock('VIEW_PORT')){
+            let VIEW_PORT = gl.createBuffer();
+            this.VIEW_PORT = VIEW_PORT;
+            gl.bindBuffer(gl.UNIFORM_BUFFER, VIEW_PORT);
+            gl.bufferData(gl.UNIFORM_BUFFER, 2 * 4, gl.STATIC_DRAW);
+            gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+
+            gl.bindBufferRange(gl.UNIFORM_BUFFER, ShaderSource.BLOCKS['VIEW_PORT'].blockIndex, VIEW_PORT, 0, 2 * 4);
+            frameContext.addContextBlock('VIEW_PORT', this.VIEW_PORT);
+        }
+        else{
+            this.VIEW_PORT = frameContext.getContextBlock('VIEW_PORT');
+        }
+        this._m_ResolutionInverse.setToInXY(1.0 / this._m_Width, 1.0 / this._m_Height);
+        if(frameContext.getContext(ShaderSource.S_RESOLUTION_INVERSE)){
+            // viewport相关信息(理论上,viewport应该独立封装一个类,但是这里简单包装在camera中)
+            gl.bindBuffer(gl.UNIFORM_BUFFER, this.VIEW_PORT);
+            gl.bufferSubData(gl.UNIFORM_BUFFER, 0, this._m_ResolutionInverse.getBufferData());
+            gl.bindBuffer(gl.UNIFORM_BUFFER, null);
         }
 
         this._doUpdate();
@@ -659,12 +690,21 @@ export default class Camera extends Component{
         if(this._m_UpdateCameraPosition){
             if(frameContext.getContext(ShaderSource.S_CAMERA_POSITION_SRC)){
                 if(this._m_IsRenderingCamera){
+                    // camera相关信息
                     gl.bindBuffer(gl.UNIFORM_BUFFER, this.VIEW);
                     gl.bufferSubData(gl.UNIFORM_BUFFER, 0, this._m_Eye.getBufferData());
                     gl.bindBuffer(gl.UNIFORM_BUFFER, null);
                 }
                 this._m_UpdateCameraPosition = false;
             }
+        }
+
+        // viewport
+        if(frameContext.getContext(ShaderSource.S_RESOLUTION_INVERSE)){
+            // viewport相关信息(理论上,viewport应该独立封装一个类,但是这里简单包装在camera中)
+            gl.bindBuffer(gl.UNIFORM_BUFFER, this.VIEW_PORT);
+            gl.bufferSubData(gl.UNIFORM_BUFFER, 0, this._m_ResolutionInverse.getBufferData());
+            gl.bindBuffer(gl.UNIFORM_BUFFER, null);
         }
 
         if(this._m_ViewMatrixUpdate || this._m_ProjectMatrixUpdate || this._m_ProjectViewMatrixUpdate){

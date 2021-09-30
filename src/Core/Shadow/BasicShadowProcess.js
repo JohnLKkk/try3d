@@ -209,13 +209,13 @@ export default class BasicShadowProcess extends Component{
         this._m_PostShadowMat.setParam('pcfEdge', new FloatVars().valueOf(this._m_PCFEdge));
         this._m_PostShadowMat.setParam('shadowIntensity', new FloatVars().valueOf(this._m_ShadowIntensity));
         this._m_ShadowMapSizeInverse.setToInXY(1.0 / this._m_ShadowMapSize, 1.0 / this._m_ShadowMapSize);
-        let w = this._m_Scene.getCanvas().getWidth();
-        let h = this._m_Scene.getCanvas().getHeight();
-        this._m_ResolutionInverse.setToInXY(1.0/w, 1.0/h);
+        // let w = this._m_Scene.getCanvas().getWidth();
+        // let h = this._m_Scene.getCanvas().getHeight();
+        // this._m_ResolutionInverse.setToInXY(1.0/w, 1.0/h);
         this._m_PostShadowMat.setParam('backfaceShadows', new BoolVars().valueOf(this._m_BackfaceShadows));
-        this._m_Scene.getCanvas().on('resize', (w, h)=>{
-            this._m_ResolutionInverse.setToInXY(1.0/w, 1.0/h);
-        });
+        // this._m_Scene.getCanvas().on('resize', (w, h)=>{
+        //     this._m_ResolutionInverse.setToInXY(1.0/w, 1.0/h);
+        // });
         this.initMat();
 
 
@@ -507,10 +507,10 @@ export default class BasicShadowProcess extends Component{
             }
         }
         if(!this._m_BackfaceShadows){
-            rd = conVars[BasicShadowProcess.S_RESOLUTION_INVERSE];
-            if(rd != null){
-                gl.uniform2f(rd.loc, this._m_ResolutionInverse._m_X, this._m_ResolutionInverse._m_Y);
-            }
+            // rd = conVars[BasicShadowProcess.S_RESOLUTION_INVERSE];
+            // if(rd != null){
+            //     gl.uniform2f(rd.loc, this._m_ResolutionInverse._m_X, this._m_ResolutionInverse._m_Y);
+            // }
         }
         rd = conVars[BasicShadowProcess.S_SHADOW_MAP_SIZE];
         if(rd != null){

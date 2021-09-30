@@ -70,6 +70,30 @@
             margin-top: 0;
             margin-bottom: 4px;
         }
+
+        .innerbox{
+            overflow-y: auto;
+            background-color: #f8f8f8;
+            height: 200px;
+            padding: 10px;
+        }
+        .innerbox::-webkit-scrollbar {/*滚动条整体样式*/
+            width: 4px;     /*高宽分别对应横竖滚动条的尺寸*/
+            height: 4px;
+            scrollbar-arrow-color:red;
+
+        }
+        .innerbox::-webkit-scrollbar-thumb {/*滚动条里面小方块*/
+            border-radius: 5px;
+            -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+            background: rgba(0,0,0,0.2);
+            scrollbar-arrow-color:red;
+        }
+        .innerbox::-webkit-scrollbar-track {/*滚动条里面轨道*/
+            -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+            border-radius: 0;
+            background: rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -87,13 +111,13 @@
         </div>
 
 
-        <div id="examples" style="height: 72%;">
+        <div id="examples" style="height: 74%;">
 
             <div id="searchContent" style="border-bottom: 1px solid gray">
                 <input placeholder="" type="text" id="filter" autocorrect="off" autocapitalize="off" spellcheck="false" style="width: 95%;margin-bottom: 10px;margin-left: 5px;margin-top: 5px;height: 25px;"/>
             </div>
 
-            <div id="examplelist" style="overflow-y:auto;height: 100%;"></div>
+            <div id="examplelist" class="innerbox" style="overflow-y:auto;height: 100%;"></div>
         </div>
 
     </div>

@@ -177,9 +177,14 @@ export default class ShaderSource {
         '{\n' +
         'vec3 ' + ShaderSource.S_CAMERA_POSITION_SRC + ';\n' +
         '};\n';
+    static VIEW_PORT = "layout (std140) uniform VIEW_PORT\n" +
+        "{\n" +
+        "vec2 " + ShaderSource.S_RESOLUTION_INVERSE + ';\n' +
+        '};\n';
     static BLOCKS = {
         'MAT':{blockIndex:0x001, blockDef:ShaderSource.MAT},
         'VIEW':{blockIndex:0x002, blockDef:ShaderSource.VIEW},
+        'VIEW_PORT':{blockIndex:0x003, blockDef:ShaderSource.VIEW_PORT},
     };
     static Context_RenderDataRefFBs = {
         "_gBuffer0":'DefaultDeferredShadingFrameBuffer',
@@ -261,7 +266,7 @@ export default class ShaderSource {
         "Context.LightPos":{src:ShaderSource.S_LIGHT_POS, pattern:/Context.LightPos/, pattern2:/Context.LightPos[\s+-;.,\*\\]{1,}/, tagPattern:/Context.LightPos/g, tag:ShaderSource.S_LIGHT_POS, type:"vec3", utype:"uniform vec3"},
         "Context.Splits":{src:ShaderSource.S_SPLITS, pattern:/Context.Splits/, pattern2:/Context.Splits[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Splits/g, tag:ShaderSource.S_SPLITS, type:"vec4", utype:"uniform vec4"},
         "Context.Fadeinfo":{src:ShaderSource.S_FADEINFO, pattern:/Context.Fadeinfo/, pattern2:/Context.Fadeinfo[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Fadeinfo/g, tag:ShaderSource.S_FADEINFO, type:"vec2", utype:"uniform vec2"},
-        "Context.ResolutionInverse":{src:ShaderSource.S_RESOLUTION_INVERSE, pattern:/Context.ResolutionInverse/, pattern2:/Context.ResolutionInverse[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ResolutionInverse/g, tag:ShaderSource.S_RESOLUTION_INVERSE, type:"vec2", utype:"uniform vec2"},
+        "Context.ResolutionInverse":{src:ShaderSource.S_RESOLUTION_INVERSE, pattern:/Context.ResolutionInverse/, pattern2:/Context.ResolutionInverse[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ResolutionInverse/g, tag:ShaderSource.S_RESOLUTION_INVERSE, def:'VIEW_PORT'},
         "Context.ShadowMapSize":{src:ShaderSource.S_SHADOW_MAP_SIZE, pattern:/Context.ShadowMapSize/, pattern2:/Context.ShadowMapSize[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ShadowMapSize/g, tag:ShaderSource.S_SHADOW_MAP_SIZE, type:"float", utype:"uniform float"},
         "Context.SMapSizeInverse":{src:ShaderSource.S_SHADOW_MAP_SIZE_INVERSE, pattern:/Context.SMapSizeInverse/, pattern2:/Context.SMapSizeInverse[\s+-;.,\*\\]{1,}/, tagPattern:/Context.SMapSizeInverse/g, tag:ShaderSource.S_SHADOW_MAP_SIZE_INVERSE, type:"vec2", utype:"uniform vec2"},
         // 输出类型缓存

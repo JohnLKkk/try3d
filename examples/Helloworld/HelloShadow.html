@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <title>HelloShadow</title>
 </head>
-<script src="../../build/try3d.min.js"></script>
+<!--<script src="../../build/try3d.min.js"></script>-->
+<script type="module">
+    import Try3d from '../../src/Try3d.js';
+    window.Try3d = Try3d;
+</script>
 <script src="../helpers.js"></script>
 <script src="./../dat.gui.min.js"></script>
 <body>
@@ -41,7 +45,7 @@
             // 开启阴影
             dirLight.proShadow(true);
             // 添加雾化
-            initFog(scene, 5, 100, [0.12, 0.12, 0.12, 1.0]);
+            addFog(scene, 5, 100, [0.12, 0.12, 0.12, 1.0]);
             rootNode.addChildren(dirLight);
 
 

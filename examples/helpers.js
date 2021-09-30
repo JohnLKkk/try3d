@@ -7,7 +7,39 @@ var Stats=function(){var l=Date.now(),m=l,g=0,n=Infinity,o=0,h=0,p=Infinity,q=0,
 function configDefault(){
     var blackColorMaterial = new Try3d.Material(window.scene, {id:"blackColorMaterial", colorDef});
 }
-function initFog(scene, fogNear, fogFar, fogColor){
+function addEnv(scene, rootNode){
+    // 环境纹理加载完再开始创建创建
+    let radianceLoader = new Try3d.RadianceLoader();
+    radianceLoader.loadHDR('../Assets/Textures/hdr/env3.hdr', imageData=> {
+
+
+
+
+        // 创建一个sky
+        let sky = new Try3d.SkyBox(scene, {id: 'sky'});
+        // 使用cubeMap作为天空盒材质
+        let envMap = new Try3d.Texture2DVars(scene);
+        envMap.setPreloadColor(scene, new Try3d.Vector4(0.5, 0.5, 0.5, 1.0));
+        envMap.setWrap(scene, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+        envMap.setFilter(scene, Try3d.Texture2DVars.S_FILTERS.S_LINEAR, Try3d.Texture2DVars.S_FILTERS.S_LINEAR);
+        envMap.setTextureFormat(Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB16F, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
+        envMap.setImage(scene, imageData, {rgbe: true, linearFloat: true});
+        sky.getMaterial().setParam('envMap', envMap);
+        sky.getMaterial().setParam('useEnvMap', new Try3d.BoolVars().valueOf(true));
+        sky.getMaterial().setParam('useHDR', new Try3d.BoolVars().valueOf(true));
+
+        scene.setSky(sky);
+
+
+        // 添加一个GI探头
+        let giProbe = new Try3d.GIProbe(scene, {id:'GIProbe'});
+        giProbe.setPositionFromXYZ(0, 0, 0);
+        rootNode.addChildren(giProbe);
+        // 捕捉环境数据
+        let envCapture = Try3d.ProbeTools.bakeGIProbe(scene, giProbe, {resolute:128});
+    });
+}
+function addFog(scene, fogNear, fogFar, fogColor){
     // 雾化
     let fogFilter = scene.getMainCamera().addFilterFromMaterial(new Try3d.Material(scene, {id:'fog', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_FOG_FILTER_DEF_DATA)}));
     fogFilter.getMaterial().selectTechnology('LinearFog');
@@ -18,6 +50,17 @@ function initFog(scene, fogNear, fogFar, fogColor){
     if(fogColor){
         fogFilter.getMaterial().setParam('fogColor', new Try3d.Vec4Vars().valueFromXYZW(fogColor[0], fogColor[1], fogColor[2], fogColor[3]));
     }
+}
+function addFxaa(scene){
+    let fxaaFilter = scene.getMainCamera().addFilterFromMaterial(new Try3d.Material(scene, {id:'fxaaFilter', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_FXAA_FILTER_DEF_DATA)}));
+    // fxaaFilter.getMaterial().setParam('subPixelShift', new Try3d.FloatVars().valueOf(0.2));
+    // fxaaFilter.getMaterial().setParam('reduceMul', new Try3d.FloatVars().valueOf(0.1));
+    return fxaaFilter;
+}
+function addBloom(scene, extractThreshold){
+    let bloomFilter = scene.getMainCamera().addFilterFromMaterial(new Try3d.Material(scene, {id:'bloomFilter', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_BLOOM_FILTER_DEF_DATA)}));
+    let mat = bloomFilter.getMaterial();
+    mat.setParam('extractThreshold', new Try3d.FloatVars().valueOf(extractThreshold || 0.2));
 }
 function initOther(scene, rootNode, fogColor, gridColor){
     // 雾化
