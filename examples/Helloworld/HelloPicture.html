@@ -14,7 +14,7 @@
 
         // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
         let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
-        scene.getCanvas().setClearColor(1.0, 1.0, 1.0, 1.0);
+        scene.getCanvas().setClearColor(0.2, 0.2, 0.2, 1.0);
         // 内置ColorDef
         let colorDef = Try3d.MaterialDef.parse(Try3d.Internal.S_COLOR_DEF_DATA);
 
@@ -22,28 +22,33 @@
         let rootNode = new Try3d.Node(scene, {id:'rootNode'});
         scene.addSceneNode(rootNode);
 
-        // 定义一个blueBox
-        let blueBox = new Try3d.Box(scene, {id:'blueBox', xHalf:2, yHalf:2, zHalf:2});
-        // 创建blueBox材质
-        let blueColorMat = new Try3d.Material(scene, {id:'blueColorMat', materialDef:colorDef});
-        blueColorMat.setParam("color", new Try3d.Vec4Vars().valueFromXYZW(0, 0, 1, 1));
-        blueBox.setMaterial(blueColorMat);
-        blueBox.setLocalTranslationXYZ(0, 2, 0);
-        rootNode.addChildren(blueBox);
-
-        // 定义一个redBox
-        let redBox = new Try3d.Box(scene, {id:'redBox', xHalf:2, yHalf:1, zHalf:1.5});
-        // 创建redBox材质
-        let redColorMat = new Try3d.Material(scene, {id:'redColorMat', materialDef:colorDef});
-        redColorMat.setParam("color", new Try3d.Vec4Vars().valueFromXYZW(1, 0, 0, 1));
-        redBox.setMaterial(redColorMat);
-        redBox.setLocalTranslationXYZ(3, 2, 2);
-        rootNode.addChildren(redBox);
+        // picture
+        let emjTexture = new Try3d.Texture2DVars(scene);
+        emjTexture.setImageSrc(scene, '../Assets/Textures/bot0.png');
+        emjTexture.setFlipY(true);
+        let emjTexture2 = new Try3d.Texture2DVars(scene);
+        emjTexture2.setImageSrc(scene, '../Assets/Textures/bot1.png');
+        emjTexture2.setFlipY(true);
+        let emjTexture3 = new Try3d.Texture2DVars(scene);
+        emjTexture3.setImageSrc(scene, '../Assets/Textures/bot2.png');
+        emjTexture3.setFlipY(true);
+        let emjs = [emjTexture, emjTexture2, emjTexture3];
+        let picture = null;
+        for(let i = 0, size = 0;i < 100;i++){
+            size = Try3d.MoreMath.random(0.1, 0.2);
+            picture = new Try3d.Picture(scene, {id:'emj_' + i});
+            picture.useDefaultMat();
+            picture.getMaterial().setParam('colorMap', emjs[Math.floor(Math.random() * 3)]);
+            picture.setLeftTop(Math.random() * 2 - 1, Math.random() * 2 - 1);
+            picture.setSize(size, size);
+            picture.setZIndex(-1);
+            rootNode.addChildren(picture);
+        }
 
         // 创建一个控制器
         let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
         sceneControl.lookScene(rootNode);
-        initOther(scene, rootNode);
+        // initOther(scene, rootNode);
 
 
         // 创建渲染器

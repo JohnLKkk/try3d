@@ -75,4 +75,15 @@ export default class MoreMath {
         startValue.add(endValue.mulReturn(scale));
         return startValue;
     }
+
+    /**
+     * 返回(a,b)之间的随机数。<br/>
+     * @param {Number}[a]
+     * @param {Number}[b]
+     * @return {*}
+     */
+    static random(a, b){
+        if(a > b)a = b;
+        return Math.random() * (b - a) + a;
+    }
 }

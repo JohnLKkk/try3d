@@ -18,6 +18,7 @@
         // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
         let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
         scene.getCanvas().setClearColor(1.0, 1.0, 1.0, 1.0);
+        // scene.getRender().setGammaFactor(1.0);
         // 内置ColorDef
         let colorDef = Try3d.MaterialDef.parse(Try3d.Internal.S_COLOR_DEF_DATA);
 
@@ -51,9 +52,11 @@
             // 创建一个控制器
             let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
             sceneControl.lookScene(rootNode);
-            sceneControl.setTargetDistance(0);
-            sceneControl.setMinDistance(0);
-            sceneControl.setMaxDistance(0);
+            sceneControl.setTargetDistance(1);
+            sceneControl.setMinDistance(1);
+            sceneControl.setMaxDistance(2);
+
+            addBloom(scene, 0.15, 5.2, 1.0, 3.2);
         });
 
 

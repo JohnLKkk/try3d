@@ -57,10 +57,19 @@ function addFxaa(scene){
     // fxaaFilter.getMaterial().setParam('reduceMul', new Try3d.FloatVars().valueOf(0.1));
     return fxaaFilter;
 }
-function addBloom(scene, extractThreshold){
+function addBloom(scene, extractThreshold, exposurePower, bloomIntensity, blurScale){
     let bloomFilter = scene.getMainCamera().addFilterFromMaterial(new Try3d.Material(scene, {id:'bloomFilter', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_BLOOM_FILTER_DEF_DATA)}));
     let mat = bloomFilter.getMaterial();
     mat.setParam('extractThreshold', new Try3d.FloatVars().valueOf(extractThreshold || 0.2));
+    if(exposurePower){
+        mat.setParam('exposurePower', new Try3d.FloatVars().valueOf(exposurePower));
+    }
+    if(bloomIntensity){
+        mat.setParam('bloomIntensity', new Try3d.FloatVars().valueOf(bloomIntensity));
+    }
+    if(blurScale){
+        mat.setParam('blurScale', new Try3d.FloatVars().valueOf(blurScale));
+    }
 }
 function initOther(scene, rootNode, fogColor, gridColor){
     // 雾化
