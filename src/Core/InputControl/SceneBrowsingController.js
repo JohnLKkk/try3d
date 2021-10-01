@@ -118,6 +118,17 @@ export default class SceneBrowsingController extends Component{
     }
 
     /**
+     * 立即聚焦相机到当前追踪位置。<br/>
+     */
+    focusCamera(){
+        this._m_TargetLocation.setTo(this._m_Target).add(this._m_LookAtOffset);
+        this._m_Distance = this._m_TargetDistance;
+        this.computePosition();
+        //cam朝向目标
+        this._m_Cam.lookAt(this._m_Pos, this._m_TargetLocation, this._m_InitialUpVec);
+    }
+
+    /**
      * 返回当前相机距离Target的距离。<br/>
      * @return {Number}
      */

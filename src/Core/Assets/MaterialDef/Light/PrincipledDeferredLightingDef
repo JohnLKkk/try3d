@@ -265,7 +265,7 @@ Def DeferredLightingDef{
                 lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);
                 float dist = length(lightVec);
 
-                #ifdef Context.Srgb
+                #ifndef Context.Srgb
                     lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
                     lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
                 #else
@@ -503,7 +503,7 @@ Def DeferredLightingDef{
                 lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);
                 float dist = length(lightVec);
 
-                #ifdef Context.Srgb
+                #ifndef Context.Srgb
                     lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
                     lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
                 #else
@@ -760,7 +760,7 @@ Def DeferredLightingDef{
                 lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);
                 float dist = length(lightVec);
 
-                #ifdef Context.Srgb
+                #ifndef Context.Srgb
                     lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
                     lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
                 #else
@@ -997,7 +997,7 @@ Def DeferredLightingDef{
                 lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);
                 float dist = length(lightVec);
 
-                #ifdef Context.Srgb
+                #ifndef Context.Srgb
                     lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
                     lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
                 #else

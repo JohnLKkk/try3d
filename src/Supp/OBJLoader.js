@@ -20,7 +20,8 @@ import Internal from "../Core/Render/Internal.js";
 export default class OBJLoader {
     static S_ALPHA_MODE_BLEND = 'blend';
     static S_ALPHA_MODE_DISCARD = 'discard';
-    _m_CustomMatDef = 'BasicLightingDef';
+    _m_CustomMatDef = null;
+    _m_MatDefSrc = Internal.S_BASIC_LIGHTING_DEF_DATA;
     _m_AlphaMode = OBJLoader.S_ALPHA_MODE_BLEND;
     /**
      * 加载一个OBJ模型。<br/>
@@ -53,6 +54,23 @@ export default class OBJLoader {
             this._m_CustomMatDef = customMatDef;
         }
     }
+
+    /**
+     * 启用默认延迟渲染材质。<br/>
+     */
+    useDeferredMatDef(){
+        this.setMatDef(Internal.S_DEFERRED_LIGHTING_DEF_DATA);
+    }
+
+    /**
+     * 设置要使用的材质定义。<br/>
+     * @param {String}[matDef]
+     */
+    setMatDef(matDef){
+        if(matDef){
+            this._m_MatDefSrc = matDef;
+        }
+    }
     _load(modelNode, src, callback) {
         // 解析OBJ数据块
         this.loadOBJ(modelNode, src, (state)=>{
@@ -61,7 +79,7 @@ export default class OBJLoader {
                     this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + this._m_CustomMatDef);
                 }
                 else{
-                    this._m_DefaultMatDef = MaterialDef.parse(Internal.S_BASIC_LIGHTING_DEF_DATA);
+                    this._m_DefaultMatDef = MaterialDef.parse(this._m_MatDefSrc);
                 }
             }
             // 加载完实例材质后再创建obj实体

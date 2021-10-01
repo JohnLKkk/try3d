@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PointLightShadowTest</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
+    <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script src="../../build/try3d.min.js"></script>
+<script src="./../dat.gui.min.js"></script>
+<script src="../helpers.js"></script>
+<script type="module">
+    import Stats from "../stats.min.js";
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(2.950315, 1.5485021, -0.06550171), new Try3d.Vector3(-3.8440266, -1.997144, 0.06595602), new Try3d.Vector3(-0.44864178, 0.8937116, 2.2803247E-4));
+
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+    let gltfLoader = new Try3d.GLTFLoader();
+    gltfLoader.load(scene, './../Assets/Models/GLTF/Cube/scene.gltf', modelNode=>{
+        modelNode.setLocalScaleXYZ(0.01, 0.01, 0.01);
+        rootNode.addChildren(modelNode);
+
+        // 地板
+        let floorMat = new Try3d.Material(scene, {id:'floorMat', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_COLOR_DEF_DATA)});
+        let floor = new Try3d.GroupPlane(scene, {id:'floor', xSize:500, zSize:500, xSegments:6, zSegments:10, xRepeat:true, zRepeat:true});
+        floor.setMaterial(floorMat);
+        floor.setLocalTranslationXYZ(0, -10, 0);
+        rootNode.addChildren(floor);
+
+        let wall1 = new Try3d.GroupPlane(scene, {id:'wall1', xSize:500, zSize:500});
+        wall1.setMaterial(floorMat);
+        wall1.setLocalTranslationXYZ(0, 0, -15);
+        wall1.setLocalRotationFromEuler(Try3d.MoreMath.toRadians(90), 0, 0);
+        rootNode.addChildren(wall1);
+
+        let wall2 = new Try3d.GroupPlane(scene, {id:'wall2', xSize:500, zSize:500});
+        wall2.setMaterial(floorMat);
+        wall2.setLocalTranslationXYZ(0, 0, 15);
+        wall2.setLocalRotationFromEuler(Try3d.MoreMath.toRadians(-90), 0, 0);
+        rootNode.addChildren(wall2);
+        addFog(scene, 10, 200, [0.5, 0.5, 0.5, 1.0]);
+
+
+        let sceneControl = new Try3d.SceneBrowsingController(scene, {id:"controller"});
+        sceneControl.setMinVerticalRotation(0);
+        sceneControl.lookScene(modelNode);
+        sceneControl.setTargetDistance(25);
+        sceneControl.setMinDistance(25);
+        sceneControl.setMaxDistance(27);
+        sceneControl.focusCamera();
+
+        let angle = 0;
+        let rad = 0;
+        scene.on('update', tpf=>{
+            angle += tpf * 20;
+            rad = Try3d.MoreMath.toRadians(angle);
+            modelNode.setLocalRotationFromEuler(rad, rad, rad);
+        });
+    }, {batch:false});
+
+    let pointLight = new Try3d.PointLight(scene, {id:'pointLight'});
+    pointLight.setRadius(2.0);
+    pointLight.setColorRGBA(0.5, 0.5, 0.5, 1.0);
+    pointLight.setPositionXYZ(0, 5, 0);
+    pointLight.proShadow(true);
+    rootNode.addChildren(pointLight);
+
+    // 使用dat gui
+    let gui = new dat.GUI();
+    var settings = {
+        pointLight: true,
+        radius:pointLight.getRadius(),
+        pointLightX:pointLight.getPosition()._m_X,
+        shadow: true,
+        biasFactor:1.0,
+        biasUnits:1.0,
+        backfaceShadows:false,
+        shadowIntensity: 0.8
+    };
+    gui.add(settings, 'pointLight').onChange(function(value) {
+        if(value){
+            pointLight.enable();
+        }
+        else{
+            pointLight.disable();
+        }
+    });
+    gui.add(settings, 'radius', 1, 20).step(1).onChange(value=>{
+        pointLight.setRadius(value);
+    });
+    gui.add(settings, 'pointLightX', -10, 10).step(1).onChange(value=>{
+        pointLight.setPositionXYZ(value, 5, 0);
+    });
+    gui.add(settings, 'shadow').onChange(function(value) {
+        pointLight.proShadow(value);
+    });
+    gui.add(settings, 'biasFactor').onChange(function(value) {
+        pointLight.getShadow().setBias(value, settings.biasUnits);
+    });
+    gui.add(settings, 'biasUnits').onChange(function(value) {
+        pointLight.getShadow().setBias(settings.biasFactor, value);
+    });
+    gui.add(settings, 'backfaceShadows').onChange(function(value) {
+        pointLight.getShadow().setBackfaceShadows(value);
+    });
+    gui.add(settings, 'shadowIntensity', 0.1, 1.0).step(0.1).onChange(function(value) {
+        pointLight.getShadow().setShadowIntensity(value);
+    });
+
+    let renderEngine = new Try3d.RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+    });
+</script>
+</body>
+</html>

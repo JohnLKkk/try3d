@@ -149,10 +149,10 @@ Def DeferredLightingDef{
                 float dist = length(lightVec);
 
                 // 对于DirLight,lightDir.w = 1.0f
-                lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
+                //lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
 
-                //lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
-                //lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
+                lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
+                lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
 
                 // 归一化
                 lightDir.xyz = lightVec / vec3(dist);
@@ -289,10 +289,10 @@ Def DeferredLightingDef{
                 float dist = length(lightVec);
 
                 // 对于DirLight,lightDir.w = 1.0f
-                lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
+                //lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
 
-                //lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
-                //lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
+                lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
+                lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
 
                 // 归一化
                 lightDir.xyz = lightVec / vec3(dist);
@@ -467,10 +467,10 @@ Def DeferredLightingDef{
                 float dist = length(lightVec);
 
                 // 对于DirLight,lightDir.w = 1.0f
-                lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
+                //lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
 
-                //lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
-                //lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
+                lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
+                lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
 
                 // 归一化
                 lightDir.xyz = lightVec / vec3(dist);
@@ -502,7 +502,7 @@ Def DeferredLightingDef{
                 //else
                 //    falloff = 0.0f;
 
-                #ifdef SRGB
+                #ifndef Context.Srgb
                     // Use quadratic falloff (notice the ^4)
                     return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0, 1.0), 4.0);
                 #else
@@ -612,10 +612,10 @@ Def DeferredLightingDef{
                 float dist = length(lightVec);
 
                 // 对于DirLight,lightDir.w = 1.0f
-                lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
+                //lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
 
-                //lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
-                //lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
+                lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
+                lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
 
                 // 归一化
                 lightDir.xyz = lightVec / vec3(dist);
@@ -647,7 +647,7 @@ Def DeferredLightingDef{
                 //else
                 //    falloff = 0.0f;
 
-                #ifdef SRGB
+                #ifndef Context.Srgb
                     // Use quadratic falloff (notice the ^4)
                     return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0, 1.0), 4.0);
                 #else

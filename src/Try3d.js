@@ -119,6 +119,7 @@ import Grid from "./Core/Node/Shape/Grid.js";
 import TextImage from "./Core/Util/TextImage.js";
 import Cylinder from "./Core/Node/Shape/Cylinder.js";
 import Torus from "./Core/Node/Shape/Torus.js";
+import Teapot from "./Core/Node/Shape/Teapot.js";
 
 export default {
     Scene,
@@ -173,6 +174,7 @@ export default {
     GroupPlane,
     Grid,
     Sphere,
+    Teapot,
     SkyBox,
     FramePicture,
     Geometry,

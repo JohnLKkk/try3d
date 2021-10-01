@@ -1552,6 +1552,9 @@ export default class Internal {
         "        vec4 diffuseColor;\n" +
         "        vec4 specularColor;\n" +
         "        float shininess;\n" +
+        "        // lightMap或AO或OCC\n" +
+        "        sampler2D lightMap;\n" +
+        "        bool lightMapTexCoord;\n" +
         "        // 完全透明剔除因子(0-1),低于该值的透明片段被完全剔除而不进行混合\n" +
         "        float alphaDiscard;\n" +
         "    }\n" +
@@ -1561,6 +1564,7 @@ export default class Internal {
         "            vec4 wTangent;\n" +
         "            vec3 wPosition;\n" +
         "            vec2 wUv0;\n" +
+        "            vec2 wUv1;\n" +
         "            // 三种成分用于调和光照,可来自材质颜色的定义,也可以来自vertex_light\n" +
         "            vec3 ambientSumAdjust;\n" +
         "            vec4 diffuseSumAdjust;\n" +
@@ -1594,6 +1598,11 @@ export default class Internal {
         "                wNormal = norm;\n" +
         "                wUv0 = Context.InUv0;\n" +
         "\n" +
+        "                // lightMap/AO/OCC\n" +
+        "                #ifdef Params.lightMapTexCoord\n" +
+        "                    wUv1 = Context.InUv1;\n" +
+        "                #endif\n" +
+        "\n" +
         "\n" +
         "                // 如果是顶点光照,则在这里将光源变化到切线空间\n" +
         "                ambientSumAdjust = Params.ambientColor.rgb * Context.AmbientLightColor;\n" +
@@ -1618,10 +1627,10 @@ export default class Internal {
         "                float dist = length(lightVec);\n" +
         "\n" +
         "                // 对于DirLight,lightDir.w = 1.0f\n" +
-        "                lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);\n" +
+        "                //lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);\n" +
         "\n" +
-        "                //lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
-        "                //lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
+        "                lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
+        "                lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
         "\n" +
         "                // 归一化\n" +
         "                lightDir.xyz = lightVec / vec3(dist);\n" +
@@ -1699,6 +1708,17 @@ export default class Internal {
         "                float _shininess = 32.0;\n" +
         "                #ifdef Params.shininess\n" +
         "                    _shininess = Params.shininess;\n" +
+        "                #endif\n" +
+        "\n" +
+        "                // lightMap/AO/OCC\n" +
+        "                #ifdef Params.lightMap\n" +
+        "                    #ifdef Params.lightMapTexCoord\n" +
+        "                        vec3 lightMapColor = texture(Params.lightMap, wUv1).rgb;\n" +
+        "                    #else\n" +
+        "                        vec3 lightMapColor = texture(Params.lightMap, wUv0).rgb;\n" +
+        "                    #endif\n" +
+        "                    _specularColor.rgb *= lightMapColor;\n" +
+        "                    _diffuseColor.rgb  *= lightMapColor;\n" +
         "                #endif\n" +
         "\n" +
         "\n" +
@@ -1782,6 +1802,7 @@ export default class Internal {
         "            vec4 wTangent;\n" +
         "            vec3 wPosition;\n" +
         "            vec2 wUv0;\n" +
+        "            vec2 wUv1;\n" +
         "            // 三种成分用于调和光照,可来自材质颜色的定义,也可以来自vertex_light\n" +
         "            vec3 ambientSumAdjust;\n" +
         "            vec4 diffuseSumAdjust;\n" +
@@ -1815,6 +1836,11 @@ export default class Internal {
         "                wNormal = norm;\n" +
         "                wUv0 = Context.InUv0;\n" +
         "\n" +
+        "                // lightMap/AO/OCC\n" +
+        "                #ifdef Params.lightMapTexCoord\n" +
+        "                    wUv1 = Context.InUv1;\n" +
+        "                #endif\n" +
+        "\n" +
         "\n" +
         "                // 如果是顶点光照,则在这里将光源变化到切线空间\n" +
         "                ambientSumAdjust = Params.ambientColor.rgb * Context.AmbientLightColor;\n" +
@@ -1839,10 +1865,10 @@ export default class Internal {
         "                float dist = length(lightVec);\n" +
         "\n" +
         "                // 对于DirLight,lightDir.w = 1.0f\n" +
-        "                lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);\n" +
+        "                //lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);\n" +
         "\n" +
-        "                //lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
-        "                //lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
+        "                lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
+        "                lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
         "\n" +
         "                // 归一化\n" +
         "                lightDir.xyz = lightVec / vec3(dist);\n" +
@@ -1925,6 +1951,17 @@ export default class Internal {
         "                float _shininess = 32.0;\n" +
         "                #ifdef Params.shininess\n" +
         "                    _shininess = Params.shininess;\n" +
+        "                #endif\n" +
+        "\n" +
+        "                // lightMap/AO/OCC\n" +
+        "                #ifdef Params.lightMap\n" +
+        "                    #ifdef Params.lightMapTexCoord\n" +
+        "                        vec3 lightMapColor = texture(Params.lightMap, wUv1).rgb;\n" +
+        "                    #else\n" +
+        "                        vec3 lightMapColor = texture(Params.lightMap, wUv0).rgb;\n" +
+        "                    #endif\n" +
+        "                    _specularColor.rgb *= lightMapColor;\n" +
+        "                    _diffuseColor.rgb  *= lightMapColor;\n" +
         "                #endif\n" +
         "\n" +
         "\n" +
@@ -2149,10 +2186,10 @@ export default class Internal {
         "                float dist = length(lightVec);\n" +
         "\n" +
         "                // 对于DirLight,lightDir.w = 1.0f\n" +
-        "                lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);\n" +
+        "                //lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);\n" +
         "\n" +
-        "                //lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
-        "                //lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
+        "                lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
+        "                lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
         "\n" +
         "                // 归一化\n" +
         "                lightDir.xyz = lightVec / vec3(dist);\n" +
@@ -2289,10 +2326,10 @@ export default class Internal {
         "                float dist = length(lightVec);\n" +
         "\n" +
         "                // 对于DirLight,lightDir.w = 1.0f\n" +
-        "                lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);\n" +
+        "                //lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);\n" +
         "\n" +
-        "                //lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
-        "                //lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
+        "                lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
+        "                lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
         "\n" +
         "                // 归一化\n" +
         "                lightDir.xyz = lightVec / vec3(dist);\n" +
@@ -2467,10 +2504,10 @@ export default class Internal {
         "                float dist = length(lightVec);\n" +
         "\n" +
         "                // 对于DirLight,lightDir.w = 1.0f\n" +
-        "                lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);\n" +
+        "                //lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);\n" +
         "\n" +
-        "                //lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
-        "                //lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
+        "                lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
+        "                lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
         "\n" +
         "                // 归一化\n" +
         "                lightDir.xyz = lightVec / vec3(dist);\n" +
@@ -2502,7 +2539,7 @@ export default class Internal {
         "                //else\n" +
         "                //    falloff = 0.0f;\n" +
         "\n" +
-        "                #ifdef SRGB\n" +
+        "                #ifndef Context.Srgb\n" +
         "                    // Use quadratic falloff (notice the ^4)\n" +
         "                    return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0, 1.0), 4.0);\n" +
         "                #else\n" +
@@ -2612,10 +2649,10 @@ export default class Internal {
         "                float dist = length(lightVec);\n" +
         "\n" +
         "                // 对于DirLight,lightDir.w = 1.0f\n" +
-        "                lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);\n" +
+        "                //lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);\n" +
         "\n" +
-        "                //lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
-        "                //lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
+        "                lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
+        "                lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
         "\n" +
         "                // 归一化\n" +
         "                lightDir.xyz = lightVec / vec3(dist);\n" +
@@ -2647,7 +2684,7 @@ export default class Internal {
         "                //else\n" +
         "                //    falloff = 0.0f;\n" +
         "\n" +
-        "                #ifdef SRGB\n" +
+        "                #ifndef Context.Srgb\n" +
         "                    // Use quadratic falloff (notice the ^4)\n" +
         "                    return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0, 1.0), 4.0);\n" +
         "                #else\n" +
@@ -3042,7 +3079,7 @@ export default class Internal {
         "                lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);\n" +
         "                float dist = length(lightVec);\n" +
         "\n" +
-        "                #ifdef Context.Srgb\n" +
+        "                #ifndef Context.Srgb\n" +
         "                    lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
         "                    lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
         "                #else\n" +
@@ -3280,7 +3317,7 @@ export default class Internal {
         "                lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);\n" +
         "                float dist = length(lightVec);\n" +
         "\n" +
-        "                #ifdef Context.Srgb\n" +
+        "                #ifndef Context.Srgb\n" +
         "                    lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
         "                    lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
         "                #else\n" +
@@ -3537,7 +3574,7 @@ export default class Internal {
         "                lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);\n" +
         "                float dist = length(lightVec);\n" +
         "\n" +
-        "                #ifdef Context.Srgb\n" +
+        "                #ifndef Context.Srgb\n" +
         "                    lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
         "                    lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
         "                #else\n" +
@@ -3774,7 +3811,7 @@ export default class Internal {
         "                lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);\n" +
         "                float dist = length(lightVec);\n" +
         "\n" +
-        "                #ifdef Context.Srgb\n" +
+        "                #ifndef Context.Srgb\n" +
         "                    lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
         "                    lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
         "                #else\n" +
@@ -4102,7 +4139,7 @@ export default class Internal {
         "                lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);\n" +
         "                float dist = length(lightVec);\n" +
         "\n" +
-        "                #ifdef Context.Srgb\n" +
+        "                #ifndef Context.Srgb\n" +
         "                    lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n" +
         "                    lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n" +
         "                #else\n" +

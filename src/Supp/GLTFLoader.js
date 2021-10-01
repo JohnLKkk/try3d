@@ -49,7 +49,8 @@ export default class GLTFLoader {
         10497:Texture2DVars.S_WRAPS.S_REPEAT,
         33071:Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE
     };
-    _m_CustomMatDef = "PrincipledLightingDef";
+    _m_CustomMatDef = null;
+    _m_MatDefSrc = Internal.S_PRINCIPLED_LIGHTING_DEF;
 
     /**
      * 加载一个GLTF模型。<br/>
@@ -491,7 +492,7 @@ export default class GLTFLoader {
                         this._m_PrincipledMatDef = MaterialDef.load(this._m_AssetsPath + this._m_CustomMatDef);
                     }
                     else{
-                        this._m_PrincipledMatDef = MaterialDef.parse(Internal.S_PRINCIPLED_LIGHTING_DEF);
+                        this._m_PrincipledMatDef = MaterialDef.parse(this._m_MatDefSrc);
                     }
                 }
                 matId = this._getName(gltf.materials[_primitive.material].name);
@@ -512,7 +513,7 @@ export default class GLTFLoader {
                         this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "ColorDef");
                     }
                     else{
-                        this._m_DefaultMatDef = MaterialDef.parse(Internal.S_PRINCIPLED_LIGHTING_DEF);
+                        this._m_DefaultMatDef = MaterialDef.parse(this._m_MatDefSrc);
                     }
                 }
                 matId = 'default_gltf_mat';
@@ -782,7 +783,7 @@ export default class GLTFLoader {
                         this._m_PrincipledMatDef = MaterialDef.load(this._m_AssetsPath + "PrincipledLightingDef");
                     }
                     else{
-                        this._m_PrincipledMatDef = MaterialDef.parse(Internal.S_PRINCIPLED_LIGHTING_DEF);
+                        this._m_PrincipledMatDef = MaterialDef.parse(this._m_MatDefSrc);
                     }
                 }
                 let matId = this._getName(gltf.materials[_primitive.material].name);

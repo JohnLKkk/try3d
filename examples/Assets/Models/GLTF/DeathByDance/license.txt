@@ -1,0 +1,11 @@
+Model Information:
+* title:	Death By Dance
+* source:	https://sketchfab.com/3d-models/death-by-dance-900e2d714d874481bc387f21ab065521
+* author:	Sultan_The2nd (https://sketchfab.com/Sultan_The2nd)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Death By Dance" (https://sketchfab.com/3d-models/death-by-dance-900e2d714d874481bc387f21ab065521) by Sultan_The2nd (https://sketchfab.com/Sultan_The2nd) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

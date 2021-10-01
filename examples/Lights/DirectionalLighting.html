@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DirectionalLight</title>
+</head>
+<script src="../../build/try3d.min.js"></script>
+<script src="./../dat.gui.min.js"></script>
+<script src="../helpers.js"></script>
+<body>
+    <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;margin: 0px;">
+        <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+    </div>
+    <script type="module">
+
+        // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
+        let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+        scene.setAmbientLightColor(0.2, 0.2, 0.2);
+        scene.getCanvas().setClearColor(0.0, 0.0, 0.0, 1.0);
+
+        // 定义一个根节点
+        let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+        scene.addSceneNode(rootNode);
+
+        // 定义一个Teapot
+        let teapot = new Try3d.Teapot(scene, {id:'teapot'});
+        let lightMat = new Try3d.Material(scene, {id:'lightMat', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_BASIC_LIGHTING_DEF_DATA)});
+        lightMat.setParam('ambientColor', new Try3d.Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
+        lightMat.setParam('diffuseColor', new Try3d.Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
+        lightMat.setParam('specularColor', new Try3d.Vec4Vars().valueFromXYZW(0.8, 0.8, 0.8, 1.0));
+        teapot.setMaterial(lightMat);
+        rootNode.addChildren(teapot);
+
+        // 定义一个directionalLight
+        let directionalLight = new Try3d.DirectionalLight(scene, {id:'directionalLight'});
+        directionalLight.setDirectionXYZ(-1, -1, -1);
+        directionalLight.setColorRGBA(1, 1, 1, 1);
+        rootNode.addChildren(directionalLight);
+
+        // 创建一个控制器
+        let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
+        sceneControl.lookScene(rootNode);
+        sceneControl.setTargetDistance(5);
+
+
+        // 使用dat gui
+        let gui = new dat.GUI();
+        var settings = {
+            ambientLight: true,
+            directionalLight: true,
+            directionalLightColor:[255, 255, 255, 255],
+            specular:true,
+            specularShininess:32.0,
+            diffuse:true,
+        };
+        gui.add(settings, 'ambientLight').onChange(function(value) {
+            if(value){
+                scene.setAmbientLightColor(0.2, 0.2, 0.2);
+            }
+            else{
+                scene.setAmbientLightColor(0, 0, 0);
+            }
+        });
+        gui.add(settings, 'directionalLight').onChange(function(value) {
+            if(value){
+                directionalLight.enable();
+            }
+            else{
+                directionalLight.disable();
+            }
+        });
+        gui.addColor(settings, 'directionalLightColor').onChange(color=>{
+            directionalLight.setColorRGBA(color[0] / 255.0, color[1] / 255.0, color[2] / 255.0, color[3] / 255.0);
+        });
+        gui.add(settings, 'specular').onChange(function(value) {
+            if(value){
+                lightMat.setParam('specularColor', new Try3d.Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
+            }
+            else{
+                lightMat.setParam('specularColor', new Try3d.Vec4Vars().valueFromXYZW(0.0, 0.0, 0.0, 1.0));
+            }
+        });
+        gui.add(settings, 'specularShininess', 1, 128).step(1.0).onChange(function(value) {
+            lightMat.setParam('shininess', new Try3d.FloatVars().valueOf(value));
+        });
+        gui.add(settings, 'diffuse').onChange(function(value) {
+            if(value){
+                lightMat.setParam('diffuseColor', new Try3d.Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
+            }
+            else{
+                lightMat.setParam('diffuseColor', new Try3d.Vec4Vars().valueFromXYZW(0.0, 0.0, 0.0, 1.0));
+            }
+        });
+
+        // 创建渲染器
+        let renderEngine = new Try3d.RenderEngine();
+        // 添加要渲染的场景对象
+        renderEngine.addScene(scene);
+        // 启动渲染器
+        renderEngine.launch();
+        showStats(scene);
+    </script>
+</body>
+</html>

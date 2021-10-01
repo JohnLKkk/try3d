@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LightMap</title>
+</head>
+<script src="../../build/try3d.min.js"></script>
+<script src="../helpers.js"></script>
+<body>
+    <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;margin: 0px;">
+        <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+    </div>
+    <script type="module">
+
+        // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
+        let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+        scene.getCanvas().setClearColor(0.0, 0.0, 0.0, 1.0);
+
+        // 定义一个根节点
+        let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+        scene.addSceneNode(rootNode);
+
+        let objLoader = new Try3d.OBJLoader();
+        objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/LightingScene/lightMap.obj', modelNode=>{
+            rootNode.addChildren(modelNode);
+            // 创建一个控制器
+            let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
+            sceneControl.lookScene(rootNode);
+        });
+
+
+
+        // 创建渲染器
+        let renderEngine = new Try3d.RenderEngine();
+        // 添加要渲染的场景对象
+        renderEngine.addScene(scene);
+        // 启动渲染器
+        renderEngine.launch();
+        showStats(scene);
+    </script>
+</body>
+</html>

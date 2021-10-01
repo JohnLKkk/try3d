@@ -143,13 +143,13 @@ export default class BasicShadowProcess extends Component{
         for(let i = 0;i < this._m_NbShadowMaps;i++){
             this._m_LVPM[i] = new Matrix44();
             if(this._m_ShadowSplitType == BasicShadowProcess.S_QUADRATIC_SCALING){
-                this._m_ShadowFB[i] = new FrameBuffer(gl, 'ShadowFB_' + i, nextSize, nextSize);
+                this._m_ShadowFB[i] = new FrameBuffer(gl, 'ShadowFB_' + i + Tools.nextId(), nextSize, nextSize);
                 this._m_ShadowMapSizes[i] = nextSize;
                 nextSize /= 2;
                 nextSize = Math.max(nextSize, minSize);
             }
             else if(this._m_ShadowSplitType == BasicShadowProcess.S_FIXED){
-                this._m_ShadowFB[i] = new FrameBuffer(gl, 'ShadowFB_' + i, this._m_ShadowMapSize, this._m_ShadowMapSize);
+                this._m_ShadowFB[i] = new FrameBuffer(gl, 'ShadowFB_' + i + Tools.nextId(), this._m_ShadowMapSize, this._m_ShadowMapSize);
             }
             else{
                 Log.error('错误的阴影类型!');

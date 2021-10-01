@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ManyDynamicPointLighting</title>
+</head>
+<body>
+<script src="../../build/try3d.min.js"></script>
+<div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
+    <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;" tabindex="0"></canvas>
+</div>
+<script type="module">
+
+
+
+    import Stats from "../stats.min.js";
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    scene.setAmbientLightColor(0.0, 0.0, 0.0);
+    scene.getRender().enablePipeline(Try3d.Render.TILE_DEFERRED_SHADING);
+    scene.getRender().setPriorityTechnology('TileDeferred');
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(40.97822191592547,31.087478106346822,40.33070739975541), new Try3d.Vector3(40.30762527867237,30.644964182873373,39.7353238446945), new Try3d.Vector3(0, 1, 0));
+
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+
+    let objLoader = new Try3d.OBJLoader();
+    objLoader.useDeferredMatDef();
+    objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/ShiNei.obj', modelNode=>{
+        rootNode.addChildren(modelNode);
+        let sceneBrowsingController = new Try3d.SceneBrowsingController(scene, {id:'sceneBrowsing'});
+        sceneBrowsingController.lookScene(modelNode);
+        sceneBrowsingController.setTargetDistance(sceneBrowsingController.getMaxDistance());
+
+
+
+        let aabb = modelNode.getBoundingVolume();
+        let center = new Try3d.Vector3();
+        let min = new Try3d.Vector3();
+        let max = new Try3d.Vector3();
+        aabb.getMin(min);
+        aabb.getMax(max);
+        let d = 5;
+        min._m_X += d;
+        min._m_Z += d;
+        max._m_X -= d;
+        max._m_Z -= d;
+        aabb.getCenter(center);
+        let dx = aabb.getXHalf() * 2;
+        let dz = aabb.getZHalf() * 2;
+
+        let pointLights = [];
+        let s = 1;
+        for(let i = 0;i < 25;i++){
+            s = Math.random() > 0.5 ? 1 : -1;
+            pointLights.push({angle:0, v:Try3d.MoreMath.random(20, 100) * s, r:Try3d.MoreMath.random(12, 20), color:[Math.random(), Math.random(), Math.random()], radius:Try3d.MoreMath.random(6, 20)});
+        }
+
+        let i = 0;
+        console.log('pointLights.lenght:' + pointLights.length);
+        let pointLightData = [];
+        pointLights.forEach(p=>{
+            let pointLight = new Try3d.PointLight(scene, {id:'pointLight' + i++});
+            pointLightData.push(pointLight);
+            pointLight.setRadius(p.r);
+            pointLight.setColorRGBA(p.color[0], p.color[1], p.color[2], p.color[3]);
+            pointLight.setPosition(center);
+            rootNode.addChildren(pointLight);
+        });
+
+
+        // 使用stats.js统计fps
+        let stats = new Stats();
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.left = '0px';
+        stats.domElement.style.top = '0px';
+        let angle = 0;
+        let rad = 0;
+        let radius = 17.5;
+        document.body.appendChild(stats.domElement);
+        scene.on('update', (exTime)=>{
+            stats.update();
+            // pointLightData[0].setPositionXYZ(Math.cos(rad) * radius + center._m_X, center._m_Y, Math.sin(rad) * radius + center._m_Z);
+            for(let i = 0;i < pointLights.length;i++){
+                pointLights[i].angle += exTime * pointLights[i].v;
+                rad = Try3d.MoreMath.toRadians(pointLights[i].angle);
+                pointLightData[i].setPositionXYZ(Math.cos(rad) * pointLights[i].radius + center._m_X, center._m_Y, Math.sin(rad) * pointLights[i].radius + center._m_Z);
+            }
+            // pointLightData[1].setPositionXYZ(-Math.cos(rad) * radius + center._m_X, center._m_Y, -Math.sin(rad) * radius + center._m_Z);
+            // pointLightData[2].setPositionXYZ(Math.cos(rad - 0.5) * radius + center._m_X, center._m_Y, -Math.sin(rad + 0.1) * radius + center._m_Z);
+            // pointLightData[3].setPositionXYZ(-Math.cos(rad - 0.1) * radius + center._m_X, center._m_Y, Math.sin(rad - 0.2) * radius + center._m_Z);
+            // pointLightData[4].setPositionXYZ(Math.cos(rad - 0.2) * radius + center._m_X, center._m_Y, -Math.sin(rad + 0.12) * radius + center._m_Z);
+        });
+    });
+
+    let renderEngine = new Try3d.RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+
+</script>
+</body>
+</html>

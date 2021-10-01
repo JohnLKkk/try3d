@@ -44,17 +44,11 @@
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Vector3(15, 15, 15), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
     let firstPersonController = new FirstPersonController(scene, {id:'myController'});
-    let materialDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/BasicLightingDef");
-    let basicLightingMat = new Material(scene, {id:"basicLightingMat", materialDef});
-    basicLightingMat.setParam('ambientColor', new Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
-    basicLightingMat.setParam('diffuseColor', new Vec4Vars().valueFromXYZW(0.5, 0.5, 0.5, 1.0));
-    basicLightingMat.setParam('specularColor', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
-    basicLightingMat.setParam('shininess', new FloatVars().valueOf(32.0));
 
     let rootNode = new Node(scene, {id:'rootNode'});
 
     let objLoader = new OBJLoader();
-    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/', 'DeferredLightingDef');
+    objLoader.useDeferredMatDef();
     objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/scene1.obj', modelNode=>{
         rootNode.addChildren(modelNode);
 

@@ -332,7 +332,6 @@ export default class Camera extends Component{
             cur.push(this._m_Filters[i]);
         }
         cur.push(filter);
-        i++;
         for(let len = this._m_Filters.length;i < len;i++){
             cur.push(this._m_Filters[i]);
         }

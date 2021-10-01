@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SpotLightShadow</title>
+</head>
+<body>
+<script src="../../build/try3d.min.js"></script>
+<div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
+    <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script src="../helpers.js"></script>
+<script src="./../dat.gui.min.js"></script>
+<script type="module">
+    import Stats from "../stats.min.js";
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    scene.setAmbientLightColor(0.0, 0.0, 0.0);
+    scene.getCanvas().setClearColor(0, 0, 0, 1.0);
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(0.10476779992566243,1.6357105831746903,-38.387722621765334), new Try3d.Vector3(15.144753042873162,8.770199710727432,13.910853382738082), new Try3d.Vector3(0, 1, 0));
+
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+    let gltfLoader = new Try3d.GLTFLoader();
+    gltfLoader.load(scene, './../Assets/Models/GLTF/DeathByDance/scene.gltf', modelNode=>{
+        rootNode.addChildren(modelNode);
+
+        // let sceneControl = new Try3d.SceneBrowsingController(scene, {id:"controller"});
+        // sceneControl.setMinVerticalRotation(0);
+        // sceneControl.lookScene(rootNode);
+        // sceneControl.setTargetDistance(1.2);
+        // sceneControl.setMinDistance(0);
+        // sceneControl.setMaxDistance(1.3);
+        // sceneControl.focusCamera();
+
+        addBloom(scene, 0.1, 2.2, 1.5, 1.2);
+        // addFog(scene, 80, 120, [0, 0, 0, 1]);
+    }, {batch:false});
+
+    let leftSpotLight = new Try3d.SpotLight(scene, {id:'leftSpotLight'});
+    leftSpotLight.setDirectionXYZ(0, -0.2, -1);
+    leftSpotLight.setColorRGBA(1, 1, 1, 1);
+    leftSpotLight.setSpotRange(500);
+    leftSpotLight.setInnerAngle(Try3d.MoreMath.toRadians(5));
+    leftSpotLight.setOuterAngle(Try3d.MoreMath.toRadians(15));
+    leftSpotLight.setPositionXYZ(6.864426, 2.9827647, 16.141102);
+    leftSpotLight.proShadow(true);
+    rootNode.addChildren(leftSpotLight);
+
+    let rightSpotLight = new Try3d.SpotLight(scene, {id:'rightSpotLight'});
+    rightSpotLight.setDirectionXYZ(0, -0.2, -1);
+    rightSpotLight.setColorRGBA(1, 1, 1, 1);
+    rightSpotLight.setSpotRange(500);
+    rightSpotLight.setInnerAngle(Try3d.MoreMath.toRadians(5));
+    rightSpotLight.setOuterAngle(Try3d.MoreMath.toRadians(15));
+    rightSpotLight.setPositionXYZ(2.590661, 2.9827647, 16.141102);
+    rightSpotLight.proShadow(true);
+    rootNode.addChildren(rightSpotLight);
+
+
+    let spotLight = new Try3d.SpotLight(scene, {id:'spotLight'});
+    spotLight.setDirectionXYZ(0.5, -1, 0);
+    spotLight.setColorRGBA(1.0, 0.8, 0.2, 1.0);
+    spotLight.setSpotRange(500);
+    spotLight.setInnerAngle(Try3d.MoreMath.toRadians(10));
+    spotLight.setOuterAngle(Try3d.MoreMath.toRadians(35));
+    spotLight.setPositionXYZ(-3.5459878, 16.842323, 0.31434864);
+    spotLight.proShadow(true);
+    rootNode.addChildren(spotLight);
+
+
+    // 使用dat gui
+    let gui = new dat.GUI();
+    var settings = {
+        leftSpotLight: true,
+        leftSpotLightShadow: true,
+        leftSpotLightBackfaceShadows:false,
+        leftSpotLightShadowIntensity: 0.8,
+        rightSpotLight: true,
+        rightSpotLightShadow: true,
+        rightSpotLightBackfaceShadows:false,
+        rightSpotLightShadowIntensity: 0.8,
+        spotLight: true,
+        spotLightShadow: true,
+        backfaceShadows:false,
+        shadowIntensity: 0.8
+    };
+    gui.add(settings, 'leftSpotLight').onChange(function(value) {
+        if(value){
+            leftSpotLight.enable();
+        }
+        else{
+            leftSpotLight.disable();
+        }
+    });
+    gui.add(settings, 'leftSpotLightShadow').onChange(function(value) {
+        leftSpotLight.proShadow(value);
+    });
+    gui.add(settings, 'leftSpotLightBackfaceShadows').onChange(function(value) {
+        leftSpotLight.getShadow().setBackfaceShadows(value);
+    });
+    gui.add(settings, 'leftSpotLightShadowIntensity', 0.1, 1.0).step(0.1).onChange(function(value) {
+        leftSpotLight.getShadow().setShadowIntensity(value);
+    });
+
+    gui.add(settings, 'rightSpotLight').onChange(function(value) {
+        if(value){
+            rightSpotLight.enable();
+        }
+        else{
+            rightSpotLight.disable();
+        }
+    });
+    gui.add(settings, 'rightSpotLightShadow').onChange(function(value) {
+        rightSpotLight.proShadow(value);
+    });
+    gui.add(settings, 'rightSpotLightBackfaceShadows').onChange(function(value) {
+        rightSpotLight.getShadow().setBackfaceShadows(value);
+    });
+    gui.add(settings, 'rightSpotLightShadowIntensity', 0.1, 1.0).step(0.1).onChange(function(value) {
+        rightSpotLight.getShadow().setShadowIntensity(value);
+    });
+
+    let renderEngine = new Try3d.RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+    });
+</script>
+</body>
+</html>

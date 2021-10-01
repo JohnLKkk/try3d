@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SinglePassVsMultiPassLighting</title>
+</head>
+<body onload="focus()">
+<div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
+    <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;" tabindex="0"></canvas>
+</div>
+<script src="../../build/try3d.min.js"></script>
+<script src="./../dat.gui.min.js"></script>
+<script type="module">
+    // 案例内容
+    import Ext from "../Ext.js";
+
+    let ext = new Ext();
+    ext.show('  这个案例演示了光源渲染模式SinglePass与MultiPass的区别，默认下，BasicLightingDef使用SinglePass，这个模式下将根据所设置的BatchLightSize，尽可能在一个Pass中完成更多的光照计算，而MultiPass则对光源裁剪以便进行累计光照。\n   通过切换，你可以看到SinglePass和MultiPass的差异。', {lineheight:50});
+
+    import Stats from "../stats.min.js";
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    scene.getCanvas().setClearColor(0.01, 0.01, 0.01, 1.0);
+    // 必须在初始阶段预设batchLightSize值,默认为4
+    scene.getRender().setBatchLightSize(4);
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(15, 15, 15), new Try3d.Vector3(0, 0, 0), new Try3d.Vector3(0, 1, 0));
+
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+
+    let objLoader = new Try3d.OBJLoader();
+    objLoader.load(scene, 'Nanosuit', './../Assets/Models/OBJ/Nanosuit/nanosuit.obj', modelNode=>{
+        modelNode.setLocalRotationFromEuler(0, Try3d.MoreMath.toRadians(90), 0);
+        rootNode.addChildren(modelNode);
+
+        let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'sceneControl'});
+        sceneControl.lookScene(modelNode);
+        sceneControl.setRotationSpeed(0.2);
+        sceneControl.setTargetDistance(20);
+
+        let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
+        dirLight.setDirectionXYZ(-1, -1, 0);
+        dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+        rootNode.addChildren(dirLight);
+        let aabb = modelNode.getBoundingVolume();
+        let dx = aabb.getXHalf() * 2;
+        let dy = aabb.getYHalf() * 2;
+        let dz = aabb.getZHalf() * 2;
+        let center = aabb.getCenter();
+        center._m_Y += dy * 0.5;
+
+        let pointLights = [
+            {
+                pos:new Try3d.Vector3(center._m_X, center._m_Y, center._m_Z + dz),
+                dir:new Try3d.Vector3(0, 0, dx),
+                color:[1.0, 0.0, 0.0, 1.0],
+                r:25.0
+            },
+            {
+                pos:new Try3d.Vector3(center._m_X + dx, center._m_Y, center._m_Z),
+                dir:new Try3d.Vector3(dx, 0, 0),
+                color:[0.3, 0.5, 0.0, 1.0],
+                r:25.0
+            },
+            {
+                pos:new Try3d.Vector3(center._m_X - dx, center._m_Y, center._m_Z),
+                dir:new Try3d.Vector3(-dx, 0, 0),
+                color:[0.3, 0.5, 0.5, 1.0],
+                r:25.0
+            },
+            {
+                pos:new Try3d.Vector3(center._m_X, center._m_Y, center._m_Z - dz),
+                dir:new Try3d.Vector3(0, 0, -dz),
+                color:[0.0, 0.0, 1.0, 1.0],
+                r:25.0
+            }
+        ];
+
+        let i = 0;
+        console.log('pointLights.lenght:' + pointLights.length);
+        let pLights = [];
+        pointLights.forEach(p=>{
+            let pointLight = new Try3d.PointLight(scene, {id:'pointLight' + i++});
+            pointLight.setRadius(p.r);
+            pointLight.setColorRGBA(p.color[0], p.color[1], p.color[2], p.color[3]);
+            pointLight.setPosition(p.pos);
+            pLights.push(pointLight);
+            rootNode.addChildren(pointLight);
+        });
+        // 使用dat gui
+        let gui = new dat.GUI();
+        var settings = {
+            render_mode: 'SinglePass',
+            directionalLight: true,
+            pointLights: true,
+            pointLightRotate: true
+        };
+        let ros = 0;
+        let rotate = new Try3d.Quaternion();
+        let rotateDir = new Try3d.Vector3();
+        let nextPos = new Try3d.Vector3();
+        scene.on('update', (exTime)=>{
+            if(!settings.pointLightRotate)return;
+            // 旋转
+            ros += Math.PI * 0.4 * exTime;
+            for(let i = 0;i < pLights.length;i++){
+                rotate.fromEuler(0, ros, 0);
+                rotate.multVec3(pointLights[i].dir, rotateDir);
+                pLights[i].setPosition(rotateDir.add(pointLights[i].pos, nextPos));
+                pLights[i].updateBounding();
+            }
+        });
+        gui.add(settings, 'render_mode', ['SinglePass', 'MultiPass']).name('渲染模式').onChange(function(value) {
+            modelNode.traverse((node)=>{
+                if(node.isDrawable()){
+                    // SinglePass是默认技术，所以传递""即可
+                    node.getMaterial().selectTechnology(value == 'SinglePass' ? "" : value);
+                }
+            });
+        });
+        gui.add(settings, 'directionalLight').onChange(swi=>{
+            if(swi){
+                dirLight.enable();
+            }
+            else{
+                dirLight.disable();
+            }
+        });
+        gui.add(settings, 'pointLights').onChange(swi=>{
+            pLights.forEach(p=>{
+                if(swi){
+                    p.enable();
+                }
+                else{
+                    p.disable();
+                }
+            });
+        });
+        gui.add(settings, 'pointLightRotate');
+        gui.width = 300;
+        gui.open();
+    });
+
+    let renderEngine = new Try3d.RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+    });
+</script>
+</body>
+</html>

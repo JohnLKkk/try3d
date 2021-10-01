@@ -49,7 +49,7 @@
     sky.getMaterial().setParam('envMap', envMap);
     scene.setSky(sky);
     let objLoader = new OBJLoader();
-    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/');
+    objLoader.setAssetsPath('../../src/Core/Assets/MaterialDef/Light/');
     objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/Reaktor/reaktor.obj', modelNode=>{
         rootNode.addChildren(modelNode);
         modelNode.traverse((node)=>{

@@ -23,10 +23,20 @@ const Examples = {
 
     ],
     'Lights':[
-
+        "DirectionalLighting.html",
+        "PointLighting.html",
+        "SpotLighting.html",
+        "DynamicPointLighting.html",
+        "ManyDynamicPointLighting.html",
+        "SinglePassForwardPointLighting.html",
+        "SinglePassVsMultiPassLighting.html",
+        "LightStepClip.html",
     ],
     'Shadows':[
-
+        'DirecationLightShadow.html',
+        'PointLightShadow.html',
+        'SpotLightShadow.html',
+        'LightMap.html',
     ],
     'Materials':[
 
