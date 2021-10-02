@@ -16791,16 +16791,24 @@ var DefaultRenderProgram = /*#__PURE__*/function () {
     _classCallCheck(this, DefaultRenderProgram);
   }
   /**
-   * 渲染指定iDrawable。<br/>
-   * @param {WebGLContext}[gl]
-   * @param {Scene}[scene]
-   * @param {FrameContext}[frameContext]
-   * @param {IDrawable}[iDrawable]
-   * @param {Light[]}[lights灯光信息列表]
+   * 每一帧开始时回调。<br/>
    */
 
 
   _createClass(DefaultRenderProgram, [{
+    key: "reset",
+    value: function reset() {// 什么也不做
+    }
+    /**
+     * 渲染指定iDrawable。<br/>
+     * @param {WebGLContext}[gl]
+     * @param {Scene}[scene]
+     * @param {FrameContext}[frameContext]
+     * @param {IDrawable}[iDrawable]
+     * @param {Light[]}[lights灯光信息列表]
+     */
+
+  }, {
     key: "draw",
     value: function draw(gl, scene, frameContext, iDrawable, lights) {
       iDrawable.draw(frameContext);
@@ -16949,17 +16957,22 @@ var MultiPassIBLLightingRenderProgram = /*#__PURE__*/function (_DefaultRenderPro
     _this._m_m_LastSubShader = null;
     return _this;
   }
-  /**
-   * 混合GI探头信息。<br/>
-   * 暂时仅仅只是提交单个探头信息。<br/>
-   * @param {WebGL}[gl]
-   * @param {Scene}[scene]
-   * @param {FrameContext}[frameContext]
-   * @private
-   */
-
 
   _createClass(MultiPassIBLLightingRenderProgram, [{
+    key: "reset",
+    value: function reset() {
+      this._m_m_LastSubShader = null;
+    }
+    /**
+     * 混合GI探头信息。<br/>
+     * 暂时仅仅只是提交单个探头信息。<br/>
+     * @param {WebGL}[gl]
+     * @param {Scene}[scene]
+     * @param {FrameContext}[frameContext]
+     * @private
+     */
+
+  }, {
     key: "_blendGIProbes",
     value: function _blendGIProbes(gl, scene, frameContext) {
       var conVars = frameContext.m_LastSubShader.getContextVars(); // 探头信息
@@ -18227,22 +18240,28 @@ var SinglePassIBLLightingRenderProgram = /*#__PURE__*/function (_DefaultRenderPr
     _this._m_AccumulationLights.setFlag(_RenderState.default.S_STATES[1], 'Off'); // 不使用SRC_ALPHA，ONE的原因在于，如果第一个光源是point或spot，则会导致累计光源渲染一个DirLight时，对于材质半透明的物体会出现累加错误的情况，因为混合了alpha
 
 
-    _this._m_AccumulationLights.setFlag(_RenderState.default.S_STATES[5], ['ONE', 'ONE']);
+    _this._m_AccumulationLights.setFlag(_RenderState.default.S_STATES[5], ['ONE', 'ONE']); // 记住这个参数必须在每次frame开始时重新设置,防止累计帧
+
 
     _this._m_m_LastSubShader = null;
     return _this;
   }
-  /**
-   * 混合GI探头信息。<br/>
-   * 暂时仅仅只是提交单个探头信息。<br/>
-   * @param {WebGL}[gl]
-   * @param {Scene}[scene]
-   * @param {FrameContext}[frameContext]
-   * @private
-   */
-
 
   _createClass(SinglePassIBLLightingRenderProgram, [{
+    key: "reset",
+    value: function reset() {
+      this._m_m_LastSubShader = null;
+    }
+    /**
+     * 混合GI探头信息。<br/>
+     * 暂时仅仅只是提交单个探头信息。<br/>
+     * @param {WebGL}[gl]
+     * @param {Scene}[scene]
+     * @param {FrameContext}[frameContext]
+     * @private
+     */
+
+  }, {
     key: "_blendGIProbes",
     value: function _blendGIProbes(gl, scene, frameContext) {
       var conVars = frameContext.m_LastSubShader.getContextVars(); // 探头信息
@@ -18992,17 +19011,22 @@ var TilePassIBLLightingRenderProgram = /*#__PURE__*/function (_DefaultRenderProg
 
     return _this;
   }
-  /**
-   * 混合GI探头信息。<br/>
-   * 暂时仅仅只是提交单个探头信息。<br/>
-   * @param {WebGL}[gl]
-   * @param {Scene}[scene]
-   * @param {FrameContext}[frameContext]
-   * @private
-   */
-
 
   _createClass(TilePassIBLLightingRenderProgram, [{
+    key: "reset",
+    value: function reset() {
+      this._m_m_LastSubShader = null;
+    }
+    /**
+     * 混合GI探头信息。<br/>
+     * 暂时仅仅只是提交单个探头信息。<br/>
+     * @param {WebGL}[gl]
+     * @param {Scene}[scene]
+     * @param {FrameContext}[frameContext]
+     * @private
+     */
+
+  }, {
     key: "_blendGIProbes",
     value: function _blendGIProbes(gl, scene, frameContext) {
       var conVars = frameContext.m_LastSubShader.getContextVars(); // 探头信息
@@ -21196,7 +21220,7 @@ var Render = /*#__PURE__*/function (_Component) {
       return change;
     }
     /**
-     * 重制渲染上下文。<br/>
+     * 重制帧上下文。<br/>
      * @private
      */
 
@@ -21204,6 +21228,19 @@ var Render = /*#__PURE__*/function (_Component) {
     key: "_resetFrameContext",
     value: function _resetFrameContext() {
       this._m_FrameContext.reset();
+    }
+    /**
+     * 重置所有渲染上下文。<br/>
+     * @private
+     */
+
+  }, {
+    key: "_resetRenderContext",
+    value: function _resetRenderContext() {
+      // 更新所有渲染程序
+      for (var r in this._m_RenderPrograms) {
+        this._m_RenderPrograms[r].reset();
+      }
     }
     /**
      * 绘制一帧。<br/>
@@ -21220,6 +21257,8 @@ var Render = /*#__PURE__*/function (_Component) {
       this.fire(Render.PRE_FRAME, [exTime]);
 
       this._resetFrameContext();
+
+      this._resetRenderContext();
 
       this._checkRenderState(gl, this._m_FrameContext.getRenderState().reset(), this._m_FrameContext.getRenderState()); // m_VisDrawables包含了视锥体剔除的结果
       // 在这里进行遮挡剔除

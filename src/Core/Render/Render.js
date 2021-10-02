@@ -519,11 +519,22 @@ export default class Render extends Component{
     }
 
     /**
-     * 重制渲染上下文。<br/>
+     * 重制帧上下文。<br/>
      * @private
      */
     _resetFrameContext(){
         this._m_FrameContext.reset();
+    }
+
+    /**
+     * 重置所有渲染上下文。<br/>
+     * @private
+     */
+    _resetRenderContext(){
+        // 更新所有渲染程序
+        for(let r in this._m_RenderPrograms){
+            this._m_RenderPrograms[r].reset();
+        }
     }
 
     /**
@@ -536,6 +547,7 @@ export default class Render extends Component{
         // 一帧的开始
         this.fire(Render.PRE_FRAME, [exTime]);
         this._resetFrameContext();
+        this._resetRenderContext();
         this._checkRenderState(gl, this._m_FrameContext.getRenderState().reset(), this._m_FrameContext.getRenderState());
         // m_VisDrawables包含了视锥体剔除的结果
         // 在这里进行遮挡剔除

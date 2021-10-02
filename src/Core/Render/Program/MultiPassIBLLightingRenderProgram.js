@@ -58,6 +58,9 @@ export default class MultiPassIBLLightingRenderProgram extends DefaultRenderProg
         this._m_ClipLights.setFlag(RenderState.S_STATES[6], 'On');
         this._m_m_LastSubShader = null;
     }
+    reset(){
+        this._m_m_LastSubShader = null;
+    }
 
     /**
      * 混合GI探头信息。<br/>

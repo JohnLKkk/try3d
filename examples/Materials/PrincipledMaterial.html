@@ -13,6 +13,10 @@
     </div>
     <script type="module">
 
+        import Ext from "../Ext.js";
+
+        let ext = new Ext();
+        ext.show('  这个例子演示了PrincipledMaterial的标准MetallicPipeline,在该Pipeline下,由baseColorMap,roughnessMap,metallicMap以及normalMap,aoMap是可选的,通常包含烘培的光照信息。', {lineheight:50});
         // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
 
         let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
@@ -111,6 +115,21 @@
         grassMaterial.setParam('normalMap', grassMaps.normalMap);
         grassMaterial.setParam('lightMap', grassMaps.aoMap);
 
+        // rustedIronMat
+        let rustedIronMaterial = new Try3d.Material(scene, {id:'rustedIronMaterial', materialDef:principledMaterialDef});
+        let rustedIronMaps = {
+            baseColorMap:getTexture(scene, basePath + "/rusted_iron/albedo.png", true),
+            metallicMap:getTexture(scene, basePath + "/rusted_iron/metallic.png", false),
+            roughnessMap:getTexture(scene, basePath + "/rusted_iron/roughness.png", false),
+            normalMap:getTexture(scene, basePath + "/rusted_iron/normal.png", false),
+            aoMap:getTexture(scene, basePath + "/rusted_iron/ao.png", true),
+        };
+        rustedIronMaterial.setParam('baseColorMap', rustedIronMaps.baseColorMap);
+        rustedIronMaterial.setParam('metallicMap', rustedIronMaps.metallicMap);
+        rustedIronMaterial.setParam('roughnessMap', rustedIronMaps.roughnessMap);
+        rustedIronMaterial.setParam('normalMap', rustedIronMaps.normalMap);
+        rustedIronMaterial.setParam('lightMap', rustedIronMaps.aoMap);
+
         let currentMat = wallMaterial;
         let currentMaps = wallMaps;
         let materials = {
@@ -118,8 +137,9 @@
             'gold':{mat:goldMaterial, maps:goldMaps},
             'plastic':{mat:plasticMaterial, maps:plasticMaps},
             'grass':{mat:grassMaterial, maps:grassMaps},
+            'rustedIron':{mat:rustedIronMaterial, maps:rustedIronMaps},
         };
-        let materialItems = ['wall', 'gold', 'plastic', 'grass'];
+        let materialItems = ['wall', 'gold', 'plastic', 'grass', 'rustedIron'];
         ball.setMaterial(currentMat);
         rootNode.addChildren(ball);
 
@@ -133,7 +153,7 @@
         scene.on('update', tpf=>{
             // angle += tpf * 10;
             // rad = Try3d.MoreMath.toRadians(angle);
-            // box.setLocalRotationFromEuler(rad, rad, rad);
+            // ball.setLocalRotationFromEuler(rad, rad, rad);
         });
 
         // 控制器
@@ -193,9 +213,11 @@
             currentMat.setParam('metallicMap', currentMaps.metallicMap);
             currentMat.setParam('roughnessMap', currentMaps.roughnessMap);
             currentMat.setParam('normalMap', currentMaps.normalMap);
+            currentMat.setParam('lightMap', currentMaps.aoMap);
             currentMat.setParam('baseColor', new Try3d.Vec4Vars().valueFromXYZW(1, 1, 1, 1));
             currentMat.setParam('metallic', new Try3d.FloatVars().valueOf(1));
             currentMat.setParam('roughness', new Try3d.FloatVars().valueOf(1));
+            dirLight.setColorRGBA(1, 1, 1, 1);
             currentMat = materials[material].mat;
             currentMaps = materials[material].maps;
             ball.setMaterial(currentMat);
@@ -230,6 +252,14 @@
             }
             else{
                 currentMat.clearParam('normalMap');
+            }
+        });
+        gui.add(settings, 'aoMap').onChange(normalMap=>{
+            if(normalMap){
+                currentMat.setParam('lightMap', currentMaps.normalMap);
+            }
+            else{
+                currentMat.clearParam('lightMap');
             }
         });
         gui.addColor(settings, 'baseColor').onChange(baseColor=>{

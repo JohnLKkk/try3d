@@ -29,6 +29,10 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[1], 'Off');
         // 不使用SRC_ALPHA，ONE的原因在于，如果第一个光源是point或spot，则会导致累计光源渲染一个DirLight时，对于材质半透明的物体会出现累加错误的情况，因为混合了alpha
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[5], ['ONE', 'ONE']);
+        // 记住这个参数必须在每次frame开始时重新设置,防止累计帧
+        this._m_m_LastSubShader = null;
+    }
+    reset(){
         this._m_m_LastSubShader = null;
     }
 

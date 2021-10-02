@@ -84,6 +84,9 @@ export default class TilePassIBLLightingRenderProgram extends DefaultRenderProgr
         // 不使用SRC_ALPHA，ONE的原因在于，如果第一个光源是point或spot，则会导致累计光源渲染一个DirLight时，对于材质半透明的物体会出现累加错误的情况，因为混合了alpha
         this._m_AccumulationLights.setFlag(RenderState.S_STATES[5], ['ONE', 'ONE']);
     }
+    reset(){
+        this._m_m_LastSubShader = null;
+    }
     /**
      * 混合GI探头信息。<br/>
      * 暂时仅仅只是提交单个探头信息。<br/>

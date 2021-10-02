@@ -11,6 +11,13 @@ export default class DefaultRenderProgram {
     }
 
     /**
+     * 每一帧开始时回调。<br/>
+     */
+    reset(){
+        // 什么也不做
+    }
+
+    /**
      * 渲染指定iDrawable。<br/>
      * @param {WebGLContext}[gl]
      * @param {Scene}[scene]
