@@ -1547,7 +1547,6 @@ export default class Internal {
         "        sampler2D diffuseMap;\n" +
         "        sampler2D normalMap;\n" +
         "        sampler2D specularMap;\n" +
-        "        sampler2D normalMap;\n" +
         "        vec4 ambientColor;\n" +
         "        vec4 diffuseColor;\n" +
         "        vec4 specularColor;\n" +

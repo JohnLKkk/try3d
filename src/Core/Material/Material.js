@@ -359,7 +359,7 @@ export default class Material extends Component{
      * 清楚一个参数。<br/>
      * @param {String}[paramName]
      */
-    clearParams(paramName, value){
+    clearParam(paramName, value){
         // 待实现
         // 检测是否有效参数
         if(this._m_Params[paramName]){

@@ -94,7 +94,7 @@
             mat.setParam('diffuseMap', colorMap);
         }
         else{
-            mat.clearParams('diffuseMap');
+            mat.clearParam('diffuseMap');
         }
     });
     gui.add(settings, 'normalMap').onChange(function(value) {
@@ -102,7 +102,7 @@
             mat.setParam('normalMap', nrmMap);
         }
         else{
-            mat.clearParams('normalMap');
+            mat.clearParam('normalMap');
         }
     });
     gui.add(settings, 'occlusionMap').onChange(function(value) {
@@ -110,7 +110,7 @@
             mat.setParam('lightMap', occMap);
         }
         else{
-            mat.clearParams('lightMap');
+            mat.clearParam('lightMap');
         }
     });
     gui.add(settings, 'specularMap').onChange(function(value) {
@@ -118,7 +118,7 @@
             mat.setParam('specularMap', specMap);
         }
         else{
-            mat.clearParams('specularMap');
+            mat.clearParam('specularMap');
         }
     });
 

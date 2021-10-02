@@ -116,4 +116,23 @@ function showStats(scene){
         stats.update();
     });
 }
+function getTexture(scene, src, srgb, flipY){
+    let texture = new Try3d.Texture2DVars(scene);
+    texture.setPreloadColor(scene, new Try3d.Vector4(0.2, 0.2, 0.2, 1.0));
+    texture.setImageSrc(scene, src);
+    texture.setFlipY(flipY);
+    if(srgb)
+        texture.setTextureFormat(Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
+    return texture;
+};
+function resetSliders(gui, name, value){
+    for(var i = 0; i<gui.__controllers.length;i++){
+
+        if(gui.__controllers[i].property == name){
+            gui.__controllers[i].setValue(value);
+            break;
+        }
+
+    }
+}
 // var blackColorMaterial = new Try3d.Material(window.scene, {id:"blackColorMaterial", colorDef});

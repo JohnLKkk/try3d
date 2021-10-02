@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BasicMaterialVsPrincipledMaterial</title>
+</head>
+<script src="../../build/try3d.min.js"></script>
+<script src="../helpers.js"></script>
+<script src="./monkey.js"></script>
+<script src="./../dat.gui.min.js"></script>
+<body>
+    <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;margin: 0px;">
+        <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+    </div>
+    <script type="module">
+        import Ext from "../Ext.js";
+
+        let ext = new Ext();
+        ext.show('  这个例子对比了基础光照模型(传统经验模型)与原理化模型(基于物理的brdf)之间的一些区别,左侧为基础光照模型渲染的效果,右侧为原理化模型渲染的效果。这是一个金属猴头,可以看到原理化模型相比经验模型更加能够呈现细节质感。', {lineheight:50});
+
+        // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
+        let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+        scene.getCanvas().setClearColor(1.0, 1.0, 1.0, 1.0);
+        scene.setAmbientLightColor(1.0, 1.0, 1.0);
+
+        // 定义一个根节点
+        let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+        scene.addSceneNode(rootNode);
+
+        // 环境纹理加载完再开始创建创建
+        let radianceLoader = new Try3d.RadianceLoader();
+        radianceLoader.loadHDR('./../Assets/Textures/hdr/env3.hdr', imageData=> {
+            // 创建一个sky
+            let sky = new Try3d.SkyBox(scene, {id: 'sky'});
+            // 使用cubeMap作为天空盒材质
+            let envMap = new Try3d.Texture2DVars(scene);
+            envMap.setPreloadColor(scene, new Try3d.Vector4(0.5, 0.5, 0.5, 1.0));
+            envMap.setWrap(scene, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+            envMap.setFilter(scene, Try3d.Texture2DVars.S_FILTERS.S_LINEAR, Try3d.Texture2DVars.S_FILTERS.S_LINEAR);
+            envMap.setTextureFormat(Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB16F, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
+            envMap.setImage(scene, imageData, {rgbe: true, linearFloat: true});
+            sky.getMaterial().setParam('envMap', envMap);
+            sky.getMaterial().setParam('useEnvMap', new Try3d.BoolVars().valueOf(true));
+            sky.getMaterial().setParam('useHDR', new Try3d.BoolVars().valueOf(true));
+
+            scene.setSky(sky);
+
+            // 创建一个monkey数据
+            let monkeyMesh = new Try3d.Mesh();
+            monkeyMesh.setData(Try3d.Mesh.S_POSITIONS, positions);
+            monkeyMesh.setData(Try3d.Mesh.S_NORMALS, normals);
+            monkeyMesh.setData(Try3d.Mesh.S_INDICES, indices);
+            monkeyMesh.setData(Try3d.Mesh.S_UV0, uvs);
+            // 切线数据
+            let tangents = Try3d.Tools.generatorTangents2(monkeyMesh.getData(Try3d.Mesh.S_INDICES), monkeyMesh.getData(Try3d.Mesh.S_POSITIONS), monkeyMesh.getData(Try3d.Mesh.S_UV0), monkeyMesh.getData(Try3d.Mesh.S_NORMALS));
+            monkeyMesh.setData(Try3d.Mesh.S_TANGENTS, tangents);
+
+            // basicMaterial
+            let basicMaterial = new Try3d.Material(scene, {id:'basicMaterial', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_BASIC_LIGHTING_DEF_DATA)});
+            // 参数
+            let diffuseMap = new Try3d.Texture2DVars(scene);
+            diffuseMap.setImageSrc(scene, "../Assets/Textures/Monkey/albedo.png");
+            diffuseMap.setFlipY(true);
+            diffuseMap.setTextureFormat(Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
+            let specularMap = new Try3d.Texture2DVars(scene);
+            specularMap.setImageSrc(scene, "../Assets/Textures/Monkey/basic/albedo_SPEC.png");
+            specularMap.setFlipY(true);
+            let normalMap = new Try3d.Texture2DVars(scene);
+            normalMap.setImageSrc(scene, "../Assets/Textures/Monkey/normal.png");
+            normalMap.setFlipY(true);
+            let occMap = new Try3d.Texture2DVars(scene);
+            occMap.setImageSrc(scene, "../Assets/Textures/Monkey/basic/albedo_OCC.png");
+            occMap.setFlipY(true);
+            basicMaterial.setParam('ambientColor', new Try3d.Vec4Vars().valueFromXYZW(0.2, 0.2, 0.2, 1.0));
+            basicMaterial.setParam('diffuseMap', diffuseMap);
+            basicMaterial.setParam('specularMap', specularMap);
+            basicMaterial.setParam('normalMap', normalMap);
+            basicMaterial.setParam('lightMap', occMap);
+
+            // basicMonkeyGeometry
+            let basicMonkeyGeometry = new Try3d.Geometry(scene, {id:'basicMonkeyGeometry'});
+            basicMonkeyGeometry.setMaterial(basicMaterial);
+            basicMonkeyGeometry.setMesh(monkeyMesh);
+            basicMonkeyGeometry.updateBound();
+            basicMonkeyGeometry.setLocalTranslationXYZ(0, 0, 2);
+            basicMonkeyGeometry.setLocalRotationFromEuler(0, Try3d.MoreMath.toRadians(90), 0);
+
+
+            // principledMaterial
+            let principledMaterial = new Try3d.Material(scene, {id:'principledMaterial', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_PRINCIPLED_LIGHTING_DEF)});
+            let metallicMap = new Try3d.Texture2DVars(scene);
+            metallicMap.setImageSrc(scene, '../Assets/Textures/Monkey/metallic.png');
+            metallicMap.setFlipY(true);
+            let roughnessMap = new Try3d.Texture2DVars(scene);
+            roughnessMap.setImageSrc(scene, '../Assets/Textures/Monkey/roughness.png');
+            roughnessMap.setFlipY(true);
+            let aoMap = new Try3d.Texture2DVars(scene);
+            aoMap.setImageSrc(scene, '../Assets/Textures/Monkey/ao.png');
+            aoMap.setTextureFormat(Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
+            aoMap.setFlipY(true);
+            principledMaterial.setParam('baseColorMap', diffuseMap);
+            principledMaterial.setParam('normalMap', normalMap);
+            principledMaterial.setParam('lightMap', aoMap);
+            principledMaterial.setParam('metallicMap', metallicMap);
+            principledMaterial.setParam('roughnessMap', roughnessMap);
+            principledMaterial.setParam('metallic', new Try3d.FloatVars().valueOf(0.3));
+            principledMaterial.setParam('roughness', new Try3d.FloatVars().valueOf(0.8));
+
+            // principledGeometry
+            let principledGeometry = new Try3d.Geometry(scene, {id:'principledGeometry'});
+            principledGeometry.setMesh(monkeyMesh);
+            principledGeometry.setMaterial(principledMaterial);
+            principledGeometry.updateBound();
+            principledGeometry.setLocalTranslationXYZ(0, 0, -2);
+            principledGeometry.setLocalRotationFromEuler(0, Try3d.MoreMath.toRadians(90), 0);
+
+            rootNode.addChildren(basicMonkeyGeometry);
+            rootNode.addChildren(principledGeometry);
+
+            // directionalLight
+            let directionalLight = new Try3d.DirectionalLight(scene, {id:'directionalLight'});
+            directionalLight.setDirectionXYZ(-1, -1, -1);
+            directionalLight.setColorRGBA(1, 1, 1, 1);
+            rootNode.addChildren(directionalLight);
+
+            // 创建一个控制器
+            let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
+            sceneControl.lookScene(rootNode);
+            window.giProbe = new Try3d.GIProbe(scene, {id:'giProbe'});
+            window.giProbe.setRadius(20);
+            window.giProbe.setPositionFromXYZ(0, 5, 0);
+            let envCapture = Try3d.ProbeTools.bakeGIProbe(scene, window.giProbe, {resolute:128});
+
+            // gui
+            // 使用dat gui
+            let gui = new dat.GUI();
+            let currentShape = 'ball';
+            let basicMatSetting = {
+                specularShininess:32.0,
+            };
+            let principledMatSetting = {
+                metallic:0.7,
+                roughness:0.2,
+            };
+            let bm = gui.addFolder('BasicMaterial');
+            bm.add(basicMatSetting, 'specularShininess', 4, 128).step(1).onChange(shininess=>{
+                basicMaterial.setParam('shininess', new Try3d.FloatVars().valueOf(shininess));
+            });
+            bm.open();
+            let pm = gui.addFolder('PrincipledMaterial');
+            pm.add(principledMatSetting, 'metallic', 0, 1).step(.1).onChange(metallic=>{
+                // 因为使用了metallicMap,所以metallic是调和参数,所以是1.0-metallic
+                principledMaterial.setParam('metallic', new Try3d.FloatVars().valueOf(1.0 - metallic));
+            });
+            pm.add(principledMatSetting, 'roughness', 0, 1).step(.1).onChange(roughness=>{
+                // 因为使用了roughnessMap,所以metallic是调和参数,所以是1.0-roughness
+                principledMaterial.setParam('roughness', new Try3d.FloatVars().valueOf(1.0 - roughness));
+            });
+            pm.open();
+        });
+
+
+
+        // 创建渲染器
+        let renderEngine = new Try3d.RenderEngine();
+        // 添加要渲染的场景对象
+        renderEngine.addScene(scene);
+        // 启动渲染器
+        renderEngine.launch();
+        showStats(scene);
+    </script>
+</body>
+</html>

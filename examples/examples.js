@@ -33,13 +33,16 @@ const Examples = {
         "LightStepClip.html",
     ],
     'Shadows':[
-        'DirecationLightShadow.html',
+        'DirectionalLightShadow.html',
+        'DynamicDirectionalLightShadow.html',
         'PointLightShadow.html',
         'SpotLightShadow.html',
         'LightMap.html',
+        'ParallelSplitShadowMapShadow.html',
+        'ParallelSplitShadowMapShadow2.html',
     ],
     'Materials':[
-
+        'BasicMaterialVsPrincipledMaterial.html',
     ],
     'Renders':[
 

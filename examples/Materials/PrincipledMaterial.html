@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PrincipledMaterial</title>
+</head>
+<script src="./../dat.gui.min.js"></script>
+<script src="../../build/try3d.min.js"></script>
+<script src="../helpers.js"></script>
+<body>
+    <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;margin: 0px;">
+        <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+    </div>
+    <script type="module">
+
+        // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
+
+        let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+        scene.getCanvas().setClearColor(0.01, 0.01, 0.01, 1.0);
+        scene.setAmbientLightColor(1.0, 1.0, 1.0);
+        let principledMaterialDef = Try3d.MaterialDef.parse(Try3d.Internal.S_PRINCIPLED_LIGHTING_DEF);
+
+        // 定义一个根节点
+        let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+        scene.addSceneNode(rootNode);
+
+        // 环境纹理加载完再开始创建创建
+        let radianceLoader = new Try3d.RadianceLoader();
+        radianceLoader.loadHDR('./../Assets/Textures/hdr/Path.hdr', imageData=> {
+            // 创建一个sky
+            let sky = new Try3d.SkyBox(scene, {id: 'sky'});
+            // 使用cubeMap作为天空盒材质
+            let envMap = new Try3d.Texture2DVars(scene);
+            envMap.setPreloadColor(scene, new Try3d.Vector4(0.5, 0.5, 0.5, 1.0));
+            envMap.setWrap(scene, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+            envMap.setFilter(scene, Try3d.Texture2DVars.S_FILTERS.S_LINEAR, Try3d.Texture2DVars.S_FILTERS.S_LINEAR);
+            envMap.setTextureFormat(Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB16F, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
+            envMap.setImage(scene, imageData, {rgbe: true, linearFloat: true});
+            sky.getMaterial().setParam('envMap', envMap);
+            sky.getMaterial().setParam('useEnvMap', new Try3d.BoolVars().valueOf(true));
+            sky.getMaterial().setParam('useHDR', new Try3d.BoolVars().valueOf(true));
+
+            scene.setSky(sky);
+            window.giProbe = new Try3d.GIProbe(scene, {id:'giProbe'});
+            window.giProbe.setRadius(20);
+            window.giProbe.setPositionFromXYZ(0, 5, 0);
+            let envCapture = Try3d.ProbeTools.bakeGIProbe(scene, window.giProbe, {resolute:128});
+        });
+
+        // 定义一个材质Ball,用于演示
+        let ball = new Try3d.Sphere(scene, {id:'ball', widthSegments:10, heightSegments:10, widthUVScale:1, heightUVScale:1, radius:1.5});
+
+        let basePath = '../Assets/Textures/pbr';
+        // wallMat
+        let wallMaterial = new Try3d.Material(scene, {id:'wallMaterial', materialDef:principledMaterialDef});
+        let wallMaps = {
+            baseColorMap:getTexture(scene, basePath + "/wall/albedo.png", true),
+            metallicMap:getTexture(scene, basePath + "/wall/metallic.png", false),
+            roughnessMap:getTexture(scene, basePath + "/wall/roughness.png", false),
+            normalMap:getTexture(scene, basePath + "/wall/normal.png", false),
+            aoMap:getTexture(scene, basePath + "/wall/ao.png", true),
+        };
+        wallMaterial.setParam('baseColorMap', wallMaps.baseColorMap);
+        wallMaterial.setParam('metallicMap', wallMaps.metallicMap);
+        wallMaterial.setParam('roughnessMap', wallMaps.roughnessMap);
+        wallMaterial.setParam('normalMap', wallMaps.normalMap);
+        wallMaterial.setParam('lightMap', wallMaps.aoMap);
+
+        // goldMat
+        let goldMaterial = new Try3d.Material(scene, {id:'goldMaterial', materialDef:principledMaterialDef});
+        let goldMaps = {
+            baseColorMap:getTexture(scene, basePath + "/gold/albedo.png", true),
+            metallicMap:getTexture(scene, basePath + "/gold/metallic.png", false),
+            roughnessMap:getTexture(scene, basePath + "/gold/roughness.png", false),
+            normalMap:getTexture(scene, basePath + "/gold/normal.png", false),
+            aoMap:getTexture(scene, basePath + "/gold/ao.png", true),
+        };
+        goldMaterial.setParam('baseColorMap', goldMaps.baseColorMap);
+        goldMaterial.setParam('metallicMap', goldMaps.metallicMap);
+        goldMaterial.setParam('roughnessMap', goldMaps.roughnessMap);
+        goldMaterial.setParam('normalMap', goldMaps.normalMap);
+        goldMaterial.setParam('lightMap', goldMaps.aoMap);
+
+        // plasticMat
+        let plasticMaterial = new Try3d.Material(scene, {id:'plasticMaterial', materialDef:principledMaterialDef});
+        let plasticMaps = {
+            baseColorMap:getTexture(scene, basePath + "/plastic/albedo.png", true),
+            metallicMap:getTexture(scene, basePath + "/plastic/metallic.png", false),
+            roughnessMap:getTexture(scene, basePath + "/plastic/roughness.png", false),
+            normalMap:getTexture(scene, basePath + "/plastic/normal.png", false),
+            aoMap:getTexture(scene, basePath + "/plastic/ao.png", true),
+        };
+        plasticMaterial.setParam('baseColorMap', plasticMaps.baseColorMap);
+        plasticMaterial.setParam('metallicMap', plasticMaps.metallicMap);
+        plasticMaterial.setParam('roughnessMap', plasticMaps.roughnessMap);
+        plasticMaterial.setParam('normalMap', plasticMaps.normalMap);
+        plasticMaterial.setParam('lightMap', plasticMaps.aoMap);
+
+        // grassMat
+        let grassMaterial = new Try3d.Material(scene, {id:'grassMaterial', materialDef:principledMaterialDef});
+        let grassMaps = {
+            baseColorMap:getTexture(scene, basePath + "/grass/albedo.png", true),
+            metallicMap:getTexture(scene, basePath + "/grass/metallic.png", false),
+            roughnessMap:getTexture(scene, basePath + "/grass/roughness.png", false),
+            normalMap:getTexture(scene, basePath + "/grass/normal.png", false),
+            aoMap:getTexture(scene, basePath + "/grass/ao.png", true),
+        };
+        grassMaterial.setParam('baseColorMap', grassMaps.baseColorMap);
+        grassMaterial.setParam('metallicMap', grassMaps.metallicMap);
+        grassMaterial.setParam('roughnessMap', grassMaps.roughnessMap);
+        grassMaterial.setParam('normalMap', grassMaps.normalMap);
+        grassMaterial.setParam('lightMap', grassMaps.aoMap);
+
+        let currentMat = wallMaterial;
+        let currentMaps = wallMaps;
+        let materials = {
+            'wall':{mat:wallMaterial, maps:wallMaps},
+            'gold':{mat:goldMaterial, maps:goldMaps},
+            'plastic':{mat:plasticMaterial, maps:plasticMaps},
+            'grass':{mat:grassMaterial, maps:grassMaps},
+        };
+        let materialItems = ['wall', 'gold', 'plastic', 'grass'];
+        ball.setMaterial(currentMat);
+        rootNode.addChildren(ball);
+
+        // light
+        let dirLight = new Try3d.DirectionalLight(scene, {id:'light'});
+        dirLight.setDirectionXYZ(-1, -1, -1);
+        dirLight.setColorRGBA(1, 1, 1, 1);
+        rootNode.addChildren(dirLight);
+        let angle = 0;
+        let rad = 0;
+        scene.on('update', tpf=>{
+            // angle += tpf * 10;
+            // rad = Try3d.MoreMath.toRadians(angle);
+            // box.setLocalRotationFromEuler(rad, rad, rad);
+        });
+
+        // 控制器
+        let sc = new Try3d.SceneBrowsingController(scene, {id:'control'});
+        sc.lookScene(rootNode);
+        sc.setMinDistance(3);
+        sc.setTargetDistance(6);
+        sc.setMaxDistance(8);
+        sc.focusCamera();
+
+        addBloom(scene, 0.5, 2.0, 1.0);
+
+        // 使用dat gui
+        let gui = new dat.GUI();
+        var settings = {
+            gi: true,
+            light: true,
+            lightColor:[255, 255, 255, 255],
+            material:'wall',
+            baseColorMap:true,
+            metallicMap:true,
+            roughnessMap:true,
+            aoMap:true,
+            normalMap:true,
+            baseColor:[255, 255, 255, 255],
+            metallic:1,
+            roughness:1,
+        };
+        gui.add(settings, 'gi').onChange(gi=>{
+            if(gi){
+                window.giProbe.enable();
+            }
+            else{
+                window.giProbe.disable();
+            }
+        });
+        gui.add(settings, 'light').onChange(light=>{
+            if(light){
+                dirLight.enable();
+            }
+            else{
+                dirLight.disable();
+            }
+        });
+        gui.addColor(settings, 'lightColor').onChange(lightColor=>{
+            dirLight.setColorRGBA(lightColor[0]/255, lightColor[1]/255, lightColor[2]/255, lightColor[3]/255);
+        });
+        gui.add(settings, 'material', materialItems).onChange(material=>{
+            resetSliders(gui, 'baseColorMap', true);
+            resetSliders(gui, 'metallicMap', true);
+            resetSliders(gui, 'roughnessMap', true);
+            resetSliders(gui, 'normalMap', true);
+            resetSliders(gui, 'baseColor', [255, 255, 255, 255]);
+            resetSliders(gui, 'metallic', 1);
+            resetSliders(gui, 'roughness', 1);
+            currentMat.setParam('baseColorMap', currentMaps.baseColorMap);
+            currentMat.setParam('metallicMap', currentMaps.metallicMap);
+            currentMat.setParam('roughnessMap', currentMaps.roughnessMap);
+            currentMat.setParam('normalMap', currentMaps.normalMap);
+            currentMat.setParam('baseColor', new Try3d.Vec4Vars().valueFromXYZW(1, 1, 1, 1));
+            currentMat.setParam('metallic', new Try3d.FloatVars().valueOf(1));
+            currentMat.setParam('roughness', new Try3d.FloatVars().valueOf(1));
+            currentMat = materials[material].mat;
+            currentMaps = materials[material].maps;
+            ball.setMaterial(currentMat);
+        });
+        gui.add(settings, 'baseColorMap').onChange(baseColorMap=>{
+            if(baseColorMap){
+                currentMat.setParam('baseColorMap', currentMaps.baseColorMap);
+            }
+            else{
+                currentMat.clearParam('baseColorMap');
+            }
+        });
+        gui.add(settings, 'metallicMap').onChange(metallicRoughnessMap=>{
+            if(metallicRoughnessMap){
+                currentMat.setParam('metallicMap', currentMaps.metallicMap);
+            }
+            else{
+                currentMat.clearParam('metallicMap');
+            }
+        });
+        gui.add(settings, 'roughnessMap').onChange(metallicRoughnessMap=>{
+            if(metallicRoughnessMap){
+                currentMat.setParam('roughnessMap', currentMaps.roughnessMap);
+            }
+            else{
+                currentMat.clearParam('roughnessMap');
+            }
+        });
+        gui.add(settings, 'normalMap').onChange(normalMap=>{
+            if(normalMap){
+                currentMat.setParam('normalMap', currentMaps.normalMap);
+            }
+            else{
+                currentMat.clearParam('normalMap');
+            }
+        });
+        gui.addColor(settings, 'baseColor').onChange(baseColor=>{
+            currentMat.setParam('baseColor', new Try3d.Vec4Vars().valueFromXYZW(baseColor[0]/255, baseColor[1]/255, baseColor[2]/255, baseColor[3]/255));
+        });
+        gui.add(settings, 'metallic', 0, 1).step(0.1).onChange(metallic=>{
+            currentMat.setParam('metallic', new Try3d.FloatVars().valueOf(metallic));
+        });
+        gui.add(settings, 'roughness', 0, 1).step(0.1).onChange(roughness=>{
+            currentMat.setParam('roughness', new Try3d.FloatVars().valueOf(roughness));
+        });
+
+        // 创建渲染器
+        let renderEngine = new Try3d.RenderEngine();
+        // 添加要渲染的场景对象
+        renderEngine.addScene(scene);
+        // 启动渲染器
+        renderEngine.launch();
+        showStats(scene);
+    </script>
+</body>
+</html>

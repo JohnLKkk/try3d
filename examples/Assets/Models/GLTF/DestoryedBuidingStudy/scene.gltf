@@ -1,0 +1,349 @@
+{
+  "accessors": [
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 41143,
+      "max": [
+        56.26104736328125,
+        60.502601623535156,
+        39.939167022705078
+      ],
+      "min": [
+        -55.415718078613281,
+        -14.578410148620605,
+        -47.217132568359375
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 493716,
+      "componentType": 5126,
+      "count": 41143,
+      "max": [
+        1,
+        1,
+        0.9999118447303772
+      ],
+      "min": [
+        -1,
+        -0.9999995231628418,
+        -1
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5126,
+      "count": 41143,
+      "max": [
+        0.99999386072158813,
+        0.99999988079071045,
+        0.9994322657585144,
+        1
+      ],
+      "min": [
+        -0.99986016750335693,
+        -0.99967861175537109,
+        -1,
+        -1
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 41143,
+      "max": [
+        2.9995722770690918,
+        2.9989347457885742
+      ],
+      "min": [
+        -1.9995174407958984,
+        -1.9988195896148682
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 329144,
+      "componentType": 5126,
+      "count": 41143,
+      "max": [
+        2.9995722770690918,
+        2.9989347457885742
+      ],
+      "min": [
+        -1.9995174407958984,
+        -1.9988195896148682
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 72375,
+      "max": [
+        41142
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    }
+  ],
+  "asset": {
+    "extras": {
+      "author": "samuel.brunner (https://sketchfab.com/samuel.brunner)",
+      "license": "CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)",
+      "source": "https://sketchfab.com/3d-models/destroyed-building-study-8a95ab9548314c66bb0bf7c2191da80c",
+      "title": "Destroyed building, study"
+    },
+    "generator": "Sketchfab-9.50.0",
+    "version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 289500,
+      "byteOffset": 0,
+      "name": "floatBufferViews",
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 658288,
+      "byteOffset": 289500,
+      "byteStride": 8,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 987432,
+      "byteOffset": 947788,
+      "byteStride": 12,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 658288,
+      "byteOffset": 1935220,
+      "byteStride": 16,
+      "name": "floatBufferViews",
+      "target": 34962
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 2593508,
+      "uri": "scene.bin"
+    }
+  ],
+  "extensionsRequired": [
+    "KHR_materials_pbrSpecularGlossiness"
+  ],
+  "extensionsUsed": [
+    "KHR_materials_pbrSpecularGlossiness"
+  ],
+  "images": [
+    {
+      "uri": "textures/concrete_diffuse.png"
+    },
+    {
+      "uri": "textures/concrete_specularGlossiness.png"
+    },
+    {
+      "uri": "textures/concrete_normal.png"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "diffuseFactor": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "diffuseTexture": {
+            "index": 0,
+            "texCoord": 0
+          },
+          "glossinessFactor": 1,
+          "specularFactor": [
+            0.050000000000000003,
+            0.050000000000000003,
+            0.050000000000000003
+          ],
+          "specularGlossinessTexture": {
+            "index": 1,
+            "texCoord": 0
+          }
+        }
+      },
+      "name": "concrete",
+      "normalTexture": {
+        "index": 2,
+        "scale": 1,
+        "texCoord": 0
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "base_cell.002_concrete_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 1,
+            "POSITION": 0,
+            "TANGENT": 2,
+            "TEXCOORD_0": 3,
+            "TEXCOORD_1": 4
+          },
+          "indices": 5,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "children": [
+        1
+      ],
+      "name": "RootNode (gltf orientation matrix)",
+      "rotation": [
+        -0.70710678118654746,
+        -0,
+        -0,
+        0.70710678118654757
+      ]
+    },
+    {
+      "children": [
+        2
+      ],
+      "matrix": [
+        0.99997305870056152,
+        0.0073386947624385357,
+        0,
+        0,
+        0.0073386817239224911,
+        -0.99997133016586304,
+        0.0018598218448460102,
+        0,
+        1.3648699678014964e-05,
+        -0.0018597716698423028,
+        -0.99999827146530151,
+        0,
+        0.06270163506269455,
+        -2.0981523990631104,
+        -47.556396484375,
+        1
+      ],
+      "name": "RootNode (model correction matrix)"
+    },
+    {
+      "children": [
+        3
+      ],
+      "matrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        -1,
+        0,
+        0,
+        0,
+        0,
+        -1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "name": "519572b95b17448f8e0866ef25733d10.fbx"
+    },
+    {
+      "children": [
+        4
+      ],
+      "name": "RootNode"
+    },
+    {
+      "children": [
+        5
+      ],
+      "matrix": [
+        0.60113835021654172,
+        -0.5143408117364674,
+        0.018022774680670706,
+        0,
+        -0.15753443112075469,
+        -0.15751113349051091,
+        0.75934943490522222,
+        0,
+        -0.48995317555454754,
+        -0.58041560141352455,
+        -0.22204061307039527,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "name": "base_cell.002"
+    },
+    {
+      "mesh": 0,
+      "name": "base_cell.002_concrete_0"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "OSG_Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    }
+  ]
+}
+

@@ -4,7 +4,6 @@ Def BasicLightingDef{
         sampler2D diffuseMap;
         sampler2D normalMap;
         sampler2D specularMap;
-        sampler2D normalMap;
         vec4 ambientColor;
         vec4 diffuseColor;
         vec4 specularColor;
