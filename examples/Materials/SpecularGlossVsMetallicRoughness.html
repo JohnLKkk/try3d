@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SpecularGlossVsMetallicRoughness</title>
+    <style>
+        #baseColor input{
+            width: 50px;
+        }
+        #baseColor2 input{
+            width: 50px;
+        }
+        #specular input{
+            width: 50px;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="../Assets/Htmls/Css/Base.css"/>
+    <script src="../../build/try3d.min.js"></script>
+    <script src="./../dat.gui.min.js"></script>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" tabindex="0" width="400" height="300" style="border: none;margin: 0px;padding: 0px;"></canvas>
+</div>
+<script type="module">
+    import Stats from "../stats.min.js";
+    import Ext from "../Ext.js";
+
+    let ext = new Ext();
+    ext.show('  这个例子演示了基于MetallicRoughness(金属工作流)与SpecularGloss(高光工作流)之间的材质差异,测试资产来自glTF-Sample-Models。', {lineheight:50});
+
+
+    // 创建scene
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(0, 0, 20), new Try3d.Vector3(0, 0, 0), new Try3d.Vector3(0, 1, 0));
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+
+    // 环境纹理加载完再开始创建创建
+    let radianceLoader = new Try3d.RadianceLoader();
+    radianceLoader.loadHDR('./../Assets/Textures/hdr/newport_loft.hdr', imageData=>{
+        // 创建一个sky
+        let sky = new Try3d.SkyBox(scene, {id:'sky'});
+        // 使用cubeMap作为天空盒材质
+        let envMap = new Try3d.Texture2DVars(scene);
+        envMap.setPreloadColor(scene, new Try3d.Vector4(0.5, 0.5, 0.5, 1.0));
+        envMap.setWrap(scene, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+        envMap.setFilter(scene, Try3d.Texture2DVars.S_FILTERS.S_LINEAR, Try3d.Texture2DVars.S_FILTERS.S_LINEAR);
+        envMap.setTextureFormat(Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB16F, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
+        envMap.setImage(scene, imageData, {rgbe:true, linearFloat:true});
+        sky.getMaterial().setParam('envMap', envMap);
+        sky.getMaterial().setParam('useEnvMap', new Try3d.BoolVars().valueOf(true));
+        sky.getMaterial().setParam('useHDR', new Try3d.BoolVars().valueOf(true));
+
+        scene.setSky(sky);
+
+        let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
+        dirLight.setDirectionXYZ(-1, -1, -1);
+        dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+        rootNode.addChildren(dirLight);
+
+        let giProbe = new Try3d.GIProbe(scene, {id:'giProbe'});
+        giProbe.setRadius(20);
+        giProbe.setPositionFromXYZ(0, 5, 0);
+        let envCapture = Try3d.ProbeTools.bakeGIProbe(scene, giProbe, {resolute:128});
+
+        // 将烘焙环境光作为sky材质
+        sky.setMaterial(new Try3d.Material(scene, {id:'giProbeMat', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_ENV_CAPTURE_OUT_DEF)}));
+        sky.getMaterial().selectTechnology('EnvSky');
+        sky.getMaterial().setParam('envCaptureMap', envCapture.getPrefilterTextureCube());
+        sky.getMaterial().setParam('lod', new Try3d.FloatVars().valueOf(2));
+
+        let gltfLoader = new Try3d.GLTFLoader();
+        gltfLoader.load(scene, './../Assets/Models/GLTF/SpecGlossVsMetalRough/SpecGlossVsMetalRough.gltf', (modelNode)=>{
+            modelNode.setLocalRotationFromEuler(0, Try3d.MoreMath.toRadians(90), 0);
+            rootNode.addChildren(modelNode);
+            let sc = new Try3d.SceneBrowsingController(scene, {id:'controller'});
+            sc.lookScene(modelNode);
+            sc.setMinDistance(0.2);
+            sc.setMaxDistance(0.7);
+            sc.setTargetDistance(0.6);
+            sc.focusCamera();
+        }, {batch:true});
+
+        // 使用dat gui
+        let gui = new dat.GUI();
+        var settings = {
+            gi: true,
+            light: true,
+            lightColor:[255, 255, 255, 255],
+        };
+        gui.add(settings, 'gi').onChange(gi=>{
+            if(gi){
+                giProbe.enable();
+            }
+            else{
+                giProbe.disable();
+            }
+        });
+        gui.add(settings, 'light').onChange(light=>{
+            if(light){
+                dirLight.enable();
+            }
+            else{
+                dirLight.disable();
+            }
+        });
+        gui.addColor(settings, 'lightColor').onChange(lightColor=>{
+            dirLight.setColorRGBA(lightColor[0]/255, lightColor[1]/255, lightColor[2]/255, lightColor[3]/255);
+        });
+    });
+
+
+
+    let renderEngine = new Try3d.RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+    });
+</script>
+</body>
+</html>

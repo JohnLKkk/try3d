@@ -12,6 +12,7 @@ Def DeferredLightingDef{
         bool lightMapTexCoord;
 
         // 自发光
+        sampler2D emissiveMap;
         vec4 emissive;
         float emissivePower;
         float emissiveIntensity;

@@ -403,35 +403,38 @@ Def PrincipledLightingDef{
                     #endif
                 }
 
-                #ifdef Params.emissive
-                    float _emissivePower = 3.0f;
-                    #ifdef Params.emissivePower
-                        _emissivePower = Params.emissivePower;
-                    #endif
-                    float _emissiveIntensity = 2.0f;
-                    #ifdef Params.emissiveIntensity
-                        _emissiveIntensity = Params.emissiveIntensity;
-                    #endif
-                    #ifdef Params.emissiveMap
-                        vec4 eMap = texture(Params.emissiveMap, wUv0);
-                        Context.OutColor.rgb += Params.emissive.rgb * eMap.rgb * pow(Params.emissive.a * eMap.a, _emissivePower) * _emissiveIntensity;
-                    #else
-                        Context.OutColor.rgb += Params.emissive.rgb * pow(Params.emissive.a, _emissivePower) * _emissiveIntensity;
-                    #endif
-                #else
-                    #ifdef Params.emissiveMap
+                // 唯一shading阶段,在这里处理自发光或只shading一次的逻辑
+                if(Context.UniqueShading){
+                    #ifdef Params.emissive
                         float _emissivePower = 3.0f;
                         #ifdef Params.emissivePower
                             _emissivePower = Params.emissivePower;
                         #endif
                         float _emissiveIntensity = 2.0f;
                         #ifdef Params.emissiveIntensity
-                            _emisiveIntensity = Params.emissiveIntensity;
+                            _emissiveIntensity = Params.emissiveIntensity;
                         #endif
-                        vec4 eMap = texture(Params.emissiveMap, wUv0);
-                        Context.OutColor.rgb += eMap.rgb * pow(eMap.a, _emissivePower) * _emissiveIntensity;
+                        #ifdef Params.emissiveMap
+                            vec4 eMap = texture(Params.emissiveMap, wUv0);
+                            Context.OutColor.rgb += Params.emissive.rgb * eMap.rgb * pow(Params.emissive.a * eMap.a, _emissivePower) * _emissiveIntensity;
+                        #else
+                            Context.OutColor.rgb += Params.emissive.rgb * pow(Params.emissive.a, _emissivePower) * _emissiveIntensity;
+                        #endif
+                    #else
+                        #ifdef Params.emissiveMap
+                            float _emissivePower = 3.0f;
+                            #ifdef Params.emissivePower
+                                _emissivePower = Params.emissivePower;
+                            #endif
+                            float _emissiveIntensity = 2.0f;
+                            #ifdef Params.emissiveIntensity
+                                _emisiveIntensity = Params.emissiveIntensity;
+                            #endif
+                            vec4 eMap = texture(Params.emissiveMap, wUv0);
+                            Context.OutColor.rgb += eMap.rgb * pow(eMap.a, _emissivePower) * _emissiveIntensity;
+                        #endif
                     #endif
-                #endif
+                }
 
                 Context.OutColor.a = albedo.a;
 

@@ -12,6 +12,10 @@
         <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
     </div>
     <script type="module">
+        import Ext from "../Ext.js";
+
+        let ext = new Ext();
+        ext.show('  这个例子演示了PrincipledMaterial的另一种MetallicPipeline(金属工作流),在该Pipeline下,由baseColorMap,metallicRoughnessMap以及normalMap描述材质,aoMap是可选的,通常包含烘培的光照信息。', {lineheight:50});
 
         // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
 
@@ -63,45 +67,45 @@
         stoneMaterial.setParam('normalMap', stoneMaps.normalMap);
 
         // woodMat
-        // let woodMaterial = new Try3d.Material(scene, {id:'woodMaterial', materialDef:principledMaterialDef});
-        // let woodMaps = {
-        //     baseColorMap:getTexture(scene, basePath + "/Wood/baseColorMap.png", true),
-        //     normalMap:getTexture(scene, basePath + "/Wood/normalMap.png", false),
-        //     metallicRoughnessMap:getTexture(scene, basePath + "/Wood/metallicRoughnessMap.png", false),
-        // };
-        // woodMaterial.setParam('baseColorMap', woodMaps.baseColorMap);
-        // woodMaterial.setParam('metallicRoughnessMap', woodMaps.metallicRoughnessMap);
-        // woodMaterial.setParam('normalMap', woodMaps.normalMap);
-        //
-        // // metallicMat
-        // let metallicMaterial = new Try3d.Material(scene, {id:'metallicMaterial', materialDef:principledMaterialDef});
-        // let metallicMaps = {
-        //     baseColorMap:getTexture(scene, basePath + "/Metallic/baseColorMap.png", true),
-        //     normalMap:getTexture(scene, basePath + "/Metallic/normalMap.png", false),
-        //     metallicRoughnessMap:getTexture(scene, basePath + "/Metallic/metallicRoughnessMap.png", false),
-        // };
-        // metallicMaterial.setParam('baseColorMap', metallicMaps.baseColorMap);
-        // metallicMaterial.setParam('metallicRoughnessMap', metallicMaps.metallicRoughnessMap);
-        // metallicMaterial.setParam('normalMap', metallicMaps.normalMap);
-        //
-        // // rockyMat
-        // let rockyMaterial = new Try3d.Material(scene, {id:'rockyMaterial', materialDef:principledMaterialDef});
-        // let rockyMaps = {
-        //     baseColorMap:getTexture(scene, basePath + "/Rocky/baseColorMap.png", true),
-        //     normalMap:getTexture(scene, basePath + "/Rocky/normalMap.png", false),
-        //     metallicRoughnessMap:getTexture(scene, basePath + "/Rocky/metallicRoughnessMap.png", false),
-        // };
-        // rockyMaterial.setParam('baseColorMap', rockyMaps.baseColorMap);
-        // rockyMaterial.setParam('metallicRoughnessMap', rockyMaps.metallicRoughnessMap);
-        // rockyMaterial.setParam('normalMap', rockyMaps.normalMap);
+        let woodMaterial = new Try3d.Material(scene, {id:'woodMaterial', materialDef:principledMaterialDef});
+        let woodMaps = {
+            baseColorMap:getTexture(scene, basePath + "/Wood/baseColorMap.png", true),
+            normalMap:getTexture(scene, basePath + "/Wood/normalMap.png", false),
+            metallicRoughnessMap:getTexture(scene, basePath + "/Wood/metallicRoughnessMap.png", false),
+        };
+        woodMaterial.setParam('baseColorMap', woodMaps.baseColorMap);
+        woodMaterial.setParam('metallicRoughnessMap', woodMaps.metallicRoughnessMap);
+        woodMaterial.setParam('normalMap', woodMaps.normalMap);
+
+        // metallicMat
+        let metallicMaterial = new Try3d.Material(scene, {id:'metallicMaterial', materialDef:principledMaterialDef});
+        let metallicMaps = {
+            baseColorMap:getTexture(scene, basePath + "/Metallic/baseColorMap.png", true),
+            normalMap:getTexture(scene, basePath + "/Metallic/normalMap.png", false),
+            metallicRoughnessMap:getTexture(scene, basePath + "/Metallic/metallicRoughnessMap.png", false),
+        };
+        metallicMaterial.setParam('baseColorMap', metallicMaps.baseColorMap);
+        metallicMaterial.setParam('metallicRoughnessMap', metallicMaps.metallicRoughnessMap);
+        metallicMaterial.setParam('normalMap', metallicMaps.normalMap);
+
+        // rockyMat
+        let rockyMaterial = new Try3d.Material(scene, {id:'rockyMaterial', materialDef:principledMaterialDef});
+        let rockyMaps = {
+            baseColorMap:getTexture(scene, basePath + "/Rocky/baseColorMap.png", true),
+            normalMap:getTexture(scene, basePath + "/Rocky/normalMap.png", false),
+            metallicRoughnessMap:getTexture(scene, basePath + "/Rocky/metallicRoughnessMap.png", false),
+        };
+        rockyMaterial.setParam('baseColorMap', rockyMaps.baseColorMap);
+        rockyMaterial.setParam('metallicRoughnessMap', rockyMaps.metallicRoughnessMap);
+        rockyMaterial.setParam('normalMap', rockyMaps.normalMap);
 
         let currentMat = stoneMaterial;
         let currentMaps = stoneMaps;
         let materials = {
-            // 'stone':{mat:stoneMaterial, maps:stoneMaps},
-            // 'wood':{mat:woodMaterial, maps:woodMaps},
-            // 'metallic':{mat:metallicMaterial, maps:metallicMaps},
-            // 'rocky':{mat:rockyMaterial, maps:rockyMaps},
+            'stone':{mat:stoneMaterial, maps:stoneMaps},
+            'wood':{mat:woodMaterial, maps:woodMaps},
+            'metallic':{mat:metallicMaterial, maps:metallicMaps},
+            'rocky':{mat:rockyMaterial, maps:rockyMaps},
         };
         let materialItems = ['stone', 'wood', 'metallic', 'rocky'];
         ball.setMaterial(currentMat);
@@ -176,6 +180,7 @@
             currentMat.setParam('baseColor', new Try3d.Vec4Vars().valueFromXYZW(1, 1, 1, 1));
             currentMat.setParam('metallic', new Try3d.FloatVars().valueOf(1));
             currentMat.setParam('roughness', new Try3d.FloatVars().valueOf(1));
+            dirLight.setColorRGBA(1, 1, 1, 1);
             currentMat = materials[material].mat;
             currentMaps = materials[material].maps;
             ball.setMaterial(currentMat);

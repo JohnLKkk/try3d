@@ -13,6 +13,12 @@ Def BasicLightingDef{
         bool lightMapTexCoord;
         // 完全透明剔除因子(0-1),低于该值的透明片段被完全剔除而不进行混合
         float alphaDiscard;
+
+        // 自发光
+        sampler2D emissiveMap;
+        vec4 emissive;
+        float emissivePower;
+        float emissiveIntensity;
     }
     SubTechnology MultiPassBlinnPhongLighting{
         Vars{
@@ -248,6 +254,39 @@ Def BasicLightingDef{
                     Context.OutColor.rgb += lightColor.rgb * ( _diffuseColor.rgb * diffuseSumAdjust.rgb * vec3( lightBRDF.x ) + _specularColor.rgb * specularSumAdjust.rgb * vec3( lightBRDF.y ));
                 }
                 Context.OutColor.a = diffuseSumAdjust.a * _diffuseColor.a;
+
+                // 唯一shading阶段,在这里处理自发光或只shading一次的逻辑
+                if(Context.UniqueShading){
+                    #ifdef Params.emissive
+                        float _emissivePower = 3.0f;
+                        #ifdef Params.emissivePower
+                            _emissivePower = Params.emissivePower;
+                        #endif
+                        float _emissiveIntensity = 2.0f;
+                        #ifdef Params.emissiveIntensity
+                            _emissiveIntensity = Params.emissiveIntensity;
+                        #endif
+                        #ifdef Params.emissiveMap
+                            vec4 eMap = texture(Params.emissiveMap, wUv0);
+                            Context.OutColor.rgb += Params.emissive.rgb * eMap.rgb * pow(Params.emissive.a * eMap.a, _emissivePower) * _emissiveIntensity;
+                        #else
+                            Context.OutColor.rgb += Params.emissive.rgb * pow(Params.emissive.a, _emissivePower) * _emissiveIntensity;
+                        #endif
+                    #else
+                        #ifdef Params.emissiveMap
+                            float _emissivePower = 3.0f;
+                            #ifdef Params.emissivePower
+                                _emissivePower = Params.emissivePower;
+                            #endif
+                            float _emissiveIntensity = 2.0f;
+                            #ifdef Params.emissiveIntensity
+                                _emisiveIntensity = Params.emissiveIntensity;
+                            #endif
+                            vec4 eMap = texture(Params.emissiveMap, wUv0);
+                            Context.OutColor.rgb += eMap.rgb * pow(eMap.a, _emissivePower) * _emissiveIntensity;
+                        #endif
+                    #endif
+                }
             }
         }
     }
@@ -455,6 +494,39 @@ Def BasicLightingDef{
                     //Context.OutColor.rgb = vec3(spotFallOff);
                 }
                 Context.OutColor.a = diffuseSumAdjust.a * _diffuseColor.a;
+
+                // 唯一shading阶段,在这里处理自发光或只shading一次的逻辑
+                if(Context.UniqueShading){
+                    #ifdef Params.emissive
+                        float _emissivePower = 3.0f;
+                        #ifdef Params.emissivePower
+                            _emissivePower = Params.emissivePower;
+                        #endif
+                        float _emissiveIntensity = 2.0f;
+                        #ifdef Params.emissiveIntensity
+                            _emissiveIntensity = Params.emissiveIntensity;
+                        #endif
+                        #ifdef Params.emissiveMap
+                            vec4 eMap = texture(Params.emissiveMap, wUv0);
+                            Context.OutColor.rgb += Params.emissive.rgb * eMap.rgb * pow(Params.emissive.a * eMap.a, _emissivePower) * _emissiveIntensity;
+                        #else
+                            Context.OutColor.rgb += Params.emissive.rgb * pow(Params.emissive.a, _emissivePower) * _emissiveIntensity;
+                        #endif
+                    #else
+                        #ifdef Params.emissiveMap
+                            float _emissivePower = 3.0f;
+                            #ifdef Params.emissivePower
+                                _emissivePower = Params.emissivePower;
+                            #endif
+                            float _emissiveIntensity = 2.0f;
+                            #ifdef Params.emissiveIntensity
+                                _emisiveIntensity = Params.emissiveIntensity;
+                            #endif
+                            vec4 eMap = texture(Params.emissiveMap, wUv0);
+                            Context.OutColor.rgb += eMap.rgb * pow(eMap.a, _emissivePower) * _emissiveIntensity;
+                        #endif
+                    #endif
+                }
             }
         }
     }

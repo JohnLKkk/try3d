@@ -1,0 +1,93 @@
+// 自发光材质定义
+Def EmissiveLightingDef{
+    Params{
+        vec4 color;
+        sampler2D colorMap;
+        float alphaDiscard;
+
+        // 自发光
+        sampler2D emissiveMap;
+        vec4 emissive;
+        float emissivePower;
+        float emissiveIntensity;
+    }
+    SubTechnology EmissivePass{
+        Vars{
+            vec2 wUv0;
+        }
+        Vs_Shader{
+            void main(){
+                #ifdef Context.Skins
+                    mat4 skinMat =
+                            Context.InWeight0.x * Context.Joints[int(Context.InJoint0.x)] +
+                            Context.InWeight0.y * Context.Joints[int(Context.InJoint0.y)] +
+                            Context.InWeight0.z * Context.Joints[int(Context.InJoint0.z)] +
+                            Context.InWeight0.w * Context.Joints[int(Context.InJoint0.w)];
+                    // vec4 pos = Context.ModelMatrix * skinMat * vec4(Context.InPosition, 1.0f);
+                    vec4 pos = skinMat * vec4(Context.InPosition, 1.0f);
+                #else
+                    vec4 pos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                #endif
+                wUv0 = Context.InUv0;
+                Context.OutPosition = Context.ProjectViewMatrix * pos;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                // 使用自定义颜色输出
+                #ifdef Params.color
+                    Context.OutColor = Params.color;
+                #else
+                    // 使用纹理
+                    #ifdef Params.colorMap
+                        Context.OutColor = texture(Params.colorMap, wUv0);
+                        #ifdef Params.alphaDiscard
+                            if(Context.OutColor.a < Params.alphaDiscard){
+                                discard;
+                            }
+                        #endif
+                    #else
+                        Context.OutColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+                    #endif
+                #endif
+                // 唯一shading阶段,在这里处理自发光或只shading一次的逻辑
+                // 因为使用默认渲染程序,所以默认就是执行一次该逻辑
+                #ifdef Params.emissive
+                    float _emissivePower = 3.0f;
+                    #ifdef Params.emissivePower
+                        _emissivePower = Params.emissivePower;
+                    #endif
+                    float _emissiveIntensity = 2.0f;
+                    #ifdef Params.emissiveIntensity
+                        _emissiveIntensity = Params.emissiveIntensity;
+                    #endif
+                    #ifdef Params.emissiveMap
+                        vec4 eMap = texture(Params.emissiveMap, wUv0);
+                        Context.OutColor.rgb += Params.emissive.rgb * eMap.rgb * pow(Params.emissive.a * eMap.a, _emissivePower) * _emissiveIntensity;
+                    #else
+                        Context.OutColor.rgb += Params.emissive.rgb * pow(Params.emissive.a, _emissivePower) * _emissiveIntensity;
+                    #endif
+                #else
+                    #ifdef Params.emissiveMap
+                        float _emissivePower = 3.0f;
+                        #ifdef Params.emissivePower
+                            _emissivePower = Params.emissivePower;
+                        #endif
+                        float _emissiveIntensity = 2.0f;
+                        #ifdef Params.emissiveIntensity
+                            _emisiveIntensity = Params.emissiveIntensity;
+                        #endif
+                        vec4 eMap = texture(Params.emissiveMap, wUv0);
+                        Context.OutColor.rgb += eMap.rgb * pow(eMap.a, _emissivePower) * _emissiveIntensity;
+                    #endif
+                #endif
+            }
+        }
+    }
+    Technology{
+        Sub_Pass{
+            Pass EmissivePass{
+            }
+        }
+    }
+}

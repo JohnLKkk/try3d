@@ -6,8 +6,22 @@
  */
 export default class DefaultRenderProgram {
     static PROGRAM_TYPE = null;
+    // 唯一shading阶段
+    static S_UNIQUE_SHADING_SRC = '_uniqueShading';
     constructor(props) {
 
+    }
+
+    /**
+     * 设置唯一着色阶段。<br/>
+     * @param {GLContext}[gl]
+     * @param {Object}[conVars]
+     * @param {Boolean}[pass]
+     */
+    uniqueShading(gl, conVars, pass){
+        if(conVars[DefaultRenderProgram.S_UNIQUE_SHADING_SRC]){
+            gl.uniform1i(conVars[DefaultRenderProgram.S_UNIQUE_SHADING_SRC].loc, pass);
+        }
     }
 
     /**

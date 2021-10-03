@@ -42,9 +42,16 @@ const Examples = {
         'ParallelSplitShadowMapShadow2.html',
     ],
     'Materials':[
+        'Basic.html',
+        'MetallicRoughness.html',
+        'SpecularGloss.html',
         'PrincipledMaterial.html',
         'PrincipledMaterialMetallicRoughness.html',
         'BasicMaterialVsPrincipledMaterial.html',
+        'SpecularGlossVsMetallicRoughness.html',
+        'MaterialReplacement.html',
+        'EnvironmentMaterial.html',
+        'MetallicOrRoughness.html',
     ],
     'Renders':[
 

@@ -437,6 +437,7 @@ export default class TilePassIBLLightingRenderProgram extends DefaultRenderProgr
                 // 也可以设计为场景只能存在一个ambientColor
                 let ambientLightColor = scene.AmbientLightColor;
                 gl.uniform3f(conVars[TilePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, ambientLightColor._m_X, ambientLightColor._m_Y, ambientLightColor._m_Z);
+                this.uniqueShading(gl, conVars, true);
             }
             else{
                 // 开启累积缓存模式
@@ -444,6 +445,7 @@ export default class TilePassIBLLightingRenderProgram extends DefaultRenderProgr
                 // 所以,渲染当前pass,s部分在当前混合下应该使用一个全黑的ambientLightColor(因为第一个pass已经计算了ambientLightColor)
                 gl.uniform3f(conVars[TilePassIBLLightingRenderProgram.S_AMBIENT_LIGHT_COLOR].loc, 0.0, 0.0, 0.0);
                 scene.getRender()._checkRenderState(gl, this._m_AccumulationLights, frameContext.getRenderState());
+                this.uniqueShading(gl, conVars, false);
             }
         }
         // 探头信息
@@ -525,6 +527,7 @@ export default class TilePassIBLLightingRenderProgram extends DefaultRenderProgr
             // 如果灯光数量为0,则直接执行渲染
             if(lights.length == 0){
                 let conVars = frameContext.m_LastSubShader.getContextVars();
+                this.uniqueShading(gl, conVars, true);
                 let enableGI = scene.enableGIProbes();
                 if(enableGI)
                     this._blendGIProbes(gl, scene, frameContext);
@@ -605,6 +608,7 @@ export default class TilePassIBLLightingRenderProgram extends DefaultRenderProgr
             // 如果灯光数量为0,则直接执行渲染
             if(lights.length == 0){
                 let conVars = frameContext.m_LastSubShader.getContextVars();
+                this.uniqueShading(gl, conVars, true);
                 let enableGI = scene.enableGIProbes();
                 if(enableGI)
                     this._blendGIProbes(gl, scene, frameContext);

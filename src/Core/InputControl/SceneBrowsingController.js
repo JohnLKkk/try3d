@@ -118,6 +118,24 @@ export default class SceneBrowsingController extends Component{
     }
 
     /**
+     * 设置垂直角度。<br/>
+     * @param {Number}[angle 弧度]
+     */
+    setTargetVerticalAngle(angle){
+        this._m_VRotation = angle;
+        this._m_TargetVRotation = this._m_VRotation;
+    }
+
+    /**
+     * 设置水平角度。<br/>
+     * @param {Number}[angle 弧度]
+     */
+    setTargetAngle(angle){
+        this._m_Rotation = angle;
+        this._m_TargetRotation = this._m_Rotation;
+    }
+
+    /**
      * 立即聚焦相机到当前追踪位置。<br/>
      */
     focusCamera(){

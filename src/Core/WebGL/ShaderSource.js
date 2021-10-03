@@ -55,6 +55,9 @@ export default class ShaderSource {
     static S_VP_SRC = "_view_project_matrix";
     static S_NDP = "";
 
+    // 着色选项
+    // 唯一shading阶段
+    static S_UNIQUE_SHADING_SRC = '_uniqueShading';
     // 灯光系统
     static S_V_LIGHT_DATA_SRC = '_vLightData';
     static S_W_LIGHT_DATA_SRC = '_wLightData';
@@ -218,6 +221,7 @@ export default class ShaderSource {
         "Context.TileLightNum":{src:ShaderSource.S_LIGHT_NUM_SRC, pattern:/Context.TileLightNum/, pattern2:/Context.TileLightNum[\s+-;.,\*\\]{1,}/, tagPattern:/Context.TileLightNum/g, tag:ShaderSource.S_LIGHT_NUM_SRC, type:"int", utype:"uniform int"},
         "Context.TileLightOffsetSize":{src:ShaderSource.S_TILE_LIGHT_OFFSET_SIZE, pattern:/Context.TileLightOffsetSize/, pattern2:/Context.TileLightOffsetSize[\s+-;.,\*\\]{1,}/, tagPattern:/Context.TileLightOffsetSize/g, tag:ShaderSource.S_TILE_LIGHT_OFFSET_SIZE, type:"float", utype:"uniform float"},
         "Context.BlendGiProbes":{src:ShaderSource.S_BLEND_GI_PROBES, pattern:/Context.BlendGiProbes/, pattern2:/Context.BlendGiProbes[\s+-;.,\*\\]{1,}/, tagPattern:/Context.BlendGiProbes/g, tag:ShaderSource.S_BLEND_GI_PROBES, type:"bool", utype:"uniform bool"},
+        "Context.UniqueShading":{src:ShaderSource.S_UNIQUE_SHADING_SRC, pattern:/Context.UniqueShading/, pattern2:/Context.UniqueShading[\s+-;.,\*\\]{1,}/, tagPattern:/Context.UniqueShading/g, tag:ShaderSource.S_UNIQUE_SHADING_SRC, type:"bool", utype:"uniform bool"},
         "Context.VLight_Data_0":{src:ShaderSource.S_V_LIGHT_DATA0_SRC, pattern:/Context.VLight_Data_0/, pattern2:/Context.VLight_Data_0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLight_Data_0/g, tag:ShaderSource.S_V_LIGHT_DATA0_SRC, type:"vec4", utype:"uniform vec4"},
         "Context.VLight_Data_1":{src:ShaderSource.S_V_LIGHT_DATA1_SRC, pattern:/Context.VLight_Data_1/, pattern2:/Context.VLight_Data_1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLight_Data_1/g, tag:ShaderSource.S_V_LIGHT_DATA1_SRC, type:"vec4", utype:"uniform vec4"},
         "Context.VLight_Data_2":{src:ShaderSource.S_V_LIGHT_DATA2_SRC, pattern:/Context.VLight_Data_2/, pattern2:/Context.VLight_Data_2[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLight_Data_2/g, tag:ShaderSource.S_V_LIGHT_DATA2_SRC, type:"vec4", utype:"uniform vec4"},
