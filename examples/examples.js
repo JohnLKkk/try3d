@@ -54,10 +54,16 @@ const Examples = {
         'MetallicOrRoughness.html',
     ],
     'Renders':[
-
+        'RenderState.html',
+        'RenderToTexture.html',
+        'DeferredShading.html',
+        'DeferredShadingPBR.html',
+        'TileBasedDeferredShading.html',
+        'TileBasedDeferredShadingPBR.html',
     ],
     'PostFilters':[
-
+        'BloomFilter.html',
+        'GrayFilter.html',
     ],
     'Cameras':[
 
@@ -78,7 +84,9 @@ const Examples = {
 
     ],
     'Optimizations':[
-
+        'FrustumeCulling.html',
+        'OctreeCulling.html',
+        'LevelOfDetail.html',
     ],
     'Supps':[
 

@@ -32,6 +32,7 @@ export default class OBJLoader {
      */
     load(scene, modelId, src, callback){
         this._m_Scene = scene;
+        this._m_Textures = {};
         this._m_DefaultMatDef = null;
         this._m_Mats = {};
         this._m_CurrentMat = null;
@@ -602,6 +603,9 @@ export default class OBJLoader {
             items.splice(pos, 4); // 只需要3个参数
         }
         textureCfg.src = basePath + items.join(' ').trim();
+        if(this._m_Textures[textureCfg.src]){
+            return this._m_Textures[textureCfg.src];
+        }
         textureCfg.flipY = true;
         textureCfg.encoding = encoding || "linear";
         //textureCfg.wrapS = self.wrap;
@@ -613,6 +617,7 @@ export default class OBJLoader {
         texture.setPreloadColor(this._m_Scene, new Vector4(0.2, 0.2, 0.2, 1.0));
         texture.setImageSrc(this._m_Scene, textureCfg.src);
         texture.setFlipY(true);
+        this._m_Textures[textureCfg.src] = texture;
         return texture;
     }
 

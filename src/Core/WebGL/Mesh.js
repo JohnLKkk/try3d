@@ -65,6 +65,7 @@ export default class Mesh {
         this._m_Primitive = Mesh.S_PRIMITIVE_TRIANGLES;
         this._m_DrawPrimitive = null;
         this._m_DrawType = null;
+        this._m_DrawTypeFlag = SizeOf.S_UNSIGNED_SHORT;// 0表示short,1表示1
         this._m_CurrentLod = 0;
         this._m_DrawLod = 0;
         this._m_LodLevels = {};
@@ -181,6 +182,7 @@ export default class Mesh {
                         break;
                     case Mesh.S_INDICES:
                         this._m_DrawType = gl.UNSIGNED_SHORT;
+                        this._m_DrawTypeFlag = SizeOf.S_UNSIGNED_SHORT;
                         if(this._m_Datas[key].lod){
                             let datas = this._m_Datas[key].datas;
                             let data = new Uint16Array(this._m_Datas[key].count);
@@ -189,8 +191,8 @@ export default class Mesh {
                             for(let i = 0,j = 0;i < datas.length;i++){
                                 this._m_LodLevels[datas[i].level] = {lod:j, count:datas[i].count};
                                 this._m_LodLevelCount++;
-                                for(let t = 0,os = _max == 0 ? 0 : _max + 1;t < datas[i].data.length;t++){
-                                    data[j++] = os + datas[i].data[t];
+                                for(let t = 0,os = (_max == 0) ? 0 : _max + 1;t < datas[i].data.length;t++){
+                                    data[j++] = datas[i].data[t];
                                     max = Math.max(datas[i].data[t] + os, max);
                                 }
                                 _max = max;
@@ -207,6 +209,7 @@ export default class Mesh {
                         break;
                     case Mesh.S_INDICES_32:
                         this._m_DrawType = gl.UNSIGNED_INT;
+                        this._m_DrawTypeFlag = SizeOf.S_INT;
                         if(this._m_Datas[key].lod){
                             let datas = this._m_Datas[key].datas;
                             let data = new Uint32Array(this._m_Datas[key].count);
@@ -215,8 +218,8 @@ export default class Mesh {
                             for(let i = 0,j = 0;i < datas.length;i++){
                                 this._m_LodLevels[datas[i].level] = {lod:j, count:datas[i].count};
                                 this._m_LodLevelCount++;
-                                for(let t = 0,os = _max == 0 ? 0 : _max + 1;t < datas[i].data.length;t++){
-                                    data[j++] = os + datas[i].data[t];
+                                for(let t = 0,os = (_max == 0) ? 0 : _max + 1;t < datas[i].data.length;t++){
+                                    data[j++] = datas[i].data[t];
                                     max = Math.max(datas[i].data[t] + os, max);
                                 }
                                 _max = max;
@@ -288,7 +291,7 @@ export default class Mesh {
         if(this._m_LodLevels[lod] != null){
             this._m_CurrentLod = lod;
             this._m_ElementCount = this._m_LodLevels[this._m_CurrentLod].count;
-            this._m_DrawLod = this._m_LodLevels[this._m_CurrentLod].lod * SizeOf.sizeof(SizeOf.S_UNSIGNED_SHORT);
+            this._m_DrawLod = this._m_LodLevels[this._m_CurrentLod].lod * SizeOf.sizeof(this._m_DrawTypeFlag);
         }
         else{
             Log.error('lod level ' + lod + '对于当前Mesh无效!');

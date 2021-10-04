@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DefaultDeferredShading</title>
+</head>
+<body>
+<script src="../../build/try3d.min.js"></script>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script type="module">
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(0, 0, 20), new Try3d.Vector3(0, 0, 0), new Try3d.Vector3(0, 1, 0));
+    let firstPersonController = new Try3d.FirstPersonController(scene, {id:'myController'});
+    firstPersonController.setMovementSpeed(50);
+    firstPersonController.setMouseSensitivity(0.2);
+    // 加载一个材质定义
+    let materialDef = Try3d.MaterialDef.load("../../src/Core/Assets/MaterialDef/DefaultDeferredShadingTestDef");
+
+    // 基于deferredShading路径渲染这个平面
+    let deferredMat = new Try3d.Material(scene, {id:"def", materialDef});
+    console.log("materialDef:" , materialDef);
+    deferredMat.selectTechnology('TestDeferredShading');
+    let geometry1 = new Try3d.Geometry(scene, {id:'testGeometry'});
+    let mesh1 = new Try3d.Mesh();
+    mesh1.setData(Try3d.Mesh.S_POSITIONS, [
+        -5, 5, 2,
+        -5, -5, 2,
+        5, 5, 2,
+        5, -5, 2
+    ]);
+    mesh1.setData(Try3d.Mesh.S_INDICES, [
+        0, 1, 2,
+        2, 1, 3
+    ]);
+    geometry1.setMesh(mesh1);
+    geometry1.updateBound();
+    geometry1.setMaterial(deferredMat);
+
+    // 基于forward路径渲染这个平面
+    let forwardMat = new Try3d.Material(scene, {id:"def2", materialDef});
+    let geometry2 = new Try3d.Geometry(scene, {id:'testGeometry2'});
+    let mesh2 = new Try3d.Mesh();
+    mesh2.setData(Try3d.Mesh.S_POSITIONS, [
+        -5, 5, -5,
+        -5, -5, -5,
+        5, 5, 5,
+        5, -5, 5
+    ]);
+    mesh2.setData(Try3d.Mesh.S_INDICES, [
+        0, 1, 2,
+        2, 1, 3
+    ]);
+    geometry2.setMesh(mesh2);
+    geometry2.updateBound();
+    geometry2.setMaterial(forwardMat);
+
+
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+    rootNode.addChildren(geometry1);
+    rootNode.addChildren(geometry2);
+    let renderEngine = new Try3d.RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+</script>
+</body>
+</html>

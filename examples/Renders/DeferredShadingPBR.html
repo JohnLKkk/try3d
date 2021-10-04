@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DeferredShadingPBR</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script type="module">
+    import Try3d from '../../src/Try3d.js';
+    window.Try3d = Try3d;
+</script>
+<script src="./../dat.gui.min.js"></script>
+<script type="module">
+    import Stats from "../stats.min.js";
+
+    // 案例内容
+    import Ext from "../Ext.js";
+
+    let ext = new Ext();
+    ext.show('  这个案例演示了Try3d.js中的基于Deferred Pipeline策略的PBR光照，该场景包含200个动态点光源和一个定向光，以及一个全局GIProbe，默认下，PrincipledDeferredLightingDef材质使用SinglePass方案，这个案例演示了优先启用MultiPassDeferred Technology，该技术使用MultiPass渲染模式，你可以切换这两种渲染模式，以查看性能区别。', {lineheight:50});
+
+
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    scene.setAmbientLightColor(1.0, 1.0, 1.0, 1.0);
+    // 设置默认启用的技术方案为MultiPassDeferred
+    scene.getRender().setPriorityTechnology('MultiPassDeferred');
+    // 启用色调映射
+    scene.getRender().enableToneMapping(true);
+
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(0, 0, 10), new Try3d.Vector3(0, 0, 0), new Try3d.Vector3(0, 1, 0));
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+
+    // 环境纹理加载完再开始创建创建
+    let radianceLoader = new Try3d.RadianceLoader();
+    radianceLoader.loadHDR('./../Assets/Textures/hdr/Path.hdr', imageData=>{
+        // 创建一个sky
+        let sky = new Try3d.SkyBox(scene, {id:'sky'});
+        // 使用cubeMap作为天空盒材质
+        let envMap = new Try3d.Texture2DVars(scene);
+        envMap.setPreloadColor(scene, new Try3d.Vector4(0.5, 0.5, 0.5, 1.0));
+        envMap.setWrap(scene, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+        envMap.setFilter(scene, Try3d.Texture2DVars.S_FILTERS.S_LINEAR, Try3d.Texture2DVars.S_FILTERS.S_LINEAR);
+        envMap.setTextureFormat(Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB16F, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
+        envMap.setImage(scene, imageData, {rgbe:true, linearFloat:true});
+        sky.getMaterial().setParam('envMap', envMap);
+        sky.getMaterial().setParam('useEnvMap', new Try3d.BoolVars().valueOf(true));
+        sky.getMaterial().setParam('useHDR', new Try3d.BoolVars().valueOf(true));
+
+        scene.setSky(sky);
+
+        let gltfLoader = new Try3d.GLTFLoader();
+        gltfLoader.useMatDef(Try3d.Internal.S_PRINCIPLED_DEFERRED_LIGHTING_DEF_DATA);
+        gltfLoader.load(scene, './../Assets/Models/GLTF/Sponza/Sponza.gltf', modelNode=>{
+            rootNode.addChildren(modelNode);
+            let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'sceneControl'});
+            sceneControl.lookScene(rootNode);
+            sceneControl.setTargetDistance(1);
+
+            let aabb = modelNode.getBoundingVolume();
+            let dx = aabb.getXHalf() * 2;
+            let dy = aabb.getYHalf() * 2;
+            let dz = aabb.getZHalf() * 2;
+            let center = aabb.getCenter();
+            let lx = center._m_X - dx * 0.5;
+            let ly = center._m_Y - dy * 0.5;
+            let lz = center._m_Z - dz * 0.5;
+            let ps = [];
+            for(let i = 0;i < 200;i++){
+                let pointLight = new Try3d.PointLight(scene, {id:'pointLight' + i});
+                pointLight.setRadius(3);
+                pointLight.setColorRGBA(Math.random() * 1.0, Math.random() * 1.0, Math.random() * 1.0, 1.0);
+                pointLight.setPositionXYZ(Math.random() * dx + lx, Math.random() * dy + ly, Math.random() * dz + lz);
+                pointLight.dx = 1.0;
+                pointLight.dy = 1.0;
+                pointLight.dz = 1.0;
+                rootNode.addChildren(pointLight);
+                ps.push(pointLight);
+            }
+
+            // 使用dat gui
+            let gui = new dat.GUI();
+            var settings = {
+                renderTechnology: 'MultiPassDeferred',
+                globalGiProbe: true,
+                directionalLight: true,
+                pointLights: true,
+                pointLightAnim: true
+            };
+            gui.add(settings, 'renderTechnology', ['MultiPassDeferred', 'Default']).name('渲染技术').onChange(function(value) {
+                modelNode.traverse((node)=>{
+                    if(node.isDrawable()){
+                        // SinglePass是默认技术，所以传递""即可
+                        node.getMaterial().selectTechnology(value == 'Default' ? "" : value);
+                    }
+                });
+            });
+            gui.add(settings, 'globalGiProbe').onChange(function(value){
+                if(value){
+                    giProbe.enable();
+                }
+                else{
+                    giProbe.disable();
+                }
+            });
+            gui.add(settings, 'directionalLight').onChange(swi=>{
+                if(swi){
+                    dirLight.enable();
+                }
+                else{
+                    dirLight.disable();
+                }
+            });
+            gui.add(settings, 'pointLights').onChange(swi=>{
+                ps.forEach(p=>{
+                    if(swi){
+                        p.enable();
+                    }
+                    else{
+                        p.disable();
+                    }
+                });
+            });
+            gui.add(settings, 'pointLightAnim');
+            gui.width = 300;
+            gui.open();
+
+
+            // 使用stats.js统计fps
+            let stats = new Stats();
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.left = '0px';
+            stats.domElement.style.top = '0px';
+            document.body.appendChild(stats.domElement);
+            scene.on('update', (exTime)=>{
+                stats.update();
+                if(settings.pointLightAnim){
+                    ps.forEach(p=>{
+                        let pos = p.getPosition();
+                        pos.addInXYZ(p.dx * exTime, 0, 0);
+                        if(pos._m_X >= dx && p.dx > 0.0){
+                            p.dx *= -1.0;
+                        }
+                        else if(pos._m_X <= lx && p.dx < 0.0){
+                            p.dx *= -1.0;
+                        }
+                        if(pos._m_Y >= dy && p.dy > 0.0){
+                            p.dy *= -1.0;
+                        }
+                        else if(pos._m_Y <= ly && p.dy < 0.0){
+                            p.dy *= -1.0;
+                        }
+                        if(pos._m_Z >= dz && p.dz > 0.0){
+                            p.dz *= -1.0;
+                        }
+                        else if(pos._m_Z <= lz && p.dz < 0.0){
+                            p.dz *= -1.0;
+                        }
+                        p.updateBounding();
+                    });
+                }
+            });
+        }, {batch:true});
+
+        let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
+        dirLight.setDirectionXYZ(-1, -1, 1);
+        dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+        rootNode.addChildren(dirLight);
+
+        // 全局GIProbe
+        var giProbe = new Try3d.GIProbe(scene, {id:'giProbe'});
+        giProbe.setRadius(20);
+        giProbe.setPositionFromXYZ(0, 5, 0);
+        let envCapture = Try3d.ProbeTools.bakeGIProbe(scene, giProbe, {resolute:128});
+    });
+
+
+    let renderEngine = new Try3d.RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+</script>
+</body>
+</html>

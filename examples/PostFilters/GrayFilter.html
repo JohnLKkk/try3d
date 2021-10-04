@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GrayFilter</title>
+    <style>
+        #baseColor input{
+            width: 50px;
+        }
+        #baseColor2 input{
+            width: 50px;
+        }
+        #specular input{
+            width: 50px;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="../Assets/Htmls/Css/Base.css"/>
+    <script src="../Assets/Htmls/Js/Infos.js"></script>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" tabindex="0" width="400" height="300" style="border: none;margin: 0px;padding: 0px;"></canvas>
+</div>
+<script type="module">
+    addInfos('GrayFilter', '该案例演示了基础的灰度过滤器,确保页面获取焦点(鼠标点击该页面)后,按下键盘J键关闭灰度过滤器,按下键盘I键开启灰度过滤器!');
+
+    import Stats from "../stats.min.js";
+
+
+    // 创建scene
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(0, 0, 5), new Try3d.Vector3(0, 0, 0), new Try3d.Vector3(0, 1, 0));
+    let firstPersonController = new Try3d.FirstPersonController(scene, {id:'myController'});
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+
+    let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(-1, -1, -1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dirLight);
+
+    let objLoader = new Try3d.OBJLoader();
+    objLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/");
+    objLoader.load(scene, 'grayScene', './../Assets/Models/OBJ/MainScene/mainScene.obj', (modelNode)=>{
+        rootNode.addChildren(modelNode);
+        let grayFilter = mainCamera.addFilterFromMaterial(new Try3d.Material(scene, {id:'grayFilter', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_GRAY_FILTER_DEF_DATA)}));
+        let sceneInput = Input.getInput(scene, {id:scene.getId()});
+        sceneInput.on('keydown', (key)=>{
+            if(key == Input.S_KEY_J){
+                grayFilter.disable();
+            }
+        });
+        sceneInput.on('keydown', (key)=>{
+            if(key == Input.S_KEY_I){
+                grayFilter.enable();
+            }
+        });
+    });
+
+    let renderEngine = new Try3d.RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+    });
+</script>
+</body>
+</html>

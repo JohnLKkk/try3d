@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RenderToTexture</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
+    <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script src="../../build/try3d.min.js"></script>
+<script type="module">
+    import Stats from "../stats.min.js";
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(25, 25, 25), new Try3d.Vector3(0, 0, 0), new Try3d.Vector3(0, 1, 0));
+
+
+
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+
+    // 创建一个sky
+    let sky = new Try3d.SkyBox(scene, {id:'sky'});
+    // 使用cubeMap作为天空盒材质
+    sky.getMaterial().setParam('useCubeMap', new Try3d.BoolVars().valueOf(true));
+    let cubeMap = new Try3d.TextureCubeVars(scene);
+    cubeMap.setPreloadColor(scene, new Try3d.Vector4(0.5, 0.5, 0.5, 1.0));
+
+    cubeMap.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.PositiveX, '../Assets/Textures/sky/SkyBlue/Front5.jpg');
+    cubeMap.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.NegativeX, '../Assets/Textures/sky/SkyBlue/Back5.jpg');
+    cubeMap.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.PositiveY, '../Assets/Textures/sky/SkyBlue/Up5.jpg');
+    cubeMap.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.NegativeY, '../Assets/Textures/sky/SkyBlue/Down5.jpg');
+    cubeMap.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.PositiveZ, '../Assets/Textures/sky/SkyBlue/Left5.jpg');
+    cubeMap.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.NegativeZ, '../Assets/Textures/sky/SkyBlue/Right5.jpg');
+    cubeMap.setWrap(scene, Try3d.TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE);
+    sky.getMaterial().setParam('cubeMap', cubeMap);
+    scene.setSky(sky);
+
+
+    let objLoader = new Try3d.OBJLoader();
+    objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/Cabin/testScene.obj', modelNode=>{
+        modelNode.setLocalScaleXYZ(10, 10, 10);
+        rootNode.addChildren(modelNode);
+        let sc = new Try3d.SceneBrowsingController(scene, {id:'control'});
+        sc.lookScene(rootNode);
+        sc.setMinDistance(5);
+        sc.setMaxDistance(15);
+        sc.setTargetDistance(10);
+        sc.setMinVerticalRotation(0);
+
+        // 添加一个Picture,用于展示渲染到纹理的效果(Picture是GUI层，所以会在最后进行绘制，以确保获取场景帧渲染结果)
+        // 将默认帧缓存数据渲染到Picture上
+        let picture = new Try3d.Picture(scene, {id:'target'});
+        picture.useDefaultMat();
+        let texture = new Try3d.Texture2DTargetVars(scene);
+        texture.target(scene.getRender().getFrameContext().getFrameBuffer(Try3d.Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER));
+        picture.getMaterial().setParam('colorMap', texture);
+        picture.setSize(0.3, 0.3);
+        picture.setLeftTop(0.7, -0.7);
+        picture.setZIndex(0);
+        rootNode.addChildren(picture);
+    });
+
+    let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(1, -1, 1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    dirLight.setShadowSplitType(Try3d.DirectionalLight.S_SHADER_SPLIT_TYPE_FIXED);
+    dirLight.setShadowSplitNum(2);
+    dirLight.setShadowMapSize(1024);
+    dirLight.proShadow(true);
+    rootNode.addChildren(dirLight);
+
+    let renderEngine = new Try3d.RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+    });
+</script>
+</body>
+</html>

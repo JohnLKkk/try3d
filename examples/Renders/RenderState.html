@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RenderState</title>
+</head>
+<style>
+    .innerbox{
+        overflow: auto;
+        background-color: #f8f8f8;
+        height: 200px;
+        padding: 10px;
+    }
+    .innerbox::-webkit-scrollbar {/*滚动条整体样式*/
+        width: 4px;     /*高宽分别对应横竖滚动条的尺寸*/
+        height: 15px;
+        scrollbar-arrow-color:red;
+
+    }
+    .innerbox::-webkit-scrollbar-thumb {/*滚动条里面小方块*/
+        border-radius: 5px;
+        -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+        background: rgba(0,0,0,0.2);
+        scrollbar-arrow-color:red;
+    }
+    .innerbox::-webkit-scrollbar-track {/*滚动条里面轨道*/
+        -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+        border-radius: 0;
+        background: rgba(0,0,0,0.1);
+    }
+
+</style>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;margin: 0px;left: 0px;top: 0px;">
+    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+    <div class="innerbox" style="top: 0px;right: 0px;background-color: rgba(128,128,128,0.31);color: white;position: fixed;width: 50%;height: 100%;padding: 5px;overflow-y:auto;">
+        <pre>
+// 测试渲染状态
+Def RenderStateDef{
+    Params{
+        vec4 color;
+    }
+    SubTechnology GreenColorPass{
+            Vars{
+                vec4 wordPosition;
+            }
+            Vs_Shader{
+                void main(){
+                    Context.OutPosition = Context.ProjectViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                    wordPosition = Context.OutPosition;
+                }
+            }
+            Fs_Shader{
+                void main(){
+                    #ifdef Params.color
+                        Context.OutColor = Params.color;
+                    #else
+                        Context.OutColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+                    #endif
+                    vec4 wPosition = wordPosition;
+                }
+            }
+        }
+    SubTechnology RedColorPass{
+        Vars{
+            vec4 wordPosition;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                wordPosition = Context.OutPosition;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                #ifdef Params.color
+                    Context.OutColor = Params.color;
+                #else
+                    Context.OutColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+                #endif
+                vec4 wPosition = wordPosition;
+            }
+        }
+    }
+    Technology{
+        Sub_Pass{
+            Pass RedColorPass{
+                // 关闭面剔除
+                FaceCull Off;
+            }
+        }
+    }
+    Technology FaceCullTechnology{
+        Sub_Pass{
+            Pass GreenColorPass{
+                FaceCull Front;
+            }
+            Pass RedColorPass{
+                FaceCull Back;
+            }
+        }
+    }
+}
+
+        </pre>
+    </div>
+</div>
+<script src="../../build/try3d.min.js"></script>
+<script src="./../helpers.js"></script>
+<script type="module">
+    // 案例内容
+    import Ext from "../Ext.js";
+
+    let ext = new Ext();
+    ext.show('  这个案例演示了编写自定义材质控制渲染状态，这个例子使用名为RenderStateDef的材质定义，包含两个Technology，其中的FaceCullTechnology关闭了FaceCull。', {lineheight:50});
+
+
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    scene.getCanvas().setClearColor(0.1, 0.1, 0.1, 1);
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(10, 0, 10), new Try3d.Vector3(0, 0, 0), new Try3d.Vector3(0, 1, 0));
+    // 加载一个材质定义
+    let materialDef = Try3d.MaterialDef.load("./RenderStateDef");
+    let mat = new Try3d.Material(scene, {id:"colorMat", materialDef});
+    console.log("materialDef:",materialDef);
+    // 选择FaceCullTechnology
+    // 该Technology关闭了渲染时的FaceCull操作
+    mat.selectTechnology('FaceCullTechnology');
+    let geometry = new Try3d.Geometry(scene, {id:'testGeometry'});
+    let mesh = new Try3d.Mesh();
+    mesh.setData(Try3d.Mesh.S_POSITIONS, [
+        -5, 5, 0,
+        -5, -5, 0,
+        5, 5, 0,
+        5, -5, 0
+    ]);
+    mesh.setData(Try3d.Mesh.S_INDICES, [
+        0, 1, 2,
+        1, 2, 3
+    ]);
+    geometry.setMesh(mesh);
+    geometry.updateBound();
+    geometry.setMaterial(mat);
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+    rootNode.addChildren(geometry);
+    rootNode.setLocalRotationFromEuler(0, 90, 0);
+    let renderEngine = new Try3d.RenderEngine();
+    scene.addSceneNode(rootNode);
+    let control = new Try3d.SceneBrowsingController(scene, {id:'control'});
+    control.lookScene(rootNode);
+    addBloom(scene);
+
+
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+</script>
+</body>
+</html>

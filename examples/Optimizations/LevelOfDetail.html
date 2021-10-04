@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LevelOfDetail</title>
+</head>
+<script src="../../build/try3d.min.js"></script>
+<script src="./grolt.js"></script>
+<script src="../helpers.js"></script>
+<script src="./../dat.gui.min.js"></script>
+<body>
+    <div style="width: 100%;height: 100%;left: 0px;top: 0px;position:fixed;">
+        <canvas style="position: absolute;left: 0px;top: 0px;"tabindex="0"id="render"></canvas>
+    </div>
+    <script type="module">
+        import Stats from '../stats.min.js';
+        import Ext from "../Ext.js";
+        let ext = new Ext();
+        ext.show('  这个例子演示了细节层次控制(Levels of Detail),测试模型包含5级不同细节层次,如果要使用细节层次控制,应该为该节点添加LodControl,请滚动视点远离或靠近物体查看区别。', {lineheight:50});
+        let scene = new Try3d.Scene({cavnas:document.getElementById('render')});
+        let mainCamera = scene.getMainCamera();
+        mainCamera.lookAt(new Try3d.Vector3(0, 0, 5), new Try3d.Vector3(0, 0, 0), new Try3d.Vector3(0, 1, 0));
+
+
+
+        // 创建一个测试物体,包含两个细节层次
+        let geometry = new Try3d.Geometry(scene, {id:'testGeo'});
+        let mesh = new Try3d.Mesh();
+
+        // 准备几何数据
+        mesh.setData(Try3d.Mesh.S_POSITIONS, positions);
+        mesh.setData(Try3d.Mesh.S_NORMALS, normals);
+        mesh.setData(Try3d.Mesh.S_UV0, uvs);
+        mesh.setData(Try3d.Mesh.S_BARYCENTRICS, Try3d.Tools.generatorBaryCentrics(positions, level0));
+        // lod level 0
+        mesh.setData(Try3d.Mesh.S_INDICES, level0, {level:0});
+        // lod level 1
+        mesh.setData(Try3d.Mesh.S_INDICES, level1, {level:1});
+        // lod level 2
+        mesh.setData(Try3d.Mesh.S_INDICES, level2, {level:2});
+        // lod level 3
+        mesh.setData(Try3d.Mesh.S_INDICES, level3, {level:3});
+        // lod level 4
+        mesh.setData(Try3d.Mesh.S_INDICES, level4, {level:4});
+        geometry.setMesh(mesh);
+        geometry.updateBound();
+        // 手动设置lod level 1
+        // 该geometry只包含两个lod level,如果设置lod 2则报错
+        geometry.lod(0);
+
+        let materialDef = Try3d.MaterialDef.parse(Try3d.Internal.S_COLOR_DEF_DATA);
+        let colorMat = new Try3d.Material(scene, {id:"colorMat", materialDef});
+        let diffuseMap = new Try3d.Texture2DVars(scene);
+        diffuseMap.setFlipY(true);
+        diffuseMap.setTextureFormat(Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
+        diffuseMap.setImageSrc(scene, '../Assets/Textures/grolt.png');
+        colorMat.setParam('colorMap', diffuseMap);
+        geometry.setMaterial(colorMat);
+        let wireframeMat = new Try3d.Material(scene, {id:'wireframeMat', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_WIREFRAME_DEF_DATA)});
+        wireframeMat.setParam('color', new Try3d.Vec4Vars().valueFromXYZW(0.2, 1.0, 0.2, 1.0));
+        wireframeMat.setParam('wireframeWidth', new Try3d.FloatVars().valueOf(0.015));
+        let lodControl = new Try3d.LodControl(geometry, {id:'lodControl', distCommonDifference:0.1});
+
+
+        // 添加到根场景
+        scene.addSceneNode(geometry);
+        let sc = new Try3d.SceneBrowsingController(scene, {id:'control'});
+        sc.lookScene(geometry);
+        sc.setMaxDistance(1000);
+
+        // gui
+        // 使用dat gui
+        // let gui = new dat.GUI();
+        // let settings = {
+        //     wireFrame:true,
+        // };
+        // gui.add(settings, 'wireFrame').onChange(function(value) {
+        //     geometry.setMaterial(value ? wireframeMat : colorMat);
+        // });
+
+        // 灯光
+        let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
+        dirLight.setDirectionXYZ(1, -0.5, 1);
+        dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+        geometry.addChildren(dirLight);
+
+
+
+        let renderEngine = new Try3d.RenderEngine();
+        renderEngine.addScene(scene);
+        renderEngine.launch();
+        showStats(scene);
+
+    </script>
+</body>
+</html>

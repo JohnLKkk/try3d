@@ -51,6 +51,8 @@ export default class GLTFLoader {
     };
     _m_CustomMatDef = null;
     _m_MatDefSrc = Internal.S_PRINCIPLED_LIGHTING_DEF;
+    _m_MagFilter = null;
+    _m_MinFilter = null;
 
     /**
      * 加载一个GLTF模型。<br/>
@@ -65,6 +67,8 @@ export default class GLTFLoader {
         this._m_GLTFRootNode = null;
         this._m_PrincipledMatDef = null;
         this._m_DefaultMatDef = null;
+        // 缓存已加载纹理
+        this._m_Textures = {};
         this._m_Joints = {};
         this._m_Bones = [];
         this._m_Nodes = {};
@@ -104,6 +108,25 @@ export default class GLTFLoader {
         if(customMatDef)
             this._m_CustomMatDef = customMatDef;
     }
+
+    /**
+     * 启用指定材质。<br/>
+     * @param {String}[matDef]
+     */
+    useMatDef(matDef){
+        this._m_MatDefSrc = matDef;
+    }
+
+    /**
+     * 强制minFilter,magFilter。<br/>
+     * @param {Number}[minFilter GLTFLoader.FILTERS可选值之一]
+     * @param {Number}[magFilter GLTFLoader.FILTERS可选值之一]
+     */
+    compulsoryMinMag(minFilter, magFilter){
+        this._m_MinFilter = minFilter;
+        this._m_MagFilter = magFilter;
+    }
+
     _loadBIN(gltf, buffers, i, length, ok){
         if(length > 0){
             AssetLoader.loadFile(this._m_BasePath + gltf.buffers[i].uri, (data)=>{
@@ -833,6 +856,9 @@ export default class GLTFLoader {
     _samplerMap(gltf, i, srgb){
         let map = gltf.textures[i];
         let img = gltf.images[map.source];
+        if(this._m_Textures[img.uri]){
+            return this._m_Textures[img.uri];
+        }
         let texture = new Texture2DVars(this._m_Scene);
         if(srgb)
             texture.setTextureFormat(Texture2DVars.S_TEXTURE_FORMAT.S_SRGBA, Texture2DVars.S_TEXTURE_FORMAT.S_RGBA, Texture2DVars.S_TEXTURE_FORMAT.S_UNSIGNED_BYTE);
@@ -841,10 +867,15 @@ export default class GLTFLoader {
             let sampler = gltf.samplers[map.sampler];
             // 设置纹理采样参数
             if(Tools.checkIsNull(sampler)){
-                let magFilter = sampler.magFilter;
-                let minFilter = sampler.minFilter;
-                if(magFilter && minFilter){
-                    texture.setFilter(this._m_Scene, GLTFLoader.FILTERS[minFilter], GLTFLoader.FILTERS[magFilter]);
+                if(this._m_MinFilter != null && this._m_MagFilter != null){
+                    texture.setFilter(this._m_Scene, this._m_MinFilter, this._m_MagFilter);
+                }
+                else{
+                    let magFilter = sampler.magFilter;
+                    let minFilter = sampler.minFilter;
+                    if(magFilter && minFilter){
+                        texture.setFilter(this._m_Scene, GLTFLoader.FILTERS[minFilter], GLTFLoader.FILTERS[magFilter]);
+                    }
                 }
                 let wrapS = sampler.wrapS;
                 let wrapT = sampler.wrapT;
@@ -853,6 +884,7 @@ export default class GLTFLoader {
                 }
             }
         }
+        this._m_Textures[img.uri] = texture;
         return texture;
     }
     _parseMaterial(gltf, i, material){

@@ -5,11 +5,13 @@
  * @date 2021年2月22日13点51分
  */
 import MoreMath from "./MoreMath.js";
+import Matrix44 from "./Matrix44.js";
 
 export default class Quaternion {
     // 内部缓存
     static _S_TEMP_QUATERNION = new Quaternion();
     static _S_TEMP_QUATERNION_2 = new Quaternion();
+    static _S_TEMP_MAT44 = new Matrix44();
     constructor(x, y, z, w) {
         this._m_X = x || 0;
         this._m_Y = y || 0;
@@ -71,6 +73,22 @@ export default class Quaternion {
             angles[0] = Math.atan2(2 * this._m_X * this._m_W - 2 * this._m_Y * this._m_Z, -sqx + sqy - sqz + sqw); // pitch
         }
         return angles;
+    }
+
+    /**
+     * 从基向量初始化四元数。<br/>
+     * @param {Vector3}[xAxis]
+     * @param {Vector3}[yAxis]
+     * @param {Vector3}[zAxis]
+     */
+    fromAxis(xAxis, yAxis, zAxis){
+        Quaternion._S_TEMP_MAT44.setArray([
+            xAxis._m_X, xAxis._m_Y, xAxis._m_Z, 0,
+            yAxis._m_X, yAxis._m_Y, yAxis._m_Z, 0,
+            zAxis._m_X, zAxis._m_Y, zAxis._m_Z, 0,
+            0, 0, 0, 1
+        ]);
+        this.fromMat44(Quaternion._S_TEMP_MAT44);
     }
 
     /**

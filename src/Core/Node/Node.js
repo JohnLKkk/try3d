@@ -346,6 +346,17 @@ export default class Node extends Component{
     }
 
     /**
+     * 根据基向量设置旋转。<br/>
+     * @param {Vector3}[xAxis]
+     * @param {Vector3}[yAxis]
+     * @param {Vector3}[zAxis]
+     */
+    setLocalRotationFromAxis(xAxis, yAxis, zAxis){
+        this._m_LocalRotation.fromAxis(xAxis, yAxis, zAxis);
+        this._updateLocalMatrix();
+    }
+
+    /**
      * 设置旋转欧拉角。<br/>
      * @param {Number}[x 轴欧拉角]
      * @param {Number}[y 轴欧拉角]

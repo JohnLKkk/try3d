@@ -581,16 +581,14 @@ export default class Tools {
                 // 检测是否相冲
                 if(calc[0][0] == calc[1][0] && calc[0][1] == calc[1][1] && calc[0][2] == calc[1][2]){
                     calc[0] = [0, 0, 0];
-                }else if(calc[1][0] == calc[2][0] && calc[1][1] == calc[2][1] && calc[1][2] == calc[2][2]){
-                    calc[1] = [0, 0, 0];
                 }
             }
             calc.forEach(cc=>{
-                if(cc[0] == calc[1][0] && cc[1] == calc[1][1] && cc[2] == calc[1][2]){
+                if(cc[0] == BS[1][0] && cc[1] == BS[1][1] && cc[2] == BS[1][2]){
                     c[1] = false;
-                }else if(cc[0] == calc[2][0] && cc[1] == calc[2][1] && cc[2] == calc[2][2]){
+                }else if(cc[0] == BS[2][0] && cc[1] == BS[2][1] && cc[2] == BS[2][2]){
                     c[2] = false;
-                }else if(cc[0] == calc[0][0] && cc[1] == calc[0][1] && cc[2] == calc[0][2]){
+                }else if(cc[0] == BS[0][0] && cc[1] == BS[0][1] && cc[2] == BS[0][2]){
                     c[0] = false;
                 }
             });
