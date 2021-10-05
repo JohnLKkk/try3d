@@ -78,11 +78,14 @@ export default class Render extends Component{
         // 所有可用渲染程序
         this._m_RenderPrograms = {};
 
+        // 初始化渲染状态
+        this.m_InitState = new RenderState(true);
         // 不透明队列的默认渲染状态
         this._m_OpaqueRenderState = new RenderState();
         // 半透明队列的默认渲染状态
         this._m_TranslucentRenderState = new RenderState();
         // 开启blend模式
+        // this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[1], 'Off');
         this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[4], 'On');
         // 关闭深度写入(不建议默认设置,因为对于大部分情况,都需要开启深度写入,以避免同一个物体前后交叉而没有深度写入导致错误情况产生,但可以通过具体材质进行控制)
         // this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[1], 'Off');
@@ -548,7 +551,8 @@ export default class Render extends Component{
         this.fire(Render.PRE_FRAME, [exTime]);
         this._resetFrameContext();
         this._resetRenderContext();
-        this._checkRenderState(gl, this._m_FrameContext.getRenderState().reset(), this._m_FrameContext.getRenderState());
+        // this._checkRenderState(gl, this._m_FrameContext.getRenderState().reset(), this._m_FrameContext.getRenderState());
+        this._checkRenderState(gl, this.m_InitState, this._m_FrameContext.getRenderState());
         // m_VisDrawables包含了视锥体剔除的结果
         // 在这里进行遮挡剔除
         // 然后进行z-pre pass

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SkyEnvHDR</title>
+</head>
+<body>
+<script src="../../build/try3d.min.js"></script>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+    <div style="position: fixed;left: 0px;bottom: 0px;margin-left: 5px;">
+        <span><span id="img"></span><div style="text-align: center;width: 100%;color: white">hdr</div></span>
+        <script>
+            let hdrDiv = document.getElementById('img');
+            let hdr = Try3d.RadianceLoader.rgbeImg();
+            hdr.style.width = '256px';
+            hdr.style.height = '128px';
+            hdr.src = '../Assets/Textures/hdr/newport_loft.hdr';
+            hdrDiv.appendChild(hdr);
+        </script>
+    </div>
+</div>
+<script type="module">
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(5, 5, 5), new Try3d.Vector3(0, 0, 0), new Try3d.Vector3(0, 1, 0));
+
+    // 创建一个sky
+    let sky = new Try3d.SkyBox(scene, {id:'sky'});
+    // 设置等距全景图作为sky纹理
+    sky.getMaterial().setParam('useEnvMap', new Try3d.BoolVars().valueOf(true));
+    // 激活hdr通道
+    sky.getMaterial().setParam('useHDR', new Try3d.BoolVars().valueOf(true));
+    let envMap = new Try3d.Texture2DVars(scene);
+    envMap.setPreloadColor(scene, new Try3d.Vector4(0.5, 0.5, 0.5, 1.0));
+    envMap.setImageSrc(scene, '../Assets/Textures/hdr/newport_loft.hdr', {rgbe:true, linearFloat:true});
+    envMap.setTextureFormat(Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGBE5, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
+    envMap.setWrap(scene, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+    envMap.setFilter(scene, Try3d.Texture2DVars.S_FILTERS.S_LINEAR, Try3d.Texture2DVars.S_FILTERS.S_LINEAR);
+    sky.getMaterial().setParam('envMap', envMap);
+
+    scene.setSky(sky);
+
+    let box = new Try3d.Box(scene, {id:'box'});
+    let mat = new Try3d.Material(scene, {id:'mat', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_COLOR_DEF_DATA)});
+    box.setMaterial(mat);
+    // 定义一个根节点
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+    scene.addSceneNode(rootNode);
+    rootNode.addChildren(box);
+    let sc = new Try3d.SceneBrowsingController(scene, {id:'control'});
+    sc.lookScene(rootNode);
+    sc.setTargetDistance(1);
+    box.setLocalScaleXYZ(0, 0, 0);
+
+
+    let renderEngine = new Try3d.RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+</script>
+</body>
+</html>

@@ -98,11 +98,18 @@ function initOther(scene, rootNode, fogColor, gridColor){
     grid.setMaterial(defaultColor);
     rootNode.addChildren(grid);
 }
-function initDirLight(scene, rootNode, lightColor){
+function initDirLight(scene, rootNode, lightColor, dir, shadow){
     let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
-    dirLight.setDirectionXYZ(-1, -1, 1);
+    dir = dir || [-1, -1, 1];
+    dirLight.setDirectionXYZ(dir[0], dir[1], dir[2]);
     lightColor = lightColor || [1.0, 1.0, 1.0, 1.0];
     dirLight.setColorRGBA(lightColor[0], lightColor[1], lightColor[2], lightColor[3]);
+    if(shadow){
+        dirLight.setShadowMapSize(1024);
+        dirLight.setShadowSplitNum(1);
+        dirLight.proShadow(true);
+        dirLight.getShadow().setShadowIntensity(0.1);
+    }
     rootNode.addChildren(dirLight);
 }
 function showStats(scene){

@@ -3845,6 +3845,19 @@ class AABBBoundingBox extends _BoundingVolume_js__WEBPACK_IMPORTED_MODULE_0__/* 
         }
         return false;
     }
+    inside(boundingVolume) {
+        switch (boundingVolume.getType()) {
+            case _BoundingVolume_js__WEBPACK_IMPORTED_MODULE_0__/* ["default"].S_TYPE_AABB */ .Z.S_TYPE_AABB:
+                let min = this.getMin(AABBBoundingBox.S_TEMP_VEC3);
+                let max = this.getMax(AABBBoundingBox.S_TEMP_VEC32);
+                let tagMin = boundingVolume.getMin(AABBBoundingBox.S_TEMP_VEC33);
+                let tagMax = boundingVolume.getMax(AABBBoundingBox.S_TEMP_VEC34);
+                return (tagMax._m_X <= max._m_X && tagMin._m_X >= min._m_X) && (tagMax._m_Y <= max._m_Y && tagMin._m_Y >= min._m_Y) && (tagMax._m_Z <= max._m_Z && tagMin._m_Z >= min._m_Z);
+            case _BoundingVolume_js__WEBPACK_IMPORTED_MODULE_0__/* ["default"].S_TYPE_SPHERE */ .Z.S_TYPE_SPHERE:
+                return false;
+        }
+        return false;
+    }
 }
 
 
@@ -3955,12 +3968,22 @@ class BoundingVolume {
     }
 
     /**
-     * 返回于指定包围体是否包含。<br/>
-     * 如果完全包含，则返回true，否则返回false。<br/>
+     * 返回与指定包围体是否包含。<br/>
+     * 如果包含(相交，包含)，则返回true，否则返回false。<br/>
      * @param {BoundingVolume}[boundingVolume]
      * @return {Boolean}
      */
     contains(boundingVolume){
+        return false;
+    }
+
+    /**
+     * 返回与指定包围体是否包含。<br/>
+     * 如果完全包含，则返回true，否则返回false。<br/>
+     * @param {BoundingVolume}[boundingVolume]
+     * @return {Boolean}
+     */
+    inside(boundingVolume){
         return false;
     }
 
@@ -15394,11 +15417,14 @@ class Render extends _Component_js__WEBPACK_IMPORTED_MODULE_15__/* ["default"] *
         // 所有可用渲染程序
         this._m_RenderPrograms = {};
 
+        // 初始化渲染状态
+        this.m_InitState = new _WebGL_RenderState_js__WEBPACK_IMPORTED_MODULE_17__/* ["default"] */ .Z(true);
         // 不透明队列的默认渲染状态
         this._m_OpaqueRenderState = new _WebGL_RenderState_js__WEBPACK_IMPORTED_MODULE_17__/* ["default"] */ .Z();
         // 半透明队列的默认渲染状态
         this._m_TranslucentRenderState = new _WebGL_RenderState_js__WEBPACK_IMPORTED_MODULE_17__/* ["default"] */ .Z();
         // 开启blend模式
+        // this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[1], 'Off');
         this._m_TranslucentRenderState.setFlag(_WebGL_RenderState_js__WEBPACK_IMPORTED_MODULE_17__/* ["default"].S_STATES[4] */ .Z.S_STATES[4], 'On');
         // 关闭深度写入(不建议默认设置,因为对于大部分情况,都需要开启深度写入,以避免同一个物体前后交叉而没有深度写入导致错误情况产生,但可以通过具体材质进行控制)
         // this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[1], 'Off');
@@ -15864,7 +15890,8 @@ class Render extends _Component_js__WEBPACK_IMPORTED_MODULE_15__/* ["default"] *
         this.fire(Render.PRE_FRAME, [exTime]);
         this._resetFrameContext();
         this._resetRenderContext();
-        this._checkRenderState(gl, this._m_FrameContext.getRenderState().reset(), this._m_FrameContext.getRenderState());
+        // this._checkRenderState(gl, this._m_FrameContext.getRenderState().reset(), this._m_FrameContext.getRenderState());
+        this._checkRenderState(gl, this.m_InitState, this._m_FrameContext.getRenderState());
         // m_VisDrawables包含了视锥体剔除的结果
         // 在这里进行遮挡剔除
         // 然后进行z-pre pass
@@ -28423,7 +28450,7 @@ class OctCullingControl extends Component/* default */.Z{
      */
     distrOct(ref, oct){
         let refAABB = ref.getBoundingVolume();
-        if(oct.getAABBBoundingBox().contains(refAABB)){
+        if(oct.getAABBBoundingBox().inside(refAABB)){
             // 递归leaf
             let leafs = oct.getLeafs();
             if(leafs != null){
@@ -31979,7 +32006,7 @@ class Torus extends Geometry/* default */.Z{
     }
 
     normalize(v, dest) {
-        let f = 1.0 / len(v);
+        let f = 1.0 / this.len(v);
         return this.mul(v, f, dest);
     }
 

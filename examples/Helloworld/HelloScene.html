@@ -22,28 +22,48 @@
         let rootNode = new Try3d.Node(scene, {id:'rootNode'});
         scene.addSceneNode(rootNode);
 
-        // 定义一个blueBox
-        let blueBox = new Try3d.Box(scene, {id:'blueBox', xHalf:2, yHalf:2, zHalf:2});
-        // 创建blueBox材质
-        let blueColorMat = new Try3d.Material(scene, {id:'blueColorMat', materialDef:colorDef});
-        blueColorMat.setParam("color", new Try3d.Vec4Vars().valueFromXYZW(0, 0, 1, 1));
-        blueBox.setMaterial(blueColorMat);
-        blueBox.setLocalTranslationXYZ(0, 2, 0);
-        rootNode.addChildren(blueBox);
+        // 环境纹理加载完再开始创建创建
+        let radianceLoader = new Try3d.RadianceLoader();
+        radianceLoader.loadHDR('./../Assets/Textures/hdr/white.hdr', imageData=>{
+            // 创建一个sky
+            let sky = new Try3d.SkyBox(scene, {id:'sky'});
+            // 使用cubeMap作为天空盒材质
+            let envMap = new Try3d.Texture2DVars(scene);
+            envMap.setPreloadColor(scene, new Try3d.Vector4(0.5, 0.5, 0.5, 1.0));
+            envMap.setWrap(scene, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+            envMap.setFilter(scene, Try3d.Texture2DVars.S_FILTERS.S_LINEAR, Try3d.Texture2DVars.S_FILTERS.S_LINEAR);
+            envMap.setTextureFormat(Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB16F, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
+            envMap.setImage(scene, imageData, {rgbe:true, linearFloat:true});
+            sky.getMaterial().setParam('envMap', envMap);
+            sky.getMaterial().setParam('useEnvMap', new Try3d.BoolVars().valueOf(true));
+            sky.getMaterial().setParam('useHDR', new Try3d.BoolVars().valueOf(true));
 
-        // 定义一个redBox
-        let redBox = new Try3d.Box(scene, {id:'redBox', xHalf:2, yHalf:1, zHalf:1.5});
-        // 创建redBox材质
-        let redColorMat = new Try3d.Material(scene, {id:'redColorMat', materialDef:colorDef});
-        redColorMat.setParam("color", new Try3d.Vec4Vars().valueFromXYZW(1, 0, 0, 1));
-        redBox.setMaterial(redColorMat);
-        redBox.setLocalTranslationXYZ(3, 2, 2);
-        rootNode.addChildren(redBox);
+            scene.setSky(sky);
 
-        // 创建一个控制器
-        let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
-        sceneControl.lookScene(rootNode);
-        initOther(scene, rootNode);
+            let gltfLoader = new Try3d.GLTFLoader();
+            gltfLoader.load(scene, './../Assets/Models/GLTF/Covid19/scene.gltf', modelNode=>{
+                rootNode.addChildren(modelNode);
+                let sceneControl = new Try3d.SceneBrowsingController(scene, {id:"controller"});
+                sceneControl.lookScene(rootNode);
+                sceneControl.setTargetDistance(10);
+                sceneControl.setTargetAngle(Try3d.MoreMath.toRadians(150));
+                sceneControl.setMinDistance(2);
+                sceneControl.setMinVerticalRotation(Try3d.MoreMath.toRadians(1));
+            }, {batch:true});
+
+            let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
+            dirLight.setDirectionXYZ(-1, -1, 1);
+            dirLight.proShadow(true);
+            dirLight.getShadow().setShadowIntensity(0.3);
+            dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+            rootNode.addChildren(dirLight);
+
+            let giProbe = new Try3d.GIProbe(scene, {id:'giProbe'});
+            giProbe.setRadius(20);
+            giProbe.setPositionFromXYZ(0, 5, 0);
+            let envCapture = Try3d.ProbeTools.bakeGIProbe(scene, giProbe, {resolute:128});
+            addFog(scene, 50, 100);
+        });
 
 
         // 创建渲染器

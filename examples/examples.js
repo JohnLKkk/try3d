@@ -17,10 +17,16 @@ const Examples = {
 
     ],
     'Scenes':[
-
+        'Toad.html',
+        'Leaves.html',
     ],
-    'Sky':[
-
+    'Skys':[
+        'SkyCubeMap.html',
+        'SkyCubeMap2.html',
+        'SkyEnv.html',
+        'SkyEnvHDR.html',
+        'EnvCapture.html',
+        'GIProbeBake.html',
     ],
     'Lights':[
         "DirectionalLighting.html",
@@ -69,7 +75,7 @@ const Examples = {
 
     ],
     'Geometrys':[
-
+        'BasicShape.html',
     ],
     'Transforms':[
 

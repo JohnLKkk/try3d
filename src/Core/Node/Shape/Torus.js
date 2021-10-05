@@ -107,7 +107,7 @@ export default class Torus extends Geometry{
     }
 
     normalize(v, dest) {
-        let f = 1.0 / len(v);
+        let f = 1.0 / this.len(v);
         return this.mul(v, f, dest);
     }
 
