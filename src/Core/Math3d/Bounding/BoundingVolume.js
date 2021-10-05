@@ -96,12 +96,22 @@ export default class BoundingVolume {
     }
 
     /**
-     * 返回于指定包围体是否包含。<br/>
-     * 如果完全包含，则返回true，否则返回false。<br/>
+     * 返回与指定包围体是否包含。<br/>
+     * 如果包含(相交，包含)，则返回true，否则返回false。<br/>
      * @param {BoundingVolume}[boundingVolume]
      * @return {Boolean}
      */
     contains(boundingVolume){
+        return false;
+    }
+
+    /**
+     * 返回与指定包围体是否包含。<br/>
+     * 如果完全包含，则返回true，否则返回false。<br/>
+     * @param {BoundingVolume}[boundingVolume]
+     * @return {Boolean}
+     */
+    inside(boundingVolume){
         return false;
     }
 

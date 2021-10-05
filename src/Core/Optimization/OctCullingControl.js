@@ -246,7 +246,7 @@ export default class OctCullingControl extends Component{
      */
     distrOct(ref, oct){
         let refAABB = ref.getBoundingVolume();
-        if(oct.getAABBBoundingBox().contains(refAABB)){
+        if(oct.getAABBBoundingBox().inside(refAABB)){
             // 递归leaf
             let leafs = oct.getLeafs();
             if(leafs != null){

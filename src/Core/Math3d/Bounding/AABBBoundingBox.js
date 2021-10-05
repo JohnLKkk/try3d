@@ -368,4 +368,17 @@ export default class AABBBoundingBox extends BoundingVolume{
         }
         return false;
     }
+    inside(boundingVolume) {
+        switch (boundingVolume.getType()) {
+            case BoundingVolume.S_TYPE_AABB:
+                let min = this.getMin(AABBBoundingBox.S_TEMP_VEC3);
+                let max = this.getMax(AABBBoundingBox.S_TEMP_VEC32);
+                let tagMin = boundingVolume.getMin(AABBBoundingBox.S_TEMP_VEC33);
+                let tagMax = boundingVolume.getMax(AABBBoundingBox.S_TEMP_VEC34);
+                return (tagMax._m_X <= max._m_X && tagMin._m_X >= min._m_X) && (tagMax._m_Y <= max._m_Y && tagMin._m_Y >= min._m_Y) && (tagMax._m_Z <= max._m_Z && tagMin._m_Z >= min._m_Z);
+            case BoundingVolume.S_TYPE_SPHERE:
+                return false;
+        }
+        return false;
+    }
 }

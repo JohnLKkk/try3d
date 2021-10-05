@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OctreeCulling2</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;margin: 0px;padding: 0px;" tabindex="0"></canvas>
+</div>
+<!--<script src="../../build/try3d.js"></script>-->
+<script type="module">
+    import Try3d from '../../src/Try3d.js';
+    window.Try3d = Try3d;
+</script>
+<script src="./../dat.gui.min.js"></script>
+<script type="module">
+    import Stats from '../stats.min.js';
+    import Ext from "../Ext.js";
+    let ext = new Ext();
+    ext.show('  这个例子演示了八叉树管理加载的OBJ模型场景，默认下，渲染器不会使用八叉树进行管理，因为默认包含了快速视锥剔除，如果要启用八叉树管理，请使用OctCullingControl控制器对指定要使用八叉树管理的节点进行管理，其他节点仍然按照快速视锥剔除进行剔除。', {lineheight:50});
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    let testCamera = new Try3d.Camera(scene, {id:'testCamera'});
+    testCamera.lookAt(new Try3d.Vector3(0, 0, 0), new Try3d.Vector3(0, 0, 1), new Try3d.Vector3(0, 1, 0));
+
+
+    let wireColorMat = new Try3d.Material(scene, {id:'colorWireFrustum', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_COLOR_DEF_DATA)});
+    wireColorMat.setParam('color', new Try3d.Vec4Vars().valueFromXYZW(1.0, 0, 0, 1.0));
+    let wireFrustum = new Try3d.Geometry(scene, {id:'wireFrustum'});
+    // 可视化剔除视锥体
+    wireFrustum.setMesh(Try3d.MeshFactor.createViewFrustumMeshFromCamera(testCamera));
+    wireFrustum.setMaterial(wireColorMat);
+    wireFrustum.updateBound();
+
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+    scene.addSceneNode(rootNode);
+    rootNode.addChildren(wireFrustum);
+
+    let objLoader = new Try3d.OBJLoader();
+    objLoader.load(scene, 'obj1', './../Assets/Models/OBJ/Jingzhuxuan/jinzuxuan.obj', modelNode=>{
+        rootNode.addChildren(modelNode);
+        let sc = new Try3d.SceneBrowsingController(scene, {id:'sc'});
+        sc.lookScene(modelNode);
+        // sc.setTargetDistance(1000);
+        // 使用OctCullingControl来管理静态场景
+        let octCullingControl = new Try3d.OctCullingControl(modelNode, {id:'octCulling'});
+        // 将octree绘制出来,为了方便管理,这里挂到一个单独节点
+        let debugOctreeNode = new Try3d.Node(scene, {id:'debugOctree'});
+        rootNode.addChildren(debugOctreeNode);
+        octCullingControl.debug(debugOctreeNode, new Try3d.Material(scene, {id:'debugMat', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_COLOR_DEF_DATA)}));
+    });
+
+
+    // 将相机设置为一个最佳观测点(以便观察上面的视锥体)
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(-150, 250, 200), new Try3d.Vector3(-50, 0, -50), new Try3d.Vector3(0, 1, 0));
+    mainCamera.setFrustumPerspective(45, mainCamera.getWidth() / mainCamera.getHeight(), 0.1, 10000);
+
+    let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(1, -0.5, 1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dirLight);
+
+    let renderEngine = new Try3d.RenderEngine();
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    let dx = 0, dy = 0, dz = 0;
+    // 设置testCamera为剔除相机(默认剔除相机是渲染主相机)
+    scene.setFrustumCullingCamera(testCamera);
+    scene.on('update', (exTime)=>{
+        // 执行旋转
+        // 该内置OctreeCulling仅优化静态场景,所以仅当物体在Octree节点范围内进行运动时优化结果仍然保持正确
+        // cubes.getChildren().forEach(node=>{
+        //     dx += Maths.random() * 0.2 * exTime;
+        //     dy += Maths.random() * 0.2 * exTime;
+        //     dz += Maths.random() * 0.2 * exTime;
+        //     let x = MoreMath.toRadians(dx);
+        //     let y = MoreMath.toRadians(dy);
+        //     let z = MoreMath.toRadians(dz);
+        //     node.setLocalRotationFromEuler(x, y, z);
+        // });
+        stats.update();
+    });
+    // 使用dat gui
+    let gui = new dat.GUI();
+    var settings = {
+        visFrustum:true,
+        visOctree:true,
+        cameraDirX:0,
+        cameraDirY:0,
+        cameraDirZ:1,
+    };
+    gui.add(settings, 'visFrustum').onChange(visFrustum=>{
+        if(visFrustum){
+            wireFrustum.setFilterFlag(Try3d.Node.S_DYNAMIC);
+        }
+        else{
+            wireFrustum.setFilterFlag(Try3d.Node.S_ALWAYS);
+        }
+    });
+    gui.add(settings, 'visOctree').onChange(visOctree=>{
+        if(visOctree){
+            debugOctreeNode.setFilterFlag(Try3d.Node.S_DYNAMIC);
+        }
+        else{
+            debugOctreeNode.setFilterFlag(Try3d.Node.S_ALWAYS);
+        }
+    });
+    gui.add(settings, 'cameraDirX', -1, 1).step(0.1).onChange(function(value) {
+        testCamera.lookAt(new Try3d.Vector3(0, 0, 0), new Try3d.Vector3(settings.cameraDirX, settings.cameraDirY, settings.cameraDirZ), new Try3d.Vector3(0, 1, 0));
+        wireFrustum.setLocalRotationFromAxis(testCamera.getUp().crossRetNew(testCamera.getDir()), testCamera.getUp(), testCamera.getDir());
+    });
+    gui.add(settings, 'cameraDirY', -1, 1).step(0.1).onChange(function(value) {
+        testCamera.lookAt(new Try3d.Vector3(0, 0, 0), new Try3d.Vector3(settings.cameraDirX, settings.cameraDirY, settings.cameraDirZ), new Try3d.Vector3(0, 1, 0));
+        wireFrustum.setLocalRotationFromAxis(testCamera.getUp().crossRetNew(testCamera.getDir()), testCamera.getUp(), testCamera.getDir());
+    });
+    gui.add(settings, 'cameraDirZ', -1, 1).step(0.1).onChange(function(value) {
+        testCamera.lookAt(new Try3d.Vector3(0, 0, 0), new Try3d.Vector3(settings.cameraDirX, settings.cameraDirY, settings.cameraDirZ), new Try3d.Vector3(0, 1, 0));
+        wireFrustum.setLocalRotationFromAxis(testCamera.getUp().crossRetNew(testCamera.getDir()), testCamera.getUp(), testCamera.getDir());
+    });
+</script>
+</body>
+</html>
