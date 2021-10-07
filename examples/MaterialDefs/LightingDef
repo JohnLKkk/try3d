@@ -1,0 +1,222 @@
+#type module
+
+// 一个基于Phong光照材质
+// 演示了两种计算方案
+Def MyMatDef/Lighting{
+    Params{
+        vec4 diffuseColor;
+        vec4 specularColor;
+        float shininess;
+
+        sampler2D diffuseMap;
+        sampler2D specularMap;
+        sampler2D normalMap;
+    }
+
+    Vars vertexAttrs{
+        vec2 wUv0;
+        vec3 wNormal;
+        vec4 wTangent;
+        vec3 wPosition;
+    }
+
+    Functions Lighting{
+        // 导入系统库
+        #include Try3dLightingLib
+
+        // 顶点变换与几何属性传递
+        void transformPositions(){
+            vertexAttrs.wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;
+            mat3 nMat = mat3(transpose(inverse(Context.ModelMatrix)));
+            vec3 norm = normalize(nMat * Context.InNormal);
+            vertexAttrs.wTangent = vec4(normalize(nMat * Context.InTangent.xyz), Context.InTangent.w);
+            vertexAttrs.wNormal = norm;
+            vertexAttrs.wUv0 = Context.InUv0;
+            Context.OutPosition = Context.ProjectViewMatrix * vec4(vertexAttrs.wPosition, 1.0f);
+        }
+
+        // 返回法线
+        vec3 getNormal(){
+            vec3 normal = normalize( vertexAttrs.wNormal );
+            #ifdef Params.normalMap
+                vec3 normalHeight = texture(Params.normalMap, vertexAttrs.wUv0).xyz;
+                vec3 tangent = normalize(vertexAttrs.wTangent.xyz);
+                mat3 tbnMat = mat3(tangent, vertexAttrs.wTangent.w * cross(normal, tangent), normal);
+                normal = normalize(tbnMat * ( normalHeight * 2.0f - 1.0f ));
+            #endif
+            return normal;
+        }
+
+        vec4 getDiffuseColor(){
+            vec4 _diffuseColor = vec4(1.0f);
+            #ifdef Params.diffuseColor
+                _diffuseColor = Params.diffuseColor;
+            #endif
+            #ifdef Params.diffuseMap
+                _diffuseColor = _diffuseColor * texture(Params.diffuseMap, vertexAttrs.wUv0);
+            #endif
+            return _diffuseColor;
+        }
+
+        // 返回specularColor
+        vec4 getSpecularColor(){
+            vec4 _specularColor = vec4(1.0f);
+            #ifdef Params.specularColor
+                _specularColor = Params.specularColor;
+            #endif
+            #ifdef Params.specularMap
+                _specularColor = _specularColor * texture(Params.specularMap, vertexAttrs.wUv0);
+            #endif
+            return _specularColor;
+        }
+
+        // 返回光泽度
+        float getShininess(){
+            #ifdef Params.shininess
+                return Params.shininess;
+            #else
+                return 32.0f;
+            #endif
+        }
+
+        // blinnPhong光照
+        void blinnPhong(){
+            vec4 lightColor;
+            vec4 lightData1;
+            vec4 lightDir = vec4(0.0f);
+            vec3 lightVec = vec3(0.0f);
+            vec2 lightBRDF = vec2(0.0f);
+            vec3 viewDir = normalize(Context.CameraPosition.xyz - vertexAttrs.wPosition.xyz);
+            vec4 _diffuseColor = getDiffuseColor();
+            vec4 _specularColor = getSpecularColor();
+            vec3 normal = getNormal();
+            float _shininess = getShininess();
+
+            // 计算光照
+            Context.OutColor.rgb = _diffuseColor.rgb * Context.AmbientLightColor;
+            for( int i = 0;i < Context.CurLightCount;i+=3 ){
+                lightColor = Context.WLightData[i];
+                lightData1 = Context.WLightData[i + 1];
+                ComputeLightDir(vertexAttrs.wPosition, lightColor.w, lightData1, lightDir, lightVec);
+
+                // 计算SpotLight的衰减
+                float spotFallOff = 1.0f;
+                if( lightColor.w > 1.0f )
+                {
+                    // 计算SpotLight的范围衰减
+                    spotFallOff = ComputeSpotFalloff( Context.WLightData[i + 2], lightDir.xyz );
+                }
+
+                // 计算反射率
+                ComputeLighting(normal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, _shininess, lightBRDF);
+
+                // 最终光照值
+                Context.OutColor.rgb += lightColor.rgb * ( _diffuseColor.rgb * vec3( lightBRDF.x ) + _specularColor.rgb * vec3( lightBRDF.y ));
+            }
+            Context.OutColor.a = _diffuseColor.a;
+        }
+
+        void blinnPhong2(){
+            vec4 lightColor;
+            vec4 lightData1;
+            vec4 lightDir = vec4(0.0f);
+            vec3 lightVec = vec3(0.0f);
+            vec2 lightBRDF = vec2(0.0f);
+            vec3 viewDir = normalize(Context.CameraPosition.xyz - vertexAttrs.wPosition.xyz);
+            vec4 _diffuseColor = getDiffuseColor();
+            vec4 _specularColor = getSpecularColor();
+            vec3 normal = getNormal();
+            float _shininess = getShininess();
+
+
+            // 可以不需要在MultiId分支处理,但是为了更好的性能,这里在MultiId == 0时处理全局光源
+            // 不必担心这个分支，不会影响性能
+            Context.OutColor.rgb = _diffuseColor.rgb * Context.AmbientLightColor;
+            if(Context.MultiId == 0){
+                for( int i = 0;i < Context.CurLightCount;i+=3 ){
+                    lightColor = Context.WLightData[i];
+                    lightData1 = Context.WLightData[i + 1];
+                    ComputeLightDir(vertexAttrs.wPosition, lightColor.w, lightData1, lightDir, lightVec);
+
+                    // 计算SpotLight的衰减
+                    float spotFallOff = 1.0;
+                    if( lightColor.w > 1.0f )
+                    {
+                        // 计算SpotLight的范围衰减
+                        spotFallOff = ComputeSpotFalloff( Context.WLightData[i + 2], lightDir.xyz );
+                    }
+
+                    // 如果存在法线纹理,则进一步计算lightDir
+
+                    // 计算反射率
+                    ComputeLighting(normal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, _shininess, lightBRDF);
+
+                    // 最终光照值
+                    Context.OutColor.rgb += lightColor.rgb * ( _diffuseColor.rgb * vec3( lightBRDF.x ) + _specularColor.rgb * vec3( lightBRDF.y ));
+                }
+            }
+            else{
+                // point和spot
+                vec4 lightColor = Context.WLight_Data_0;
+                vec4 lightData1 = Context.WLight_Data_1;
+                ComputeLightDir(vertexAttrs.wPosition, lightColor.w, lightData1, lightDir, lightVec);
+
+                // 计算SpotLight的衰减
+                float spotFallOff = 1.0;
+                if( lightColor.w > 1.0f )
+                {
+                    // 计算SpotLight的范围衰减
+                    spotFallOff = ComputeSpotFalloff( Context.WLight_Data_2, lightDir.xyz );
+                }
+
+                // 如果存在法线纹理,则进一步计算lightDir
+
+                // 计算反射率
+                ComputeLighting(normal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, _shininess, lightBRDF);
+
+                // 最终光照值
+                Context.OutColor.rgb += lightColor.rgb * ( _diffuseColor.rgb * vec3( lightBRDF.x ) + _specularColor.rgb * vec3( lightBRDF.y ));
+            }
+            Context.OutColor.a = _diffuseColor.a;
+        }
+    }
+
+    SubTechnology Lighting{
+        // 指定带光照的渲染程序
+        // 这是最直观的光照计算逻辑,在尽可能单个pass中完成光照
+        Advanced{
+            RenderProgram SinglePassLighting;
+        }
+
+        Vs_Shader:Lighting.transformPositions;
+        Fs_Shader:Lighting.blinnPhong;
+    }
+
+    SubTechnology Lighting2{
+        // 累计光照
+        Advanced{
+            RenderProgram MultiPassLighting;
+        }
+
+        Vs_Shader:Lighting.transformPositions;
+        Fs_Shader:Lighting.blinnPhong2;
+    }
+
+    Technology{
+        // 可以指定渲染Pipeline
+        // 默认就是在ForwardPipeline
+        Sub_Pass Forward{
+            Pass Lighting{
+            }
+        }
+    }
+
+    Technology Lighting2{
+        // 可以指定渲染Pipeline
+        // 默认就是在ForwardPipeline
+        Sub_Pass Forward{
+            Pass Lighting2{
+            }
+        }
+    }
+}

@@ -8,12 +8,70 @@
     <!--<canvas id="canvas" width="512" height="512"></canvas>-->
     <span><img src="./Assets/Textures/pond/Pond_NRM.png" width="128" height="128"><div style="text-align: center;width: 128px;color: white">sdsd</div></span>
     <script type="module">
-        let arr = ['color','get','test'];
-        var newArr = arr.sort(function(a,b){return a.localeCompare(b)});
-        console.log("newArr:" + newArr);
-        arr = ['test','color','get'];
-        var newArr = arr.sort(function(a,b){return a.localeCompare(b)});
-        console.log("newArr:" + newArr);
+        import MaterialDefBuild from "../src/Core/Material/MaterialDefBuild.js";
+
+        let matDefBuild = new MaterialDefBuild();
+        matDefBuild.build("#version 2\n" +
+            "Def Template{\n" +
+            "    Params{\n" +
+            "        // 材质参数\n" +
+            "        sampler2D colorMap;\n" +
+            "    }\n" +
+            "    Vars data1{\n" +
+            "        vec2 wUv0;\n" +
+            "    }\n" +
+            "    Vars data2{\n" +
+            "        vec2 wUv0;\n" +
+            "    }\n" +
+            "    // 一组库函数\n" +
+            "    Functions myCode{\n" +
+            "        void function1(){\n" +
+            "            Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" +
+            "            data1.wUv0 = Context.InUv0;\n" +
+            "        }\n" +
+            "        void function2(){\n" +
+            "            function1();\n" +
+            "            Context.OutColor = vec4(1.0f);\n" +
+            "        }\n" +
+            "        void function3(){\n" +
+            "            function2();\n" +
+            "            Context.OutColor = vec4(data1.wUv0, 0.0f, 1.0f);\n" +
+            "        }\n" +
+            "        vec4 getColorMap(){\n" +
+            "            return texture(Params.colorMap, data1.wUv0);\n" +
+            "        }\n" +
+            "        void function4(){\n" +
+            "            // 只能使用一组Vars,不能同时使用两组不同的Vars\n" +
+            "            Context.OutColor = getColorMap();\n" +
+            "        }\n" +
+            "    }\n" +
+            "    SubTechnology Test{\n" +
+            "        Vs_Shader:myCode.function1;\n" +
+            "        Fs_Shader:myCode.function2;\n" +
+            "    }\n" +
+            "    SubTechnology Test2{\n" +
+            "        Vs_Shader:myCode.function1;\n" +
+            "        Fs_Shader:myCode.function3;\n" +
+            "    }\n" +
+            "    Technology{\n" +
+            "        Sub_Pass{\n" +
+            "            Pass Test{\n" +
+            "            }\n" +
+            "        }\n" +
+            "    }\n" +
+            "    Technology 2{\n" +
+            "        Sub_Pass{\n" +
+            "            Pass Test2{\n" +
+            "            }\n" +
+            "        }\n" +
+            "    }\n" +
+            "}\n");
+        // let arr = ['color','get','test'];
+        // var newArr = arr.sort(function(a,b){return a.localeCompare(b)});
+        // console.log("newArr:" + newArr);
+        // arr = ['test','color','get'];
+        // var newArr = arr.sort(function(a,b){return a.localeCompare(b)});
+        // console.log("newArr:" + newArr);
         //
         // let s1 = /color/;
         // let s2 = /colorMap/;

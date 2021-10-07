@@ -199,6 +199,67 @@ export default class ShaderSource {
         "_inDepthMap":'DefaultPostFilterShadingFrameBuffer',
     };
 
+    // code
+    // 后期改为库文件
+    static S_TRY3D_LIGHTING_LIB = '// 计算光照方向\n' +
+        '            // 对于DirLight,PointLight以及SpotLight,lightType依次为0.0,1.0,2.0\n' +
+        '            // 输出光照方向\n' +
+        '            // lightDir.w存储衰减率(对于DirLight,衰减值一直为1,对于Point或Spot,衰减值随着半径而变小,衰减值越小,表示衰减度越大)\n' +
+        '            void ComputeLightDir(in vec3 worldPos, in float lightType, in vec4 position, out vec4 lightDir, out vec3 lightVec){\n' +
+        '                // 只有lightType = 0.0时,posLight为0.0,否则posLight为1.0\n' +
+        '                float posLight = step(0.5f, lightType);\n' +
+        '\n' +
+        '                // 计算光照位置\n' +
+        '                // 对于DirLight,lightVec = position.xyz * sign(-0.5f) = position.xyz * -1.0f;其中position代表DirLight的方向\n' +
+        '                // 对于PointLight和SpotLight,lightVec = position.xyz * sign(1.0f - 0.5f) - (worldPos * 1.0f) = positions.xyz * 1.0f - worldPos;其中position代表Light的位置\n' +
+        '                lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);\n' +
+        '                float dist = length(lightVec);\n' +
+        '\n' +
+        '                // 对于DirLight,lightDir.w = 1.0f\n' +
+        '                //lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);\n' +
+        '\n' +
+        '                lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n' +
+        '                lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n' +
+        '\n' +
+        '                // 归一化\n' +
+        '                lightDir.xyz = lightVec / vec3(dist);\n' +
+        '            }\n' +
+        '            // 基于BlinnPhong光照模型计算光照因子\n' +
+        '            // brdf.x保存漫反射部分;brdf.y保存镜面反射部分\n' +
+        '            void ComputeLighting(in vec3 normal, in vec3 viewDir, in vec3 lightDir, in float attenuation, in float shininess, out vec2 brdf){\n' +
+        '                // diffuse部分\n' +
+        '                float diffuseBRDF = max(0.0f, dot(normal, lightDir));\n' +
+        '                // specular部分\n' +
+        '                // 半角向量代替viewDir参与光照计算\n' +
+        '                vec3 H = normalize(viewDir + lightDir);\n' +
+        '                float HdotN = max(0.0f, dot(H, normal));\n' +
+        '                float specularBRDF = pow( HdotN, shininess );\n' +
+        '\n' +
+        '                // 衰减,对于PointLight和SpotLight来说有效,对于DirLight而言,attenuation一直为1\n' +
+        '                brdf.x = diffuseBRDF * attenuation;\n' +
+        '                brdf.y = specularBRDF * attenuation;\n' +
+        '            }\n' +
+        '            // 返回Spot范围衰减\n' +
+        '            float ComputeSpotFalloff(in vec4 spotDirection, in vec3 lightDir){\n' +
+        '                float curAngleCos = dot(lightDir, -spotDirection.xyz);\n' +
+        '                float innerAngleCos = floor(spotDirection.w) * 0.001f;\n' +
+        '                float outerAngleCos = fract(spotDirection.w);\n' +
+        '                float innerMinusOuter = innerAngleCos - outerAngleCos;\n' +
+        '                float falloff = clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f);\n' +
+        '                //if(curAngleCos > innerMinusOuter)\n' +
+        '                //    falloff = 1.0f;\n' +
+        '                //else\n' +
+        '                //    falloff = 0.0f;\n' +
+        '\n' +
+        '                #ifdef SRGB\n' +
+        '                    // Use quadratic falloff (notice the ^4)\n' +
+        '                    return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0, 1.0), 4.0);\n' +
+        '                #else\n' +
+        '                    // Use linear falloff\n' +
+        '                    return falloff;\n' +
+        '                #endif\n' +
+        '            }\n';
+
     // 上下文数据
     static Context_Data = {
         "Context.InPosition":{src:ShaderSource.S_POSITION_SRC, loc:ShaderSource.S_POSITION, pattern:/Context.InPosition/, pattern2:/Context.InPosition[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InPosition/g, tag:ShaderSource.S_POSITION_SRC, type:"vec3"},
@@ -296,6 +357,9 @@ export default class ShaderSource {
         '_C_POINTLIGHT_SHADOWS':"#define " + ShaderSource.S_POINTLIGHT_SHADOWS_SRC + " " + ShaderSource.S_POINTLIGHT_SHADOWS_SRC,
         '_C_SPOTLIGHT_SHADOWS':"#define " + ShaderSource.S_SPOTLIGHT_SHADOWS_SRC + " " + ShaderSource.S_SPOTLIGHT_SHADOWS_SRC,
         '_FADE':"#define " + ShaderSource.S_FADE_SRC + " " + ShaderSource.S_FADE_SRC,
+
+        // 系统库
+        'Try3dLightingLib':ShaderSource.S_TRY3D_LIGHTING_LIB,
     };
 
     constructor() {

@@ -45,6 +45,7 @@
             // 开启阴影
             dirLight.proShadow(true);
             // 添加雾化
+            addBloom(scene, 0.1);
             addFog(scene, 5, 100, [0.12, 0.12, 0.12, 1.0]);
             rootNode.addChildren(dirLight);
 

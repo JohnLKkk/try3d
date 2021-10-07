@@ -6,6 +6,7 @@ import SubShaderDef from "./SubShaderDef.js";
 import TechnologyDef from "./TechnologyDef.js";
 import Render from "../Render/Render.js";
 import Log from "../Util/Log.js";
+import MaterialDefBuild from "./MaterialDefBuild.js";
 
 class Block{
     /**
@@ -1275,7 +1276,14 @@ export default class MaterialDef{
         let endBlocks = {};
         if(data){
             // 分割每一行
-            data = data.split("\n");
+            if(MaterialDef.trim(data).startsWith('#type module')){
+                // 解析模块化材质定义
+                let mdb = new MaterialDefBuild();
+                data = mdb.build(data);
+            }
+            else{
+                data = data.split("\n");
+            }
             // console.log("data:\n",data);
             for(let i = 0;i < data.length;i++){
                 let _line = MaterialDef.trim(data[i]);

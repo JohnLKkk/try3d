@@ -343,7 +343,7 @@ class Filter extends _Component_js__WEBPACK_IMPORTED_MODULE_2__/* ["default"] */
     postFilter(){
         if(this._m_PostFilters){
             let gl = this._m_Scene.getCanvas().getGLContext();
-            this._m_Scene.getRender().draw(gl, Filter.S_POST_FILTER, this._m_PostFilters);
+            this._m_Scene.getRender().draw(gl, Filter.S_POST_FILTER, this._m_PostFilters, null, true);
         }
     }
 
@@ -1159,9 +1159,11 @@ class Material extends _Component_js__WEBPACK_IMPORTED_MODULE_4__/* ["default"] 
 /* harmony import */ var _WebGL_ShaderSource_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(9085);
 /* harmony import */ var _Util_Tools_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(9881);
 /* harmony import */ var _SubShaderDef_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(1144);
-/* harmony import */ var _TechnologyDef_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(89);
+/* harmony import */ var _TechnologyDef_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(89);
 /* harmony import */ var _Render_Render_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(2432);
 /* harmony import */ var _Util_Log_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(8803);
+/* harmony import */ var _MaterialDefBuild_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(6815);
+
 
 
 
@@ -2362,7 +2364,7 @@ class MaterialDef{
                     break;
                 case "Technology":
                     // 技术块
-                    let technologyDef = new _TechnologyDef_js__WEBPACK_IMPORTED_MODULE_6__/* ["default"] */ .Z(blockDef.getName());
+                    let technologyDef = new _TechnologyDef_js__WEBPACK_IMPORTED_MODULE_7__/* ["default"] */ .Z(blockDef.getName());
                     blockObj.addTechnologyDef(blockDef.getName(), technologyDef);
                     blockObj = technologyDef;
                     break;
@@ -2439,7 +2441,14 @@ class MaterialDef{
         let endBlocks = {};
         if(data){
             // 分割每一行
-            data = data.split("\n");
+            if(MaterialDef.trim(data).startsWith('#type module')){
+                // 解析模块化材质定义
+                let mdb = new _MaterialDefBuild_js__WEBPACK_IMPORTED_MODULE_6__/* ["default"] */ .Z();
+                data = mdb.build(data);
+            }
+            else{
+                data = data.split("\n");
+            }
             // console.log("data:\n",data);
             for(let i = 0;i < data.length;i++){
                 let _line = MaterialDef.trim(data[i]);
@@ -2470,6 +2479,405 @@ class MaterialDef{
             }
         }
         return null;
+    }
+
+}
+
+
+/***/ }),
+
+/***/ 6815:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Z": () => (/* binding */ MaterialDefBuild)
+/* harmony export */ });
+/* harmony import */ var _Util_Tools_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(9881);
+/* harmony import */ var _WebGL_ShaderSource_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(9085);
+
+
+
+/**
+ * MaterialDefBuild。<br/>
+ * 用于构建优化的MaterialDef代码。<br/>
+ * @author Kkk
+ * @date 2021年10月6日16点29分
+ */
+class MaterialDefBuild {
+    constructor(props) {
+        this._m_funs = {};
+        this._m_vars = {};
+    }
+    static trim(str){
+        return str.replace(/(^\s*)|(\s*$)/g, "");
+    }
+
+    /**
+     * 进行栈解退收集调用链。<br/>
+     * @param {Array[]}[data]
+     * @param {Object}[allVars]
+     * @param {Object}[allFuns]
+     * @param {String}[fun]
+     * @return {Object}
+     * @private
+     */
+    _getFun(data, allVars, allFuns, fun){
+        let src = [];
+        let call = {};
+        let svars = null;
+        let sfun = fun;
+        let bd = (s, e, vars)=>{
+            let v = allVars[vars];
+            let c = [];
+            let line = null;
+            for(let i = s;i <= e;i++){
+                line = data[i];
+                if(v){
+                    line = _Util_Tools_js__WEBPACK_IMPORTED_MODULE_0__/* ["default"].repSrc */ .Z.repSrc(line, v.pattern, v.tagPattern, '');
+                }
+                c.push(line + '\n');
+            }
+            return c;
+        };
+        let finds = (fun)=>{
+            let curFun = allFuns[fun];
+            if(curFun && !call[fun]){
+                call[fun] = true;
+                let calls = curFun.calls;
+                if(calls && calls.length){
+                    for(let nextFun in calls){
+                        finds(calls[nextFun]);
+                    }
+                }
+                if(!this._m_funs[fun]){
+                    this._m_funs[fun] = bd(curFun.s, curFun.e, curFun.vars);
+                    if(curFun.vars && svars && curFun.vars != svars){
+                        console.error('函数链' + sfun + '使用了多个vars!');
+                    }
+                }
+                if(curFun.vars){
+                    svars = curFun.vars;
+                }
+                for(let i = 0;i < this._m_funs[fun].length;i++){
+                    src.push(this._m_funs[fun][i]);
+                }
+            }
+        };
+        // 栈解退
+        finds(fun);
+        if(svars){
+            if(!this._m_vars[svars]){
+                let v = [];
+                v.push('Vars{\n');
+                let nv = allVars[svars];
+                for(let i = nv.s + 1;i <= nv.e;i++){
+                    v.push(data[i] + '\n');
+                }
+                this._m_vars[svars] = v;
+            }
+            let c = [];
+            for(let i = 0;i < this._m_vars[svars].length;i++){
+                c.push(this._m_vars[svars][i]);
+            }
+            svars = c;
+        }
+        return {src, svars};
+    }
+    build(data){
+        let vars = {};
+        let allVars = {};
+        let functions = {};
+        let funDefId = null;
+        let allFuns = {};
+        let v = 0, f = 0;
+        // 解析每一行
+        let startBlocks = {};
+        let includes = {};
+        let endBlocks = {};
+        let find = false;
+        let def = null;
+        if(data){
+            // 分割每一行
+            data = data.split("\n");
+
+            // 导入库函数
+            // 检测是否导入库
+            let result = [];
+            for(let i = 1;i < data.length;i++){
+                let _line = MaterialDefBuild.trim(data[i]);
+                if(_line.startsWith('#include')){
+                    let lib = _line.split(" ")[1];
+                    // 插入库代码
+                    if(_WebGL_ShaderSource_js__WEBPACK_IMPORTED_MODULE_1__/* ["default"].Context_Data */ .Z.Context_Data[lib] && !includes[lib]){
+                        includes[lib] = true;
+                        // 系统库代码
+                        lib = _WebGL_ShaderSource_js__WEBPACK_IMPORTED_MODULE_1__/* ["default"].Context_Data */ .Z.Context_Data[lib];
+                        lib = lib.split("\n");
+                        for(let g = 0;g < lib.length;g++){
+                            result.push(lib[g]);
+                        }
+                    }
+                    else{
+                        // 自定义库代码
+                    }
+                }
+                else{
+                    result.push(data[i]);
+                }
+            }
+            data = result;
+            // for(let i = 0;i < result.length;i++){
+            //     console.log(result[i]);
+            // }
+
+
+            for(let i = 0;i < data.length;i++){
+                let _line = MaterialDefBuild.trim(data[i]);
+                find = false;
+                def = null;
+                if(!_line.startsWith("//")){
+                    // 查找所有Vars和Functions,由于下一个阶段生成优化代码
+                    let nextDef = null;
+                    if(_line.startsWith('Vars')){
+                        nextDef = vars;
+                        v++;
+                    }
+                    else if(_line.startsWith('Functions')){
+                        nextDef = functions;
+                        f++;
+                    }
+                    if(nextDef){
+                        find = true;
+                        // Vars
+                        let block = _line.substring(0, _line.indexOf("{"));
+                        def = {s:i, e:null};
+
+                        // Vars/Functions定义
+                        let bsa = block.split(" ");
+                        let blockId = "";
+                        if(bsa.length > 1){
+                            blockId = bsa[bsa.length - 1];
+                        }
+                        nextDef[blockId] = def;
+                        if(nextDef == vars){
+                            // pattern:eval("/" + name + "/"), pattern2:eval("/" + name + "[\\s+-;.,\\*\\\\]{1,}/")
+                            def.pattern = eval("/" + blockId + "./");
+                            def.pattern2 = eval("/" + blockId + ".[\\s+-;.,\\*\\\\]{1,}/");
+                            def.tagPattern = eval("/" + blockId + "./g");
+                        }
+                        else{
+                            funDefId = blockId;
+                            // pattern:eval("/" + name + "/"), pattern2:eval("/" + name + "[\\s+-;.,\\*\\\\]{1,}/")
+                            def.pattern = eval("/" + blockId + "./");
+                            def.pattern2 = eval("/" + blockId + ".[\\s+-;.,\\*\\\\]{1,}/");
+                        }
+                        // end
+                    }
+                    if(find){
+                        let start = 1;
+                        let nextFun = null;
+                        let cf = false;
+                        let cfstart = 0;
+                        do {
+                            i++;
+                            _line = MaterialDefBuild.trim(data[i]);
+                            // 可能存在表达式
+                            if(_line.endsWith('{')){
+                                if((_line.startsWith('{') || _line.startsWith('for') || _line.startsWith('if') || _line.startsWith('else') || _line.startsWith('while'))){
+                                    cfstart++;
+                                }
+                                else{
+                                    start++;
+                                    let block = _line.substring(0, _line.indexOf("("));
+                                    let bsa = block.split(" ");
+                                    nextFun = bsa[bsa.length - 1];
+                                    if(!allFuns[nextFun]){
+                                        allFuns[nextFun] = {pattern:eval("/" + nextFun + "/"), pattern2:eval("/" + nextFun + "[\\s+-;.,\\*\\\\]{1,}/")};
+                                        allFuns[nextFun].s = i;
+                                        allFuns[nextFun].funDefId = funDefId;
+                                    }
+                                }
+                            }
+                            else if(_line.startsWith('}')){
+                                if(cfstart > 0){
+                                    cfstart--;
+                                }
+                                else{
+                                    start--;
+                                    if(nextFun){
+                                        allFuns[nextFun].e = i;
+                                    }
+                                    nextFun = null;
+                                }
+                            }
+                            else if(nextFun){
+                                // 索引vars
+                                for(let v in vars){
+                                    let pr = _Util_Tools_js__WEBPACK_IMPORTED_MODULE_0__/* ["default"].find2 */ .Z.find2(_line, vars[v].pattern);
+                                    if(pr != -1) {
+                                        // 为了正确匹配一行的重复,再这里二次匹配并判断
+                                        let pr2 = _Util_Tools_js__WEBPACK_IMPORTED_MODULE_0__/* ["default"].find2 */ .Z.find2(_line, vars[v].pattern2);
+                                        if (pr2 != null) {
+                                            if(allFuns[nextFun]){
+                                                if(allFuns[nextFun].vars && allFuns[nextFun].vars != v){
+                                                    console.error('函数' + nextFun + '使用了不同的vars!');
+                                                }
+                                                allFuns[nextFun].vars = v;
+                                            }
+                                        }
+                                    }
+                                }
+                                // 索引调用链
+                                for(let f in allFuns){
+                                    let pr = _Util_Tools_js__WEBPACK_IMPORTED_MODULE_0__/* ["default"].find2 */ .Z.find2(_line, allFuns[f].pattern);
+                                    if(pr != -1) {
+                                        // 为了正确匹配一行的重复,再这里二次匹配并判断
+                                        let pr2 = _Util_Tools_js__WEBPACK_IMPORTED_MODULE_0__/* ["default"].find2 */ .Z.find2(_line, allFuns[f].pattern2);
+                                        if (pr2 != null) {
+                                            if(!allFuns[nextFun]){
+                                                console.error('当前上下文不存在调用函数:' + nextFun);
+                                            }
+                                            // 稳妥一点,这里再检测一边(其实是多余的,但部分浏览器在error()后会继续执行
+                                            if(allFuns[nextFun]){
+                                                if(!allFuns[nextFun].calls){
+                                                    allFuns[nextFun].calls = [];
+                                                }
+                                                allFuns[nextFun].calls.push(f);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if(start == 0)break;
+                        }while(true);
+                        def.e = i;
+                    }
+                }
+            }
+            if(v || f){
+                let res = [];
+                // 删除多余代码
+                // 首先删除v
+                let nv = null;
+                for(let vs in vars){
+                    nv = vars[vs];
+                    for(let t = nv.s;t <= nv.e;t++){
+                        res[t] = true;
+                    }
+                }
+                // 紧接着删除f
+                for(let fs in functions){
+                    nv = functions[fs];
+                    for(let t = nv.s;t <= nv.e;t++){
+                        res[t] = true;
+                    }
+                }
+                let result = [];
+                for(let i = 0;i < data.length;i++){
+                    if(!res[i]){
+                        result.push(data[i] + '\n');
+                    }
+                }
+                // for(let i = 0;i < result.length;i++){
+                //     console.log(result[i]);
+                // }
+                // 生成下一个阶段的代码
+                let curSub = null;
+                let ncode = {};
+                let nc = 0;
+                for(let i = 0;i < result.length;i++){
+                    let _line = MaterialDefBuild.trim(result[i]);
+                    if(!_line.startsWith("//")){
+                        if(_line.startsWith('SubTechnology')){
+                            let block = _line.substring(0, _line.indexOf("{"));
+                            let bsa = block.split(" ");
+                            let blockId = "";
+                            if(bsa.length > 1){
+                                blockId = bsa[bsa.length - 1];
+                            }
+                            curSub = blockId;
+                        }
+                        else if(_line.startsWith('Vs_Shader')){
+                            let bsa = _line.split(":");
+                            if(bsa.length > 1){
+                                let fun = ((bsa[1].split('.'))[1]).split(';')[0];
+                                let d = this._getFun(data, vars, allFuns, fun);
+                                ncode[i] = {curSub, type:'Vs_Shader', src:d.src, vars:d.svars, fun};
+                                nc++;
+                            }
+                        }
+                        else if(_line.startsWith('Fs_Shader')){
+                            let bsa = _line.split(":");
+                            if(bsa.length > 1){
+                                let fun = ((bsa[1].split('.'))[1]).split(';')[0];
+                                let d = this._getFun(data, vars, allFuns, fun);
+                                ncode[i] = {curSub, type:'Fs_Shader', src:d.src, vars:d.svars, fun};
+                                nc++;
+                            }
+                        }
+                    }
+                }
+                data = [];
+                // 构建代码
+                if(nc){
+                    let subVars = {};
+                    let code = null;
+                    for(let i = 0;i < result.length;i++){
+                        code = ncode[i];
+                        if(code){
+                            // 生成代码
+                            if(code.vars && !subVars[code.curSub]){
+                                for(let i = 0;i < code.vars.length;i++){
+                                    data.push(code.vars[i]);
+                                }
+                            }
+                            if(code.type == 'Vs_Shader'){
+                                data.push('Vs_Shader{\n');
+                            }
+                            else if(code.type == 'Fs_Shader'){
+                                data.push('Fs_Shader{\n');
+                            }
+                            for(let i = 0;i < code.src.length;i++){
+                                data.push(code.src[i]);
+                            }
+                            // 主函数
+                            data.push('void main(){\n');
+                            data.push(code.fun + '();\n');
+                            data.push('}\n');
+                            data.push('}\n');
+                        }
+                        else{
+                            data.push(result[i]);
+                        }
+                    }
+                }
+
+
+                // console.log('vars:' , vars);
+                // console.log('functions:' , functions);
+                // // 测试调用function3
+                // let fun = 'function3';
+                // let d = this._getFun(data, vars, allFuns, fun);
+                // console.log('src:\n' + d.src);
+                // console.log('vars:\n' + d.svars);
+                // let calls = (fun)=>{
+                //     if(allFuns[fun]){
+                //         console.log('调用' + fun);
+                //         if(allFuns[fun].calls && allFuns[fun].calls.length){
+                //             for(let nextFun in allFuns[fun].calls){
+                //                 calls(allFuns[fun].calls[nextFun]);
+                //             }
+                //         }
+                //     }
+                // };
+                // calls(fun);
+            }
+            // console.log('src:\n');
+            // for(let i = 0;i < data.length;i++){
+            //     console.log(data[i])
+            // }
+        }
+        return data;
     }
 
 }
@@ -7071,6 +7479,128 @@ class Picture extends _Geometry_js__WEBPACK_IMPORTED_MODULE_0__/* ["default"] */
 /* harmony export */   "Z": () => (/* binding */ Internal)
 /* harmony export */ });
 class Internal {
+    static S_DOF_FILTER_DEF_DATA = "// 景深\n" +
+        "Def DofFilterDef{\n" +
+        "    Params{\n" +
+        "        // 视锥near\n" +
+        "        float vNear;\n" +
+        "        // 视锥far\n" +
+        "        float vFar;\n" +
+        "        // 焦距距离\n" +
+        "        float focusDistance;\n" +
+        "        // 焦距半径\n" +
+        "        float focusRange;\n" +
+        "        // 水平模糊缩放\n" +
+        "        float hScale;\n" +
+        "        // 垂直模糊缩放\n" +
+        "        float vScale;\n" +
+        "    }\n" +
+        "    // 快速景深\n" +
+        "    SubTechnology FastDof{\n" +
+        "        Vars{\n" +
+        "            vec2 wUv0;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" +
+        "                wUv0 = Context.InUv0;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            // 计算线性深度(后续重构整个材质定义系统后,这些都将封装为内置API)\n" +
+        "            float linearDepth(float depth){\n" +
+        "                #ifdef Params.vFar\n" +
+        "                    float _far = Params.vFar;\n" +
+        "                #else\n" +
+        "                    float _far = 1000.0f;\n" +
+        "                #endif\n" +
+        "                #ifdef Params.vNear\n" +
+        "                    float _near = Params.vNear;\n" +
+        "                #else\n" +
+        "                    float _near = 0.1f;\n" +
+        "                #endif\n" +
+        "                float fn = (_far - _near) * 1.0f;\n" +
+        "                float a = _far / fn;\n" +
+        "                float b = _far * _near / -fn;\n" +
+        "                return b / (depth - a);\n" +
+        "            }\n" +
+        "            void main(){\n" +
+        "                Context.OutColor = texture(Context.InScreen, wUv0);\n" +
+        "                float linearDepth = linearDepth(texture(Context.InDepth, wUv0).r);\n" +
+        "\n" +
+        "                #ifdef Params.focusDistance\n" +
+        "                    float _focusDistance = Params.focusDistance;\n" +
+        "                #else\n" +
+        "                    float _focusDistance = 100.0f;\n" +
+        "                #endif\n" +
+        "                #ifdef Params.focusRange\n" +
+        "                    float _focusRange = Params.focusRange;\n" +
+        "                #else\n" +
+        "                    float _focusRange = 10.0f;\n" +
+        "                #endif\n" +
+        "\n" +
+        "                // 在focusDistance附件,并在focusRange范围内焦距,其他地方进行模糊\n" +
+        "                // 快速景深的优化是:\n" +
+        "                // 在焦距范围内完全焦距(清晰)\n" +
+        "                // 其他部分进行5x5半卷积得到一个快速模糊\n" +
+        "                float status = min(1.0f, abs(linearDepth - _focusDistance) / _focusRange);\n" +
+        "\n" +
+        "                if(status < 0.2f){\n" +
+        "                    return;\n" +
+        "                }\n" +
+        "                else{\n" +
+        "                    // 5x5半卷积\n" +
+        "                    // 1  0  1  0  1\n" +
+        "                    // 0  1  0  1  0\n" +
+        "                    // 1  0  x  0  1\n" +
+        "                    // 0  1  0  1  0\n" +
+        "                    // 1  0  1  0  1\n" +
+        "\n" +
+        "                    vec4 sum = vec4(0.0f);\n" +
+        "\n" +
+        "                    float x = wUv0.x;\n" +
+        "                    float y = wUv0.y;\n" +
+        "\n" +
+        "                    #ifdef Params.hScale\n" +
+        "                        float xScale = hScale * Context.ResolutionInverse.x;\n" +
+        "                    #else\n" +
+        "                        float xScale = 1.0f * Context.ResolutionInverse.x;\n" +
+        "                    #endif\n" +
+        "                    #ifdef Params.vScale\n" +
+        "                        float yScale = vScale * Context.ResolutionInverse.y;\n" +
+        "                    #else\n" +
+        "                        float yScale = 1.0f * Context.ResolutionInverse.y;\n" +
+        "                    #endif\n" +
+        "\n" +
+        "                    // 直接展开而不是循环\n" +
+        "                    sum += texture( Context.InScreen, vec2(x - 2.0f * xScale, y - 2.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x - 0.0f * xScale, y - 2.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x + 2.0f * xScale, y - 2.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x - 1.0f * xScale, y - 1.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x + 1.0f * xScale, y - 1.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x - 2.0f * xScale, y - 0.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x + 2.0f * xScale, y - 0.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x - 1.0f * xScale, y + 1.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x + 1.0f * xScale, y + 1.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x - 2.0f * xScale, y + 2.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x - 0.0f * xScale, y + 2.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x + 2.0f * xScale, y + 2.0f * yScale) );\n" +
+        "\n" +
+        "                    sum = sum / 12.0f;\n" +
+        "\n" +
+        "                    // 将卷积结果混合到当前颜色中\n" +
+        "                    Context.OutColor = mix(Context.OutColor, sum, status);\n" +
+        "                }\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology{\n" +
+        "        Sub_Pass PostFilter{\n" +
+        "            Pass FastDof{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "}\n";
     static S_GRAY_FILTER_DEF_DATA = "// 灰度过滤\n" +
         "Def GrayFilterDef{\n" +
         "    Params{\n" +
@@ -16093,7 +16623,7 @@ class Render extends _Component_js__WEBPACK_IMPORTED_MODULE_15__/* ["default"] *
      * @param {Object}[lights]
      * @param {Light[]}[lights]
      */
-    draw(gl, path, bucks, lights){
+    draw(gl, path, bucks, lights, swarp){
         let subShaders = null;
         let mat = null;
         let currentTechnology = null;
@@ -16101,15 +16631,25 @@ class Render extends _Component_js__WEBPACK_IMPORTED_MODULE_15__/* ["default"] *
         if(bucks){
             let resetFrameBuffer = this._m_FrameContext.m_LastFrameBuffer;
             let outFB = null;
+            let j = 0;
             for(let matId in bucks){
+                if(swarp && j > 0){
+                    this.swapPostFilter();
+                }
+                j++;
                 // 获取当前选中的技术
                 mat = this._m_Scene.getComponent(matId);
                 currentTechnology = mat.getCurrentTechnology();
                 subPasss = currentTechnology.getSubPasss(path);
                 if(subPasss){
                     subShaders = subPasss.getSubShaders();
+                    let i = 0;
                     // 执行渲染
                     for(let subShader in subShaders){
+                        if(swarp && i > 0){
+                            this.swapPostFilter();
+                        }
+                        i++;
                         // 指定subShader
                         mat._selectSubShader(subShaders[subShader].subShader);
                         if(subShaders[subShader].subShader.getFBId() != null){
@@ -16136,6 +16676,7 @@ class Render extends _Component_js__WEBPACK_IMPORTED_MODULE_15__/* ["default"] *
                             this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
                         }
                         this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].drawArrays(gl, this._m_Scene, this._m_FrameContext, bucks[matId], lights);
+
                     }
                 }
             }
@@ -21063,6 +21604,67 @@ class ShaderSource {
         "_inDepthMap":'DefaultPostFilterShadingFrameBuffer',
     };
 
+    // code
+    // 后期改为库文件
+    static S_TRY3D_LIGHTING_LIB = '// 计算光照方向\n' +
+        '            // 对于DirLight,PointLight以及SpotLight,lightType依次为0.0,1.0,2.0\n' +
+        '            // 输出光照方向\n' +
+        '            // lightDir.w存储衰减率(对于DirLight,衰减值一直为1,对于Point或Spot,衰减值随着半径而变小,衰减值越小,表示衰减度越大)\n' +
+        '            void ComputeLightDir(in vec3 worldPos, in float lightType, in vec4 position, out vec4 lightDir, out vec3 lightVec){\n' +
+        '                // 只有lightType = 0.0时,posLight为0.0,否则posLight为1.0\n' +
+        '                float posLight = step(0.5f, lightType);\n' +
+        '\n' +
+        '                // 计算光照位置\n' +
+        '                // 对于DirLight,lightVec = position.xyz * sign(-0.5f) = position.xyz * -1.0f;其中position代表DirLight的方向\n' +
+        '                // 对于PointLight和SpotLight,lightVec = position.xyz * sign(1.0f - 0.5f) - (worldPos * 1.0f) = positions.xyz * 1.0f - worldPos;其中position代表Light的位置\n' +
+        '                lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);\n' +
+        '                float dist = length(lightVec);\n' +
+        '\n' +
+        '                // 对于DirLight,lightDir.w = 1.0f\n' +
+        '                //lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);\n' +
+        '\n' +
+        '                lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n' +
+        '                lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n' +
+        '\n' +
+        '                // 归一化\n' +
+        '                lightDir.xyz = lightVec / vec3(dist);\n' +
+        '            }\n' +
+        '            // 基于BlinnPhong光照模型计算光照因子\n' +
+        '            // brdf.x保存漫反射部分;brdf.y保存镜面反射部分\n' +
+        '            void ComputeLighting(in vec3 normal, in vec3 viewDir, in vec3 lightDir, in float attenuation, in float shininess, out vec2 brdf){\n' +
+        '                // diffuse部分\n' +
+        '                float diffuseBRDF = max(0.0f, dot(normal, lightDir));\n' +
+        '                // specular部分\n' +
+        '                // 半角向量代替viewDir参与光照计算\n' +
+        '                vec3 H = normalize(viewDir + lightDir);\n' +
+        '                float HdotN = max(0.0f, dot(H, normal));\n' +
+        '                float specularBRDF = pow( HdotN, shininess );\n' +
+        '\n' +
+        '                // 衰减,对于PointLight和SpotLight来说有效,对于DirLight而言,attenuation一直为1\n' +
+        '                brdf.x = diffuseBRDF * attenuation;\n' +
+        '                brdf.y = specularBRDF * attenuation;\n' +
+        '            }\n' +
+        '            // 返回Spot范围衰减\n' +
+        '            float ComputeSpotFalloff(in vec4 spotDirection, in vec3 lightDir){\n' +
+        '                float curAngleCos = dot(lightDir, -spotDirection.xyz);\n' +
+        '                float innerAngleCos = floor(spotDirection.w) * 0.001f;\n' +
+        '                float outerAngleCos = fract(spotDirection.w);\n' +
+        '                float innerMinusOuter = innerAngleCos - outerAngleCos;\n' +
+        '                float falloff = clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f);\n' +
+        '                //if(curAngleCos > innerMinusOuter)\n' +
+        '                //    falloff = 1.0f;\n' +
+        '                //else\n' +
+        '                //    falloff = 0.0f;\n' +
+        '\n' +
+        '                #ifdef SRGB\n' +
+        '                    // Use quadratic falloff (notice the ^4)\n' +
+        '                    return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0, 1.0), 4.0);\n' +
+        '                #else\n' +
+        '                    // Use linear falloff\n' +
+        '                    return falloff;\n' +
+        '                #endif\n' +
+        '            }\n';
+
     // 上下文数据
     static Context_Data = {
         "Context.InPosition":{src:ShaderSource.S_POSITION_SRC, loc:ShaderSource.S_POSITION, pattern:/Context.InPosition/, pattern2:/Context.InPosition[\s+-;.,\*\\]{1,}/, tagPattern:/Context.InPosition/g, tag:ShaderSource.S_POSITION_SRC, type:"vec3"},
@@ -21160,6 +21762,9 @@ class ShaderSource {
         '_C_POINTLIGHT_SHADOWS':"#define " + ShaderSource.S_POINTLIGHT_SHADOWS_SRC + " " + ShaderSource.S_POINTLIGHT_SHADOWS_SRC,
         '_C_SPOTLIGHT_SHADOWS':"#define " + ShaderSource.S_SPOTLIGHT_SHADOWS_SRC + " " + ShaderSource.S_SPOTLIGHT_SHADOWS_SRC,
         '_FADE':"#define " + ShaderSource.S_FADE_SRC + " " + ShaderSource.S_FADE_SRC,
+
+        // 系统库
+        'Try3dLightingLib':ShaderSource.S_TRY3D_LIGHTING_LIB,
     };
 
     constructor() {
@@ -25576,6 +26181,8 @@ class SceneBrowsingController extends Component/* default */.Z{
     _m_ZoomSensitivity = 2.0;
     _m_ZoomSpeed = 1.0;
     _m_VeryCloseRotation = true;
+    _m_MaxRotation = null;
+    _m_MinRotation = null;
     _m_MaxVerticalRotation = Math.PI / 2.0;
     _m_MinVerticalRotation = -Math.PI / 2.0;
     _m_Distance = 1;
@@ -25793,7 +26400,24 @@ class SceneBrowsingController extends Component/* default */.Z{
             return;
         }
         this._m_Rotating = true;
+        let lastGoodRot = this._m_TargetRotation;
         this._m_TargetRotation += val * this._m_RotationSpeed;
+        if(this._m_MaxRotation != null && this._m_MinRotation != null){
+            if (this._m_TargetRotation > this._m_MaxRotation) {
+                this._m_TargetRotation = lastGoodRot;
+            }
+            if (this._m_VeryCloseRotation) {
+                if ((this._m_TargetRotation < this._m_MinRotation) && (this._m_TargetDistance > (this._m_MinDistance + 1.0))) {
+                    this._m_TargetRotation = this._m_MinRotation;
+                } else if (this._m_TargetRotation < -MoreMath/* default.S_DEG_TO_RAD */.Z.S_DEG_TO_RAD * 90) {
+                    this._m_TargetRotation = lastGoodRot;
+                }
+            } else {
+                if ((this._m_TargetRotation < this._m_MinRotation)) {
+                    this._m_TargetRotation = lastGoodRot;
+                }
+            }
+        }
     }
 
     /**
@@ -25825,6 +26449,22 @@ class SceneBrowsingController extends Component/* default */.Z{
     }
 
     /**
+     * 设置最小水平旋转角度。<br/>
+     * @param {Number}[minRotation 弧度，默认为-Math.PI/2.0]
+     */
+    setMinRotation(minRotation){
+        this._m_MinRotation = minRotation;
+    }
+
+    /**
+     * 设置最大水平旋转角度。<br/>
+     * @param {Number}[maxRotation 弧度，默认为Math.PI/2.0]
+     */
+    setMaxRotation(maxRotation){
+        this._m_MaxRotation = maxRotation;
+    }
+
+    /**
      * 设置最小垂直旋转角度。<br/>
      * @param {Number}[minVerticalRotation 弧度，默认为-Math.PI/2.0]
      */
@@ -25838,6 +26478,14 @@ class SceneBrowsingController extends Component/* default */.Z{
      */
     setMaxVerticalRotation(maxVerticalRotation){
         this._m_MaxVerticalRotation = maxVerticalRotation;
+    }
+
+    /**
+     * 非常靠近时关闭旋转限制。<br/>
+     * @param {Boolean}[veryCloseRotation]
+     */
+    setVeryCloseRotation(veryCloseRotation){
+        this._m_VeryCloseRotation = veryCloseRotation;
     }
 
     /**

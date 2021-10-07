@@ -1,4 +1,126 @@
 export default class Internal {
+    static S_DOF_FILTER_DEF_DATA = "// 景深\n" +
+        "Def DofFilterDef{\n" +
+        "    Params{\n" +
+        "        // 视锥near\n" +
+        "        float vNear;\n" +
+        "        // 视锥far\n" +
+        "        float vFar;\n" +
+        "        // 焦距距离\n" +
+        "        float focusDistance;\n" +
+        "        // 焦距半径\n" +
+        "        float focusRange;\n" +
+        "        // 水平模糊缩放\n" +
+        "        float hScale;\n" +
+        "        // 垂直模糊缩放\n" +
+        "        float vScale;\n" +
+        "    }\n" +
+        "    // 快速景深\n" +
+        "    SubTechnology FastDof{\n" +
+        "        Vars{\n" +
+        "            vec2 wUv0;\n" +
+        "        }\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                Context.OutPosition = vec4(Context.InPosition, 1.0f);\n" +
+        "                wUv0 = Context.InUv0;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            // 计算线性深度(后续重构整个材质定义系统后,这些都将封装为内置API)\n" +
+        "            float linearDepth(float depth){\n" +
+        "                #ifdef Params.vFar\n" +
+        "                    float _far = Params.vFar;\n" +
+        "                #else\n" +
+        "                    float _far = 1000.0f;\n" +
+        "                #endif\n" +
+        "                #ifdef Params.vNear\n" +
+        "                    float _near = Params.vNear;\n" +
+        "                #else\n" +
+        "                    float _near = 0.1f;\n" +
+        "                #endif\n" +
+        "                float fn = (_far - _near) * 1.0f;\n" +
+        "                float a = _far / fn;\n" +
+        "                float b = _far * _near / -fn;\n" +
+        "                return b / (depth - a);\n" +
+        "            }\n" +
+        "            void main(){\n" +
+        "                Context.OutColor = texture(Context.InScreen, wUv0);\n" +
+        "                float linearDepth = linearDepth(texture(Context.InDepth, wUv0).r);\n" +
+        "\n" +
+        "                #ifdef Params.focusDistance\n" +
+        "                    float _focusDistance = Params.focusDistance;\n" +
+        "                #else\n" +
+        "                    float _focusDistance = 100.0f;\n" +
+        "                #endif\n" +
+        "                #ifdef Params.focusRange\n" +
+        "                    float _focusRange = Params.focusRange;\n" +
+        "                #else\n" +
+        "                    float _focusRange = 10.0f;\n" +
+        "                #endif\n" +
+        "\n" +
+        "                // 在focusDistance附件,并在focusRange范围内焦距,其他地方进行模糊\n" +
+        "                // 快速景深的优化是:\n" +
+        "                // 在焦距范围内完全焦距(清晰)\n" +
+        "                // 其他部分进行5x5半卷积得到一个快速模糊\n" +
+        "                float status = min(1.0f, abs(linearDepth - _focusDistance) / _focusRange);\n" +
+        "\n" +
+        "                if(status < 0.2f){\n" +
+        "                    return;\n" +
+        "                }\n" +
+        "                else{\n" +
+        "                    // 5x5半卷积\n" +
+        "                    // 1  0  1  0  1\n" +
+        "                    // 0  1  0  1  0\n" +
+        "                    // 1  0  x  0  1\n" +
+        "                    // 0  1  0  1  0\n" +
+        "                    // 1  0  1  0  1\n" +
+        "\n" +
+        "                    vec4 sum = vec4(0.0f);\n" +
+        "\n" +
+        "                    float x = wUv0.x;\n" +
+        "                    float y = wUv0.y;\n" +
+        "\n" +
+        "                    #ifdef Params.hScale\n" +
+        "                        float xScale = hScale * Context.ResolutionInverse.x;\n" +
+        "                    #else\n" +
+        "                        float xScale = 1.0f * Context.ResolutionInverse.x;\n" +
+        "                    #endif\n" +
+        "                    #ifdef Params.vScale\n" +
+        "                        float yScale = vScale * Context.ResolutionInverse.y;\n" +
+        "                    #else\n" +
+        "                        float yScale = 1.0f * Context.ResolutionInverse.y;\n" +
+        "                    #endif\n" +
+        "\n" +
+        "                    // 直接展开而不是循环\n" +
+        "                    sum += texture( Context.InScreen, vec2(x - 2.0f * xScale, y - 2.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x - 0.0f * xScale, y - 2.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x + 2.0f * xScale, y - 2.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x - 1.0f * xScale, y - 1.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x + 1.0f * xScale, y - 1.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x - 2.0f * xScale, y - 0.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x + 2.0f * xScale, y - 0.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x - 1.0f * xScale, y + 1.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x + 1.0f * xScale, y + 1.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x - 2.0f * xScale, y + 2.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x - 0.0f * xScale, y + 2.0f * yScale) );\n" +
+        "                    sum += texture( Context.InScreen, vec2(x + 2.0f * xScale, y + 2.0f * yScale) );\n" +
+        "\n" +
+        "                    sum = sum / 12.0f;\n" +
+        "\n" +
+        "                    // 将卷积结果混合到当前颜色中\n" +
+        "                    Context.OutColor = mix(Context.OutColor, sum, status);\n" +
+        "                }\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology{\n" +
+        "        Sub_Pass PostFilter{\n" +
+        "            Pass FastDof{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "}\n";
     static S_GRAY_FILTER_DEF_DATA = "// 灰度过滤\n" +
         "Def GrayFilterDef{\n" +
         "    Params{\n" +

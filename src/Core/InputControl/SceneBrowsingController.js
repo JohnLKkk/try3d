@@ -28,6 +28,8 @@ export default class SceneBrowsingController extends Component{
     _m_ZoomSensitivity = 2.0;
     _m_ZoomSpeed = 1.0;
     _m_VeryCloseRotation = true;
+    _m_MaxRotation = null;
+    _m_MinRotation = null;
     _m_MaxVerticalRotation = Math.PI / 2.0;
     _m_MinVerticalRotation = -Math.PI / 2.0;
     _m_Distance = 1;
@@ -245,7 +247,24 @@ export default class SceneBrowsingController extends Component{
             return;
         }
         this._m_Rotating = true;
+        let lastGoodRot = this._m_TargetRotation;
         this._m_TargetRotation += val * this._m_RotationSpeed;
+        if(this._m_MaxRotation != null && this._m_MinRotation != null){
+            if (this._m_TargetRotation > this._m_MaxRotation) {
+                this._m_TargetRotation = lastGoodRot;
+            }
+            if (this._m_VeryCloseRotation) {
+                if ((this._m_TargetRotation < this._m_MinRotation) && (this._m_TargetDistance > (this._m_MinDistance + 1.0))) {
+                    this._m_TargetRotation = this._m_MinRotation;
+                } else if (this._m_TargetRotation < -MoreMath.S_DEG_TO_RAD * 90) {
+                    this._m_TargetRotation = lastGoodRot;
+                }
+            } else {
+                if ((this._m_TargetRotation < this._m_MinRotation)) {
+                    this._m_TargetRotation = lastGoodRot;
+                }
+            }
+        }
     }
 
     /**
@@ -277,6 +296,22 @@ export default class SceneBrowsingController extends Component{
     }
 
     /**
+     * 设置最小水平旋转角度。<br/>
+     * @param {Number}[minRotation 弧度，默认为-Math.PI/2.0]
+     */
+    setMinRotation(minRotation){
+        this._m_MinRotation = minRotation;
+    }
+
+    /**
+     * 设置最大水平旋转角度。<br/>
+     * @param {Number}[maxRotation 弧度，默认为Math.PI/2.0]
+     */
+    setMaxRotation(maxRotation){
+        this._m_MaxRotation = maxRotation;
+    }
+
+    /**
      * 设置最小垂直旋转角度。<br/>
      * @param {Number}[minVerticalRotation 弧度，默认为-Math.PI/2.0]
      */
@@ -290,6 +325,14 @@ export default class SceneBrowsingController extends Component{
      */
     setMaxVerticalRotation(maxVerticalRotation){
         this._m_MaxVerticalRotation = maxVerticalRotation;
+    }
+
+    /**
+     * 非常靠近时关闭旋转限制。<br/>
+     * @param {Boolean}[veryCloseRotation]
+     */
+    setVeryCloseRotation(veryCloseRotation){
+        this._m_VeryCloseRotation = veryCloseRotation;
     }
 
     /**

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LightingDef</title>
+    <link rel="stylesheet" type="text/css" href="./../main.css">
+</head>
+<script src="../../build/try3d.min.js"></script>
+<script src="../helpers.js"></script>
+<script src="./../dat.gui.min.js"></script>
+<body>
+    <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;margin: 0px;">
+        <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+        <div class="innerbox" style="top: 0px;right: 0px;background-color: rgba(128,128,128,0.31);color: white;position: fixed;width: 50%;height: 100%;padding: 5px;overflow-y:auto;">
+            <pre>
+#type module
+
+// 一个基于Phong光照材质
+// 演示了两种计算方案
+Def MyMatDef/Lighting{
+    Params{
+        vec4 diffuseColor;
+        vec4 specularColor;
+        float shininess;
+
+        sampler2D diffuseMap;
+        sampler2D specularMap;
+        sampler2D normalMap;
+    }
+
+    Vars vertexAttrs{
+        vec2 wUv0;
+        vec3 wNormal;
+        vec4 wTangent;
+        vec3 wPosition;
+    }
+
+    Functions Lighting{
+        // 导入系统库
+        #include Try3dLightingLib
+
+        // 顶点变换与几何属性传递
+        void transformPositions(){
+            vertexAttrs.wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;
+            mat3 nMat = mat3(transpose(inverse(Context.ModelMatrix)));
+            vec3 norm = normalize(nMat * Context.InNormal);
+            vertexAttrs.wTangent = vec4(normalize(nMat * Context.InTangent.xyz), Context.InTangent.w);
+            vertexAttrs.wNormal = norm;
+            vertexAttrs.wUv0 = Context.InUv0;
+            Context.OutPosition = Context.ProjectViewMatrix * vec4(vertexAttrs.wPosition, 1.0f);
+        }
+
+        // 返回法线
+        vec3 getNormal(){
+            vec3 normal = normalize( vertexAttrs.wNormal );
+            #ifdef Params.normalMap
+                vec3 normalHeight = texture(Params.normalMap, vertexAttrs.wUv0).xyz;
+                vec3 tangent = normalize(vertexAttrs.wTangent.xyz);
+                mat3 tbnMat = mat3(tangent, vertexAttrs.wTangent.w * cross(normal, tangent), normal);
+                normal = normalize(tbnMat * ( normalHeight * 2.0f - 1.0f ));
+            #endif
+            return normal;
+        }
+
+        vec4 getDiffuseColor(){
+            vec4 _diffuseColor = vec4(1.0f);
+            #ifdef Params.diffuseColor
+                _diffuseColor = Params.diffuseColor;
+            #endif
+            #ifdef Params.diffuseMap
+                _diffuseColor = _diffuseColor * texture(Params.diffuseMap, vertexAttrs.wUv0);
+            #endif
+            return _diffuseColor;
+        }
+
+        // 返回specularColor
+        vec4 getSpecularColor(){
+            vec4 _specularColor = vec4(1.0f);
+            #ifdef Params.specularColor
+                _specularColor = Params.specularColor;
+            #endif
+            #ifdef Params.specularMap
+                _specularColor = _specularColor * texture(Params.specularMap, vertexAttrs.wUv0);
+            #endif
+            return _specularColor;
+        }
+
+        // 返回光泽度
+        float getShininess(){
+            #ifdef Params.shininess
+                return Params.shininess;
+            #else
+                return 32.0f;
+            #endif
+        }
+
+        // blinnPhong光照
+        void blinnPhong(){
+            vec4 lightColor;
+            vec4 lightData1;
+            vec4 lightDir = vec4(0.0f);
+            vec3 lightVec = vec3(0.0f);
+            vec2 lightBRDF = vec2(0.0f);
+            vec3 viewDir = normalize(Context.CameraPosition.xyz - vertexAttrs.wPosition.xyz);
+            vec4 _diffuseColor = getDiffuseColor();
+            vec4 _specularColor = getSpecularColor();
+            vec3 normal = getNormal();
+            float _shininess = getShininess();
+
+            // 计算光照
+            Context.OutColor.rgb = _diffuseColor.rgb * Context.AmbientLightColor;
+            for( int i = 0;i < Context.CurLightCount;i+=3 ){
+                lightColor = Context.WLightData[i];
+                lightData1 = Context.WLightData[i + 1];
+                ComputeLightDir(vertexAttrs.wPosition, lightColor.w, lightData1, lightDir, lightVec);
+
+                // 计算SpotLight的衰减
+                float spotFallOff = 1.0f;
+                if( lightColor.w > 1.0f )
+                {
+                    // 计算SpotLight的范围衰减
+                    spotFallOff = ComputeSpotFalloff( Context.WLightData[i + 2], lightDir.xyz );
+                }
+
+                // 计算反射率
+                ComputeLighting(normal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, _shininess, lightBRDF);
+
+                // 最终光照值
+                Context.OutColor.rgb += lightColor.rgb * ( _diffuseColor.rgb * vec3( lightBRDF.x ) + _specularColor.rgb * vec3( lightBRDF.y ));
+            }
+            Context.OutColor.a = _diffuseColor.a;
+        }
+
+        void blinnPhong2(){
+            vec4 lightColor;
+            vec4 lightData1;
+            vec4 lightDir = vec4(0.0f);
+            vec3 lightVec = vec3(0.0f);
+            vec2 lightBRDF = vec2(0.0f);
+            vec3 viewDir = normalize(Context.CameraPosition.xyz - vertexAttrs.wPosition.xyz);
+            vec4 _diffuseColor = getDiffuseColor();
+            vec4 _specularColor = getSpecularColor();
+            vec3 normal = getNormal();
+            float _shininess = getShininess();
+
+
+            // 可以不需要在MultiId分支处理,但是为了更好的性能,这里在MultiId == 0时处理全局光源
+            // 不必担心这个分支，不会影响性能
+            Context.OutColor.rgb = _diffuseColor.rgb * Context.AmbientLightColor;
+            if(Context.MultiId == 0){
+                for( int i = 0;i < Context.CurLightCount;i+=3 ){
+                    lightColor = Context.WLightData[i];
+                    lightData1 = Context.WLightData[i + 1];
+                    ComputeLightDir(vertexAttrs.wPosition, lightColor.w, lightData1, lightDir, lightVec);
+
+                    // 计算SpotLight的衰减
+                    float spotFallOff = 1.0;
+                    if( lightColor.w > 1.0f )
+                    {
+                        // 计算SpotLight的范围衰减
+                        spotFallOff = ComputeSpotFalloff( Context.WLightData[i + 2], lightDir.xyz );
+                    }
+
+                    // 如果存在法线纹理,则进一步计算lightDir
+
+                    // 计算反射率
+                    ComputeLighting(normal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, _shininess, lightBRDF);
+
+                    // 最终光照值
+                    Context.OutColor.rgb += lightColor.rgb * ( _diffuseColor.rgb * vec3( lightBRDF.x ) + _specularColor.rgb * vec3( lightBRDF.y ));
+                }
+            }
+            else{
+                // point和spot
+                vec4 lightColor = Context.WLight_Data_0;
+                vec4 lightData1 = Context.WLight_Data_1;
+                ComputeLightDir(vertexAttrs.wPosition, lightColor.w, lightData1, lightDir, lightVec);
+
+                // 计算SpotLight的衰减
+                float spotFallOff = 1.0;
+                if( lightColor.w > 1.0f )
+                {
+                    // 计算SpotLight的范围衰减
+                    spotFallOff = ComputeSpotFalloff( Context.WLight_Data_2, lightDir.xyz );
+                }
+
+                // 如果存在法线纹理,则进一步计算lightDir
+
+                // 计算反射率
+                ComputeLighting(normal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, _shininess, lightBRDF);
+
+                // 最终光照值
+                Context.OutColor.rgb += lightColor.rgb * ( _diffuseColor.rgb * vec3( lightBRDF.x ) + _specularColor.rgb * vec3( lightBRDF.y ));
+            }
+            Context.OutColor.a = _diffuseColor.a;
+        }
+    }
+
+    SubTechnology Lighting{
+        // 指定带光照的渲染程序
+        // 这是最直观的光照计算逻辑,在尽可能单个pass中完成光照
+        Advanced{
+            RenderProgram SinglePassLighting;
+        }
+
+        Vs_Shader:Lighting.transformPositions;
+        Fs_Shader:Lighting.blinnPhong;
+    }
+
+    SubTechnology Lighting2{
+        // 累计光照
+        Advanced{
+            RenderProgram MultiPassLighting;
+        }
+
+        Vs_Shader:Lighting.transformPositions;
+        Fs_Shader:Lighting.blinnPhong2;
+    }
+
+    Technology{
+        // 可以指定渲染Pipeline
+        // 默认就是在ForwardPipeline
+        Sub_Pass Forward{
+            Pass Lighting{
+            }
+        }
+    }
+
+    Technology Lighting2{
+        // 可以指定渲染Pipeline
+        // 默认就是在ForwardPipeline
+        Sub_Pass Forward{
+            Pass Lighting2{
+            }
+        }
+    }
+}
+            </pre>
+        </div>
+    </div>
+    <script type="module">
+        // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
+        let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+        scene.getCanvas().setClearColor(0.1, 0.1, 0.1, 1.0);
+        scene.setAmbientLightColor(0.2, 0.2, 0.2);
+
+        // 定义一个根节点
+        let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+        scene.addSceneNode(rootNode);
+
+        // 定义一个box
+        let box = new Try3d.Box(scene, {id:'box', xHalf:2, yHalf:2, zHalf:2});
+        // 创建box材质
+        let lightMat = new Try3d.Material(scene, {id:'lightMat', materialDef:Try3d.MaterialDef.load('./LightingDef')});
+        lightMat.setParam("diffuseColor", new Try3d.Vec4Vars().valueFromXYZW(0.5, 0.5, 1, 1));
+        lightMat.setParam("specularColor", new Try3d.Vec4Vars().valueFromXYZW(0.8, 0.8, 0.5, 1));
+        let diffuseMap = getTexture(scene, '../Assets/Textures/pond/Pond_COLOR.png', true, true);
+        let normalMap = getTexture(scene, '../Assets/Textures/pond/Pond_normal.png', false, true);
+        let specularMap = getTexture(scene, '../Assets/Textures/pond/Pond_SPEC.png', false, true);
+        lightMat.setParam('diffuseMap', diffuseMap);
+        lightMat.setParam('normalMap', normalMap);
+        lightMat.setParam('specularMap', specularMap);
+        lightMat.setParam("shininess", new Try3d.FloatVars().valueOf(32.0));
+        box.setMaterial(lightMat);
+        box.setLocalTranslationXYZ(0, 2, 0);
+        rootNode.addChildren(box);
+
+        // dirLighting
+        let dirLighting = new Try3d.DirectionalLight(scene, {id:'dirLighting'});
+        dirLighting.setDirectionXYZ(-1, -1, -1);
+        dirLighting.setColorRGBA(1, 1, 1, 1);
+        rootNode.addChildren(dirLighting);
+
+        // pointLighting
+        let pointLighting = new Try3d.PointLight(scene, {id:'pointLighting'});
+        pointLighting.setPositionXYZ(3, 3, 3);
+        pointLighting.setRadius(15);
+        pointLighting.setColorRGBA(1, 0.2, 0.2, 1);
+        rootNode.addChildren(pointLighting);
+
+        // 创建一个控制器
+        let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
+        sceneControl.lookScene(rootNode);
+        sceneControl.setMaxDistance(15);
+        sceneControl.setMinDistance(5);
+        sceneControl.setTargetDistance(15);
+        sceneControl.focusCamera();
+
+        // gui
+        // 使用dat gui
+        let gui = new dat.GUI();
+        let settings = {
+            dirLighting:true,
+            pointLighting:true,
+            diffuseColor:[0.5 * 255, 0.5 * 255, 255, 255],
+            specularColor:[0.8 * 255, 0.8 * 255, 0.5 * 255, 255],
+            diffuseMap:true,
+            specularMap:true,
+            normalMap:true,
+            technology:"Default",
+        };
+        gui.add(settings, 'dirLighting').onChange(enable=>{
+            if(enable){
+                dirLighting.enable();
+            }
+            else{
+                dirLighting.disable();
+            }
+        });
+        gui.add(settings, 'pointLighting').onChange(enable=>{
+            if(enable){
+                pointLighting.enable();
+            }
+            else{
+                pointLighting.disable();
+            }
+        });
+        gui.addColor(settings, 'diffuseColor').onChange(color=>{
+            lightMat.setParam('diffuseColor', new Try3d.Vec4Vars().valueFromXYZW(color[0]/255, color[1]/255, color[2]/255, color[3]/255));
+        });
+        gui.addColor(settings, 'specularColor').onChange(color=>{
+            lightMat.setParam('specularColor', new Try3d.Vec4Vars().valueFromXYZW(color[0]/255, color[1]/255, color[2]/255, color[3]/255));
+        });
+        gui.add(settings, 'diffuseMap').onChange(b=>{
+            if(b){
+                lightMat.setParam('diffuseMap', diffuseMap);
+            }
+            else{
+                lightMat.clearParam('diffuseMap');
+            }
+        });
+        gui.add(settings, 'specularMap').onChange(b=>{
+            if(b){
+                lightMat.setParam('specularMap', specularMap);
+            }
+            else{
+                lightMat.clearParam('specularMap');
+            }
+        });
+        gui.add(settings, 'normalMap').onChange(b=>{
+            if(b){
+                lightMat.setParam('normalMap', normalMap);
+            }
+            else{
+                lightMat.clearParam('normalMap');
+            }
+        });
+        gui.add(settings, 'technology', ['Default', 'Lighting2']).onChange(technolog=>{
+            // 默认技术不需要名称,所以传递''空字符串
+            lightMat.selectTechnology((technolog == 'Default') ? '' : technolog);
+        });
+
+        // 创建渲染器
+        let renderEngine = new Try3d.RenderEngine();
+        // 添加要渲染的场景对象
+        renderEngine.addScene(scene);
+        // 启动渲染器
+        renderEngine.launch();
+        showStats(scene);
+    </script>
+</body>
+</html>

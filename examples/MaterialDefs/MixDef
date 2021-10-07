@@ -1,0 +1,134 @@
+#type module
+// 混合纹理与颜色
+Def MixDef{
+    Params{
+        // 颜色
+        vec4 color1;
+        vec4 color2;
+        // 纹理
+        sampler2D colorMap1;
+        sampler2D colorMap2;
+        // 混合因子
+        float mixFactor;
+    }
+
+    // 定义一个db结构体
+    Vars db{
+        // uv坐标
+        vec2 wUv0;
+    }
+
+    // 定义一个函数模块mixLib
+    // 包含混合颜色的函数
+    Functions mixLib{
+        // 这个函数传递纹理属性到db结构体中
+        // 并且完成顶点变换
+        void transformPosition(){
+            db.wUv0 = Context.InUv0;
+            Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+        }
+
+        // 用于两个颜色的混合
+        vec4 mixColor(vec4 color1, vec4 color2, float factor){
+            return mix(color1, color2, factor);
+        }
+
+        // 返回color1
+        vec4 getColor1(){
+            #ifdef Params.color1
+                return Params.color1;
+            #else
+                return vec4(0.5f);
+            #endif
+        }
+
+        // 返回colorMap1
+        vec4 getColorMap1(){
+            #ifdef Params.colorMap1
+                return texture(Params.colorMap1, db.wUv0);
+            #else
+                return getColor1();
+            #endif
+        }
+
+        // 返回color2
+        vec4 getColor2(){
+            #ifdef Params.color2
+                return Params.color2;
+            #else
+                return vec4(1.0f);
+            #endif
+        }
+
+        // 返回colorMap2
+        vec4 getColorMap2(){
+            #ifdef Params.colorMap2
+                return texture(Params.colorMap2, db.wUv0);
+            #else
+                return getColor2();
+            #endif
+        }
+
+        // 返回混合因子
+        float getFactor(){
+            #ifdef Params.mixFactor
+                return Params.mixFactor;
+            #else
+                return 0.5f;
+            #endif
+        }
+
+        // 混合颜色输出
+        void blendColor(){
+            Context.OutColor = mixColor(getColor1(), getColor2(), getFactor());
+        }
+
+        // 混合纹理颜色输出
+        void blendMap(){
+            Context.OutColor = mixColor(getColorMap1(), getColorMap2(), getFactor());
+        }
+
+        // 混合纹理或颜色输出
+        void blend(){
+            vec4 color1 = getColor1() * getColorMap1();
+            vec4 color2 = getColor2() * getColorMap2();
+            Context.OutColor = mixColor(color1, color2, getFactor());
+        }
+    }
+
+    SubTechnology MixColor{
+        Vs_Shader:mixLib.transformPosition;
+        Fs_Shader:mixLib.blendColor;
+    }
+
+    SubTechnology MixColorMap{
+        Vs_Shader:mixLib.transformPosition;
+        Fs_Shader:mixLib.blendMap;
+    }
+
+    SubTechnology MixColorOrMap{
+        Vs_Shader:mixLib.transformPosition;
+        Fs_Shader:mixLib.blend;
+    }
+
+    Technology{
+        Sub_Pass{
+            Pass MixColor{
+            }
+        }
+    }
+
+    Technology MixColorMap{
+        Sub_Pass{
+            Pass MixColorMap{
+            }
+        }
+    }
+
+    Technology MixColorOrMap{
+        Sub_Pass{
+            Pass MixColorOrMap{
+            }
+        }
+    }
+}

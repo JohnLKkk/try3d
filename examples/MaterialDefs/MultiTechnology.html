@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MultiTechnology</title>
+    <link rel="stylesheet" type="text/css" href="./../main.css">
+</head>
+<script src="../../build/try3d.min.js"></script>
+<script src="../helpers.js"></script>
+<script src="./../dat.gui.min.js"></script>
+<body>
+    <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;margin: 0px;">
+        <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+        <div class="innerbox" style="top: 0px;right: 0px;background-color: rgba(128,128,128,0.31);color: white;position: fixed;width: 50%;height: 100%;padding: 5px;overflow-y:auto;">
+            <pre>
+#type module
+// 包含多个Technology的材质定义
+Def TimeColorDef{
+    Params{
+        float time;
+        vec4 color;
+    }
+    Functions code{
+        void transformPosition(){
+            Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+        }
+        void timeColor(){
+            #ifdef Params.time
+                float _time = Params.time;
+            #else
+                float _time = 0.0f;
+            #endif
+            Context.OutColor = vec4(vec3(_time), 1.0f);
+        }
+        void fadeColor(){
+            #ifdef Params.time
+                float _time = Params.time;
+            #else
+                float _time = 0.0f;
+            #endif
+            #ifdef Params.color
+                vec4 _color = Params.color;
+            #else
+                vec4 _color = vec4(1.0f);
+            #endif
+            Context.OutColor = mix(_color, vec4(1.0f), _time);
+        }
+    }
+    SubTechnology TimeColor{
+        Vs_Shader:code.transformPosition;
+        Fs_Shader:code.timeColor;
+    }
+    SubTechnology TimeFade{
+        Vs_Shader:code.transformPosition;
+        Fs_Shader:code.fadeColor;
+    }
+    Technology{
+        Sub_Pass{
+            Pass TimeColor{
+            }
+        }
+    }
+    Technology TimeFade{
+        Sub_Pass{
+            Pass TimeFade{
+            }
+        }
+    }
+}
+            </pre>
+        </div>
+    </div>
+    </div>
+    <script type="module">
+        // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
+        let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+        scene.getCanvas().setClearColor(0.1, 0.1, 0.1, 1.0);
+
+        // 定义一个根节点
+        let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+        scene.addSceneNode(rootNode);
+
+        // 定义一个box
+        let box = new Try3d.Box(scene, {id:'box', xHalf:2, yHalf:2, zHalf:2});
+        // 创建box材质
+        let timeColorMat = new Try3d.Material(scene, {id:'timeColor', materialDef:Try3d.MaterialDef.load('./TimeColorDef')});
+        timeColorMat.setParam("color", new Try3d.Vec4Vars().valueFromXYZW(1, 1, 1, 1));
+        box.setMaterial(timeColorMat);
+        box.setLocalTranslationXYZ(0, 2, 0);
+        rootNode.addChildren(box);
+
+        // 创建一个控制器
+        let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
+        sceneControl.lookScene(rootNode);
+        sceneControl.setMaxDistance(15);
+        sceneControl.setMinDistance(5);
+        sceneControl.setTargetDistance(15);
+        sceneControl.focusCamera();
+
+        let time = 0;
+        scene.on('update', tpf=>{
+            time += tpf;
+            time %= 1;
+            timeColorMat.setParam('time', new Try3d.FloatVars().valueOf(time));
+        });
+        // gui
+        // 使用dat gui
+        let gui = new dat.GUI();
+        let settings = {
+            color:[255, 255, 255, 255],
+            technology:"Default",
+        };
+        gui.addColor(settings, 'color').onChange(color=>{
+            timeColorMat.setParam('color', new Try3d.Vec4Vars().valueFromXYZW(color[0]/255, color[1]/255, color[2]/255, color[3]/255));
+        });
+        gui.add(settings, 'technology', ['Default', 'TimeFade']).onChange(technolog=>{
+            // 默认技术不需要名称,所以传递''空字符串
+            timeColorMat.selectTechnology((technolog == 'Default') ? '' : technolog);
+        });
+
+        // 创建渲染器
+        let renderEngine = new Try3d.RenderEngine();
+        // 添加要渲染的场景对象
+        renderEngine.addScene(scene);
+        // 启动渲染器
+        renderEngine.launch();
+        showStats(scene);
+    </script>
+</body>
+</html>

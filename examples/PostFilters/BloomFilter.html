@@ -79,7 +79,7 @@
             blurScale: 1.5
         };
         gui.add(settings, 'cams', [0, 1, 2, 3]).onChange(value=>{
-            mainCamera.lookAt(cams[value][0], cams[value][1], Vector3.S_UNIT_AXIS_Y);
+            mainCamera.lookAt(cams[value][0], cams[value][1], Try3d.Vector3.S_UNIT_AXIS_Y);
         });
         gui.add(settings, 'bloomFilter').onChange(swi=>{
             if(swi){

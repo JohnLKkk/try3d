@@ -58,6 +58,18 @@ const Examples = {
         'MaterialReplacement.html',
         'EnvironmentMaterial.html',
         'MetallicOrRoughness.html',
+        'FilterPipeline.html',
+    ],
+    'MaterialDefs':[
+        'SimpleMaterialDef.html',
+        'SimpleMaterialDef2.html',
+        'MultiTechnology.html',
+        'MultiTechnology2.html',
+        'MaterialParams.html',
+        'LightingDef.html',
+        'FilterPipeline.html',
+        'WriteToTexture.html',
+        'ReadWriteCustomData.html',
     ],
     'Renders':[
         'RenderState.html',

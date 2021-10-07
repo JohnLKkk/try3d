@@ -1,0 +1,122 @@
+// 景深
+Def DofFilterDef{
+    Params{
+        // 视锥near
+        float vNear;
+        // 视锥far
+        float vFar;
+        // 焦距距离
+        float focusDistance;
+        // 焦距半径
+        float focusRange;
+        // 水平模糊缩放
+        float hScale;
+        // 垂直模糊缩放
+        float vScale;
+    }
+    // 快速景深
+    SubTechnology FastDof{
+        Vars{
+            vec2 wUv0;
+        }
+        Vs_Shader{
+            void main(){
+                Context.OutPosition = vec4(Context.InPosition, 1.0f);
+                wUv0 = Context.InUv0;
+            }
+        }
+        Fs_Shader{
+            // 计算线性深度(后续重构整个材质定义系统后,这些都将封装为内置API)
+            float linearDepth(float depth){
+                #ifdef Params.vFar
+                    float _far = Params.vFar;
+                #else
+                    float _far = 1000.0f;
+                #endif
+                #ifdef Params.vNear
+                    float _near = Params.vNear;
+                #else
+                    float _near = 0.1f;
+                #endif
+                float fn = (_far - _near) * 1.0f;
+                float a = _far / fn;
+                float b = _far * _near / -fn;
+                return b / (depth - a);
+            }
+            void main(){
+                Context.OutColor = texture(Context.InScreen, wUv0);
+                float linearDepth = linearDepth(texture(Context.InDepth, wUv0).r);
+
+                #ifdef Params.focusDistance
+                    float _focusDistance = Params.focusDistance;
+                #else
+                    float _focusDistance = 100.0f;
+                #endif
+                #ifdef Params.focusRange
+                    float _focusRange = Params.focusRange;
+                #else
+                    float _focusRange = 10.0f;
+                #endif
+
+                // 在focusDistance附件,并在focusRange范围内焦距,其他地方进行模糊
+                // 快速景深的优化是:
+                // 在焦距范围内完全焦距(清晰)
+                // 其他部分进行5x5半卷积得到一个快速模糊
+                float status = min(1.0f, abs(linearDepth - _focusDistance) / _focusRange);
+
+                if(status < 0.2f){
+                    return;
+                }
+                else{
+                    // 5x5半卷积
+                    // 1  0  1  0  1
+                    // 0  1  0  1  0
+                    // 1  0  x  0  1
+                    // 0  1  0  1  0
+                    // 1  0  1  0  1
+
+                    vec4 sum = vec4(0.0f);
+
+                    float x = wUv0.x;
+                    float y = wUv0.y;
+
+                    #ifdef Params.hScale
+                        float xScale = hScale * Context.ResolutionInverse.x;
+                    #else
+                        float xScale = 1.0f * Context.ResolutionInverse.x;
+                    #endif
+                    #ifdef Params.vScale
+                        float yScale = vScale * Context.ResolutionInverse.y;
+                    #else
+                        float yScale = 1.0f * Context.ResolutionInverse.y;
+                    #endif
+
+                    // 直接展开而不是循环
+                    sum += texture( Context.InScreen, vec2(x - 2.0f * xScale, y - 2.0f * yScale) );
+                    sum += texture( Context.InScreen, vec2(x - 0.0f * xScale, y - 2.0f * yScale) );
+                    sum += texture( Context.InScreen, vec2(x + 2.0f * xScale, y - 2.0f * yScale) );
+                    sum += texture( Context.InScreen, vec2(x - 1.0f * xScale, y - 1.0f * yScale) );
+                    sum += texture( Context.InScreen, vec2(x + 1.0f * xScale, y - 1.0f * yScale) );
+                    sum += texture( Context.InScreen, vec2(x - 2.0f * xScale, y - 0.0f * yScale) );
+                    sum += texture( Context.InScreen, vec2(x + 2.0f * xScale, y - 0.0f * yScale) );
+                    sum += texture( Context.InScreen, vec2(x - 1.0f * xScale, y + 1.0f * yScale) );
+                    sum += texture( Context.InScreen, vec2(x + 1.0f * xScale, y + 1.0f * yScale) );
+                    sum += texture( Context.InScreen, vec2(x - 2.0f * xScale, y + 2.0f * yScale) );
+                    sum += texture( Context.InScreen, vec2(x - 0.0f * xScale, y + 2.0f * yScale) );
+                    sum += texture( Context.InScreen, vec2(x + 2.0f * xScale, y + 2.0f * yScale) );
+
+                    sum = sum / 12.0f;
+
+                    // 将卷积结果混合到当前颜色中
+                    Context.OutColor = mix(Context.OutColor, sum, status);
+                }
+            }
+        }
+    }
+    Technology{
+        Sub_Pass PostFilter{
+            Pass FastDof{
+            }
+        }
+    }
+}

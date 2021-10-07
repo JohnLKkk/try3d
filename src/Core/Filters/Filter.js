@@ -83,7 +83,7 @@ export default class Filter extends Component{
     postFilter(){
         if(this._m_PostFilters){
             let gl = this._m_Scene.getCanvas().getGLContext();
-            this._m_Scene.getRender().draw(gl, Filter.S_POST_FILTER, this._m_PostFilters);
+            this._m_Scene.getRender().draw(gl, Filter.S_POST_FILTER, this._m_PostFilters, null, true);
         }
     }
 

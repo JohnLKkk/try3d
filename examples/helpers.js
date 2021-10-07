@@ -57,6 +57,22 @@ function addFxaa(scene){
     // fxaaFilter.getMaterial().setParam('reduceMul', new Try3d.FloatVars().valueOf(0.1));
     return fxaaFilter;
 }
+function addDof(scene, focusDistance, focusRange, hScale, vScale){
+    let dofFilter = scene.getMainCamera().addFilterFromMaterial(new Try3d.Material(scene, {id:'dofFilter', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_DOF_FILTER_DEF_DATA)}));
+    let mat = dofFilter.getMaterial();
+    if(focusDistance){
+        mat.setParam('focusDistance', new Try3d.FloatVars().valueOf(focusDistance));
+    }
+    if(focusRange){
+        mat.setParam('focusRange', new Try3d.FloatVars().valueOf(focusRange));
+    }
+    if(hScale){
+        mat.setParam('hScale', new Try3d.FloatVars().valueOf(hScale));
+    }
+    if(vScale){
+        mat.setParam('vScale', new Try3d.FloatVars().valueOf(vScale));
+    }
+}
 function addBloom(scene, extractThreshold, exposurePower, bloomIntensity, blurScale){
     let bloomFilter = scene.getMainCamera().addFilterFromMaterial(new Try3d.Material(scene, {id:'bloomFilter', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_BLOOM_FILTER_DEF_DATA)}));
     let mat = bloomFilter.getMaterial();
@@ -70,6 +86,10 @@ function addBloom(scene, extractThreshold, exposurePower, bloomIntensity, blurSc
     if(blurScale){
         mat.setParam('blurScale', new Try3d.FloatVars().valueOf(blurScale));
     }
+}
+function addFilter(scene, id, matDef){
+    let filter = scene.getMainCamera().addFilterFromMaterial(new Try3d.Material(scene, {id:'filter_' + id, materialDef:Try3d.MaterialDef.load(matDef)}));
+    return filter;
 }
 function initOther(scene, rootNode, fogColor, gridColor){
     // 雾化

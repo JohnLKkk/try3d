@@ -1,0 +1,54 @@
+#type module
+// 一个简单的过渡后处理
+Def FadeFilterDef{
+    Vars fd{
+        vec2 wUv0;
+        vec2 sXY;
+    }
+
+    Functions fadeLib{
+        // 变换顶点
+        void transformPosition(){
+            Context.OutPosition = vec4(Context.InPosition, 1.0f);
+            fd.sXY = Context.InPosition.xy;
+            fd.wUv0 = Context.InUv0;
+        }
+
+        // 获取当前屏幕值
+        vec4 getImg(){
+            return texture(Context.InScreen, fd.wUv0);
+        }
+
+        void horizontalFade(){
+            // 在水平方向过渡
+            Context.OutColor = mix(getImg(), vec4(0.0f), abs(fd.sXY.x));
+        }
+
+        void verticalFade(){
+            // 在垂直方向过渡
+            Context.OutColor = mix(getImg(), vec4(0.0f), abs(fd.sXY.y) * 1.5f);
+        }
+    }
+
+    SubTechnology hFade{
+        Vs_Shader:fadeLib.transformPosition;
+        Fs_Shader:fadeLib.horizontalFade;
+    }
+
+    SubTechnology vFade{
+        Vs_Shader:fadeLib.transformPosition;
+        Fs_Shader:fadeLib.verticalFade;
+    }
+
+    Technology{
+        // 在FilterPipeline上进行shading
+        Sub_Pass PostFilter{
+            // pass1
+            Pass hFade{
+            }
+            // pass2
+            Pass vFade{
+            }
+        }
+    }
+}

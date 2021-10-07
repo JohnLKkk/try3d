@@ -1,0 +1,54 @@
+#type module
+// 包含多个Technology的材质定义
+Def TimeColorDef{
+    Params{
+        float time;
+        vec4 color;
+    }
+    Functions code{
+        void transformPosition(){
+            Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+        }
+        void timeColor(){
+            #ifdef Params.time
+                float _time = Params.time;
+            #else
+                float _time = 0.0f;
+            #endif
+            Context.OutColor = vec4(vec3(_time), 1.0f);
+        }
+        void fadeColor(){
+            #ifdef Params.time
+                float _time = Params.time;
+            #else
+                float _time = 0.0f;
+            #endif
+            #ifdef Params.color
+                vec4 _color = Params.color;
+            #else
+                vec4 _color = vec4(1.0f);
+            #endif
+            Context.OutColor = mix(_color, vec4(1.0f), _time);
+        }
+    }
+    SubTechnology TimeColor{
+        Vs_Shader:code.transformPosition;
+        Fs_Shader:code.timeColor;
+    }
+    SubTechnology TimeFade{
+        Vs_Shader:code.transformPosition;
+        Fs_Shader:code.fadeColor;
+    }
+    Technology{
+        Sub_Pass{
+            Pass TimeColor{
+            }
+        }
+    }
+    Technology TimeFade{
+        Sub_Pass{
+            Pass TimeFade{
+            }
+        }
+    }
+}

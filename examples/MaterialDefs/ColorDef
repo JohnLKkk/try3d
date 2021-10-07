@@ -1,0 +1,65 @@
+#type module
+// 有两种材质定义方式
+// #type module表示该材质定义以模块化方式组织,必须是材质定义的第一行
+// 如果不是模块化定义,则不必添加该行
+
+
+
+// 一个简单的材质定义
+// 演示了如何编写一个材质定义
+// 注意,如果你的材质定义,SubTechnology完全与另一个材质定义计算的hashId一致,系统会自动选择最后一次那个
+// 所以,最好为你的材质定义设置一个不太可能冲突的路径名
+// 定义材质名为My/ColorDef
+Def My/ColorDef{
+    // 定义材质参数
+    Params{
+        vec4 color;
+    }
+    // 定义一个名为info的结构体
+    Vars info{
+        vec4 wPosition;
+    }
+    // 定义一组函数库
+    // 也可以单独封装到其他文件然后引入
+    Functions test{
+
+        // 这个函数用于变换坐标
+        void transformPosition(){
+            // 将世界坐标传递到info结构体中的wPosition变量
+            info.wPosition = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+            Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * info.wPosition;
+        }
+
+        // 一个输出颜色的函数
+        void drawColor(){
+            // 直接输出到Context.OutColor变量
+            // 当然,也可以返回函数值并设置返回target
+            Context.OutColor = mix(Params.color, info.wPosition, 0.5f);
+        }
+    }
+
+    // 定义一个SubTechnology
+    // 一个材质定义可以包含多个SubTechnology
+    // 每个SubTechnology表示一个shading Pass
+    SubTechnology ColorPass{
+        // 指定VertexShader的主函数
+        Vs_Shader:test.transformPosition;
+        // 指定FragmentShader的主函数
+        Fs_Shader:test.drawColor;
+    }
+
+    // 定义默认使用的Technology
+    // 当Technology没有指定名称时,则为该材质定义默认启用的Technology
+    Technology{
+        // 一个Technology可以包含多个Sub_Pass
+        // 每个Sub_Pass可以指定其渲染所在的Pipeline
+        Sub_Pass{
+            // 每个Sub_Pass可以包含多个Pass
+            // 每个Pass可以设置其渲染所需的状态
+            // 如果不需要渲染状态设置
+            Pass ColorPass{
+
+            }
+        }
+    }
+}

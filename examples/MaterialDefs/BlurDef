@@ -1,0 +1,94 @@
+#type module
+// 混合blur
+// 这个材质定义描述了如何使用自定义自定读写数据
+// 尽管这里演示了PostFilterPipeline,但是自定义读写数据也可以在CorePipeline或ShadowPipeline中使用
+Def BlurDef{
+
+    Params{
+        float blurScale;
+        float mixFactor;
+    }
+
+    // 定义一个自定义数据块
+    // 可以包含多个需要使用的texture以及depth缓冲区
+    // 定义一个名为MyImageData的全局读写数据块
+    // 它可以在整个运行期间被任意材质对象，渲染对象访问
+    // 你也可以从js代码获取这个数据块
+    Globals MyImageData{
+        color0 vec4 Image;
+        depth24_stencil8 inner depthAndStencil;
+    }
+
+    Vars temp{
+        vec2 wUv0;
+    }
+
+    Functions code{
+        // 变换顶点
+        void transformPosition(){
+            Context.OutPosition = vec4(Context.InPosition, 1.0f);
+            temp.wUv0 = Context.InUv0;
+        }
+
+        // 执行水平方向模糊
+        vec4 hBlur(){
+            #define DEFAULT_BLUR_SCALE 1.5f
+            #ifdef Params.blurScale
+                float blurSize = Params.blurScale / float(textureSize(Context.InScreen, 0).x);
+            #else
+                float blurSize = DEFAULT_BLUR_SCALE / float(textureSize(Context.InScreen, 0).x);
+            #endif
+            vec4 sum = vec4(0.0f);
+
+            // 水平方向模糊
+            // 采样9个部分
+            sum += texture(Context.InScreen, vec2(temp.wUv0.x - 4.0f*blurSize, temp.wUv0.y )) * 0.06f;
+            sum += texture(Context.InScreen, vec2(temp.wUv0.x - 3.0f*blurSize, temp.wUv0.y )) * 0.09f;
+            sum += texture(Context.InScreen, vec2(temp.wUv0.x - 2.0f*blurSize, temp.wUv0.y)) * 0.12f;
+            sum += texture(Context.InScreen, vec2(temp.wUv0.x - blurSize, temp.wUv0.y )) * 0.15f;
+            sum += texture(Context.InScreen, vec2(temp.wUv0.x, temp.wUv0.y)) * 0.16f;
+            sum += texture(Context.InScreen, vec2(temp.wUv0.x + blurSize, temp.wUv0.y )) * 0.15f;
+            sum += texture(Context.InScreen, vec2(temp.wUv0.x + 2.0f*blurSize, temp.wUv0.y )) * 0.12f;
+            sum += texture(Context.InScreen, vec2(temp.wUv0.x + 3.0f*blurSize, temp.wUv0.y )) * 0.09f;
+            sum += texture(Context.InScreen, vec2(temp.wUv0.x + 4.0f*blurSize, temp.wUv0.y )) * 0.06f;
+
+            return sum;
+        }
+
+        // blurPass
+        void blurPass(){
+            GlobalsMyImageData.OutImage = hBlur();
+        }
+
+        // mixPass
+        void mixPass(){
+            #ifdef Params.mixFactor
+                float _factor = Params.mixFactor;
+            #else
+                float _factor = 0.5f;
+            #endif
+
+            // 混合Image和当前帧颜色
+            Context.OutColor = mix(texture(Context.InScreen, temp.wUv0), texture(GlobalsMyImageData.InImage, temp.wUv0), _factor);
+        }
+    }
+
+    SubTechnology HBlurPass{
+        Vs_Shader:code.transformPosition;
+        Fs_Shader:code.blurPass;
+    }
+
+    SubTechnology BlurMix{
+        Vs_Shader:code.transformPosition;
+        Fs_Shader:code.mixPass;
+    }
+
+    Technology{
+        Sub_Pass PostFilter{
+            Pass HBlurPass{
+            }
+            Pass BlurMix{
+            }
+        }
+    }
+}

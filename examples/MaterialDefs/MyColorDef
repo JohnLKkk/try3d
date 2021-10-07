@@ -1,0 +1,50 @@
+// 这个材质定义使用非模块化定义
+// 定义材质名为MyDef/TestColor
+Def MyDef/TestColor{
+    // 定义材质参数
+    Params{
+        vec4 color;
+        float mixFactor;
+    }
+
+    // 定义一个SubTechnology
+    // 一个材质定义可以包含多个SubTechnology
+    SubTechnology MixColor{
+        // 定义一个内部结构体
+        Vars{
+            vec4 wPosition;
+        }
+
+        // 定义VertexShader
+        Vs_Shader{
+            void main(){
+                // 将世界坐标传递到内部结构体中的wPosition变量
+                wPosition = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * wPosition;
+            }
+        }
+
+        // 定义FragmentShader
+        Fs_Shader{
+            void main(){
+                // 混合颜色
+                Context.OutColor = mix(Params.color, wPosition, Params.mixFactor);
+            }
+        }
+    }
+
+    // 定义一个匿名Technology
+    // 匿名Technology表示为该Def(材质定义)的默认首选Technology
+    Technology{
+        // 定义该Technology要执行的Sub_Pass
+        // 可以包含多组Sub_Pass
+        Sub_Pass{
+            // 每个Sub_Pass可以指定其所在的Pipeline,默认为forwardPipeline
+            // 每个Sub_Pass可以包含多个Pass
+            // 每个Pass可以指定渲染状态
+            Pass MixColor{
+
+            }
+        }
+    }
+}

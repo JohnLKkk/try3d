@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MaterialParams</title>
+    <link rel="stylesheet" type="text/css" href="./../main.css">
+</head>
+<script src="../../build/try3d.min.js"></script>
+<script src="../helpers.js"></script>
+<script src="./../dat.gui.min.js"></script>
+<body>
+    <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;margin: 0px;">
+        <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+        <div class="innerbox" style="top: 0px;right: 0px;background-color: rgba(128,128,128,0.31);color: white;position: fixed;width: 50%;height: 100%;padding: 5px;overflow-y:auto;">
+            <pre>
+#type module
+// 混合纹理与颜色
+Def MixDef{
+    Params{
+        // 颜色
+        vec4 color1;
+        vec4 color2;
+        // 纹理
+        sampler2D colorMap1;
+        sampler2D colorMap2;
+        // 混合因子
+        float mixFactor;
+    }
+
+    // 定义一个db结构体
+    Vars db{
+        // uv坐标
+        vec2 wUv0;
+    }
+
+    // 定义一个函数模块mixLib
+    // 包含混合颜色的函数
+    Functions mixLib{
+        // 这个函数传递纹理属性到db结构体中
+        // 并且完成顶点变换
+        void transformPosition(){
+            db.wUv0 = Context.InUv0;
+            Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+        }
+
+        // 用于两个颜色的混合
+        vec4 mixColor(vec4 color1, vec4 color2, float factor){
+            return mix(color1, color2, factor);
+        }
+
+        // 返回color1
+        vec4 getColor1(){
+            #ifdef Params.color1
+                return Params.color1;
+            #else
+                return vec4(0.5f);
+            #endif
+        }
+
+        // 返回colorMap1
+        vec4 getColorMap1(){
+            #ifdef Params.colorMap1
+                return texture(Params.colorMap1, db.wUv0);
+            #else
+                return getColor1();
+            #endif
+        }
+
+        // 返回color2
+        vec4 getColor2(){
+            #ifdef Params.color2
+                return Params.color2;
+            #else
+                return vec4(1.0f);
+            #endif
+        }
+
+        // 返回colorMap2
+        vec4 getColorMap2(){
+            #ifdef Params.colorMap2
+                return texture(Params.colorMap2, db.wUv0);
+            #else
+                return getColor2();
+            #endif
+        }
+
+        // 返回混合因子
+        float getFactor(){
+            #ifdef Params.mixFactor
+                return Params.mixFactor;
+            #else
+                return 0.5f;
+            #endif
+        }
+
+        // 混合颜色输出
+        void blendColor(){
+            Context.OutColor = mixColor(getColor1(), getColor2(), getFactor());
+        }
+
+        // 混合纹理颜色输出
+        void blendMap(){
+            Context.OutColor = mixColor(getColorMap1(), getColorMap2(), getFactor());
+        }
+
+        // 混合纹理或颜色输出
+        void blend(){
+            vec4 color1 = getColor1() * getColorMap1();
+            vec4 color2 = getColor2() * getColorMap2();
+            Context.OutColor = mixColor(color1, color2, getFactor());
+        }
+    }
+
+    SubTechnology MixColor{
+        Vs_Shader:mixLib.transformPosition;
+        Fs_Shader:mixLib.blendColor;
+    }
+
+    SubTechnology MixColorMap{
+        Vs_Shader:mixLib.transformPosition;
+        Fs_Shader:mixLib.blendMap;
+    }
+
+    SubTechnology MixColorOrMap{
+        Vs_Shader:mixLib.transformPosition;
+        Fs_Shader:mixLib.blend;
+    }
+
+    Technology{
+        Sub_Pass{
+            Pass MixColor{
+            }
+        }
+    }
+
+    Technology MixColorMap{
+        Sub_Pass{
+            Pass MixColorMap{
+            }
+        }
+    }
+
+    Technology MixColorOrMap{
+        Sub_Pass{
+            Pass MixColorOrMap{
+            }
+        }
+    }
+}
+            </pre>
+        </div>
+    </div>
+    </div>
+    <script type="module">
+        // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
+        let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+        scene.getCanvas().setClearColor(0.1, 0.1, 0.1, 1.0);
+
+        // 定义一个根节点
+        let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+        scene.addSceneNode(rootNode);
+
+        // 定义一个box
+        let box = new Try3d.Box(scene, {id:'box', xHalf:2, yHalf:2, zHalf:2});
+        // 创建box材质
+        let mixMat = new Try3d.Material(scene, {id:'mixMat', materialDef:Try3d.MaterialDef.load('./MixDef')});
+        mixMat.setParam("color1", new Try3d.Vec4Vars().valueFromXYZW(0, 1, 0, 1));
+        mixMat.setParam("color2", new Try3d.Vec4Vars().valueFromXYZW(1, 0, 0, 1));
+        let colorMap1 = getTexture(scene, '../Assets/Textures/rockwall.jpg', true, true);
+        let colorMap2 = getTexture(scene, '../Assets/Textures/stones.jpg', true, true);
+        mixMat.setParam('colorMap1', colorMap1);
+        mixMat.setParam('colorMap2', colorMap2);
+        mixMat.setParam("mixFactor", new Try3d.FloatVars().valueOf(0.25));
+        box.setMaterial(mixMat);
+        box.setLocalTranslationXYZ(0, 2, 0);
+        rootNode.addChildren(box);
+
+        // gui
+        // 使用dat gui
+        let gui = new dat.GUI();
+        let settings = {
+            color1:[0, 255, 0, 255],
+            color2:[255, 0, 0, 255],
+            colorMap1:true,
+            colorMap2:true,
+            mixFactor:0.25,
+            technology:"Default",
+        };
+        gui.addColor(settings, 'color1').onChange(color=>{
+            mixMat.setParam('color1', new Try3d.Vec4Vars().valueFromXYZW(color[0]/255, color[1]/255, color[2]/255, color[3]/255));
+        });
+        gui.addColor(settings, 'color2').onChange(color=>{
+            mixMat.setParam('color2', new Try3d.Vec4Vars().valueFromXYZW(color[0]/255, color[1]/255, color[2]/255, color[3]/255));
+        });
+        gui.add(settings, 'colorMap1').onChange(b=>{
+            if(b){
+                mixMat.setParam('colorMap1', colorMap1);
+            }
+            else{
+                mixMat.clearParam('colorMap1');
+            }
+        });
+        gui.add(settings, 'colorMap2').onChange(b=>{
+            if(b){
+                mixMat.setParam('colorMap2', colorMap2);
+            }
+            else{
+                mixMat.clearParam('colorMap2');
+            }
+        });
+        gui.add(settings, 'mixFactor', 0, 1).step(0.1).onChange(mixFactor=>{
+            mixMat.setParam('mixFactor', new Try3d.FloatVars().valueOf(mixFactor));
+        });
+        gui.add(settings, 'technology', ['Default', 'MixColorMap', 'MixColorOrMap']).onChange(technolog=>{
+            // 默认技术不需要名称,所以传递''空字符串
+            mixMat.selectTechnology((technolog == 'Default') ? '' : technolog);
+        });
+
+        // 创建一个控制器
+        let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
+        sceneControl.lookScene(rootNode);
+        sceneControl.setMaxDistance(15);
+        sceneControl.setMinDistance(5);
+        sceneControl.setTargetDistance(15);
+        sceneControl.focusCamera();
+
+        // 创建渲染器
+        let renderEngine = new Try3d.RenderEngine();
+        // 添加要渲染的场景对象
+        renderEngine.addScene(scene);
+        // 启动渲染器
+        renderEngine.launch();
+        showStats(scene);
+    </script>
+</body>
+</html>

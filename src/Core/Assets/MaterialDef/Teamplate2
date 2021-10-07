@@ -1,0 +1,55 @@
+#version 2
+Def Template{
+    Params{
+        // 材质参数
+        sampler2D colorMap;
+    }
+    Vars data1{
+        vec2 wUv0;
+    }
+    Vars data2{
+        vec2 wUv0;
+    }
+    // 一组库函数
+    Functions myCode{
+        void function1(){
+            Context.OutPosition = vec4(Context.InPosition, 1.0f);
+            data2.wUv0 = Context.InUv0;
+        }
+        void function2(){
+            function1();
+            Context.OutColor = vec4(1.0f);
+        }
+        void function3(){
+            function2();
+            Context.OutColor = vec4(data1.wUv0, 0.0f, 1.0f);
+        }
+        vec4 getColorMap(){
+            return texture(Params.colorMap, data1.wUv0);
+        }
+        void function4(){
+            // 只能使用一组Vars,不能同时使用两组不同的Vars
+            Context.OutColor = getColorMap();
+        }
+    }
+    SubTechnology Test{
+        Vs_Shader:myCode.function1;
+        Fs_Shader:myCode.function2;
+    }
+    SubTechnology Test2{
+        Vs_Shader:myCode.function1;
+        Fs_Shader:myCode.function3;
+    }
+    Technology{
+        Sub_Pass{
+            Pass Test{
+            }
+        }
+    }
+    Technology 2{
+        Sub_Pass{
+            Pass Test2{
+            }
+        }
+    }
+}

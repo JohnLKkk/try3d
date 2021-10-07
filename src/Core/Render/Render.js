@@ -754,7 +754,7 @@ export default class Render extends Component{
      * @param {Object}[lights]
      * @param {Light[]}[lights]
      */
-    draw(gl, path, bucks, lights){
+    draw(gl, path, bucks, lights, swarp){
         let subShaders = null;
         let mat = null;
         let currentTechnology = null;
@@ -762,15 +762,25 @@ export default class Render extends Component{
         if(bucks){
             let resetFrameBuffer = this._m_FrameContext.m_LastFrameBuffer;
             let outFB = null;
+            let j = 0;
             for(let matId in bucks){
+                if(swarp && j > 0){
+                    this.swapPostFilter();
+                }
+                j++;
                 // 获取当前选中的技术
                 mat = this._m_Scene.getComponent(matId);
                 currentTechnology = mat.getCurrentTechnology();
                 subPasss = currentTechnology.getSubPasss(path);
                 if(subPasss){
                     subShaders = subPasss.getSubShaders();
+                    let i = 0;
                     // 执行渲染
                     for(let subShader in subShaders){
+                        if(swarp && i > 0){
+                            this.swapPostFilter();
+                        }
+                        i++;
                         // 指定subShader
                         mat._selectSubShader(subShaders[subShader].subShader);
                         if(subShaders[subShader].subShader.getFBId() != null){
@@ -797,6 +807,7 @@ export default class Render extends Component{
                             this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
                         }
                         this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].drawArrays(gl, this._m_Scene, this._m_FrameContext, bucks[matId], lights);
+
                     }
                 }
             }
