@@ -80,8 +80,8 @@
 
 #### 安装教程
 
-1.  目前,仅打包了普通的js包,意味着你只能通过script标签引入该库
-2.  你也可以clone该项目,然后使用webpack打包为amd或umd库
+1.  通过script标签引入该库
+2.  通过npm install try3d
 
 #### 使用说明
 
