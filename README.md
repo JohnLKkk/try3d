@@ -5,11 +5,11 @@
 
 #### 展示
 
-![image](https://gitee.com/JoyClm/try3d/tree/master/Screenshot/a.jpg)
-![image](https://gitee.com/JoyClm/try3d/tree/master/Screenshot/b.jpg)
-![image](https://gitee.com/JoyClm/try3d/tree/master/Screenshot/c.jpg)
-![image](https://gitee.com/JoyClm/try3d/tree/master/Screenshot/d.jpg)
-![image](https://gitee.com/JoyClm/try3d/tree/master/Screenshot/e.jpg)
+![image](https://github.com/JohnLKkk/try3d/tree/master/Screenshot/a.jpg)
+![image](https://github.com/JohnLKkk/try3d/tree/master/Screenshot/b.jpg)
+![image](https://github.com/JohnLKkk/try3d/tree/master/Screenshot/c.jpg)
+![image](https://github.com/JohnLKkk/try3d/tree/master/Screenshot/d.jpg)
+![image](https://github.com/JohnLKkk/try3d/tree/master/Screenshot/e.jpg)
 
 
 #### 特性
