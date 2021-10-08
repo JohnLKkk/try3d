@@ -55,7 +55,6 @@ const Examples = {
         'MaterialReplacement.html',
         'EnvironmentMaterial.html',
         'MetallicOrRoughness.html',
-        'FilterPipeline.html',
     ],
     'MaterialDefs':[
         'SimpleMaterialDef.html',
@@ -65,7 +64,6 @@ const Examples = {
         'MaterialParams.html',
         'LightingDef.html',
         'FilterPipeline.html',
-        'WriteToTexture.html',
         'ReadWriteCustomData.html',
     ],
     'Renders':[
