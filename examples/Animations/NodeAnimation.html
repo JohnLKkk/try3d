@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NodeAnimation</title>
+</head>
+<body>
+<script src="../../build/try3d.min.js"></script>
+<div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
+    <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script type="module">
+    import Stats from "../stats.min.js";
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(0, 0, 5), new Try3d.Vector3(0, 0, 0), new Try3d.Vector3(0, 1, 0));
+    let firstPersonController = new Try3d.FirstPersonController(scene, {id:'myController'});
+
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+    let gltfLoader = new Try3d.GLTFLoader();
+    gltfLoader.load(scene, './../Assets/Models/GLTF/Axes/Axes.gltf', modelNode=>{
+        rootNode.addChildren(modelNode);
+    });
+    gltfLoader = new Try3d.GLTFLoader();
+    gltfLoader.load(scene, './../Assets/Models/GLTF/AnimatedTriangle/AnimatedTriangle.gltf', modelNode=>{
+        // // 使用OctCullingControl来管理静态场景
+        rootNode.addChildren(modelNode);
+        let animationProcessor = modelNode.getComponentAtType('AnimationProcessor');
+        let anim = animationProcessor.getAnimationActionAtIndex(0);
+        anim.play();
+    });
+
+    let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(-1, -1, 1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dirLight);
+
+    let renderEngine = new Try3d.RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+    });
+</script>
+</body>
+</html>

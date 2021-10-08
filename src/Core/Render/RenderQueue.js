@@ -5,9 +5,12 @@
  * @date 2021年2月10日2021年2月10日
  * @lastdate 2021年3月17日16点48分
  */
+import Vector3 from "../Math3d/Vector3.js";
+
 export default class RenderQueue {
     static _TEMP_BUCKET_ARRAY = [];
     static _TEMP_ARRAY = [];
+    static _TEMP_VEC3 = new Vector3();
     constructor() {
         // 不透明队列
         this.m_OpaqueBucket = {};
@@ -32,7 +35,7 @@ export default class RenderQueue {
         temp.length = 0;
         let camPos = cam.getEye();
         translucentBucket.forEach(geo=>{
-            temp.push([geo.getLocalTranslation().distanceSq(camPos), geo]);
+            temp.push([geo.getBoundingVolume().getCenter(RenderQueue._TEMP_VEC3).distanceSq(camPos), geo]);
         });
         // 从远往近排序
         temp.sort((a, b)=>{return b[0] - a[0];});

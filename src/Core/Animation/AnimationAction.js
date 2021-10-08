@@ -120,6 +120,15 @@ export default class AnimationAction {
     }
 
     /**
+     * 设置当前动画时间点。<br/>
+     * @param {Number}[time]
+     */
+    setTime(time){
+        this._m_Time = time;
+        this.update(0.1);
+    }
+
+    /**
      * 更新动画。<br/>
      * @param {Number}[exTime 经过时间毫秒]
      */

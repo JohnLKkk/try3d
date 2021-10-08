@@ -41,6 +41,7 @@
             scene.setSky(sky);
 
             let gltfLoader = new Try3d.GLTFLoader();
+            gltfLoader.config({alphaMode:'discard'});
             gltfLoader.load(scene, './../Assets/Models/GLTF/Leaves/scene.gltf', modelNode=>{
                 rootNode.addChildren(modelNode);
                 let sceneControl = new Try3d.SceneBrowsingController(scene, {id:"controller"});
@@ -66,7 +67,8 @@
             giProbe.setRadius(20);
             giProbe.setPositionFromXYZ(0, 5, 0);
             let envCapture = Try3d.ProbeTools.bakeGIProbe(scene, giProbe, {resolute:128});
-            addBloom(scene, 0.9, 2.2, 0.5, 1.2);
+            addBloom(scene, 0.9, 2.5, 0.5, 1.2);
+            addDof(scene, 6, 2.055, 1.12, 1.12);
             // addFog(scene, 50, 100);
         });
 

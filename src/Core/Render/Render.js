@@ -85,9 +85,11 @@ export default class Render extends Component{
         // 半透明队列的默认渲染状态
         this._m_TranslucentRenderState = new RenderState();
         // 开启blend模式
-        // this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[1], 'Off');
+        this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[0], 'Off');
         this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[4], 'On');
         // 关闭深度写入(不建议默认设置,因为对于大部分情况,都需要开启深度写入,以避免同一个物体前后交叉而没有深度写入导致错误情况产生,但可以通过具体材质进行控制)
+        // 但由于corePipeline其他环节使用了深度重建算法,所以需要写入完整深度
+        // 所以半透明部分只能后续完善
         // this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[1], 'Off');
         // 设置默认blend方程(默认方程)
         this._m_TranslucentRenderState.setFlag(RenderState.S_STATES[5], ['SRC_ALPHA', 'ONE_MINUS_SRC_ALPHA']);
@@ -612,12 +614,12 @@ export default class Render extends Component{
 
 
         // 不透明物体渲染默认默认开启深度测试,深度写入(但是仍然可以通过具体的SubPass控制渲染状态)
+        let subShaders = null;
         if(hasOpaque){
             this._checkRenderState(gl, this._m_OpaqueRenderState, this._m_FrameContext.getRenderState());
+            // 延迟路径部分...
+            useBackForwardFrameBuffer = this._m_Pipeline[1].render({gl, scene:this._m_Scene, frameContext:this._m_FrameContext, lights:lights, bucket:opaqueBucket});
         }
-        let subShaders = null;
-        // 延迟路径部分...
-        useBackForwardFrameBuffer = this._m_Pipeline[1].render({gl, scene:this._m_Scene, frameContext:this._m_FrameContext, lights:lights, bucket:opaqueBucket});
         let pfilter = this._m_Scene.getMainCamera().demandFilter();
         if(!useBackForwardFrameBuffer){
             // 检测filters
@@ -631,7 +633,9 @@ export default class Render extends Component{
 
         // 正向路径部分...
         // 先渲染不透明队列
-        this._m_Pipeline[0].render({gl, scene:this._m_Scene, frameContext:this._m_FrameContext, lights:lights, opaque:true, bucket:opaqueBucket});
+        if(hasOpaque){
+            this._m_Pipeline[0].render({gl, scene:this._m_Scene, frameContext:this._m_FrameContext, lights:lights, opaque:true, bucket:opaqueBucket});
+        }
 
         // 渲染env
         this._drawEnv(gl, lights);

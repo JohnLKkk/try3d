@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SkinAnimation</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
+    <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script src="../../build/try3d.min.js"></script>
+<script src="./../dat.gui.min.js"></script>
+<script type="module">
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(2, 2, 2), new Try3d.Vector3(0, 1, 0), new Try3d.Vector3(0, 1, 0));
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+
+
+    // 环境纹理加载完再开始创建创建
+    let radianceLoader = new Try3d.RadianceLoader();
+    radianceLoader.loadHDR('./../Assets/Textures/hdr/Path.hdr', imageData=>{
+
+        // 创建一个sky
+        let sky = new Try3d.SkyBox(scene, {id:'sky'});
+        // 使用cubeMap作为天空盒材质
+        let envMap = new Try3d.Texture2DVars(scene);
+        envMap.setPreloadColor(scene, new Try3d.Vector4(0.5, 0.5, 0.5, 1.0));
+        envMap.setWrap(scene, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+        envMap.setFilter(scene, Try3d.Texture2DVars.S_FILTERS.S_LINEAR, Try3d.Texture2DVars.S_FILTERS.S_LINEAR);
+        envMap.setTextureFormat(Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB16F, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
+        envMap.setImage(scene, imageData, {rgbe:true, linearFloat:true});
+        sky.getMaterial().setParam('envMap', envMap);
+        sky.getMaterial().setParam('useEnvMap', new Try3d.BoolVars().valueOf(true));
+        sky.getMaterial().setParam('useHDR', new Try3d.BoolVars().valueOf(true));
+        scene.setSky(sky);
+
+
+
+        let gltfLoader = new Try3d.GLTFLoader();
+        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/Light/");
+        gltfLoader.load(scene, './../Assets/Models/GLTF/Bot/Bot.gltf', modelNode=>{
+            rootNode.addChildren(modelNode);
+            let animationProcessors = modelNode.getComponentAtTypes('AnimationProcessor');
+            let attack1 = animationProcessors[0].getAnimationActionAtIndex(0);
+            let attack2 = animationProcessors[0].getAnimationActionAtIndex(1);
+            let anims = {attack1,attack2};
+            let curAnim = attack1;
+            let giProbe = new Try3d.GIProbe(scene, {id:'giProbe'});
+            giProbe.setRadius(20);
+            giProbe.setPositionFromXYZ(0, 5, 0);
+            let envCapture = Try3d.ProbeTools.bakeGIProbe(scene, giProbe, {resolute:128});
+            // 某些动画轨迹进行了缩放动画,而动画影响顶点,所以会出现包围盒不对应动画下的模型标准,所以这里可以对模型关闭剔除(但一般建模人员不会这么处理,除非是新手)
+            modelNode.setFilterFlag(Try3d.Node.S_NEVER);
+
+            let sc = new Try3d.SceneBrowsingController(scene, {id:'sc'});
+            sc.lookScene(modelNode);
+            sc.setTargetDistance(0.5);
+            sc.setMinDistance(0.45);
+            sc.setMaxDistance(0.55);
+            sc.focusCamera();
+            modelNode.setLocalTranslationXYZ(0, -0.1, 0);
+            modelNode.setLocalScaleXYZ(0.1, 0.1, 0.1);
+            // 使用dat gui
+            let gui = new dat.GUI();
+            var settings = {
+                play:false,
+                anim:'attack1',
+            };
+            let playAnim = (play)=>{
+                if(play){
+                    curAnim.play();
+                }
+                else{
+                    curAnim.pause();
+                }
+            };
+            gui.add(settings, 'play').onChange(play=>{
+                playAnim(play);
+            });
+            gui.add(settings, 'anim', ['attack1', 'attack2']).onChange(anim=>{
+                if(curAnim != anims[anim]){
+                    curAnim.pause();
+                    curAnim = anims[anim];
+                    curAnim.setTime(0);
+                    playAnim(settings.play);
+                }
+            });
+        });
+
+    });
+
+
+
+
+    let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(-1, -1, 1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dirLight);
+
+    let renderEngine = new Try3d.RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+    // 使用stats.js统计fps
+    import Stats from './../stats.min.js';
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+    });
+</script>
+</body>
+</html>

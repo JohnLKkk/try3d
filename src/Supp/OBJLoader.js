@@ -751,7 +751,7 @@ export default class OBJLoader {
                         if(this._m_AlphaMode == OBJLoader.S_ALPHA_MODE_BLEND)
                             this._m_CurrentMat.alphaMode = 'blend';
                         else if(this._m_AlphaMode == OBJLoader.S_ALPHA_MODE_DISCARD)
-                            this._m_CurrentMat.setParam('alphaDiscard', new FloatVars().valueOf(1 - alpha));
+                            this._m_CurrentMat.setParam('alphaDiscard', new FloatVars().valueOf(Math.max(alpha, 0.1)));
                     }
                     else{
                         // this._m_CurrentMat.alphaMode = 'blend';

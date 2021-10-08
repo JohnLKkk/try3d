@@ -2172,22 +2172,22 @@
         {
             "mimeType" : "image/jpeg",
             "name" : "RedKnight_NRM",
-            "uri" : "RedKnight_NRM.jpg"
+            "uri" : "RedKnight_NRM.png"
         },
         {
             "mimeType" : "image/jpeg",
             "name" : "RedKnight",
-            "uri" : "RedKnight.jpg"
+            "uri" : "RedKnight.png"
         },
         {
             "mimeType" : "image/jpeg",
             "name" : "SwordC_NRM",
-            "uri" : "SwordC_NRM.jpg"
+            "uri" : "SwordC_NRM.png"
         },
         {
             "mimeType" : "image/jpeg",
             "name" : "SwordC",
-            "uri" : "SwordC.jpg"
+            "uri" : "SwordC.png"
         }
     ],
     "skins" : [

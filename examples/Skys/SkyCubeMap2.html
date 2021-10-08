@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SkyCubeMap</title>
+</head>
+<body>
+<script src="../../build/try3d.min.js"></script>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<script src="./../dat.gui.min.js"></script>
+<script type="module">
+    import Stats from "../stats.min.js";
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(25, 25, 25), new Try3d.Vector3(-20, 30, 20), new Try3d.Vector3(0, 1, 0));
+    let firstPersonController = new Try3d.FirstPersonController(scene, {id:'myController'});
+    firstPersonController.setMovementSpeed(100);
+
+    // 创建一个sky
+    let sky = new Try3d.SkyBox(scene, {id:'sky'});
+    // 使用cubeMap作为天空盒材质
+    sky.getMaterial().setParam('useCubeMap', new Try3d.BoolVars().valueOf(true));
+    let cubeMap = new Try3d.TextureCubeVars(scene);
+    cubeMap.setPreloadColor(scene, new Try3d.Vector4(0.5, 0.5, 0.5, 1.0));
+
+    cubeMap.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.PositiveX, '../Assets/Textures/sky/Gk/ft.jpg');
+    cubeMap.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.NegativeX, '../Assets/Textures/sky/Gk/bk.jpg');
+    cubeMap.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.PositiveY, '../Assets/Textures/sky/Gk/up.jpg');
+    cubeMap.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.NegativeY, '../Assets/Textures/sky/Gk/dn.jpg');
+    cubeMap.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.PositiveZ, '../Assets/Textures/sky/Gk/lf.jpg');
+    cubeMap.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.NegativeZ, '../Assets/Textures/sky/Gk/rt.jpg');
+    cubeMap.setWrap(scene, Try3d.TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE);
+
+    let cubeMap2 = new Try3d.TextureCubeVars(scene);
+    cubeMap2.setPreloadColor(scene, new Try3d.Vector4(0.5, 0.5, 0.5, 1.0));
+
+    cubeMap2.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.PositiveX, '../Assets/Textures/sky/Lagoon/lagoon_west.jpg');
+    cubeMap2.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.NegativeX, '../Assets/Textures/sky/Lagoon/lagoon_east.jpg');
+    cubeMap2.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.PositiveY, '../Assets/Textures/sky/Lagoon/lagoon_up.jpg');
+    cubeMap2.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.NegativeY, '../Assets/Textures/sky/Lagoon/lagoon_down.jpg');
+    cubeMap2.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.PositiveZ, '../Assets/Textures/sky/Lagoon/lagoon_south.jpg');
+    cubeMap2.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.NegativeZ, '../Assets/Textures/sky/Lagoon/lagoon_north.jpg');
+    cubeMap2.setWrap(scene, Try3d.TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE);
+
+    let cubeMap3 = new Try3d.TextureCubeVars(scene);
+    cubeMap3.setPreloadColor(scene, new Try3d.Vector4(0.5, 0.5, 0.5, 1.0));
+
+    cubeMap3.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.PositiveX, '../Assets/Textures/sky/SkyBlue/Front5.JPG');
+    cubeMap3.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.NegativeX, '../Assets/Textures/sky/SkyBlue/Back5.jpg');
+    cubeMap3.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.PositiveY, '../Assets/Textures/sky/SkyBlue/Up5.JPG');
+    cubeMap3.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.NegativeY, '../Assets/Textures/sky/SkyBlue/Down5.JPG');
+    cubeMap3.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.PositiveZ, '../Assets/Textures/sky/SkyBlue/Left5.JPG');
+    cubeMap3.setImageSrc(scene, Try3d.TextureCubeVars.S_FACE.NegativeZ, '../Assets/Textures/sky/SkyBlue/Right5.JPG');
+    cubeMap3.setWrap(scene, Try3d.TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE);
+
+    let cms = [];
+    cms.push(cubeMap);
+    cms.push(cubeMap2);
+    cms.push(cubeMap3);
+    sky.getMaterial().setParam('cubeMap', cubeMap);
+    scene.setSky(sky);
+
+    // gui
+    // 使用dat gui
+    let gui = new dat.GUI();
+    let settings = {
+        cubeMap:0,
+    };
+    gui.add(settings, 'cubeMap', [0, 1, 2]).onChange(cm=>{
+        sky.getMaterial().setParam('cubeMap', cms[cm]);
+    });
+
+    let box = new Try3d.Box(scene, {id:'box'});
+    let mat = new Try3d.Material(scene, {id:'mat', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_COLOR_DEF_DATA)});
+    box.setMaterial(mat);
+    // 定义一个根节点
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+    scene.addSceneNode(rootNode);
+    rootNode.addChildren(box);
+    let sc = new Try3d.SceneBrowsingController(scene, {id:'control'});
+    sc.lookScene(rootNode);
+    sc.setTargetDistance(1);
+    box.setLocalScaleXYZ(0, 0, 0);
+
+    let renderEngine = new Try3d.RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+    });
+</script>
+</body>
+</html>

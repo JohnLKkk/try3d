@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DofFilter</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" tabindex="0" width="400" height="300" style="border: none;margin: 0px;padding: 0px;"></canvas>
+</div>
+<script src="../../build/try3d.min.js"></script>
+<script src="./../dat.gui.min.js"></script>
+<script type="module">
+    import Stats from "../stats.min.js";
+
+
+    // 创建scene
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(0, 0, 5), new Try3d.Vector3(0, 0, 0), new Try3d.Vector3(0, 1, 0));
+
+
+    // 创建一个sky
+    let sky = new Try3d.SkyBox(scene, {id:'sky'});
+    // 使用cubeMap作为天空盒材质
+    sky.getMaterial().setParam('useEnvMap', new Try3d.BoolVars().valueOf(true));
+    let envMap = new Try3d.Texture2DVars(scene);
+    envMap.setPreloadColor(scene, new Try3d.Vector4(0.5, 0.5, 0.5, 1.0));
+    envMap.setImageSrc(scene, '../Assets/Textures/sky/skydome.jpg');
+    envMap.setWrap(scene, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+    envMap.setFilter(scene, Try3d.Texture2DVars.S_FILTERS.S_LINEAR, Try3d.Texture2DVars.S_FILTERS.S_LINEAR);
+    sky.getMaterial().setParam('envMap', envMap);
+    scene.setSky(sky);
+
+
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+
+    let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(-1, -1, -1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dirLight);
+
+    let objLoader = new Try3d.OBJLoader();
+    objLoader.config({alphaMode:Try3d.OBJLoader.S_ALPHA_MODE_DISCARD});
+    objLoader.load(scene, 'grayScene', './../Assets/Models/OBJ/MainScene/mainScene.obj', (modelNode)=>{
+        rootNode.addChildren(modelNode);
+        let dofFilter = mainCamera.addFilterFromMaterial(new Try3d.Material(scene, {id:'dofFilter', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_DOF_FILTER_DEF_DATA)}));
+        let mat = dofFilter.getMaterial();
+        let focusDistance = 50;
+        let focusRange = 10;
+        let hScale = 1.0;
+        let vScale = 1.0;
+        mat.setParam('focusDistance', new Try3d.FloatVars().valueOf(focusDistance));
+        mat.setParam('focusRange', new Try3d.FloatVars().valueOf(focusRange));
+        mat.setParam('hScale', new Try3d.FloatVars().valueOf(hScale));
+        mat.setParam('vScale', new Try3d.FloatVars().valueOf(vScale));
+        let cams = [
+            [
+                new Try3d.Vector3(-3.954944349292721,16.35814168676132,103.37243513108395),
+                new Try3d.Vector3(-3.837730145081967,16.04083703035614,102.43138328057047)
+            ],
+            [
+                new Try3d.Vector3(6.881008330060707,1.592819103187714,67.00876924859638),
+                new Try3d.Vector3(7.283230609341024,1.1233475404017135,66.22275799563252)
+            ],
+            [
+                new Try3d.Vector3(-5.441614755212288,-0.024594676316369427,42.910831020937984),
+                new Try3d.Vector3(-5.8194503626820495,-0.029830640147942143,41.9849731277326)
+            ],
+            [
+                new Try3d.Vector3(21.363606410632595,8.646861711913166,24.77185665417691),
+                new Try3d.Vector3(21.41125290072479,8.125852080072432,23.9196367438773)
+            ]
+        ];
+        mainCamera.lookAt(cams[0][0], cams[0][1], Try3d.Vector3.S_UNIT_AXIS_Y);
+
+
+        // 使用dat gui
+        let gui = new dat.GUI();
+        var settings = {
+            cams:0,
+            dofFilter: true,
+            focusDistance: focusDistance,
+            focusRange: focusRange,
+            hScale: 1.0,
+            vScale:1.0,
+        };
+        gui.add(settings, 'cams', [0, 1, 2, 3]).onChange(value=>{
+            mainCamera.lookAt(cams[value][0], cams[value][1], Try3d.Vector3.S_UNIT_AXIS_Y);
+        });
+        gui.add(settings, 'dofFilter').onChange(swi=>{
+            if(swi){
+                dofFilter.enable();
+            }
+            else{
+                dofFilter.disable();
+            }
+        });
+        gui.add(settings, 'focusDistance', 50, 250).onChange(value=>{
+            mat.setParam('focusDistance', new Try3d.FloatVars().valueOf(value));
+        });
+        gui.add(settings, 'focusRange', 10, 100).onChange(fogFar=>{
+            mat.setParam('focusRange', new Try3d.FloatVars().valueOf(fogFar));
+        });
+        gui.add(settings, 'hScale', 0.0, 1.0).onChange(hScale=>{
+            mat.setParam('hScale', new Try3d.FloatVars().valueOf(hScale));
+        });
+        gui.add(settings, 'vScale', 0.0, 1.0).onChange(vScale=>{
+            mat.setParam('vScale', new Try3d.FloatVars().valueOf(vScale));
+        });
+    });
+
+    let renderEngine = new Try3d.RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+    });
+</script>
+</body>
+</html>

@@ -58,7 +58,8 @@ Def DeferredLightingDef{
                 #endif
 
 
-                wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;
+                //wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;
+                wPosition = pos.xyz;
                 mat3 nMat = mat3(transpose(inverse(Context.ModelMatrix)));
                 vec3 norm = normalize(nMat * Context.InNormal);
                 //vec3 t = normalize(nMat * Context.InTangent);

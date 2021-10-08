@@ -1842,7 +1842,7 @@ export default class Internal {
         "                #endif\n" +
         "\n" +
         "\n" +
-        "                wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;\n" +
+        "                wPosition = pos.xyz;\n" +
         "                mat3 nMat = mat3(transpose(inverse(Context.ModelMatrix)));\n" +
         "                vec3 norm = normalize(nMat * Context.InNormal);\n" +
         "                wTangent = vec4(normalize(nMat * Context.InTangent.xyz), Context.InTangent.w);\n" +
@@ -2113,7 +2113,7 @@ export default class Internal {
         "                #endif\n" +
         "\n" +
         "\n" +
-        "                wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;\n" +
+        "                wPosition = pos.xyz;\n" +
         "                mat3 nMat = mat3(transpose(inverse(Context.ModelMatrix)));\n" +
         "                vec3 norm = normalize(nMat * Context.InNormal);\n" +
         "                wTangent = vec4(normalize(nMat * Context.InTangent.xyz), Context.InTangent.w);\n" +
@@ -2395,7 +2395,7 @@ export default class Internal {
         '                #endif\n' +
         '\n' +
         '\n' +
-        '                wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;\n' +
+        '                wPosition = pos.xyz;\n' +
         '                mat3 nMat = mat3(transpose(inverse(Context.ModelMatrix)));\n' +
         '                vec3 norm = normalize(nMat * Context.InNormal);\n' +
         '                wTangent = vec4(normalize(nMat * Context.InTangent.xyz), Context.InTangent.w);\n' +
@@ -3191,7 +3191,7 @@ export default class Internal {
         "                #endif\n" +
         "\n" +
         "\n" +
-        "                wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;\n" +
+        "                wPosition = pos.xyz;\n" +
         "                mat3 nMat = mat3(transpose(inverse(Context.ModelMatrix)));\n" +
         "                vec3 norm = normalize(nMat * Context.InNormal);\n" +
         "                //vec3 t = normalize(nMat * Context.InTangent);\n" +
@@ -4425,7 +4425,7 @@ export default class Internal {
         "                #endif\n" +
         "\n" +
         "\n" +
-        "                wPosition = (Context.ModelMatrix * vec4(Context.InPosition, 1.0f)).xyz;\n" +
+        "                wPosition = pos.xyz;\n" +
         "                mat3 nMat = mat3(transpose(inverse(Context.ModelMatrix)));\n" +
         "                vec3 norm = normalize(nMat * Context.InNormal);\n" +
         "                //vec3 t = normalize(nMat * Context.InTangent);\n" +

@@ -3444,43 +3444,43 @@
 	],
 	"images": [
 		{
-			"uri": "Assets/Models/PBR/Adam/Textures/Adam_Head_a.jpg"
+			"uri": "Assets/Models/PBR/Adam/Textures/Adam_Head_a.png"
 		},
 		{
 			"uri": "Assets/Models/PBR/Adam/Textures/Adam_Head_sg.png"
 		},
 		{
-			"uri": "Assets/Models/PBR/Adam/Textures/Adam_Head_n.jpg"
+			"uri": "Assets/Models/PBR/Adam/Textures/Adam_Head_n.png"
 		},
 		{
-			"uri": "Assets/Models/PBR/Adam/Textures/Adam_Head_o.jpg"
+			"uri": "Assets/Models/PBR/Adam/Textures/Adam_Head_o.png"
 		},
 		{
-			"uri": "Assets/Models/PBR/Adam/Textures/AdamMonitor.jpg"
+			"uri": "Assets/Models/PBR/Adam/Textures/AdamMonitor.png"
 		},
 		{
-			"uri": "Assets/Models/PBR/Adam/Textures/Mask/Adam_mask_intact_a.jpg"
+			"uri": "Assets/Models/PBR/Adam/Textures/Mask/Adam_mask_intact_a.png"
 		},
 		{
 			"uri": "Assets/Models/PBR/Adam/Textures/Mask/Adam_mask_intact_sg.png"
 		},
 		{
-			"uri": "Assets/Models/PBR/Adam/Textures/Mask/Adam_mask_intact_n.jpg"
+			"uri": "Assets/Models/PBR/Adam/Textures/Mask/Adam_mask_intact_n.png"
 		},
 		{
-			"uri": "Assets/Models/PBR/Adam/Textures/Mask/Adam_mask_intact_o.jpg"
+			"uri": "Assets/Models/PBR/Adam/Textures/Mask/Adam_mask_intact_o.png"
 		},
 		{
-			"uri": "Assets/Models/PBR/Adam/Textures/Adam_Torso_a.jpg"
+			"uri": "Assets/Models/PBR/Adam/Textures/Adam_Torso_a.png"
 		},
 		{
 			"uri": "Assets/Models/PBR/Adam/Textures/Adam_Torso_sg.png"
 		},
 		{
-			"uri": "Assets/Models/PBR/Adam/Textures/Adam_Torso_n.jpg"
+			"uri": "Assets/Models/PBR/Adam/Textures/Adam_Torso_n.png"
 		},
 		{
-			"uri": "Assets/Models/PBR/Adam/Textures/Adam_Torso_o.jpg"
+			"uri": "Assets/Models/PBR/Adam/Textures/Adam_Torso_o.png"
 		}
 	],
 	"materials": [

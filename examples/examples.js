@@ -13,9 +13,6 @@ const Examples = {
         'HelloSky.html',
         'HelloPicture.html',
     ],
-    'Animations':[
-
-    ],
     'Scenes':[
         'Toad.html',
         'Leaves.html',
@@ -79,27 +76,22 @@ const Examples = {
         'TileBasedDeferredShading.html',
         'TileBasedDeferredShadingPBR.html',
     ],
+    'Animations':[
+        'NodeAnimation.html',
+        'SkinAnimation.html',
+        'SkinAnimation2.html',
+        'AnimationBlend.html',
+    ],
     'PostFilters':[
         'BloomFilter.html',
-        'GrayFilter.html',
-    ],
-    'Cameras':[
-
+        'FogFilter.html',
+        'DofFilter.html',
     ],
     'Geometrys':[
         'BasicShape.html',
     ],
-    'Transforms':[
-
-    ],
-    'Textures':[
-
-    ],
     'BoundingVolume':[
-
-    ],
-    'Maths':[
-
+        'AABBBoundingBoxFrustumCulling.html',
     ],
     'Optimizations':[
         'FrustumeCulling.html',
@@ -107,9 +99,12 @@ const Examples = {
         'LevelOfDetail.html',
     ],
     'Supps':[
-
+        'GLTFLoader.html',
+        'GLTFLoader2.html',
+        'OBJLoader.html',
     ],
     'Common':[
-
+        'FirstPersonController.html',
+        'SceneBrowsingController.html',
     ],
 };

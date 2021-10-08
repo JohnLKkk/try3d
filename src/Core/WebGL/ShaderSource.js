@@ -259,6 +259,420 @@ export default class ShaderSource {
         '                    return falloff;\n' +
         '                #endif\n' +
         '            }\n';
+    static S_TRY3D_PRINCIPLED_LIGHTING_LIB = '// 计算光照方向\n' +
+        '            // 对于DirLight,PointLight以及SpotLight,lightType依次为0.0,1.0,2.0\n' +
+        '            // 输出光照方向\n' +
+        '            // lightDir.w存储衰减率(对于DirLight,衰减值一直为1,对于Point或Spot,衰减值随着半径而变小,衰减值越小,表示衰减度越大)\n' +
+        '            void ComputeLightDir(in vec3 worldPos, in float lightType, in vec4 position, out vec4 lightDir, out vec3 lightVec){\n' +
+        '                // 只有lightType = 0.0时,posLight为0.0,否则posLight为1.0\n' +
+        '                float posLight = step(0.5f, lightType);\n' +
+        '\n' +
+        '                // 计算光照位置\n' +
+        '                // 对于DirLight,lightVec = position.xyz * sign(-0.5f) = position.xyz * -1.0f;其中position代表DirLight的方向\n' +
+        '                // 对于PointLight和SpotLight,lightVec = position.xyz * sign(1.0f - 0.5f) - (worldPos * 1.0f) = positions.xyz * 1.0f - worldPos;其中position代表Light的位置\n' +
+        '                lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);\n' +
+        '                float dist = length(lightVec);\n' +
+        '\n' +
+        '                #ifndef Context.Srgb\n' +
+        '                    lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);\n' +
+        '                    lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);\n' +
+        '                #else\n' +
+        '                    // 对于DirLight,lightDir.w = 1.0f\n' +
+        '                    lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);\n' +
+        '                #endif\n' +
+        '\n' +
+        '                // 归一化\n' +
+        '                lightDir.xyz = lightVec / vec3(dist);\n' +
+        '            }\n' +
+        '            #define PI 3.14159265358979323846264\n' +
+        '            // 镜面反射菲涅尔计算\n' +
+        '            vec3 F_Shlick(float vh,\tvec3 F0){\n' +
+        '            \tfloat fresnelFact = pow(2.0f, (-5.55473f * vh - 6.98316f) * vh);\n' +
+        '            \treturn mix(F0, vec3(1.0f, 1.0f, 1.0f), fresnelFact);\n' +
+        '            }\n' +
+        '            vec3 F_Schlick2(float cosTheta, vec3 F0)\n' +
+        '            {\n' +
+        '                return F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);\n' +
+        '            }\n' +
+        '            // 计算直接光照\n' +
+        '            void ComputeDirectLighting(in vec3 normal, in vec3 viewDir, in vec3 lightDir, in vec3 lightColor, in vec3 diffuseColor, in vec3 fZero, in float roughness, in float ndotv, out vec3 directLighting){\n' +
+        '                vec3 h = normalize(lightDir + viewDir);\n' +
+        '                float ndotl = max( dot( normal, lightDir ), 0.0f );\n' +
+        '                float ndoth = max( dot( normal, h), 0.0f );\n' +
+        '                float hdotv = max( dot( h, viewDir ), 0.0f );\n' +
+        '\n' +
+        '                // 这里,不使用c/Π计算diffuse fr(x, wi, wo)\n' +
+        '                // 而假设恒定\n' +
+        '                vec3 diffuse = vec3( ndotl ) * lightColor * diffuseColor;\n' +
+        '\n' +
+        '                // cook-torrence,BRDF : http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf\n' +
+        '                float alpha = roughness * roughness;\n' +
+        '\n' +
+        '                // D, GGX 法线分布函数\n' +
+        '                float alpha2 = alpha * alpha;\n' +
+        '                float sum = (( ndoth * ndoth ) * ( alpha2 - 1.0f ) + 1.0f);\n' +
+        '                float denom = PI * sum * sum;\n' +
+        '                float D = alpha2 / denom;\n' +
+        '\n' +
+        '                // F, 菲涅尔项\n' +
+        '                vec3 F = F_Shlick( hdotv, fZero );\n' +
+        '\n' +
+        '                // G, 几何遮挡项\n' +
+        '                float k = alpha * 0.5f;\n' +
+        '                float G_V = ndotv + sqrt( ( ndotv - ndotv * k ) * ndotv + k );\n' +
+        '                float G_L = ndotl + sqrt( ( ndotl - ndotl * k ) * ndotl + k );\n' +
+        '                float G = 1.0f / max( G_V * G_L ,0.01f );\n' +
+        '\n' +
+        '                // specularBRDF\n' +
+        '                float t = D * G * ndotl;\n' +
+        '                vec3 specular =  vec3( t ) * F * lightColor;\n' +
+        '\n' +
+        '                directLighting = diffuse + specular;\n' +
+        '            }\n' +
+        '            // 返回Spot范围衰减\n' +
+        '            float ComputeSpotFalloff(in vec4 spotDirection, in vec3 lightDir){\n' +
+        '                float curAngleCos = dot(lightDir, -spotDirection.xyz);\n' +
+        '                float innerAngleCos = floor(spotDirection.w) * 0.001f;\n' +
+        '                float outerAngleCos = fract(spotDirection.w);\n' +
+        '                float innerMinusOuter = innerAngleCos - outerAngleCos;\n' +
+        '\n' +
+        '                #ifndef Context.Srgb\n' +
+        '                    // 使用二次衰减（请注意^ 4）\n' +
+        '                    return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f), 4.0f);\n' +
+        '                #else\n' +
+        '                    // 线性空间衰减\n' +
+        '                    return clamp((curAngleCos - outerAngleCos) / innerMinusOuter, step(spotDirection.w, 0.001f), 1.0f);\n' +
+        '                #endif\n' +
+        '            }\n' +
+        '            // 球谐函数\n' +
+        '            vec3 sphericalHarmonics( const in vec3 normal, const vec3 sph[9] ){\n' +
+        '                float x = normal.x;\n' +
+        '                float y = normal.y;\n' +
+        '                float z = normal.z;\n' +
+        '\n' +
+        '                vec3 result = (\n' +
+        '                    sph[0] +\n' +
+        '\n' +
+        '                    sph[1] * y +\n' +
+        '                    sph[2] * z +\n' +
+        '                    sph[3] * x +\n' +
+        '\n' +
+        '                    sph[4] * y * x +\n' +
+        '                    sph[5] * y * z +\n' +
+        '                    sph[6] * (3.0f * z * z - 1.0f) +\n' +
+        '                    sph[7] * (z * x) +\n' +
+        '                    sph[8] * (x*x - y*y)\n' +
+        '                );\n' +
+        '\n' +
+        '                return max(result, vec3(0.0f));\n' +
+        '            }\n' +
+        '            // 镜面反射趋势朝向\n' +
+        '            vec3 getSpecularDominantDir(const in vec3 N, const in vec3 R, const in float realRoughness){\n' +
+        '\n' +
+        '                float smoothness = 1.0f - realRoughness;\n' +
+        '                float lerpFactor = smoothness * (sqrt(smoothness) + realRoughness);\n' +
+        '                // 当我们在立方体贴图中获取时，结果未规范化\n' +
+        '                vec3 dominant = mix(N, R, lerpFactor);\n' +
+        '\n' +
+        '                return dominant;\n' +
+        '            }\n' +
+        '            // 拟合方程\n' +
+        '            // 关于镜面部分，有很多优化地方，除了常见的优化，还有很多可以替代方案，几乎可以在保证画质的前提下，在移动端35帧率提升到60帧率，详细可参考我的笔记:https://www.cnblogs.com/JhonKkk/p/14313882.html\n' +
+        '            vec3 integrateBRDFApprox( const in vec3 specular, in float roughness, in float NoV ){\n' +
+        '                const vec4 c0 = vec4( -1.0f, -0.0275f, -0.572f, 0.022f );\n' +
+        '                const vec4 c1 = vec4( 1.0f, 0.0425f, 1.04f, -0.04f );\n' +
+        '                vec4 r = roughness * c0 + c1;\n' +
+        '                float a004 = min( r.x * r.x, exp2( -9.28f * NoV ) ) * r.x + r.y;\n' +
+        '                vec2 ab = vec2( -1.04f, 1.04f ) * a004 + r.zw;\n' +
+        '                return specular * ab.x + ab.y;\n' +
+        '            }\n' +
+        '            // 近似镜面IBL多项式\n' +
+        '            vec3 approximateSpecularIBLPolynomial(in samplerCube envMap, in vec3 specularColor , in float roughness, in float ndotv, in vec3 refVec, in float mipMaps){\n' +
+        '                float lod = sqrt( roughness ) * (mipMaps - 1.0f);\n' +
+        '                vec3 prefilteredColor = textureLod(envMap, refVec.xyz, lod).rgb;\n' +
+        '                return prefilteredColor * integrateBRDFApprox(specularColor, roughness, ndotv);\n' +
+        '            }\n';
+    static S_TYR3D_SHADOW_LIB = '//#extension GL_ARB_gpu_shader5 : enable\n' +
+        '            float shadowBorderScale = 1.0f;\n' +
+        '            #ifdef HARDWARE_SHADOWS\n' +
+        '                #define SHADOWMAP sampler2DShadow\n' +
+        '                #define SHADOWCOMPAREOFFSET(tex,coord,offset) textureProjOffset(tex, coord, offset)\n' +
+        '                #define SHADOWCOMPARE(tex,coord) textureProj(tex, coord)\n' +
+        '                #define SHADOWGATHER(tex,coord) textureGather(tex, coord.xy, coord.z)\n' +
+        '            #else\n' +
+        '                #define SHADOWMAP sampler2D\n' +
+        '                #define SHADOWCOMPAREOFFSET(tex,coord,offset) step(coord.z, textureProjOffset(tex, coord, offset).r)\n' +
+        '                #define SHADOWCOMPARE(tex,coord) step(coord.z, textureProj(tex, coord).r)\n' +
+        '                #define SHADOWGATHER(tex,coord) step(coord.z, textureGather(tex, coord.xy))\n' +
+        '            #endif\n' +
+        '\n' +
+        '            #define FILTER_MODE 1\n' +
+        '\n' +
+        '            #if FILTER_MODE == 10\n' +
+        '                #define GETSHADOW Shadow_Nearest\n' +
+        '                #define KERNEL 1.0\n' +
+        '            #elif FILTER_MODE == 1\n' +
+        '                #ifdef HARDWARE_SHADOWS\n' +
+        '                    #define GETSHADOW Shadow_Nearest\n' +
+        '                #else\n' +
+        '                    #define GETSHADOW Shadow_DoBilinear_2x2\n' +
+        '                #endif\n' +
+        '                #define KERNEL 1.0\n' +
+        '            #endif\n' +
+        '\n' +
+        '            #if (FILTER_MODE == 2)\n' +
+        '                #define GETSHADOW Shadow_DoDither_2x2\n' +
+        '                #define KERNEL 1.0\n' +
+        '            #elif FILTER_MODE == 3\n' +
+        '                #define GETSHADOW Shadow_DoPCF\n' +
+        '                #define KERNEL 4.0\n' +
+        '            #elif FILTER_MODE == 4\n' +
+        '                #define GETSHADOW Shadow_DoPCFPoisson\n' +
+        '                #define KERNEL 4.0\n' +
+        '            #elif FILTER_MODE == 5\n' +
+        '                #define GETSHADOW Shadow_DoPCF\n' +
+        '                #define KERNEL 8.0\n' +
+        '            #endif\n' +
+        '\n' +
+        '            float Shadow_DoShadowCompare(in SHADOWMAP tex,in vec4 projCoord){\n' +
+        '                return SHADOWCOMPARE(tex, projCoord);\n' +
+        '            }\n' +
+        '\n' +
+        '            float Shadow_BorderCheck(in vec2 coord){\n' +
+        '                // 最快的“hack”方法（使用 4-5 条指令）\n' +
+        '                vec4 t = vec4(coord.xy, 0.0f, 1.0f);\n' +
+        '                t = step(t.wwxy, t.xyzz);\n' +
+        '                return dot(t,t);\n' +
+        '            }\n' +
+        '\n' +
+        '            float Shadow_Nearest(in SHADOWMAP tex,in vec4 projCoord){\n' +
+        '                float border = Shadow_BorderCheck(projCoord.xy);\n' +
+        '                if (border > 0.0f){\n' +
+        '                    return 1.0f;\n' +
+        '                }\n' +
+        '                return SHADOWCOMPARE(tex, projCoord);\n' +
+        '            }\n' +
+        '\n' +
+        '            //----------------------------------ShadowFilter--------------------------------------\n' +
+        '            float Shadow_DoShadowCompareOffset(in SHADOWMAP tex,in vec4 projCoord,in vec2 offset){\n' +
+        '                vec4 coord = vec4(projCoord.xy + offset.xy * Context.SMapSizeInverse * shadowBorderScale, projCoord.zw);\n' +
+        '                return SHADOWCOMPARE(tex, coord);\n' +
+        '            }\n' +
+        '\n' +
+        '\n' +
+        '            float Shadow_DoDither_2x2(in SHADOWMAP tex, in vec4 projCoord){\n' +
+        '                float border = Shadow_BorderCheck(projCoord.xy);\n' +
+        '                if (border > 0.0f)\n' +
+        '                    return 1.0f;\n' +
+        '\n' +
+        '                float shadow = 0.0f;\n' +
+        '                vec2 o = vec2(ivec2(mod(floor(gl_FragCoord.xy), 2.0f))); //Strict type checking in GLSL ES\n' +
+        '                shadow += Shadow_DoShadowCompareOffset(tex, projCoord, (vec2(-1.5f, 1.5f)+o));\n' +
+        '                shadow += Shadow_DoShadowCompareOffset(tex, projCoord, (vec2( 0.5f, 1.5f)+o));\n' +
+        '                shadow += Shadow_DoShadowCompareOffset(tex, projCoord, (vec2(-1.5f, -0.5f)+o));\n' +
+        '                shadow += Shadow_DoShadowCompareOffset(tex, projCoord, (vec2( 0.5f, -0.5f)+o));\n' +
+        '                shadow *= 0.25f;\n' +
+        '                return shadow;\n' +
+        '            }\n' +
+        '\n' +
+        '            float Shadow_DoBilinear_2x2(in SHADOWMAP tex, in vec4 projCoord){\n' +
+        '                float border = Shadow_BorderCheck(projCoord.xy);\n' +
+        '                if (border > 0.0f){\n' +
+        '                    return 1.0f;\n' +
+        '                }\n' +
+        '\n' +
+        '                vec4 gather = vec4(0.0f);\n' +
+        '                #if defined GL_ARB_gpu_shader5 || defined GL_OES_gpu_shader5\n' +
+        '                    vec4 coord = vec4(projCoord.xyz / projCoord.www, 0.0f);\n' +
+        '                    gather = SHADOWGATHER(tex, coord);\n' +
+        '                #else\n' +
+        '                    gather.x = SHADOWCOMPAREOFFSET(tex, projCoord, ivec2(0, 1));\n' +
+        '                    gather.y = SHADOWCOMPAREOFFSET(tex, projCoord, ivec2(1, 1));\n' +
+        '                    gather.z = SHADOWCOMPAREOFFSET(tex, projCoord, ivec2(1, 0));\n' +
+        '                    gather.w = SHADOWCOMPAREOFFSET(tex, projCoord, ivec2(0, 0));\n' +
+        '                #endif\n' +
+        '\n' +
+        '               vec2 f = fract( projCoord.xy * Context.ShadowMapSize );\n' +
+        '               vec2 mx = mix( gather.wx, gather.zy, f.x );\n' +
+        '               return mix( mx.x, mx.y, f.y );\n' +
+        '            }\n' +
+        '\n' +
+        '            float Shadow_DoPCF(in SHADOWMAP tex,in vec4 projCoord){\n' +
+        '\n' +
+        '                float shadow = 0.0f;\n' +
+        '                float border = Shadow_BorderCheck(projCoord.xy);\n' +
+        '                if (border > 0.0f)\n' +
+        '                    return 1.0f;\n' +
+        '\n' +
+        '                float bound = KERNEL * 0.5f - 0.5f;\n' +
+        '                bound *= Params.pcfEdge;\n' +
+        '                for (float y = -bound; y <= bound; y += Params.pcfEdge){\n' +
+        '                    for (float x = -bound; x <= bound; x += Params.pcfEdge){\n' +
+        '                        shadow += Shadow_DoShadowCompareOffset(tex, projCoord, vec2(x,y));\n' +
+        '                    }\n' +
+        '                }\n' +
+        '\n' +
+        '                shadow = shadow / (KERNEL * KERNEL);\n' +
+        '                return shadow;\n' +
+        '            }\n' +
+        '\n' +
+        '            //12 tap poisson disk\n' +
+        '            const vec2 poissonDisk0 =  vec2(-0.1711046f, -0.425016f);\n' +
+        '            const vec2 poissonDisk1 =  vec2(-0.7829809f, 0.2162201f);\n' +
+        '            const vec2 poissonDisk2 =  vec2(-0.2380269f, -0.8835521f);\n' +
+        '            const vec2 poissonDisk3 =  vec2(0.4198045f, 0.1687819f);\n' +
+        '            const vec2 poissonDisk4 =  vec2(-0.684418f, -0.3186957f);\n' +
+        '            const vec2 poissonDisk5 =  vec2(0.6026866f, -0.2587841f);\n' +
+        '            const vec2 poissonDisk6 =  vec2(-0.2412762f, 0.3913516f);\n' +
+        '            const vec2 poissonDisk7 =  vec2(0.4720655f, -0.7664126f);\n' +
+        '            const vec2 poissonDisk8 =  vec2(0.9571564f, 0.2680693f);\n' +
+        '            const vec2 poissonDisk9 =  vec2(-0.5238616f, 0.802707f);\n' +
+        '            const vec2 poissonDisk10 = vec2(0.5653144f, 0.60262f);\n' +
+        '            const vec2 poissonDisk11 = vec2(0.0123658f, 0.8627419f);\n' +
+        '\n' +
+        '\n' +
+        '            float Shadow_DoPCFPoisson(in SHADOWMAP tex, in vec4 projCoord){\n' +
+        '                float shadow = 0.0f;\n' +
+        '                float border = Shadow_BorderCheck(projCoord.xy);\n' +
+        '                if (border > 0.0f){\n' +
+        '                    return 1.0f;\n' +
+        '                }\n' +
+        '\n' +
+        '                vec2 texelSize = Context.SMapSizeInverse * 4.0f * Params.pcfEdge * shadowBorderScale;\n' +
+        '\n' +
+        '                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk0 * texelSize, projCoord.zw));\n' +
+        '                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk1 * texelSize, projCoord.zw));\n' +
+        '                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk2 * texelSize, projCoord.zw));\n' +
+        '                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk3 * texelSize, projCoord.zw));\n' +
+        '                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk4 * texelSize, projCoord.zw));\n' +
+        '                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk5 * texelSize, projCoord.zw));\n' +
+        '                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk6 * texelSize, projCoord.zw));\n' +
+        '                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk7 * texelSize, projCoord.zw));\n' +
+        '                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk8 * texelSize, projCoord.zw));\n' +
+        '                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk9 * texelSize, projCoord.zw));\n' +
+        '                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk10 * texelSize, projCoord.zw));\n' +
+        '                shadow += SHADOWCOMPARE(tex, vec4(projCoord.xy + poissonDisk11 * texelSize, projCoord.zw));\n' +
+        '\n' +
+        '                // 除以 12\n' +
+        '                return shadow * 0.08333333333f;\n' +
+        '            }\n' +
+        '            //----------------------------------ShadowFilter--------------------------------------\n' +
+        '\n' +
+        '\n' +
+        '            #ifdef Context.Pssm\n' +
+        '                // 基于PSSM实现的DirectionalLightShadows\n' +
+        '                float getDirectionalLightShadows(in vec4 splits,in float shadowPosition, in SHADOWMAP shadowMap0, in SHADOWMAP shadowMap1, in SHADOWMAP shadowMap2,in SHADOWMAP shadowMap3, in vec4 projCoord0,in vec4 projCoord1,in vec4 projCoord2,in vec4 projCoord3){\n' +
+        '                    float shadow = 1.0f;\n' +
+        '                    if(shadowPosition < splits.x){\n' +
+        '                        shadow = GETSHADOW(shadowMap0, projCoord0 );\n' +
+        '                    }\n' +
+        '                    else if( shadowPosition <  splits.y){\n' +
+        '                        shadowBorderScale = 0.5f;\n' +
+        '                        shadow = GETSHADOW(shadowMap1, projCoord1);\n' +
+        '                    }\n' +
+        '                    else if( shadowPosition <  splits.z){\n' +
+        '                        shadowBorderScale = 0.25f;\n' +
+        '                        shadow = GETSHADOW(shadowMap2, projCoord2);\n' +
+        '                    }\n' +
+        '                    else if( shadowPosition <  splits.w){\n' +
+        '                        shadowBorderScale = 0.125f;\n' +
+        '                        shadow = GETSHADOW(shadowMap3, projCoord3);\n' +
+        '                    }\n' +
+        '                    return shadow;\n' +
+        '                }\n' +
+        '            #endif\n' +
+        '            #ifdef Context.PointLightShadows\n' +
+        '                float getPointLightShadows(in vec4 worldPos,in vec3 lightPos, in SHADOWMAP shadowMap0, in SHADOWMAP shadowMap1, in SHADOWMAP shadowMap2, in SHADOWMAP shadowMap3, in SHADOWMAP shadowMap4, in SHADOWMAP shadowMap5, in vec4 projCoord0,in vec4 projCoord1,in vec4 projCoord2,in vec4 projCoord3,in vec4 projCoord4,in vec4 projCoord5){\n' +
+        '                    float shadow = 1.0f;\n' +
+        '                    vec3 vect = worldPos.xyz - lightPos;\n' +
+        '                    vec3 absv = abs(vect);\n' +
+        '                    float maxComp = max(absv.x,max(absv.y,absv.z));\n' +
+        '                    if(maxComp == absv.y){\n' +
+        '                       if(vect.y < 0.0f){\n' +
+        '                           shadow = GETSHADOW(shadowMap0, projCoord0 / projCoord0.w);\n' +
+        '                       }\n' +
+        '                       else{\n' +
+        '                           shadow = GETSHADOW(shadowMap1, projCoord1 / projCoord1.w);\n' +
+        '                       }\n' +
+        '                    }\n' +
+        '                    else if(maxComp == absv.z){\n' +
+        '                       if(vect.z < 0.0f){\n' +
+        '                           shadow = GETSHADOW(shadowMap2, projCoord2 / projCoord2.w);\n' +
+        '                       }\n' +
+        '                       else{\n' +
+        '                           shadow = GETSHADOW(shadowMap3, projCoord3 / projCoord3.w);\n' +
+        '                       }\n' +
+        '                    }\n' +
+        '                    else if(maxComp == absv.x){\n' +
+        '                       if(vect.x < 0.0f){\n' +
+        '                           shadow = GETSHADOW(shadowMap4, projCoord4 / projCoord4.w);\n' +
+        '                       }\n' +
+        '                       else{\n' +
+        '                           shadow = GETSHADOW(shadowMap5, projCoord5 / projCoord5.w);\n' +
+        '                       }\n' +
+        '                    }\n' +
+        '                    return shadow;\n' +
+        '                }\n' +
+        '            #endif\n' +
+        '            #ifdef Context.SpotLightShadows\n' +
+        '                float getSpotLightShadows(in SHADOWMAP shadowMap, in  vec4 projCoord){\n' +
+        '                    float shadow = 1.0f;\n' +
+        '                    projCoord /= projCoord.w;\n' +
+        '                    shadow = GETSHADOW(shadowMap, projCoord);\n' +
+        '\n' +
+        '                    // 一个小的衰减，使阴影很好地融入暗部，将纹理坐标值转换为 -1,1 范围，因此纹理坐标向量的长度实际上是地面上变亮区域的半径\n' +
+        '                    projCoord = projCoord * 2.0f - 1.0f;\n' +
+        '                    float fallOff = ( length(projCoord.xy) - 0.9f ) / 0.1f;\n' +
+        '                    return mix(shadow, 1.0f, clamp(fallOff, 0.0f, 1.0f));\n' +
+        '                }\n' +
+        '            #endif\n' +
+        '            const mat4 biasMat = mat4(0.5f, 0.0f, 0.0f, 0.0f,\n' +
+        '                                      0.0f, 0.5f, 0.0f, 0.0f,\n' +
+        '                                      0.0f, 0.0f, 0.5f, 0.0f,\n' +
+        '                                      0.5f, 0.5f, 0.5f, 1.0f);\n';
+    static S_TRY3D_COMMON_LIB = '' +
+        '// 获取世界坐标\n' +
+        'vec4 getWorldPosition(){\n' +
+        '    #ifdef Context.Skins\n' +
+        '        mat4 skinMat =\n' +
+        '                Context.InWeight0.x * Context.Joints[int(Context.InJoint0.x)] +\n' +
+        '                Context.InWeight0.y * Context.Joints[int(Context.InJoint0.y)] +\n' +
+        '                Context.InWeight0.z * Context.Joints[int(Context.InJoint0.z)] +\n' +
+        '                Context.InWeight0.w * Context.Joints[int(Context.InJoint0.w)];\n' +
+        '        // vec4 pos = Context.ModelMatrix * skinMat * vec4(Context.InPosition, 1.0f);\n' +
+        '        return skinMat * vec4(Context.InPosition, 1.0f);\n' +
+        '    #else\n' +
+        '        return Context.ModelMatrix * vec4(Context.InPosition, 1.0f);\n' +
+        '    #endif\n' +
+        '}\n' +
+        '// 获取变换顶点\n' +
+        'vec4 getTransformPosition(){\n' +
+        '    return Context.ProjectViewMatrix * getWorldPosition();\n' +
+        '}\n' +
+        '// 深度重建positions\n' +
+        'vec3 getPosition(in mat4 pvInverse, in float depth, in vec2 newTexCoord){\n' +
+        '\n' +
+        '                vec4 pos;\n' +
+        '                pos.xy = (newTexCoord * vec2(2.0)) - vec2(1.0);\n' +
+        '                pos.z  = depth * 2.0 - 1.0;\n' +
+        '                pos.w  = 1.0;\n' +
+        '                pos    = pvInverse * pos;\n' +
+        '                pos.xyz /= pos.w;\n' +
+        '                return pos.xyz;\n' +
+        '            }\n' +
+        '// 近似法线\n' +
+        'vec3 approximateNormal(in vec4 worldPos,in vec2 texCoord, in sampler2D depthMap, in vec2 resolutionInverse, in mat4 pvInverse){\n' +
+        '                float step = resolutionInverse.x;\n' +
+        '                float stepy = resolutionInverse.y;\n' +
+        '                float depth2 = texture(depthMap, texCoord + vec2(step, -stepy)).r;\n' +
+        '                float depth3 = texture(depthMap, texCoord + vec2(-step, -stepy)).r;\n' +
+        '                vec4 worldPos2 = vec4(getPosition(pvInverse, depth2, texCoord + vec2(step, -stepy)),1.0f);\n' +
+        '                vec4 worldPos3 = vec4(getPosition(pvInverse, depth3, texCoord + vec2(-step, -stepy)),1.0f);\n' +
+        '\n' +
+        '                vec3 v1 = (worldPos - worldPos2).xyz;\n' +
+        '                vec3 v2 = (worldPos3 - worldPos2).xyz;\n' +
+        '                return normalize(cross(v1, v2));\n' +
+        '            }\n';
 
     // 上下文数据
     static Context_Data = {
@@ -360,6 +774,9 @@ export default class ShaderSource {
 
         // 系统库
         'Try3dLightingLib':ShaderSource.S_TRY3D_LIGHTING_LIB,
+        'Try3dPrincipledLightingLib':ShaderSource.S_TRY3D_PRINCIPLED_LIGHTING_LIB,
+        'Try3dShadowLib':ShaderSource.S_TYR3D_SHADOW_LIB,
+        'Try3dCommonLib':ShaderSource.S_TRY3D_COMMON_LIB,
     };
 
     constructor() {

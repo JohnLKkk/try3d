@@ -53,6 +53,10 @@ export default class GLTFLoader {
     _m_MatDefSrc = Internal.S_PRINCIPLED_LIGHTING_DEF;
     _m_MagFilter = null;
     _m_MinFilter = null;
+    _m_AlphaMode = null;
+    config(config){
+        this._m_AlphaMode = config.alphaMode || this._m_AlphaMode;
+    }
 
     /**
      * 加载一个GLTF模型。<br/>
@@ -533,7 +537,8 @@ export default class GLTFLoader {
                 // 添加一个默认材质
                 if(!this._m_DefaultMatDef){
                     if(this._m_AssetsPath){
-                        this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "ColorDef");
+                        // this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "ColorDef");
+                        this._m_DefaultMatDef = MaterialDef.parse(Internal.S_COLOR_DEF_DATA);
                     }
                     else{
                         this._m_DefaultMatDef = MaterialDef.parse(this._m_MatDefSrc);
@@ -803,7 +808,8 @@ export default class GLTFLoader {
 
                 if(!this._m_PrincipledMatDef){
                     if(this._m_AssetsPath){
-                        this._m_PrincipledMatDef = MaterialDef.load(this._m_AssetsPath + "PrincipledLightingDef");
+                        // this._m_PrincipledMatDef = MaterialDef.load(this._m_AssetsPath + "PrincipledLightingDef");
+                        this._m_PrincipledMatDef = MaterialDef.parse(this._m_MatDefSrc);
                     }
                     else{
                         this._m_PrincipledMatDef = MaterialDef.parse(this._m_MatDefSrc);
@@ -830,7 +836,8 @@ export default class GLTFLoader {
             else{
                 // 添加一个默认材质
                 if(!this._m_DefaultMatDef){
-                    this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "ColorDef");
+                    // this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "ColorDef");
+                    this._m_DefaultMatDef = MaterialDef.parse(Internal.S_COLOR_DEF_DATA);
                 }
                 let matId = 'default_gltf_mat';
                 let material = null;
@@ -952,7 +959,12 @@ export default class GLTFLoader {
         }
         let renderState = {};
         if(_material.alphaMode){
-            renderState.alphaMode = _material.alphaMode;
+            if(this._m_AlphaMode == 'discard'){
+                material.setParam('alphaDiscard', new FloatVars().valueOf(0.1));
+            }
+            else{
+                renderState.alphaMode = _material.alphaMode;
+            }
         }
         if(_material.doubleSided){
             renderState.doubleSided = _material.doubleSided;
