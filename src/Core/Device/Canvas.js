@@ -61,16 +61,27 @@ export default class Canvas extends Component{
      */
     _sizeCanvas(parent, canvas){
         let self = this;
+        // 移动端有像素密度,所以需要使用这个
+        let dpr = window.devicePixelRatio;
+        console.log('dpr:' + dpr);
         let resetSize = function(){
             if(parent){
                 //调整为parent的大小
-                canvas.width = parent.clientWidth;
-                canvas.height = parent.clientHeight;
+                canvas.width = parent.clientWidth * dpr;
+                canvas.height = parent.clientHeight * dpr;
+                // 上面两行设置物理分辨率
+                // 下面两行设置DIP映射缩放
+                canvas.style.width = parent.clientWidth + 'px';
+                canvas.style.height = parent.clientHeight + 'px';
             }
             else{
                 //调整为浏览器可见窗口大小
-                canvas.width = document.documentElement.clientWidth;
-                canvas.height = document.documentElement.clientHeight;
+                canvas.width = document.documentElement.clientWidth * dpr;
+                canvas.height = document.documentElement.clientHeight * dpr;
+                // 上面两行设置物理分辨率
+                // 下面两行设置DIP映射缩放
+                canvas.style.width = document.documentElement.clientWidth + 'px';
+                canvas.style.height = document.documentElement.clientWidth + 'px';
             }
             Log.debug("改变大小:" + canvas.width + "," + canvas.height);
             self.fire('resize', [canvas.width, canvas.height]);
@@ -119,11 +130,27 @@ export default class Canvas extends Component{
     }
 
     /**
+     * 返回物理密度宽度。<br/>
+     * @return {Number}
+     */
+    getDPRWidth(){
+        return this._m_Canvas.width * (1.0/window.devicePixelRatio);
+    }
+
+    /**
      * 返回Canvas高度。<br/>
      * @return {Number}
      */
     getHeight(){
         return this._m_Canvas.height;
+    }
+
+    /**
+     * 返回物理密度高度。<br/>
+     * @return {Number}
+     */
+    getDPRHeight(){
+        return this._m_Canvas.height / (1.0/window.devicePixelRatio);
     }
 
     /**

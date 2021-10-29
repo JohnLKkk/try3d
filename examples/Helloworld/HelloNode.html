@@ -2,9 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
     <title>HelloNode</title>
 </head>
-<script src="../../build/try3d.min.js"></script>
+<!--<script src="../../build/try3d.min.js"></script>-->
+<script type="module">
+    import Try3d from '../../src/Try3d.js';
+    window.Try3d = Try3d;
+</script>
 <script src="../helpers.js"></script>
 <body>
 <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;margin: 0px;">

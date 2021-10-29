@@ -2121,16 +2121,22 @@ var Canvas = /*#__PURE__*/function (_Component) {
     key: "_sizeCanvas",
     value: function _sizeCanvas(parent, canvas) {
       var self = this;
+      var dpr = window.devicePixelRatio;
+      console.log('dpr:' + dpr);
 
       var resetSize = function resetSize() {
         if (parent) {
           //调整为parent的大小
-          canvas.width = parent.clientWidth;
-          canvas.height = parent.clientHeight;
+          canvas.width = parent.clientWidth * dpr;
+          canvas.height = parent.clientHeight * dpr;
+          canvas.style.width = parent.clientWidth + 'px';
+          canvas.style.height = parent.clientHeight + 'px';
         } else {
           //调整为浏览器可见窗口大小
-          canvas.width = document.documentElement.clientWidth;
-          canvas.height = document.documentElement.clientHeight;
+          canvas.width = document.documentElement.clientWidth * dpr;
+          canvas.height = document.documentElement.clientHeight * dpr;
+          canvas.style.width = document.documentElement.clientWidth + 'px';
+          canvas.style.height = document.documentElement.clientWidth + 'px';
         }
 
         _Log.default.debug("改变大小:" + canvas.width + "," + canvas.height);
@@ -2189,6 +2195,16 @@ var Canvas = /*#__PURE__*/function (_Component) {
       return this._m_Canvas.width;
     }
     /**
+     * 返回物理密度宽度。<br/>
+     * @return {Number}
+     */
+
+  }, {
+    key: "getDPRWidth",
+    value: function getDPRWidth() {
+      return this._m_Canvas.width * (1.0 / window.devicePixelRatio);
+    }
+    /**
      * 返回Canvas高度。<br/>
      * @return {Number}
      */
@@ -2197,6 +2213,16 @@ var Canvas = /*#__PURE__*/function (_Component) {
     key: "getHeight",
     value: function getHeight() {
       return this._m_Canvas.height;
+    }
+    /**
+     * 返回物理密度高度。<br/>
+     * @return {Number}
+     */
+
+  }, {
+    key: "getDPRHeight",
+    value: function getDPRHeight() {
+      return this._m_Canvas.height / (1.0 / window.devicePixelRatio);
     }
     /**
      * 返回GL上下文
