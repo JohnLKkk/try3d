@@ -134,7 +134,7 @@ export default class Canvas extends Component{
      * @return {Number}
      */
     getDPRWidth(){
-        return this._m_Canvas.width * (1.0/window.devicePixelRatio);
+        return this._m_Canvas.width / (1.0/window.devicePixelRatio);
     }
 
     /**

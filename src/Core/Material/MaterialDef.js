@@ -234,6 +234,18 @@ export default class MaterialDef{
         varName = "_" + name + varName;
         this._m_Globals[name][varName] = [];
         let innerType = this.getGlobalInner(type);
+
+        // 优先检查类型标记
+        if(type.indexOf('width') > -1){
+            this._m_Globals[name].width = Number(dataType);
+            return;
+        }
+        else if(type.indexOf('height') > -1){
+            this._m_Globals[name].height = Number(dataType);
+            return;
+        }
+
+
         let t = type.indexOf('color');
         if(t > -1){
             // in部分

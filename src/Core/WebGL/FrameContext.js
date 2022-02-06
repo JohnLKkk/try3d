@@ -12,6 +12,8 @@ export default class FrameContext {
         this.m_LastSubShader = null;
         this.m_LastSubShaderId = null;
         this.m_LastFrameBuffer = null;
+        this.m_LastWidth = 0;
+        this.m_LastHeight = 0;
         // 统计
         // 每帧切换的材质
         this.m_SM = 0;

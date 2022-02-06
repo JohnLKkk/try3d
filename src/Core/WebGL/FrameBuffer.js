@@ -27,12 +27,58 @@ export default class FrameBuffer {
         this._m_DrawBuffers = [];
         this._m_Width = w;
         this._m_Height = h;
+        this._m_RelativeWidth = 1;
+        this._m_RelativeHeight = 1;
         // frameBuffer元素信息
         this._m_RData = {};
         // 当前帧图像输出
         this._m_FramePicture = null;
         // 固定尺寸
         this._m_FixedSize = false;
+        // 相对尺寸
+        this._m_RelativeSize = false;
+    }
+
+    /**
+     * 返回FrameBuffer宽度。<br/>
+     * @returns {Number}
+     */
+    getWidth(){
+        return this._m_Width;
+    }
+
+    /**
+     * 返回FrameBuffer高度。<br/>
+     * @returns {Number}
+     */
+    getHeight(){
+        return this._m_Height;
+    }
+
+    /**
+     * 设置是否为相对尺寸。<br/>
+     * @param {Boolean}[relativeSize]
+     */
+    setRelativeSize(relativeSize){
+        this._m_RelativeSize = relativeSize;
+    }
+
+    /**
+     * 设置相对尺寸比例。<br/>
+     * @param {Number}[w 0.0-1.0]
+     * @param {Number}[h 0.0-1.0]
+     */
+    setRelativeWidthHeight(w, h){
+        this._m_RelativeWidth = w;
+        this._m_RelativeHeight = h;
+    }
+
+    /**
+     * 是否为相对尺寸的FrameBuffer。<br/>
+     * @returns {Boolean}
+     */
+    isRelativeSize(){
+        return this._m_RelativeSize;
     }
 
     /**
@@ -269,6 +315,10 @@ export default class FrameBuffer {
      */
     resize(gl, w, h){
         if(this._m_FixedSize)return;
+        if(this._m_RelativeSize){
+            w = w * this._m_RelativeWidth;
+            h = h * this._m_RelativeHeight;
+        }
         if(this._m_Width != w || this._m_Height != h){
             this._m_Width = w;
             this._m_Height = h;

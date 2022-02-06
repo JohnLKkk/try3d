@@ -134,11 +134,24 @@ export default class Material extends Component{
         for(let global in globals){
             if(!frameContext.getFrameBuffer(global)){
                 let gf = globals[global];
-                let gfb = new FrameBuffer(gl, global, w, h);
+                let _w = gf.width ? (gf.width <= 1.0 ? gf.width * w : gf.width) : w;
+                let _h = gf.height ? (gf.height <= 1.0 ? gf.height * h : gf.height) : h;
+                let gfb = new FrameBuffer(gl, global, _w, _h);
+                if(gf.width != undefined && gf.height != undefined){
+                    if(gf.width <= 1.0 && gf.height <= 1.0){
+                        // 相对尺寸
+                        gfb.setRelativeSize(true);
+                        gfb.setRelativeWidthHeight(gf.width, gf.height);
+                    }
+                    else{
+                        // 固定尺寸
+                        gfb.setFixedSize(true);
+                    }
+                }
                 frameContext.addFrameBuffer(global, gfb);
                 if(gf){
                     for(let atc in gf){
-                        gf[atc][0].type
+                        // gf[atc][0].type
                         if(gf[atc].length > 1){
                             this._newAtc(gl, gfb, gf[atc][1].type, gf[atc][1].name, gf[atc][1].loc);
                         }

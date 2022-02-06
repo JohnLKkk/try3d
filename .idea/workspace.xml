@@ -2,12 +2,17 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="938a111a-9ea9-4e10-a3e6-a9975ca463a9" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/jsLibraryMappings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/examples/PostFilters/FxaaFilter.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/examples/PostFilters/ScaleFilter.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/Core/Assets/MaterialDef/Filter/ScaleFilterDef" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Core/Device/Canvas.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/Core/Device/Canvas.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Core/Material/Material.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/Core/Material/Material.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Core/Material/MaterialDef.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/Core/Material/MaterialDef.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Core/Render/Render.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/Core/Render/Render.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Core/Scene/Camera.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/Core/Scene/Camera.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Core/WebGL/FrameBuffer.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/Core/WebGL/FrameBuffer.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Core/WebGL/FrameContext.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/Core/WebGL/FrameContext.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -16,6 +21,14 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -29,10 +42,15 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/examples/PostFilters" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
     <property name="vue.rearranger.settings.migration" value="true" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="E:\MyFiles\Sources\try3d\examples\PostFilters" />
+    </key>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -42,11 +60,25 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1644048792816</updated>
-      <workItem from="1644048794839" duration="720000" />
+      <workItem from="1644048794839" duration="2540000" />
+      <workItem from="1644066130277" duration="10670000" />
+      <workItem from="1644139691679" duration="903000" />
+      <workItem from="1644153601400" duration="349000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>

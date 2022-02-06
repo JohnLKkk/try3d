@@ -765,6 +765,10 @@ export default class Render extends Component{
         let subPasss = null;
         if(bucks){
             let resetFrameBuffer = this._m_FrameContext.m_LastFrameBuffer;
+            let resetWidth = this._m_FrameContext.m_LastWidth;
+            let resetHeight = this._m_FrameContext.m_LastHeight;
+            let lastWidth = resetWidth;
+            let lastHeight = resetHeight;
             let outFB = null;
             let j = 0;
             for(let matId in bucks){
@@ -792,12 +796,22 @@ export default class Render extends Component{
                             if(this._m_FrameContext.m_LastFrameBuffer != outFB){
                                 this._m_FrameContext.m_LastFrameBuffer = outFB;
                                 gl.bindFramebuffer(gl.FRAMEBUFFER, outFB.getFrameBuffer());
+                                lastWidth = outFB.getWidth();
+                                lastHeight = outFB.getHeight();
+                                if(resetWidth != lastWidth || resetHeight != lastHeight){
+                                    gl.viewport(0, 0, lastWidth, lastHeight);
+                                }
                                 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
                             }
                         }
                         else if(this._m_FrameContext.m_LastFrameBuffer != resetFrameBuffer){
                             // 不需要clear
                             gl.bindFramebuffer(gl.FRAMEBUFFER, resetFrameBuffer);
+                            if(resetWidth != lastWidth || resetHeight != lastHeight){
+                                lastWidth = resetWidth;
+                                lastHeight = resetHeight;
+                                gl.viewport(0, 0, lastWidth, lastHeight);
+                            }
                             this._m_FrameContext.m_LastFrameBuffer = resetFrameBuffer;
                         }
                         let renderDatas = subShaders[subShader].subShader.getRenderDatas();
@@ -817,6 +831,11 @@ export default class Render extends Component{
             }
             if(this._m_FrameContext.m_LastFrameBuffer != resetFrameBuffer){
                 gl.bindFramebuffer(gl.FRAMEBUFFER, resetFrameBuffer);
+                if(resetWidth != lastWidth || resetHeight != lastHeight){
+                    lastWidth = resetWidth;
+                    lastHeight = resetHeight;
+                    gl.viewport(0, 0, lastWidth, lastHeight);
+                }
                 this._m_FrameContext.m_LastFrameBuffer = resetFrameBuffer;
             }
         }

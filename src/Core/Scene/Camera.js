@@ -105,6 +105,8 @@ export default class Camera extends Component{
         this._m_ProjectMatrixUpdate = true;
         this._m_UpdateCameraPosition = true;
         gl.viewport(0, 0, this._m_Width, this._m_Height);
+        this._m_Scene.getRender().getFrameContext().m_LastWidth = this._m_Width;
+        this._m_Scene.getRender().getFrameContext().m_LastHeight = this._m_Height;
         this._init();
 
         canvas.on('resize', ()=>{
@@ -115,6 +117,8 @@ export default class Camera extends Component{
                     gl.viewport(0, 0, this._m_Width, this._m_Height);
                     this._m_ResolutionInverse.setToInXY(1.0 / this._m_Width, 1.0 / this._m_Height);
                     let frameContext = this._m_Scene.getRender().getFrameContext();
+                    frameContext.m_LastWidth = this._m_Width;
+                    frameContext.m_LastHeight = this._m_Height;
                     if(frameContext.getContext(ShaderSource.S_RESOLUTION_INVERSE)){
                         // viewport相关信息(理论上,viewport应该独立封装一个类,但是这里简单包装在camera中)
                         gl.bindBuffer(gl.UNIFORM_BUFFER, this.VIEW_PORT);

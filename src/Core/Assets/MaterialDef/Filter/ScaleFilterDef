@@ -1,0 +1,132 @@
+#type module
+// Scale
+Def System/ScaleFilterDef{
+    Globals DownScaleData{
+        width 0.5;
+        height 0.5;
+        color0 vec4 texture;
+        depth24_stencil8 inner depthAndStencil;
+    }
+
+    Params{
+        float inputPtX;
+        float inputPtY;
+    }
+
+    Vars CommonData{
+        vec2 uv0;
+    }
+
+    // 缩放库
+    Functions ScaleCommon{
+        // 这个函数用于变换坐标
+        void transformPosition(){
+            CommonData.uv0 = Context.InUv0;
+            Context.OutPosition = vec4(Context.InPosition, 1.0f);
+        }
+
+        // 降频渲染
+        void downScale(){
+            GlobalsDownScaleData.Outtexture = texture(Context.InScreen, CommonData.uv0);
+        }
+
+
+        void outSceneColor(){
+            Context.OutColor = texture(GlobalsDownScaleData.Intexture, CommonData.uv0);
+        }
+    }
+
+    // 降频渲染
+    SubTechnology DownPass{
+        Vs_Shader:ScaleCommon.transformPosition;
+        Fs_Shader:ScaleCommon.downScale;
+    }
+    SubTechnology LanczosPass{
+        Vs_Shader:ScaleCommon.transformPosition;
+        Fs_Shader{
+            #define FIX(c) max(abs(c), 1e-5f)
+            #define PI 3.14159265359f
+            #define min4(a, b, c, d) min(min(a, b), min(c, d))
+            #define max4(a, b, c, d) max(max(a, b), max(c, d))
+            #define ARStrength 0.5f
+
+            vec3 weight3(float x) {
+                const float radius = 3.0f;
+                vec3 s = FIX(2.0f * PI * vec3(x - 1.5f, x - 0.5f, x + 0.5f));
+                // 兰佐斯 3. 注意：我们在这个函数之外进行归一化，所以乘以半径没有意义。
+                return sin(s) * sin(s / radius) / (s * s);
+            }
+
+            vec3 line_run(float ypos, vec3 xpos1, vec3 xpos2, vec3 linetaps1, vec3 linetaps2) {
+                return texture(GlobalsDownScaleData.Intexture, vec2(xpos1.r, ypos)).rgb * linetaps1.r
+                    + texture(GlobalsDownScaleData.Intexture, vec2(xpos1.g, ypos)).rgb * linetaps2.r
+                    + texture(GlobalsDownScaleData.Intexture, vec2(xpos1.b, ypos)).rgb * linetaps1.g
+                    + texture(GlobalsDownScaleData.Intexture, vec2(xpos2.r, ypos)).rgb * linetaps2.g
+                    + texture(GlobalsDownScaleData.Intexture, vec2(xpos2.g, ypos)).rgb * linetaps1.b
+                    + texture(GlobalsDownScaleData.Intexture, vec2(xpos2.b, ypos)).rgb * linetaps2.b;
+            }
+
+            vec4 lanczos(in vec2 pos){
+                // 用于抗振铃
+                vec3 neighbors[4] = vec3[](
+                    texture(GlobalsDownScaleData.Intexture, vec2(pos.x - Params.inputPtX, pos.y)).rgb,
+                    texture(GlobalsDownScaleData.Intexture, vec2(pos.x + Params.inputPtX, pos.y)).rgb,
+                    texture(GlobalsDownScaleData.Intexture, vec2(pos.x, pos.y - Params.inputPtY)).rgb,
+                    texture(GlobalsDownScaleData.Intexture, vec2(pos.x, pos.y + Params.inputPtY)).rgb
+                );
+                vec2 f = fract(pos.xy / vec2(Params.inputPtX, Params.inputPtY) + 0.5f);
+                vec3 linetaps1 = weight3(0.5f - f.x * 0.5f);
+                vec3 linetaps2 = weight3(1.0f - f.x * 0.5f);
+                vec3 columntaps1 = weight3(0.5f - f.y * 0.5f);
+                vec3 columntaps2 = weight3(1.0f - f.y * 0.5f);
+
+                // 确保加在一起的所有正好是 1.0，否则会出现一些（非常小的）失真
+                float suml = dot(linetaps1, vec3(1.0f)) + dot(linetaps2, vec3(1.0f));
+                float sumc = dot(columntaps1, vec3(1.0f)) + dot(columntaps2, vec3(1.0f));
+                linetaps1 /= suml;
+                linetaps2 /= suml;
+                columntaps1 /= sumc;
+                columntaps2 /= sumc;
+
+                // !!!改变当前坐标
+                pos -= (f + 2.0f) * vec2(Params.inputPtX, Params.inputPtY);
+                vec3 xpos1 = vec3(pos.x, pos.x + Params.inputPtX, pos.x + 2.0f * Params.inputPtX);
+                vec3 xpos2 = vec3(pos.x + 3.0f * Params.inputPtX, pos.x + 4.0f * Params.inputPtX, pos.x + 5.0f * Params.inputPtX);
+
+                // 最终总和和权重归一化
+                vec3 color = line_run(pos.y, xpos1, xpos2, linetaps1, linetaps2) * columntaps1.r
+                    + line_run(pos.y + Params.inputPtY, xpos1, xpos2, linetaps1, linetaps2) * columntaps2.r
+                    + line_run(pos.y + 2.0f * Params.inputPtY, xpos1, xpos2, linetaps1, linetaps2) * columntaps1.g
+                    + line_run(pos.y + 3.0f * Params.inputPtY, xpos1, xpos2, linetaps1, linetaps2) * columntaps2.g
+                    + line_run(pos.y + 4.0f * Params.inputPtY, xpos1, xpos2, linetaps1, linetaps2) * columntaps1.b
+                    + line_run(pos.y + 5.0f * Params.inputPtY, xpos1, xpos2, linetaps1, linetaps2) * columntaps2.b;
+
+                // 抗振铃
+                vec3 min_sample = min4(neighbors[0], neighbors[1], neighbors[2], neighbors[3]);
+                vec3 max_sample = max4(neighbors[0], neighbors[1], neighbors[2], neighbors[3]);
+                color = mix(color, clamp(color, min_sample, max_sample), ARStrength);
+                return vec4(color, 1.0f);
+            }
+            void main(){
+                Context.OutColor = lanczos(uv0);
+            }
+        }
+    }
+
+    // 输出测试
+    SubTechnology OutPass{
+        Vs_Shader:ScaleCommon.transformPosition;
+        Fs_Shader:ScaleCommon.outSceneColor;
+    }
+
+    Technology{
+        Sub_Pass PostFilter{
+            Pass DownPass{
+            }
+            Pass OutPass{
+            }
+            Pass LanczosPass{
+            }
+        }
+    }
+}
