@@ -1,12 +1,13 @@
 {
   "name": "try3d",
-  "version": "0.0.1",
+  "version": "0.1.4",
   "description": "Based on webGL renderer(The essence of rendering technology)",
   "main": "index.js",
   "scripts": {
     "build": "webpack",
     "test": "echo \"The essence of rendering technology\" && exit 0"
   },
+  "files": ["build", "src"],
   "repository": {
     "type": "git",
     "url": "https://github.com/JohnLKkk/try3d.git"
