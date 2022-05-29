@@ -317,6 +317,12 @@ export default class Vector3 {
     negate(){
         return new Vector3(-this._m_X, -this._m_Y, -this._m_Z);
     }
+    negateLocal(){
+        this._m_X = -this._m_X;
+        this._m_Y = -this._m_Y;
+        this._m_Z = -this._m_Z;
+        return this;
+    }
     length(){
         let d = this._m_X * this._m_X + this._m_Y * this._m_Y + this._m_Z * this._m_Z;
         d = Math.sqrt(d);

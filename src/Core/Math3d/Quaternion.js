@@ -184,6 +184,47 @@ export default class Quaternion {
     }
 
     /**
+     * 返回这个四元数的范数。<br/>
+     * @returns {number}
+     */
+    norm(){
+        let x = this._m_X;
+        let y = this._m_Y;
+        let z = this._m_Z;
+        let w = this._m_W;
+        return w * w + x * x + y * y + z * z;
+    }
+    inverse(){
+        let no = this.norm();
+        if(no > 0.0){
+            let invNorm = 1.0 / no;
+            let x = this._m_X;
+            let y = this._m_Y;
+            let z = this._m_Z;
+            let w = this._m_W;
+            return new Quaternion(-x * invNorm, -y * invNorm, -z * invNorm, w
+                * invNorm);
+        }
+        // 返回无效结果以标记错误
+        return null;
+    }
+    mult(q, res){
+        if(!res){
+            res = new Quaternion();
+        }
+        let qw = q._m_W, qx = q._m_X, qy = q._m_Y, qz = q._m_Z;
+        let x = this._m_X;
+        let y = this._m_Y;
+        let z = this._m_Z;
+        let w = this._m_W;
+        res._m_X = x * qw + y * qz - z * qy + w * qx;
+        res._m_Y = -x * qz + y * qw + z * qx + w * qy;
+        res._m_Z = x * qy - y * qx + z * qw + w * qz;
+        res._m_W = -x * qx - y * qy - z * qz + w * qw;
+        return res;
+    }
+
+    /**
      * 将一个四元数与Vector3相乘，将结果存放到result中。<br/>
      * @param {Vector3}[vec3]
      * @param {Vector3}[result 当result为null时,结果存放到vec3,对于result来说,可以与vec3相同,这是安全的]

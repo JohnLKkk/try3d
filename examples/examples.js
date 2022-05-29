@@ -87,6 +87,7 @@ const Examples = {
     ],
     'Geometrys':[
         'BasicShape.html',
+        'BillboardTest.html',
     ],
     'BoundingVolume':[
         'AABBBoundingBoxFrustumCulling.html',

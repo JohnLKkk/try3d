@@ -120,6 +120,7 @@ import TextImage from "./Core/Util/TextImage.js";
 import Cylinder from "./Core/Node/Shape/Cylinder.js";
 import Torus from "./Core/Node/Shape/Torus.js";
 import Teapot from "./Core/Node/Shape/Teapot.js";
+import BillboardControl from "./Core/Scene/Control/BillboardControl.js";
 
 export default {
     Scene,
@@ -238,6 +239,7 @@ export default {
     UniformBuffer,
     UniformBufferI,
     Component,
+    BillboardControl,
     Globals,
     RenderEngine,
     GLTFLoader,

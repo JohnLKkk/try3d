@@ -228,6 +228,9 @@ export default class Matrix44 {
             this.m[i] = mat44.m[i];
         }
     }
+    setRC(rowI, colI, value){
+        this.m[4 * rowI + colI] = value;
+    }
 
     /**
      * 将当前矩阵设置为指定矩阵数组。<br/>
@@ -595,6 +598,14 @@ export default class Matrix44 {
         this.identity();
         Matrix44.parallelM(this.m, 0, left, right, top, bottom, near, far);
         return this;
+    }
+    fromAxis(xAxis, yAxis, zAxis){
+        this.setArray([
+            xAxis._m_X, xAxis._m_Y, xAxis._m_Z, 0,
+            yAxis._m_X, yAxis._m_Y, yAxis._m_Z, 0,
+            zAxis._m_X, zAxis._m_Y, zAxis._m_Z, 0,
+            0, 0, 0, 1
+        ]);
     }
 
     /**
