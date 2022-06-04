@@ -55,6 +55,7 @@ export default class DirectionalLight extends Light{
      */
     setDirection(dir){
         this._m_Direction.setTo(dir);
+        this.setLocalRotationFromZDirection(this._m_Direction);
     }
 
     /**
@@ -62,6 +63,7 @@ export default class DirectionalLight extends Light{
      * @return {Vector3}
      */
     getDirection(){
+        this.getWorldRotation().getRotationColumn(2, this._m_Direction);
         return this._m_Direction;
     }
 
@@ -74,6 +76,7 @@ export default class DirectionalLight extends Light{
     setDirectionXYZ(x, y, z){
         this._m_Direction.setToInXYZ(x, y, z);
         this._m_Direction.normal();
+        this.setLocalRotationFromZDirection(this._m_Direction);
     }
 
     /**

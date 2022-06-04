@@ -6,12 +6,16 @@
  */
 import MoreMath from "./MoreMath.js";
 import Matrix44 from "./Matrix44.js";
+import Vector3 from "./Vector3.js";
 
 export default class Quaternion {
     // 内部缓存
     static _S_TEMP_QUATERNION = new Quaternion();
     static _S_TEMP_QUATERNION_2 = new Quaternion();
     static _S_TEMP_MAT44 = new Matrix44();
+    static _S_TEMP_VEC3_0 = new Vector3();
+    static _S_TEMP_VEC3_1 = new Vector3();
+    static _S_TEMP_VEC3_2 = new Vector3();
     constructor(x, y, z, w) {
         this._m_X = x || 0;
         this._m_Y = y || 0;
@@ -73,6 +77,67 @@ export default class Quaternion {
             angles[0] = Math.atan2(2 * this._m_X * this._m_W - 2 * this._m_Y * this._m_Z, -sqx + sqy - sqz + sqw); // pitch
         }
         return angles;
+    }
+
+    /**
+     * 右手乘法下,返回旋转矩阵下的第i列表示的基轴。<br/>
+     * @param {Number}[i]
+     * @param {Vector3}[store]
+     * @returns {Vector3}
+     */
+    getRotationColumn(i, store){
+        if(store == null){
+            store = new Vector3();
+        }
+
+        let norm = this.norm();
+        if(norm != 1.0){
+            norm = MoreMath.invSqrt(norm);
+        }
+        let x = this._m_X;
+        let y = this._m_Y;
+        let z = this._m_Z;
+        let w = this._m_W;
+        let xx = x * x * norm;
+        let xy = x * y * norm;
+        let xz = x * z * norm;
+        let xw = x * w * norm;
+        let yy = y * y * norm;
+        let yz = y * z * norm;
+        let yw = y * w * norm;
+        let zz = z * z * norm;
+        let zw = z * w * norm;
+
+        switch (i) {
+            case 0:
+                store._m_X = 1 - 2 * (yy + zz);
+                store._m_Y = 2 * (xy + zw);
+                store._m_Z = 2 * (xz - yw);
+                break;
+            case 1:
+                store._m_X = 2 * (xy - zw);
+                store._m_Y = 1 - 2 * (xx + zz);
+                store._m_Z = 2 * (yz + xw);
+                break;
+            case 2:
+                store._m_X = 2 * (xz + yw);
+                store._m_Y = 2 * (yz - xw);
+                store._m_Z = 1 - 2 * (xx + yy);
+                break;
+            default:
+        }
+
+        return store;
+    }
+
+    /**
+     * 从zAxisDirection构建一个四元数。<br/>
+     * @param {Vector3}[zAxisDirection]
+     */
+    fromDirectionAtZ(zAxisDirection){
+        Vector3.S_UNIT_AXIS_Y.cross(zAxisDirection, Quaternion._S_TEMP_VEC3_0);
+        zAxisDirection.cross(Quaternion._S_TEMP_VEC3_0, Quaternion._S_TEMP_VEC3_1);
+        this.fromAxis(Quaternion._S_TEMP_VEC3_0, Quaternion._S_TEMP_VEC3_1, zAxisDirection);
     }
 
     /**

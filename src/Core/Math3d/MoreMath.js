@@ -35,6 +35,15 @@ export default class MoreMath {
     }
 
     /**
+     * 返回1/sqrt(fValue)。<br/>
+     * @param {Number}[fValue 输入值]
+     * @returns {Number}
+     */
+    static invSqrt(fValue){
+        return (1.0 / Math.sqrt(fValue));
+    }
+
+    /**
      * 对单值进行线性插值。<br/>
      * @param {Number}[scale 0-1插值阈值]
      * @param {Number}[startValue 起始值]

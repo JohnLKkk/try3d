@@ -19,7 +19,7 @@ export default class PointLight extends Light{
 
     constructor(owner, cfg) {
         super(owner, cfg);
-        // 位置
+        // 位置(用于保留只需要更新当前pointLight而跳过子节点的需求)
         this._m_Position = new Vector3();
         // 灯光半径
         this._m_Radius = -1;
@@ -63,6 +63,7 @@ export default class PointLight extends Light{
      */
     setPosition(pos){
         this._m_Position.setTo(pos);
+        this.setLocalTranslation(this._m_Position);
         this._updateBounding();
     }
 
@@ -71,7 +72,8 @@ export default class PointLight extends Light{
      * @return {Vector3}
      */
     getPosition(){
-        return this._m_Position;
+        // return this._m_Position;
+        return this.getWorldTranslation();
     }
 
     /**
@@ -82,6 +84,7 @@ export default class PointLight extends Light{
      */
     setPositionXYZ(x, y, z){
         this._m_Position.setToInXYZ(x, y, z);
+        this.setLocalTranslationXYZ(x, y, z);
         this._updateBounding();
     }
 
@@ -126,7 +129,7 @@ export default class PointLight extends Light{
                 // 对于PointLight,创建包围球
                 this._m_BoudingVolume = new BoundingSphere();
             }
-            this._m_BoudingVolume.setCenter(this._m_Position);
+            this._m_BoudingVolume.setCenter(this.getWorldTranslation());
             this._m_BoudingVolume.setRaiuds(this._m_Radius);
             this._m_UpdateBoundingVolume = false;
         }

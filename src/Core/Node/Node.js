@@ -49,12 +49,21 @@ export default class Node extends Component{
         this._m_Children = [];
         this._m_ChildrenIDs = {};
 
+        // local
         // 缩放
         this._m_LocalScale = new Vector3(1, 1, 1);
         // 旋转
         this._m_LocalRotation = new Quaternion(0, 0, 0, 1);
         // 平移
         this._m_LocalTranslation = new Vector3();
+
+        // world
+        // 缩放
+        this._m_WorldScale = new Vector3(1, 1, 1);
+        // 旋转
+        this._m_WorldRotation = new Quaternion(0, 0, 0, 1);
+        // 平移
+        this._m_WorldTranslation = new Vector3();
 
         // 两种可能,本地矩阵发生变化时,需要更新本地矩阵,然后更新世界矩阵
         // 本地矩阵没有发生变化时,只需要更新世界矩阵
@@ -337,11 +346,30 @@ export default class Node extends Component{
     }
 
     /**
+     * 返回world缩放。<br/>
+     * @returns {Vector3}
+     */
+    getWorldScale(){
+        // 调用一次用于计算当前最新的变换
+        this.getWorldMatrix();
+        return this._m_WorldScale;
+    }
+
+    /**
      * 设置旋转。<br/>
      * @param {Quaternion}[rotation]
      */
     setLocalRotation(rotation){
         this._m_LocalRotation.setTo(rotation);
+        this._updateLocalMatrix();
+    }
+
+    /**
+     * 设置旋转。<br/>
+     * @param {Vector3}[zDirection]
+     */
+    setLocalRotationFromZDirection(zDirection){
+        this._m_LocalRotation.fromDirectionAtZ(zDirection);
         this._updateLocalMatrix();
     }
 
@@ -388,6 +416,16 @@ export default class Node extends Component{
     }
 
     /**
+     * 返回world旋转。<br/>
+     * @returns {Quaternion}
+     */
+    getWorldRotation(){
+        // 更新当前最新的变换
+        this.getWorldMatrix();
+        return this._m_WorldRotation;
+    }
+
+    /**
      * 设置平移。<br/>
      * @param {Vector3}[translation]
      */
@@ -413,6 +451,16 @@ export default class Node extends Component{
      */
     getLocalTranslation(){
         return this._m_LocalTranslation;
+    }
+
+    /**
+     * 返回world平移。<br/>
+     * @returns {Vector3}
+     */
+    getWorldTranslation(){
+        // 调用一次用于计算当前最新的变换
+        this.getWorldMatrix();
+        return this._m_WorldTranslation;
     }
 
     /**
@@ -526,6 +574,8 @@ export default class Node extends Component{
                 Matrix44.multiplyMM(this._m_WorldMatrix, 0, this._m_Parent.getWorldMatrix(), 0, this._m_LocalMatrix, 0);
             }
             // ...
+            // 更新world变换信息
+            Matrix44.decomposeMat4(this._m_WorldMatrix, this._m_WorldTranslation, this._m_WorldRotation, this._m_WorldScale);
             this._m_UpdateWorldMatrix = false;
         }
     }

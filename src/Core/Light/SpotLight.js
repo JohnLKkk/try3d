@@ -23,7 +23,7 @@ export default class SpotLight extends Light{
         super(owner, cfg);
         // 方向
         this._m_Direction = new Vector3();
-        // 位置
+        // 位置(用于保留只需要更新当前spotLight)
         this._m_Position = new Vector3();
         // 内角
         this._m_InnerAngle = MoreMath.toRadians(30);
@@ -176,6 +176,7 @@ export default class SpotLight extends Light{
      */
     setPosition(position){
         this._m_Position.setTo(position);
+        this.setLocalTranslation(this._m_Position);
     }
 
     /**
@@ -186,6 +187,7 @@ export default class SpotLight extends Light{
      */
     setPositionXYZ(x, y, z){
         this._m_Position.setToInXYZ(x, y, z);
+        this.setLocalTranslationXYZ(x, y, z);
     }
 
     /**
@@ -193,25 +195,26 @@ export default class SpotLight extends Light{
      * @return {Vector3}
      */
     getPosition(){
-        return this._m_Position;
-    }
-
-    /**
-     * 返回位置。<br/>
-     * @return {Vector3}
-     */
-    getPosition(){
-        return this._m_Position;
+        // return this._m_Position;
+        return this.getWorldTranslation();
     }
 
     /**
      * 设置方向。<br/>
-     * @param {Vector3}[direction]
+     * @param {Vector3}[dir]
      */
-    setDirection(direction){
-        this._m_Direction.setTo(direction);
-        // 提前normal,以便shader减少normal操作
-        this._m_Direction.normal();
+    setDirection(dir){
+        this._m_Direction.setTo(dir);
+        this.setLocalRotationFromZDirection(this._m_Direction);
+    }
+
+    /**
+     * 返回方向。<br/>
+     * @return {Vector3}
+     */
+    getDirection(){
+        this.getWorldRotation().getRotationColumn(2, this._m_Direction);
+        return this._m_Direction;
     }
 
     /**
@@ -221,15 +224,9 @@ export default class SpotLight extends Light{
      * @param {Number}[z]
      */
     setDirectionXYZ(x, y, z){
-        this._m_Direction.setToInXYZ(x, y, z).normal();
-    }
-
-    /**
-     * 返回方向。<br/>
-     * @return {Vector3}
-     */
-    getDirection(){
-        return this._m_Direction;
+        this._m_Direction.setToInXYZ(x, y, z);
+        this._m_Direction.normal();
+        this.setLocalRotationFromZDirection(this._m_Direction);
     }
 
     getBoundingVolume(){
@@ -245,7 +242,7 @@ export default class SpotLight extends Light{
 
             let lr = this._m_SpotRange * 0.5;
             let center = TempVars.S_TEMP_VEC3_2;
-            this._m_Direction.multLength(this._m_SpotRange * 0.5, center).add(this._m_Position);
+            this.getDirection().multLength(this._m_SpotRange * 0.5, center).add(this.getWorldTranslation());
 
             let lr2 = this._m_SpotRange * Math.tan(this._m_OuterCorner);
 
