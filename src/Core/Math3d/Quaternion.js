@@ -135,6 +135,7 @@ export default class Quaternion {
      * @param {Vector3}[zAxisDirection]
      */
     fromDirectionAtZ(zAxisDirection){
+        zAxisDirection.normal();
         Vector3.S_UNIT_AXIS_Y.cross(zAxisDirection, Quaternion._S_TEMP_VEC3_0);
         zAxisDirection.cross(Quaternion._S_TEMP_VEC3_0, Quaternion._S_TEMP_VEC3_1);
         this.fromAxis(Quaternion._S_TEMP_VEC3_0, Quaternion._S_TEMP_VEC3_1, zAxisDirection);
