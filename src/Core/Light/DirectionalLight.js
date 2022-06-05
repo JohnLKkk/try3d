@@ -2,6 +2,7 @@ import Light from "./Light.js";
 import Vector3 from "../Math3d/Vector3.js";
 import DirectionalLightShadowProcess from "../Shadow/DirectionalLightShadowProcess.js";
 import Log from "../Util/Log.js";
+import AABBBoundingBox from "../Math3d/Bounding/AABBBoundingBox.js";
 
 export default class DirectionalLight extends Light{
     // 尽量不依赖外部类枚举，所以在这里声明合适类型
@@ -85,6 +86,27 @@ export default class DirectionalLight extends Light{
      * @return {null}
      */
     getBoundingVolume(){
+        if(this._m_UpdateBoundingVolume){
+            // 更新包围盒
+            // 如果存在子节点,则合并子节点
+            if(this._m_Children.length > 0){
+                let aabb = null;
+                // 清空包围体(避免保留上次结果)
+                this._m_Children.forEach(children=>{
+                    aabb = children.getBoundingVolume();
+                    if(aabb){
+                        // // 说明存在子节点包围盒
+                        // if(!this._m_BoudingVolume){
+                        //     // 说明是初次获取,则创建该Node的包围盒
+                        //     this._m_BoudingVolume = new AABBBoundingBox();
+                        // }
+                        // // 合并子节点包围体
+                        // this._m_BoudingVolume.merge(aabb);
+                    }
+                });
+            }
+            this._m_UpdateBoundingVolume = false;
+        }
         return null;
     }
 
