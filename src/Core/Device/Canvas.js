@@ -92,6 +92,41 @@ export default class Canvas extends Component{
     }
 
     /**
+     * 强制刷新大小。<br/>
+     * @param {Number}[w]
+     * @param {Number}[h]
+     */
+    resize(w, h){
+        let self = this;
+        // 移动端有像素密度,所以需要使用这个
+        let dpr = window.devicePixelRatio;
+        console.log('dpr:' + dpr);
+        let resetSize = function(){
+            if(w != undefined && h != undefined){
+                //调整为parent的大小
+                self._m_Canvas.width = w * dpr;
+                self._m_Canvas.height = h * dpr;
+                // 上面两行设置物理分辨率
+                // 下面两行设置DIP映射缩放
+                self._m_Canvas.style.width = w + 'px';
+                self._m_Canvas.style.height = h + 'px';
+            }
+            else{
+                //调整为浏览器可见窗口大小
+                self._m_Canvas.width = document.documentElement.clientWidth * dpr;
+                self._m_Canvas.height = document.documentElement.clientHeight * dpr;
+                // 上面两行设置物理分辨率
+                // 下面两行设置DIP映射缩放
+                self._m_Canvas.style.width = document.documentElement.clientWidth + 'px';
+                self._m_Canvas.style.height = document.documentElement.clientWidth + 'px';
+            }
+            Log.debug("改变大小:" + self._m_Canvas.width + "," + self._m_Canvas.height);
+            self.fire('resize', [self._m_Canvas.width, self._m_Canvas.height]);
+        };
+        resetSize();
+    }
+
+    /**
      * 返回canvas元素
      * @returns {Document}
      */
