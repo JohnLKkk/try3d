@@ -136,7 +136,17 @@ export default class Quaternion {
      */
     fromDirectionAtZ(zAxisDirection){
         zAxisDirection.normal();
-        Vector3.S_UNIT_AXIS_Y.cross(zAxisDirection, Quaternion._S_TEMP_VEC3_0);
+        let dot = zAxisDirection.dot(Vector3.S_UNIT_AXIS_Y);
+        // 说明此时zAxisDirection几乎与Y平行
+        if(dot >= 0.9){
+            Vector3.S_UNIT_AXIS_Z.multLength(-1, Quaternion._S_TEMP_VEC3_2).cross(zAxisDirection, Quaternion._S_TEMP_VEC3_0);
+        }
+        else if(dot <= -0.9){
+            Vector3.S_UNIT_AXIS_Z.cross(zAxisDirection, Quaternion._S_TEMP_VEC3_0);
+        }
+        else{
+            Vector3.S_UNIT_AXIS_Y.cross(zAxisDirection, Quaternion._S_TEMP_VEC3_0);
+        }
         zAxisDirection.cross(Quaternion._S_TEMP_VEC3_0, Quaternion._S_TEMP_VEC3_1);
         this.fromAxis(Quaternion._S_TEMP_VEC3_0, Quaternion._S_TEMP_VEC3_1, zAxisDirection);
     }
