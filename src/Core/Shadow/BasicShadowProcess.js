@@ -21,6 +21,7 @@ import FramePicture from "../Node/FramePicture.js";
 import Vector2 from "../Math3d/Vector2.js";
 import FloatVars from "../WebGL/Vars/FloatVars.js";
 import Vec2Vars from "../WebGL/Vars/Vec2Vars.js";
+import Log from "../Util/Log.js";
 
 export default class BasicShadowProcess extends Component{
     // 二次方缩小

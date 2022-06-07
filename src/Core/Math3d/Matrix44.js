@@ -310,6 +310,30 @@ export default class Matrix44 {
         m[offset + 13] = -(top + bottom) / (top * 1.0 - bottom);
         m[offset + 14] = -(far + near) / (far * 1.0 - near);
     }
+    /**
+     * 根据指定的边界定义透视投影矩阵。<br/>
+     * @param {Array}[m 保存透视矩阵的浮点数组]
+     * @param {Number}[offset 将偏移量偏移到写入透视矩阵数据的浮点数组m中]
+     * @param {Number}[left]
+     * @param {Number}[right]
+     * @param {Number}[top]
+     * @param {Number}[bottom]
+     * @param {Number}[near]
+     * @param {Number}[far]
+     */
+    static perspectiveM2(m, offset, left, right, top, bottom, near, far){
+        // 这里假设传入的矩阵数组m已经是单位矩阵,则只计算几个重要行列值
+        // scale
+        m[offset + 0] = (2.0 * near) / (right - left);
+        m[offset + 5] = (2.0 * near) / (top - bottom);
+        m[offset + 15] = 0.0;
+
+        m[offset + 8] = (right + left) / (right - left);
+        m[offset + 9] = (top + bottom) / (top - bottom);
+        m[offset + 10] = -(far + near) / (far - near);
+        m[offset + 11] = -1.0;
+        m[offset + 14] = -(2.0 * far * near) / (far - near);
+    }
 
     /**
      * 根据视场角度，纵横比和Z剪裁平面定义透视投影矩阵。
@@ -594,10 +618,46 @@ export default class Matrix44 {
         Matrix44.perspectiveM(this.m, 0, fovy, aspect, zNear, zFar);
         return this;
     }
+    perspectiveM2(left, right, top, bottom, near, far){
+        this.identity();
+        Matrix44.perspectiveM2(this.m, 0, left, right, top, bottom, near, far);
+        return this;
+    }
+
+    /**
+     * 创建平行投影矩阵。<br/>
+     * @param left
+     * @param right
+     * @param top
+     * @param bottom
+     * @param near
+     * @param far
+     * @return {Matrix44}
+     */
     parallelM(left, right, top, bottom, near, far){
         this.identity();
         Matrix44.parallelM(this.m, 0, left, right, top, bottom, near, far);
         return this;
+    }
+
+    /**
+     * 基于六截面创建投影矩阵。<br/>
+     * @param left
+     * @param right
+     * @param top
+     * @param bottom
+     * @param near
+     * @param far
+     * @param parallel
+     * @return {Matrix44}
+     */
+    fromFrustum(left, right, top, bottom, near, far, parallel){
+        if(parallel){
+            return this.parallelM(left, right, top, bottom, near, far);
+        }
+        else{
+            return this.perspectiveM2(left, right, top, bottom, near, far);
+        }
     }
     fromAxis(xAxis, yAxis, zAxis){
         this.setArray([

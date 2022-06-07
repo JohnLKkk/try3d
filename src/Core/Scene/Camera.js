@@ -273,7 +273,7 @@ export default class Camera extends Component{
         this._m_FrustumRight = right;
         this._m_FrustumTop = top;
         this._m_FrustumBottom = bottom;
-        this._m_ProjectMatrix.parallelM(this._m_FrustumLeft, this._m_FrustumRight, this._m_FrustumTop, this._m_FrustumBottom, this._m_FrustumNear, this._m_FrustumFar);
+        this._m_ProjectMatrix.fromFrustum(this._m_FrustumLeft, this._m_FrustumRight, this._m_FrustumTop, this._m_FrustumBottom, this._m_FrustumNear, this._m_FrustumFar, this._m_ParallelProjection);
     }
 
     /**

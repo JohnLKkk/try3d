@@ -5,6 +5,7 @@ import Matrix44 from "../Math3d/Matrix44.js";
 import TempVars from "../Util/TempVars.js";
 import AABBBoundingBox from "../Math3d/Bounding/AABBBoundingBox.js";
 import Log from "../Util/Log.js";
+import Tools from "../Util/Tools.js";
 
 /**
  * Geometry继承Node,同时实现IDrawable接口,表示一个空间节点,同时表示一个可渲染的实例对象。<br/>
@@ -22,6 +23,9 @@ export default class Geometry extends Node{
         this._m_Material = null;
         this._m_IsDrawable = true;
         this._m_Opaque = true;
+        this._m_DrawableId = Tools.nextDrawableId();
+        // 是否为可拾取物体
+        this._m_IsPickable = true;
     }
 
     /**
@@ -119,6 +123,30 @@ export default class Geometry extends Node{
         if(customAttrs){
             this._m_Mesh._refreshBufLocal(this._m_Scene.getCanvas().getGLContext(), customAttrs);
         }
+    }
+
+    /**
+     * 返回drawableId。<br/>
+     * @return {Number}
+     */
+    getDrawableId(){
+        return this._m_DrawableId;
+    }
+
+    /**
+     * 设置当前是否为可拾取物体。<br/>
+     * @param {Boolean}[isPickable]
+     */
+    setIsPickable(isPickable){
+        this._m_IsPickable = isPickable;
+    }
+
+    /**
+     * 是否为可拾取物体。<br/>
+     * @return {boolean}
+     */
+    isPickable(){
+        return this._m_IsPickable;
     }
     /**
      * 表示当前是否为可渲染实例

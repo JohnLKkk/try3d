@@ -1,4 +1,43 @@
 export default class Internal {
+    static S_PICKABLE_DEF_DATA = "// PickableDef\n" +
+        "// 这个材质定义用于输出PickableId信息\n" +
+        "Def PickableDef{\n" +
+        "    Params{\n" +
+        "        vec4 id;\n" +
+        "    }\n" +
+        "    SubTechnology PrePickablePass{\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                #ifdef Context.Skins\n" +
+        "                    mat4 skinMat =\n" +
+        "                            Context.InWeight0.x * Context.Joints[int(Context.InJoint0.x)] +\n" +
+        "                            Context.InWeight0.y * Context.Joints[int(Context.InJoint0.y)] +\n" +
+        "                            Context.InWeight0.z * Context.Joints[int(Context.InJoint0.z)] +\n" +
+        "                            Context.InWeight0.w * Context.Joints[int(Context.InJoint0.w)];\n" +
+        "                    // vec4 pos = Context.ModelMatrix * skinMat * vec4(Context.InPosition, 1.0f);\n" +
+        "                    vec4 pos = skinMat * vec4(Context.InPosition, 1.0f);\n" +
+        "                #else\n" +
+        "                    vec4 pos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);\n" +
+        "                #endif\n" +
+        "                Context.OutPosition = Context.ProjectViewMatrix * pos;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            void main(){\n" +
+        "                Context.OutColor = vec4(1.0);\n" +
+        "                #ifdef Params.id\n" +
+        "                    Context.OutColor = Params.id;\n" +
+        "                #endif\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology{\n" +
+        "        Sub_Pass PreFrame{\n" +
+        "            Pass PrePickablePass{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "}\n";
     static S_DOF_FILTER_DEF_DATA = "// 景深\n" +
         "Def DofFilterDef{\n" +
         "    Params{\n" +

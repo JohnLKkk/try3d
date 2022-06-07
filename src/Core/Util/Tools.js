@@ -48,6 +48,7 @@ const BS = [[0, 1, 0], [1, 0, 0], [0, 0, 1]];
  */
 export default class Tools {
     static _s_Id = 0;
+    static _s_DrawableId = 0;
     static isPowerOfTwo(x) {
         return (x & (x - 1)) === 0;
     }
@@ -94,6 +95,14 @@ export default class Tools {
      */
     static nextId(){
         return Tools.uniqueId(--Tools._s_Id + 'R3D');
+    }
+
+    /**
+     * 返回系统默认分配的下一个唯一DrawableId。<br/>
+     * @return {Number}
+     */
+    static nextDrawableId(){
+        return ++Tools._s_DrawableId;
     }
     /**
      * 插入一行到指定源中的指定位置。<br/>
