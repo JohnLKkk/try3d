@@ -10,6 +10,7 @@ export default class Canvas extends Component{
         super(owner, cfg);
         cfg.version = cfg.version || 'webgl2';
         this._m_Canvas = cfg.canvas;
+        this._m_ClearColor = [0.3, 0.3, 0.3, 1.0];
         if(this._m_Canvas){
             // 默认不需要alpha缓冲区,这个缓冲区的作用详见：https://www.khronos.org/registry/webgl/specs/latest/1.0/index.html#2.4
             // 关闭它可以在fragment中输出alpha<1时正确的不透明渲染,而不是混合html页面背景
@@ -135,7 +136,7 @@ export default class Canvas extends Component{
     }
     _init(){
         let gl = this._m_GL;
-        gl.clearColor(.3, .3, .3, 1.0);
+        gl.clearColor(this._m_ClearColor[0], this._m_ClearColor[1], this._m_ClearColor[2], this._m_ClearColor[3]);
         gl.enable(gl.DEPTH_TEST);
         gl.enable(gl.CULL_FACE);
         gl.disable(gl.BLEND);
@@ -154,6 +155,18 @@ export default class Canvas extends Component{
     setClearColor(r, g, b, a){
         let gl = this._m_GL;
         gl.clearColor(r, g, b, a);
+        this._m_ClearColor[0] = r;
+        this._m_ClearColor[1] = g;
+        this._m_ClearColor[2] = b;
+        this._m_ClearColor[3] = a;
+    }
+
+    /**
+     * 返回ClearColor。<br/>
+     * @return {Number[]}
+     */
+    getClearColor(){
+        return this._m_ClearColor;
     }
 
     /**

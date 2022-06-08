@@ -31,6 +31,7 @@
     import Vec4Vars from "../../src/Core/WebGL/Vars/Vec4Vars.js";
     import MaterialDef from "../../src/Core/Material/MaterialDef.js";
     import Pickable from "../../src/Core/Filters/Pickable.js";
+    import Input from "../../src/Core/InputControl/Input.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     let pickableFilter = new Pickable(scene, {id:'pickableFilter'});
@@ -76,6 +77,15 @@
         window.giProbe.setRadius(20);
         window.giProbe.setPositionFromXYZ(0, 5, 0);
         let envCapture = ProbeTools.bakeGIProbe(scene, window.giProbe, {resolute:128});
+
+        let input = Input.getInput(scene, {id:scene.getId()});
+        pickableFilter.on(Pickable.S_EVENT_PICK_LISTENER, (id, result)=>{});
+        input.on('mousedown', (buttonId)=>{
+            if(buttonId == Input.S_MOUSE_BUTTON2_DOWN){
+                let uv = input.getMouseCoords();
+                pickableFilter.pick(uv[0], uv[1]);
+            }
+        });
     });
     let pointLight = new PointLight(scene, {id:'pointLight2'});
     pointLight.setRadius(8.0);

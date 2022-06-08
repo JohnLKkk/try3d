@@ -258,6 +258,22 @@ export default class Camera extends Component{
     }
 
     /**
+     * 返回视野角度。<br/>
+     * @return {Number}
+     */
+    getFov(){
+        return this._m_Fovy;
+    }
+
+    /**
+     * 返回视野弧度。<br/>
+     * @return {Number}
+     */
+    getFovy(){
+        return MoreMath.toRadians(this._m_Fovy);
+    }
+
+    /**
      * 设置锥体截面。<br/>
      * @param {Number}[left]
      * @param {Number}[right]

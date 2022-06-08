@@ -8,6 +8,8 @@
     <!--<canvas id="canvas" width="512" height="512"></canvas>-->
     <span><img src="./Assets/Textures/pond/Pond_NRM.png" width="128" height="128"><div style="text-align: center;width: 128px;color: white">sdsd</div></span>
     <script type="module">
+        import Matrix44 from "../src/Core/Math3d/Matrix44.js";
+
         let array = [250, 500, 15, 1000];
         array.sort((a, b)=>{return b - a;});
         console.log('array:\n',array);
@@ -187,8 +189,55 @@
         // let result = await test();
         // console.timeEnd('test');
         // console.log('result:' + result);
+        const canvasWidth = 640;
+        const canvasHeight = 480;
+        const pD = 180.0;
+        const pDN = 1.0 / pD;
+        const fieldOfViewRadians = 45.0 * pDN * Math.PI;
+        const near = 0.1;
+        const far = 1000.0;
+        const mouseX = 50;
+        const mouseY = 45;
+        const aspect = canvasWidth / canvasHeight;
+        const top = Math.tan(fieldOfViewRadians * 0.5) * near;
+        const bottom = -top;
+        const left = aspect * bottom;
+        const right = aspect * top;
+        const width = Math.abs(right - left);
+        const height = Math.abs(top - bottom);
 
+        // compute the portion of the near plane covers the 1 pixel
+        // under the mouse.
+        const pixelX = mouseX * 1;
+        const pixelY = canvasHeight - mouseY * 1 - 1;
 
+        const subLeft = left + pixelX * width / canvasWidth;
+        const subBottom = bottom + pixelY * height / canvasHeight;
+        const subWidth = width / canvasWidth;
+        const subHeight = height / canvasHeight;
+        let m = new Matrix44();
+        m.fromFrustum(subLeft,
+            subLeft + subWidth,
+            subBottom + subHeight,
+            subBottom,
+            near,
+            far,
+            false
+        );
+        console.log('aspect:'+aspect);
+        console.log('top:'+top);
+        console.log('bottom:'+bottom);
+        console.log('left:'+left);
+        console.log('right:'+right);
+        console.log('width:'+width);
+        console.log('height:'+height);
+        console.log('pixelX:'+pixelX);
+        console.log('pixelY:'+pixelY);
+        console.log('subLeft:'+subLeft);
+        console.log('subBottom:'+subBottom);
+        console.log('subWidth:'+subWidth);
+        console.log('subHeight:'+subHeight);
+        console.log('m:'+m.toString());
 
     </script>
     <!--<script>-->
