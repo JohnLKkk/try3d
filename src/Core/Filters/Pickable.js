@@ -158,7 +158,7 @@ export default class Pickable extends Filter{
                 const id = pick[0] + (pick[1] << 8) + (pick[2] << 16) + (pick[3] << 24);
                 let pickResult = this._m_PickableDrawableMap[id];
                 if(pickResult){
-                    console.log('pickResult:' + id);
+                    // console.log('pickResult:' + id);
                     this._mEvents.trigger(Pickable.S_EVENT_PICK_LISTENER, [id, pickResult]);
                 }
 

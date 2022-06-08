@@ -32,10 +32,14 @@
     import MaterialDef from "../../src/Core/Material/MaterialDef.js";
     import Pickable from "../../src/Core/Filters/Pickable.js";
     import Input from "../../src/Core/InputControl/Input.js";
+    import SelectedFilter from "../../src/Core/Filters/SelectedFilter.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     let pickableFilter = new Pickable(scene, {id:'pickableFilter'});
     mainCamera.addFilter(pickableFilter, 0);
+    let outlineFilter = new SelectedFilter(scene, {id:'outlineFilter'});
+    mainCamera.addFilter(outlineFilter, 0);
+    outlineFilter.getMaterial().setParam('outlineColor', new Vec4Vars().valueFromXYZW(0, 0, 1, 1));
     mainCamera.lookAt(new Vector3(2.950315, 1.5485021, -0.06550171), new Vector3(-3.8440266, -1.997144, 0.06595602), new Vector3(-0.44864178, 0.8937116, 2.2803247E-4));
 
     let rootNode = new Node(scene, {id:'rootNode'});
@@ -59,7 +63,7 @@
 
         let gltfLoader = new GLTFLoader();
         gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/Light/");
-        gltfLoader.load(scene, './../Assets/Models/GLTF/MiniScene/test.gltf', modelNode=>{
+        gltfLoader.load(scene, './../Assets/Models/GLTF/Test/test.gltf', modelNode=>{
             rootNode.addChildren(modelNode);
 
             let sceneControl = new SceneBrowsingController(scene, {id:"controller"});
@@ -79,7 +83,10 @@
         let envCapture = ProbeTools.bakeGIProbe(scene, window.giProbe, {resolute:128});
 
         let input = Input.getInput(scene, {id:scene.getId()});
-        pickableFilter.on(Pickable.S_EVENT_PICK_LISTENER, (id, result)=>{});
+        pickableFilter.on(Pickable.S_EVENT_PICK_LISTENER, (id, result)=>{
+            outlineFilter.clearOutlineDrawables();
+            outlineFilter.pushOutlineDrawable(result);
+        });
         input.on('mousedown', (buttonId)=>{
             if(buttonId == Input.S_MOUSE_BUTTON2_DOWN){
                 let uv = input.getMouseCoords();
@@ -91,16 +98,12 @@
     pointLight.setRadius(8.0);
     pointLight.setColorRGBA(0.5, 0.5, 0.5, 1.0);
     pointLight.setPositionXYZ(7, 2, 2);
-    // pointLight.debugShadowMap();
-    pointLight.proShadow(true);
     rootNode.addChildren(pointLight);
 
     pointLight = new PointLight(scene, {id:'pointLight'});
     pointLight.setRadius(8.0);
     pointLight.setColorRGBA(0.5, 0.5, 0.5, 1.0);
     pointLight.setPositionXYZ(-7, 2, 0);
-    // pointLight.debugShadowMap();
-    pointLight.proShadow(true);
     rootNode.addChildren(pointLight);
 
     // let sphere = new Sphere(scene, {id:'pointLight_geo:', radius:1.0});

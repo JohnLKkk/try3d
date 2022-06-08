@@ -1,0 +1,53 @@
+// SelectedFilterDef
+Def SelectedFilterDef{
+    Params{
+        vec4 outlineColor;
+    }
+
+    Functions SelectedLib{
+        // 变换顶点
+        void transformPosition(){
+            #ifdef Context.Skins
+                mat4 skinMat =
+                        Context.InWeight0.x * Context.Joints[int(Context.InJoint0.x)] +
+                        Context.InWeight0.y * Context.Joints[int(Context.InJoint0.y)] +
+                        Context.InWeight0.z * Context.Joints[int(Context.InJoint0.z)] +
+                        Context.InWeight0.w * Context.Joints[int(Context.InJoint0.w)];
+                // vec4 pos = Context.ModelMatrix * skinMat * vec4(Context.InPosition, 1.0f);
+                vec4 pos = skinMat * vec4(Context.InPosition, 1.0f);
+            #else
+                vec4 pos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+            #endif
+            Context.OutPosition = Context.ProjectViewMatrix * pos;
+        }
+
+        void outColor(){
+            Context.OutColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+            #ifdef Params.outlineColor
+                if(Params.outlineColor){
+                    Context.OutColor = outlineColor;
+                }
+            #endif
+        }
+    }
+
+    SubTechnology OutlinePass{
+        Vs_Shader:SelectedLib.transformPosition;
+        Fs_Shader:SelectedLib.outColor;
+    }
+    // 默认输出
+    Technology OutColor{
+        Sub_Pass PostFilter{
+            Pass OutlinePass{
+            }
+        }
+    }
+
+    // Outline Effect
+    Technology Outline{
+        Sub_Pass PostFilter{
+            Pass OutlinePass{
+            }
+        }
+    }
+}

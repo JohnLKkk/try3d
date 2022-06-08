@@ -1,4 +1,44 @@
 export default class Internal {
+    static S_SELECTED_FILTER_DEF_DATA = "// SelectedFilterDef\n" +
+        "Def SelectedFilterDef{\n" +
+        "    Params{\n" +
+        "        vec4 outlineColor;\n" +
+        "    }\n" +
+        "    SubTechnology OutlinePass{\n" +
+        "        Vs_Shader{\n" +
+        "            void main(){\n" +
+        "                mat4 outlineMat = mat4(1.1f);\n" +
+        "                outlineMat[3][3] = 1.0f;\n" +
+        "                #ifdef Context.Skins\n" +
+        "                    mat4 skinMat =\n" +
+        "                            Context.InWeight0.x * Context.Joints[int(Context.InJoint0.x)] +\n" +
+        "                            Context.InWeight0.y * Context.Joints[int(Context.InJoint0.y)] +\n" +
+        "                            Context.InWeight0.z * Context.Joints[int(Context.InJoint0.z)] +\n" +
+        "                            Context.InWeight0.w * Context.Joints[int(Context.InJoint0.w)];\n" +
+        "                    // vec4 pos = Context.ModelMatrix * outlineMat * skinMat * vec4(Context.InPosition, 1.0f);\n" +
+        "                    vec4 pos = skinMat * vec4(Context.InPosition, 1.0f);\n" +
+        "                #else\n" +
+        "                    vec4 pos = Context.ModelMatrix * outlineMat * vec4(Context.InPosition, 1.0f);\n" +
+        "                #endif\n" +
+        "                Context.OutPosition = Context.ProjectViewMatrix * pos;\n" +
+        "            }\n" +
+        "        }\n" +
+        "        Fs_Shader{\n" +
+        "            void main(){\n" +
+        "                Context.OutColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);\n" +
+        "                #ifdef Params.outlineColor\n" +
+        "                        Context.OutColor = outlineColor;\n" +
+        "                #endif\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "    Technology{\n" +
+        "        Sub_Pass PostFilter{\n" +
+        "            Pass OutlinePass{\n" +
+        "            }\n" +
+        "        }\n" +
+        "    }\n" +
+        "}\n";
     static S_PICKABLE_DEF_DATA = "// PickableDef\n" +
         "// 这个材质定义用于输出PickableId信息\n" +
         "Def PickableDef{\n" +

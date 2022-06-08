@@ -463,6 +463,36 @@ export default class Render extends Component{
                             gl.disable(gl.DEPTH_TEST);
                         }
                         break;
+                    case RenderState.S_STATES[8]:
+                        let r = null;
+                        switch (state[k]) {
+                            case 'NEVER':
+                                r = gl.NEVER;
+                                break;
+                            case 'LESS':
+                                r = gl.LESS;
+                                break;
+                            case 'EQUAL':
+                                r = gl.EQUAL;
+                                break;
+                            case 'LEQUAL':
+                                r = gl.LEQUAL;
+                                break;
+                            case 'GREATER':
+                                r = gl.GREATER;
+                                break;
+                            case 'NOTEQUAL':
+                                r = gl.NOTEQUAL;
+                                break;
+                            case 'GEQUAL':
+                                r = gl.GEQUAL;
+                                break;
+                            case 'ALWAYS':
+                                r = gl.ALWAYS;
+                                break;
+                        }
+                        gl.depthFunc(r);
+                        break;
                     case RenderState.S_STATES[4]:
                         if(state[k] == 'On'){
                             gl.enable(gl.BLEND);
