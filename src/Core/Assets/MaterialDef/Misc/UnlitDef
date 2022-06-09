@@ -1,0 +1,58 @@
+// UnlitDef
+// 这个材质定义无光照模式
+Def PreShadowDef{
+    Params{
+        vec4 color;
+        sampler2D colorMap;
+        float alphaDiscard;
+    }
+    SubTechnology UnlitPass{
+        Vars{
+            vec2 wUv0;
+        }
+        Vs_Shader{
+            void main(){
+                #ifdef Context.Skins
+                    mat4 skinMat =
+                            Context.InWeight0.x * Context.Joints[int(Context.InJoint0.x)] +
+                            Context.InWeight0.y * Context.Joints[int(Context.InJoint0.y)] +
+                            Context.InWeight0.z * Context.Joints[int(Context.InJoint0.z)] +
+                            Context.InWeight0.w * Context.Joints[int(Context.InJoint0.w)];
+                    // vec4 pos = Context.ModelMatrix * skinMat * vec4(Context.InPosition, 1.0f);
+                    vec4 pos = skinMat * vec4(Context.InPosition, 1.0f);
+                #else
+                    vec4 pos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                #endif
+                wUv0 = Context.InUv0;
+                Context.OutPosition = Context.ProjectViewMatrix * pos;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                Context.OutColor = vec4(1.0f);
+                // 使用自定义颜色输出
+                #ifdef Params.color
+                    Context.OutColor = Params.color;
+                #else
+                    // 使用纹理
+                    #ifdef Params.colorMap
+                        Context.OutColor = texture(Params.colorMap, wUv0);
+                        #ifdef Params.alphaDiscard
+                            if(Context.OutColor.a < Params.alphaDiscard){
+                                discard;
+                            }
+                        #endif
+                    #else
+                        Context.OutColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+                    #endif
+                #endif
+            }
+        }
+    }
+    Technology{
+        Sub_Pass{
+            Pass UnlitPass{
+            }
+        }
+    }
+}
