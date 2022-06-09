@@ -105,5 +105,6 @@ const Examples = {
     'Common':[
         'FirstPersonController.html',
         'SceneBrowsingController.html',
+        'PickableTest.html',
     ],
 };

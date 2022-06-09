@@ -7,6 +7,12 @@
 <body>
 <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
     <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+    <div class="innerbox" style="top: 0px;right: 0px;background-color: rgba(128,128,128,0.31);color: white;position: fixed;width: 20%;height: 100%;padding-top: 30%;overflow-y:auto;">
+            <pre>
+    单击鼠标右键选中物体，默认使用
+    BoundingBox显示选中状态。
+            </pre>
+    </div>
 </div>
 <script src="./../dat.gui.min.js"></script>
 <script type="module">
@@ -72,11 +78,6 @@
             sceneControl.setTargetDistance(10);
         }, {batch:false});
 
-        // let dirLight = new DirectionalLight(scene, {id:'dirLight'});
-        // dirLight.setDirectionXYZ(-1, -1, 1);
-        // dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
-        // rootNode.addChildren(dirLight);
-
         window.giProbe = new GIProbe(scene, {id:'giProbe'});
         window.giProbe.setRadius(20);
         window.giProbe.setPositionFromXYZ(0, 5, 0);
@@ -105,18 +106,6 @@
     pointLight.setColorRGBA(0.5, 0.5, 0.5, 1.0);
     pointLight.setPositionXYZ(-7, 2, 0);
     rootNode.addChildren(pointLight);
-
-    // let sphere = new Sphere(scene, {id:'pointLight_geo:', radius:1.0});
-    // let colorMat = new Material(scene, {id:'colorMat', materialDef:MaterialDef.load("../../src/Core/Assets/MaterialDef/ColorDef")});
-    // colorMat.setParam('color', new Vec4Vars().valueFromXYZW(1.0, 1.0, 1.0, 1.0));
-    // sphere.setLocalTranslation(pointLight.getPosition());
-    // sphere.castShadow(false);
-    // sphere.receiveShadow(false);
-    // sphere.setLocalScaleXYZ(pointLight.getRadius(), pointLight.getRadius(), pointLight.getRadius());
-    // sphere.setMaterial(colorMat);
-    // sphere.getMesh().setPrimitive(Mesh.S_PRIMITIVE_LINES);
-    // sphere.updateBound();
-    // rootNode.addChildren(sphere);
 
     // 使用dat gui
     let gui = new dat.GUI();
