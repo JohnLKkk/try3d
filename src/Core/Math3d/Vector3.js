@@ -6,6 +6,7 @@
 export default class Vector3 {
     // 内部缓存
     static _S_TEMP_VEC3 = new Vector3();
+    static S_ZERO = new Vector3(0, 0, 0);
 
     // 单位向量
     static S_UNIT_AXIS_X = new Vector3(1, 0, 0);

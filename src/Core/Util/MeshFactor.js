@@ -6,19 +6,44 @@
  */
 import Vector2 from "../Math3d/Vector2.js";
 import Mesh from "../WebGL/Mesh.js";
+import Vector3 from "../Math3d/Vector3";
 
 export default class MeshFactor {
     static count = 0;
     constructor() {
 
     }
+
     static nextId(){
         return --MeshFactor.count;
     }
+
     static pushVec3ToArray(array, vec3){
         array.push(vec3._m_X);
         array.push(vec3._m_Y);
         array.push(vec3._m_Z);
+    }
+    static createDebugProbesMesh(probeOrigin, probeCount, probeStep){
+        let debugGIProbes = new Node();
+        let totalCount = probeCount._m_X * probeCount._m_Y * probeCount._m_Z;
+        let probeLocations = new Array(totalCount);
+        let index = 0;
+        let location = new Vector3();
+        let diff = new Vector3();
+        let temp = new Vector3();
+        for (let z = 0; z < probeCount._m_Z; ++z) {
+            for (let y = 0; y < probeCount._m_Y; ++y) {
+                for (let x = 0; x < probeCount._m_X; ++x) {
+
+                    temp.setToInXYZ(x, y, z);
+                    temp.mult(probeStep, diff);
+                    probeOrigin.add(diff, location);
+
+                    probeLocations[index++] = location;
+
+                }
+            }
+        }
     }
 
     /**
