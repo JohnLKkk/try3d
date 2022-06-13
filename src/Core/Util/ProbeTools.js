@@ -48,19 +48,27 @@ class EnvCapture {
      * @param {Number}[resolute]
      * @param {Vector3}[position]
      * @param {Boolean}[mipmap]
+     * @param {Boolean}[isProbeGroup]
+     * @param {Array}[probeLocations]
      */
-    constructor(scene, resolute, position, mipmap) {
+    constructor(scene, resolute, position, mipmap, isProbeGroup, probeLocations) {
         this._m_Scene = scene;
         this._m_MipMap = mipmap;
         this._m_Resolute = resolute;
+        this._m_IsProbeGropu = isProbeGroup;
         this._m_CaptureCameres = [];
         this._m_CaptureFrames = [];
         this._m_CaptureResult = new TextureCubeVars(scene);
         this._m_CaptureResult.setTextureFormat(TextureCubeVars.S_TEXTURE_FORMAT.S_RGBA16F, TextureCubeVars.S_TEXTURE_FORMAT.S_RGBA, TextureCubeVars.S_TEXTURE_FORMAT.S_FLOAT);
         this._m_CapturePixels = [];
+        this._m_CaptureDistancePixels = [];
         this._m_Position = new Vector3();
+        this._m_ProbeLocations = null;
         if(position){
             this._m_Position.setTo(position);
+        }
+        if(probeLocations){
+            this._m_ProbeLocations = probeLocations;
         }
 
         // 用于捕获prefilterEnvMap(关于这一点，这里有一点需要注意的是，这里虽然保留了cpu解决方案，但是使用gpu解决方案，原因是在web上启用多线程cpu解决方案不如gpu解决方案高效)
@@ -88,14 +96,15 @@ class EnvCapture {
         }
 
         // 初始化
-        this._init();
+        this._init(isProbeGroup);
     }
 
     /**
      * 初始化。<br/>
+     * @param {Boolean}
      * @private
      */
-    _init(){
+    _init(isProbeGroup){
         let at = new Vector3();
         const gl = this._m_Scene.getCanvas().getGLContext();
         for(let i = 0;i < 6;i++){
@@ -103,7 +112,10 @@ class EnvCapture {
             EnvCapture._S_CAPTURE_CONFIG[i].dir.add(this._m_Position, at);
             this._m_CaptureCameres[i].lookAt(this._m_Position, at, EnvCapture._S_CAPTURE_CONFIG[i].up);
             this._m_CaptureFrames[i] = new FrameBuffer(gl, 'capture_frame_' + i + "_" + Tools.nextId(), this._m_Resolute, this._m_Resolute);
-            this._m_CaptureFrames[i].addTexture(gl, 'capture_texture_' + i, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT0, false, this._m_MipMap);
+            this._m_CaptureFrames[i].addTexture(gl, 'capture_texture_0_' + i, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT0, false, this._m_MipMap);
+            if(isProbeGroup){
+                this._m_CaptureFrames[i].addTexture(gl, 'capture_texture_1_' + i, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT1, false, this._m_MipMap);
+            }
             this._m_CaptureFrames[i].addBuffer(gl, 'capture_depth_' + i, gl.DEPTH24_STENCIL8, gl.DEPTH_STENCIL_ATTACHMENT);
             this._m_CaptureFrames[i].finish(gl, this._m_Scene, false);
         }
@@ -148,13 +160,53 @@ class EnvCapture {
             // 目前仅支持捕捉环境（后续完善对场景的捕捉）
             this._m_Scene.getRender()._drawEnv(gl);
 
-            pixels = this._m_CaptureFrames[i].readPixels(gl, '', gl.RGBA, gl.FLOAT);
+            pixels = this._m_CaptureFrames[i].readPixels(gl, '', gl.RGBA, gl.FLOAT, undefined, undefined, undefined, undefined, 0);
             this._m_CapturePixels[i] = pixels;
             // Log.log('pixels:',pixels);
             // 将像素数据设置到结果纹理中
             this._m_CaptureResult.setImage(this._m_Scene, EnvCapture._S_CAPTURE_FACE[i], pixels, {width:this._m_Resolute, height:this._m_Resolute});
         }
         this._m_CaptureResult.setWrap(this._m_Scene, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE);
+
+        this._m_Scene.setMainCamera(mainCamera);
+        this._m_Scene.getRender().useDefaultFrame();
+        render.setViewPort(gl, 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight());
+    }
+
+    /**
+     * 捕捉环境数据。<br/>
+     */
+    captureProbe(position, final){
+        const gl = this._m_Scene.getCanvas().getGLContext();
+        // 以便编译材质
+        this._m_Scene.getRender()._resetFrameContext();
+        this._m_Scene.getRender()._drawEnv(gl);
+        let mainCamera = this._m_Scene.getMainCamera();
+        let render = this._m_Scene.getRender();
+        let pixels = null;
+
+        render.setViewPort(gl, 0, 0, this._m_Resolute, this._m_Resolute);
+        let at = new Vector3();
+        for(let i = 0;i < 6;i++){
+            EnvCapture._S_CAPTURE_CONFIG[i].dir.add(position, at);
+            this._m_CaptureCameres[i].lookAt(position, at, EnvCapture._S_CAPTURE_CONFIG[i].up);
+            this._m_Scene.setMainCamera(this._m_CaptureCameres[i]);
+            this._m_CaptureFrames[i].use(render);
+            this._m_CaptureFrames[i].clear(gl);
+            // 目前仅支持捕捉环境（后续完善对场景的捕捉）
+            this._m_Scene.getRender()._drawEnv(gl);
+
+            pixels = this._m_CaptureFrames[i].readPixels(gl, '', gl.RGBA, gl.FLOAT, undefined, undefined, undefined, undefined, 0);
+            this._m_CapturePixels[i] = pixels;
+            // Log.log('pixels:',pixels);
+            // 将像素数据设置到结果纹理中
+            if(final)
+                this._m_CaptureResult.setImage(this._m_Scene, EnvCapture._S_CAPTURE_FACE[i], pixels, {width:this._m_Resolute, height:this._m_Resolute});
+            // pixels = this._m_CaptureFrames[i].readPixels(gl, '', gl.RGBA, gl.FLOAT, undefined, undefined, undefined, undefined, 1);
+            // this._m_CaptureDistancePixels[i] = pixels;
+        }
+        if(final)
+            this._m_CaptureResult.setWrap(this._m_Scene, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE);
 
         this._m_Scene.setMainCamera(mainCamera);
         this._m_Scene.getRender().useDefaultFrame();
@@ -336,6 +388,51 @@ export default class ProbeTools {
                 }
             }
         }
+    }
+    /**
+     * 捕获数据到探头中。<br/>
+     * @param {Scene}[scene]
+     * @param {EnvCapture}[envCapture]
+     * @param {Vector3}[probeLocation]
+     * @param {Boolean}[final]
+     * @param {Number}[options.resolute 分辨率,默认256]
+     */
+    static captureProbes(scene, envCapture, probeLocation, final, options){
+        // 创建捕捉镜头
+        const gl = scene.getCanvas().getGLContext();
+        let resolute = (options && options.resolute != null) ? options.resolute : ProbeTools._S_DEFAULT_CAPTURE_RESOLUTE;
+        envCapture.captureProbe(probeLocation, final);
+        return envCapture;
+    }
+    static bakeGIProbes(scene, giProbes, options){
+        options = options || {};
+        options.mipmap = true;
+        let resolute = (options && options.resolute != null) ? options.resolute : ProbeTools._S_DEFAULT_CAPTURE_RESOLUTE;
+        let probeLocations = ProbeTools.placeProbes(giProbes.getProbeOrigin(), giProbes.getProbeCount(), giProbes.getProbeStep());
+        let envCapture = new EnvCapture(scene, resolute, giProbes.getProbeOrigin(), options.mipmap);
+        for(let i = 0,size = probeLocations.length;i < size;i++){
+            // 开始捕捉
+            Log.time('capture probe[' + i + ']');
+            envCapture = ProbeTools.captureProbes(scene, envCapture, probeLocations[i], i == (size - 1), options);
+            Log.timeEnd('capture probe[' + i + ']');
+            // 可以在子线程中进行
+            // 计算球谐系数
+            Log.time('shCoeffs[' + i + ']');
+            let shCoeffs = ProbeTools.getShCoeffs(resolute, resolute, envCapture.getCapturePixels(), ProbeTools._S_FIX_SEAMS_METHOD.Wrap);
+            ProbeTools.prepareShCoefs(shCoeffs);
+            giProbes.setShCoeffsIndex(i, shCoeffs);
+            Log.timeEnd('shCoeffs[' + i + ']');
+        }
+
+
+
+        // 计算prefilterMap
+        Log.time('prefiltered');
+        envCapture.prefiltered();
+        giProbes.setPrefilterEnvMap(envCapture.getPrefilterTextureCube());
+        giProbes.setPrefilterMipmap(envCapture.getPrefilterMipMap());
+        Log.timeEnd('prefiltered');
+        return envCapture;
     }
     static _prefilterEnvMapTexel(resolute, envMapPixels, roughness, N, numSamples, mipLevel, prefilteredColor){
         let totalWeight = 0.0;
@@ -723,5 +820,39 @@ export default class ProbeTools {
 
         store.normal();
         return store;
+    }
+    static bakeProbes(scene, giProbes){
+        return ProbeTools.placeProbes(giProbes.getProbeOrigin(), giProbes.getProbeCount(), giProbes.getProbeStep());
+    }
+
+    /**
+     * 放置一组探针。<br/>
+     * @param {Vector3}[probeOrigin]
+     * @param {Vector3}[probeCount]
+     * @param {Vector3}[probeStep]
+     * @return {Array}[probeLocations]
+     */
+    static placeProbes(probeOrigin, probeCount, probeStep){
+        let totalCount = probeCount._m_X * probeCount._m_Y * probeCount._m_Z;
+        let probeLocations = new Array(totalCount);
+        let index = 0;
+        let location = null;
+        let diff = new Vector3();
+        let temp = new Vector3();
+        for (let z = 0; z < probeCount._m_Z; ++z) {
+            for (let y = 0; y < probeCount._m_Y; ++y) {
+                for (let x = 0; x < probeCount._m_X; ++x) {
+
+                    temp.setToInXYZ(x, y, z);
+                    temp.mult(probeStep, diff);
+                    location = new Vector3();
+                    probeOrigin.add(diff, location);
+
+                    probeLocations[index++] = location;
+
+                }
+            }
+        }
+        return probeLocations;
     }
 }

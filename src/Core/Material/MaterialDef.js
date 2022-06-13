@@ -62,6 +62,8 @@ class Block{
 class Param{
     constructor() {
         this.m_Name = null;
+        // 修饰数组
+        this.m_Retouch = '';
         this.m_Type = null;
         this.m_DefaultValue = null;
 
@@ -93,6 +95,12 @@ class Param{
     }
     getName(){
         return this.m_Name;
+    }
+    setRetouch(retouch){
+        this.m_Retouch = retouch;
+    }
+    getRetouch(){
+        return this.m_Retouch;
     }
     setType(type){
         this.m_Type = type;
@@ -309,10 +317,17 @@ export default class MaterialDef{
             line = data[i];
             // 按空格分割(去掉最后的;号)
             line = Tools.trim(line);
-            if(line.startsWith("//"))continue;
+            if(line.startsWith("//") || line == '')continue;
             line = line.substring(0, line.length - 1).split(" ");
+            let array_start = line[1].indexOf('[');
             param = new Param();
-            param.setName(line[1]);
+            if(array_start > -1){
+                param.setName(line[1].substring(0, array_start));
+                param.setRetouch(line[1].substring(array_start, line[1].length));
+            }
+            else{
+                param.setName(line[1]);
+            }
             param.setType(line[0]);
             param.creator();
             if(line.length > 2){
@@ -517,7 +532,7 @@ export default class MaterialDef{
                 param = useParams[k];
                 // 添加参数
                 // inParams += "#ifdef " + param.getDefType() + "\n";
-                inParams += "uniform " + param.getType() + " " + param.getName() + ";\n";
+                inParams += "uniform " + param.getType() + " " + param.getName() + param.getRetouch() + ";\n";
                 // inParams += "#endif\n";
             }
             shader = inParams + shader;
@@ -920,7 +935,7 @@ export default class MaterialDef{
                 param = useParams[k];
                 // 添加参数
                 // inParams += "#ifdef " + param.getDefType() + "\n";
-                inParams += "uniform " + param.getType() + " " + param.getName() + ";\n";
+                inParams += "uniform " + param.getType() + " " + param.getName() + param.getRetouch() + ";\n";
                 // inParams += "#endif\n";
             }
             shader = inParams + shader;

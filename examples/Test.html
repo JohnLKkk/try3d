@@ -124,6 +124,10 @@
         import ProbeTools from "../src/Core/Util/ProbeTools.js";
         import Camera from "../src/Core/Scene/Camera.js";
         import Shadow from "../src/Core/Shadow/Shadow.js";
+        import MaterialDef from "../src/Core/Material/MaterialDef.js";
+        import Internal from "../src/Core/Render/Internal.js";
+        import Material from "../src/Core/Material/Material.js";
+        import Tools from "../src/Core/Util/Tools.js";
 
         // console.log('0.5 ^ 2.2 = ' + Math.pow(0.534, 2.2));
         // let texelVect = new Vector3();
@@ -189,58 +193,60 @@
         // let result = await test();
         // console.timeEnd('test');
         // console.log('result:' + result);
-        const canvasWidth = 640;
-        const canvasHeight = 480;
-        const pD = 180.0;
-        const pDN = 1.0 / pD;
-        const fieldOfViewRadians = 45.0 * pDN * Math.PI;
-        const near = 0.1;
-        const far = 1000.0;
-        const mouseX = 50;
-        const mouseY = 45;
-        const aspect = canvasWidth / canvasHeight;
-        const top = Math.tan(fieldOfViewRadians * 0.5) * near;
-        const bottom = -top;
-        const left = aspect * bottom;
-        const right = aspect * top;
-        const width = Math.abs(right - left);
-        const height = Math.abs(top - bottom);
+        // const canvasWidth = 640;
+        // const canvasHeight = 480;
+        // const pD = 180.0;
+        // const pDN = 1.0 / pD;
+        // const fieldOfViewRadians = 45.0 * pDN * Math.PI;
+        // const near = 0.1;
+        // const far = 1000.0;
+        // const mouseX = 50;
+        // const mouseY = 45;
+        // const aspect = canvasWidth / canvasHeight;
+        // const top = Math.tan(fieldOfViewRadians * 0.5) * near;
+        // const bottom = -top;
+        // const left = aspect * bottom;
+        // const right = aspect * top;
+        // const width = Math.abs(right - left);
+        // const height = Math.abs(top - bottom);
+        //
+        // // compute the portion of the near plane covers the 1 pixel
+        // // under the mouse.
+        // const pixelX = mouseX * 1;
+        // const pixelY = canvasHeight - mouseY * 1 - 1;
+        //
+        // const subLeft = left + pixelX * width / canvasWidth;
+        // const subBottom = bottom + pixelY * height / canvasHeight;
+        // const subWidth = width / canvasWidth;
+        // const subHeight = height / canvasHeight;
+        // let m = new Matrix44();
+        // m.fromFrustum(subLeft,
+        //     subLeft + subWidth,
+        //     subBottom + subHeight,
+        //     subBottom,
+        //     near,
+        //     far,
+        //     false
+        // );
+        // console.log('aspect:'+aspect);
+        // console.log('top:'+top);
+        // console.log('bottom:'+bottom);
+        // console.log('left:'+left);
+        // console.log('right:'+right);
+        // console.log('width:'+width);
+        // console.log('height:'+height);
+        // console.log('pixelX:'+pixelX);
+        // console.log('pixelY:'+pixelY);
+        // console.log('subLeft:'+subLeft);
+        // console.log('subBottom:'+subBottom);
+        // console.log('subWidth:'+subWidth);
+        // console.log('subHeight:'+subHeight);
+        // console.log('m:'+m.toString());
+        // let i = 1;
+        // console.log('i >> 1:' + (i >> 1) + ";i >> 2:" + (i >> 2));
 
-        // compute the portion of the near plane covers the 1 pixel
-        // under the mouse.
-        const pixelX = mouseX * 1;
-        const pixelY = canvasHeight - mouseY * 1 - 1;
-
-        const subLeft = left + pixelX * width / canvasWidth;
-        const subBottom = bottom + pixelY * height / canvasHeight;
-        const subWidth = width / canvasWidth;
-        const subHeight = height / canvasHeight;
-        let m = new Matrix44();
-        m.fromFrustum(subLeft,
-            subLeft + subWidth,
-            subBottom + subHeight,
-            subBottom,
-            near,
-            far,
-            false
-        );
-        console.log('aspect:'+aspect);
-        console.log('top:'+top);
-        console.log('bottom:'+bottom);
-        console.log('left:'+left);
-        console.log('right:'+right);
-        console.log('width:'+width);
-        console.log('height:'+height);
-        console.log('pixelX:'+pixelX);
-        console.log('pixelY:'+pixelY);
-        console.log('subLeft:'+subLeft);
-        console.log('subBottom:'+subBottom);
-        console.log('subWidth:'+subWidth);
-        console.log('subHeight:'+subHeight);
-        console.log('m:'+m.toString());
-        let i = 1;
-        console.log('i >> 1:' + (i >> 1) + ";i >> 2:" + (i >> 2));
-
+        let matDef = MaterialDef.parse(Internal.S_PROBE_INFO_DEF_DATA);
+        let mat = new Material(scene, {id:'probe_mat_' + Tools.nextId(), materialDef:matDef});
     </script>
     <!--<script>-->
         <!--function findSrc(str, reg){-->

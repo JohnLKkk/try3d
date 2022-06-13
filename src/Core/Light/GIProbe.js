@@ -1,6 +1,7 @@
 import Probe from "./Probe.js";
 import BoundingSphere from "../Math3d/Bounding/BoundingSphere.js";
 import UniformBuffer from "../WebGL/UniformBuffer.js";
+import Vec3ArrayVars from "../WebGL/Vars/Vec3ArrayVars.js";
 
 /**
  * GIProbe。<br/>
@@ -63,13 +64,15 @@ export default class GIProbe extends Probe{
      * @param {Vector3[]}[shCoeffs 9个球谐系数]
      */
     setShCoeffs(shCoeffs){
-        this._m_ShCoeffs = shCoeffs;
+        this._m_ShCoeffs = new Vec3ArrayVars({length:9});
         this._m_ShCoeffsBufferData = new UniformBuffer(9 * 3);
         let array = this._m_ShCoeffsBufferData.getArray();
         for(let i = 0,t = 0;i < shCoeffs.length;i++){
             array[t++] = shCoeffs[i]._m_X;
             array[t++] = shCoeffs[i]._m_Y;
             array[t++] = shCoeffs[i]._m_Z;
+
+            this._m_ShCoeffs.valueFromXYZ(i, shCoeffs[i]._m_X, shCoeffs[i]._m_Y, shCoeffs[i]._m_Z);
         }
     }
 

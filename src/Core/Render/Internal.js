@@ -1,4 +1,121 @@
 export default class Internal {
+    static S_PROBE_INFO_DEF_DATA = '// ProbeInfoDef\n' +
+        '// 这个材质定义无光照模式\n' +
+        'Def ProbeInfoDef{\n' +
+        '    Params{\n' +
+        '        vec4 color;\n' +
+        '        vec3 probeData[9];\n' +
+        '    }\n' +
+        '    SubTechnology ProbeInfoPass{\n' +
+        '        Vars{\n' +
+        '            vec3 wDir;\n' +
+        '        }\n' +
+        '        Vs_Shader{\n' +
+        '            void main(){\n' +
+        '                wDir = normalize(Context.InNormal);\n' +
+        '                Context.OutPosition = Context.ProjectViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);\n' +
+        '            }\n' +
+        '        }\n' +
+        '        Fs_Shader{\n' +
+        '            vec3 probeDiffuses( const in vec3 normal, const vec3 sph[9] ){\n' +
+        '                float x = normal.x;\n' +
+        '                float y = normal.y;\n' +
+        '                float z = normal.z;\n' +
+        '\n' +
+        '                vec3 result = (\n' +
+        '                    sph[0] +\n' +
+        '\n' +
+        '                    sph[1] * y +\n' +
+        '                    sph[2] * z +\n' +
+        '                    sph[3] * x +\n' +
+        '\n' +
+        '                    sph[4] * y * x +\n' +
+        '                    sph[5] * y * z +\n' +
+        '                    sph[6] * (3.0f * z * z - 1.0f) +\n' +
+        '                    sph[7] * (z * x) +\n' +
+        '                    sph[8] * (x*x - y*y)\n' +
+        '                );\n' +
+        '\n' +
+        '                return max(result, vec3(0.0f));\n' +
+        '            }\n' +
+        '            void main(){\n' +
+        '                Context.OutColor = vec4(1.0f);\n' +
+        '                // 使用自定义颜色输出\n' +
+        '                #ifdef Params.color\n' +
+        '                    Context.OutColor = Params.color;\n' +
+        '                #endif\n' +
+        '                // 使用probe数据\n' +
+        '                #ifdef Params.probeData\n' +
+        '                    Context.OutColor = vec4(probeDiffuses(wDir, Params.probeData), 1.0f);\n' +
+        '                #endif\n' +
+        '            }\n' +
+        '        }\n' +
+        '    }\n' +
+        '    Technology{\n' +
+        '        Sub_Pass{\n' +
+        '            Pass ProbeInfoPass{\n' +
+        '            }\n' +
+        '        }\n' +
+        '    }\n' +
+        '}\n';
+    static S_UNLIT_DEF_DATA = '// UnlitDef\n' +
+        '// 这个材质定义无光照模式\n' +
+        'Def UnlitDef{\n' +
+        '    Params{\n' +
+        '        vec4 color;\n' +
+        '        sampler2D colorMap;\n' +
+        '        float alphaDiscard;\n' +
+        '    }\n' +
+        '    SubTechnology UnlitPass{\n' +
+        '        Vars{\n' +
+        '            vec2 wUv0;\n' +
+        '        }\n' +
+        '        Vs_Shader{\n' +
+        '            void main(){\n' +
+        '                #ifdef Context.Skins\n' +
+        '                    mat4 skinMat =\n' +
+        '                            Context.InWeight0.x * Context.Joints[int(Context.InJoint0.x)] +\n' +
+        '                            Context.InWeight0.y * Context.Joints[int(Context.InJoint0.y)] +\n' +
+        '                            Context.InWeight0.z * Context.Joints[int(Context.InJoint0.z)] +\n' +
+        '                            Context.InWeight0.w * Context.Joints[int(Context.InJoint0.w)];\n' +
+        '                    // vec4 pos = Context.ModelMatrix * skinMat * vec4(Context.InPosition, 1.0f);\n' +
+        '                    vec4 pos = skinMat * vec4(Context.InPosition, 1.0f);\n' +
+        '                #else\n' +
+        '                    vec4 pos = Context.ModelMatrix * vec4(Context.InPosition, 1.0f);\n' +
+        '                #endif\n' +
+        '                wUv0 = Context.InUv0;\n' +
+        '                Context.OutPosition = Context.ProjectViewMatrix * pos;\n' +
+        '            }\n' +
+        '        }\n' +
+        '        Fs_Shader{\n' +
+        '            void main(){\n' +
+        '                Context.OutColor = vec4(1.0f);\n' +
+        '                // 使用自定义颜色输出\n' +
+        '                #ifdef Params.color\n' +
+        '                    Context.OutColor = Params.color;\n' +
+        '                #else\n' +
+        '                    // 使用纹理\n' +
+        '                    #ifdef Params.colorMap\n' +
+        '                        Context.OutColor = texture(Params.colorMap, wUv0);\n' +
+        '                        #ifdef Params.alphaDiscard\n' +
+        '                            if(Context.OutColor.a < Params.alphaDiscard){\n' +
+        '                                discard;\n' +
+        '                            }\n' +
+        '                        #endif\n' +
+        '                    #else\n' +
+        '                        Context.OutColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);\n' +
+        '                    #endif\n' +
+        '                #endif\n' +
+        '            }\n' +
+        '        }\n' +
+        '    }\n' +
+        '    Technology{\n' +
+        '        Sub_Pass{\n' +
+        '            Pass UnlitPass{\n' +
+        '            }\n' +
+        '        }\n' +
+        '    }\n' +
+        '}\n';
     static S_SELECTED_FILTER_DEF_DATA = "// SelectedFilterDef\n" +
         "Def SelectedFilterDef{\n" +
         "    Params{\n" +

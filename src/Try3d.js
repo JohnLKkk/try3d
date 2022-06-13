@@ -21,6 +21,7 @@ import Input from "./Core/InputControl/Input.js";
 import SceneBrowsingController from "./Core/InputControl/SceneBrowsingController.js";
 import DirectionalLight from "./Core/Light/DirectionalLight.js";
 import GIProbe from "./Core/Light/GIProbe.js";
+import GIProbes from "./Core/Light/GIProbes.js";
 import Light from "./Core/Light/Light.js";
 import PointLight from "./Core/Light/PointLight.js";
 import Probe from "./Core/Light/Probe.js";
@@ -121,6 +122,7 @@ import Cylinder from "./Core/Node/Shape/Cylinder.js";
 import Torus from "./Core/Node/Shape/Torus.js";
 import Teapot from "./Core/Node/Shape/Teapot.js";
 import BillboardControl from "./Core/Scene/Control/BillboardControl.js";
+import FxiedControl from "./Core/Scene/Control/FxiedControl.js";
 
 export default {
     Scene,
@@ -146,6 +148,7 @@ export default {
     SceneBrowsingController,
     DirectionalLight,
     GIProbe,
+    GIProbes,
     Light,
     PointLight,
     Probe,
@@ -240,6 +243,7 @@ export default {
     UniformBufferI,
     Component,
     BillboardControl,
+    FxiedControl,
     Globals,
     RenderEngine,
     GLTFLoader,

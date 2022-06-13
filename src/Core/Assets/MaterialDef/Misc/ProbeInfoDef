@@ -1,0 +1,59 @@
+// ProbeInfoDef
+// 这个材质定义无光照模式
+Def ProbeInfoDef{
+    Params{
+        vec4 color;
+        vec3 probeData[9];
+    }
+    SubTechnology ProbeInfoPass{
+        Vars{
+            vec3 wDir;
+        }
+        Vs_Shader{
+            void main(){
+                wDir = normalize(Context.InNormal);
+                Context.OutPosition = Context.ProjectViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+            }
+        }
+        Fs_Shader{
+            vec3 probeDiffuses( const in vec3 normal, const vec3 sph[9] ){
+                float x = normal.x;
+                float y = normal.y;
+                float z = normal.z;
+
+                vec3 result = (
+                    sph[0] +
+
+                    sph[1] * y +
+                    sph[2] * z +
+                    sph[3] * x +
+
+                    sph[4] * y * x +
+                    sph[5] * y * z +
+                    sph[6] * (3.0f * z * z - 1.0f) +
+                    sph[7] * (z * x) +
+                    sph[8] * (x*x - y*y)
+                );
+
+                return max(result, vec3(0.0f));
+            }
+            void main(){
+                Context.OutColor = vec4(1.0f);
+                // 使用自定义颜色输出
+                #ifdef Params.color
+                    Context.OutColor = Params.color;
+                #endif
+                // 使用probe数据
+                #ifdef Params.probeData
+                    Context.OutColor = vec4(probeDiffuses(wDir, Params.probeData), 1.0f);
+                #endif
+            }
+        }
+    }
+    Technology{
+        Sub_Pass{
+            Pass ProbeInfoPass{
+            }
+        }
+    }
+}

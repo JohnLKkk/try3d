@@ -8,7 +8,11 @@
 <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
     <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
 </div>
-<script src="../../build/try3d.min.js"></script>
+<!--<script src="../../build/try3d.min.js"></script>-->
+<script type="module">
+    import Try3d from "../../src/Try3d.js";
+    window.Try3d = Try3d;
+</script>
 <script type="module">
     import Stats from "../stats.min.js";
     let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
@@ -42,9 +46,16 @@
             rootNode.addChildren(modelNode);
             let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'sceneControl'});
             sceneControl.lookScene(modelNode);
-            sceneControl.setTargetDistance(10);
+            sceneControl.setTargetDistance(18);
             sceneControl.setTargetAngle(Try3d.MoreMath.toRadians(135));
             sceneControl.focusCamera();
+            let giProbes = new Try3d.GIProbes(scene, {id:'giProbes'});
+            giProbes.getProbeOrigin().setToInXYZ(-6, 0, -6);
+            giProbes.getProbeStep().setToInXYZ(4, 2, 4);
+            // 内置ColorDef
+            Try3d.ProbeTools.bakeGIProbes(scene, giProbes, {resolute:128});
+            let giProbesDebug = Try3d.MeshFactor.createDebugProbes(scene, Try3d.ProbeTools.bakeProbes(scene, giProbes), null, giProbes);
+            rootNode.addChildren(giProbesDebug);
         }, {batch:false});
 
         let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});

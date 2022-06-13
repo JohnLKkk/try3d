@@ -1,6 +1,6 @@
 // UnlitDef
 // 这个材质定义无光照模式
-Def PreShadowDef{
+Def UnlitDef{
     Params{
         vec4 color;
         sampler2D colorMap;

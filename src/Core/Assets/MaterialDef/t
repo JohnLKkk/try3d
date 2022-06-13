@@ -1,0 +1,41 @@
+#version 300 es
+#define probeData probeData
+
+precision mediump float;
+
+out vec4 _outColor;
+
+in vec3 wDir;
+
+uniform vec4 color;
+uniform vec3 probeData[9];
+vec3 probeDiffuses( const in vec3 normal, const vec3 sph[9] ){
+float x = normal.x;
+float y = normal.y;
+float z = normal.z;
+
+vec3 result = (
+sph[0] +
+
+sph[1] * y +
+sph[2] * z +
+sph[3] * x +
+
+sph[4] * y * x +
+sph[5] * y * z +
+sph[6] * (3.0f * z * z - 1.0f) +
+sph[7] * (z * x) +
+sph[8] * (x*x - y*y)
+);
+
+return max(result, vec3(0.0f));
+}
+void main(){
+_outColor = vec4(1.0f);
+#ifdef color
+_outColor = color;
+#endif
+#ifdef probeData
+_outColor = probeDiffuses(wDir, probeData);
+#endif
+}

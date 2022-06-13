@@ -1,5 +1,8 @@
-import GIProbe from "./GIProbe.js";
 import Vector3 from "../Math3d/Vector3.js";
+import Probe from "./Probe.js";
+import BoundingSphere from "../Math3d/Bounding/BoundingSphere.js";
+import UniformBuffer from "../WebGL/UniformBuffer.js";
+import Vec3ArrayVars from "../WebGL/Vars/Vec3ArrayVars.js";
 
 /**
  * GI探头集合，用于模拟光场信息，提供光场中任意物体表面可达的光照信息，<br/>
@@ -7,7 +10,7 @@ import Vector3 from "../Math3d/Vector3.js";
  * @author Kkk
  * @date 2022年6月9日21点47分
  */
-export default class GIProbes extends GIProbe{
+export default class GIProbes extends Probe{
     // 探头起始点
     _m_ProbeOrigin;
     // 探头数目
@@ -45,6 +48,44 @@ export default class GIProbes extends GIProbe{
         if(cfg.probeStep){
             this._m_ProbeStep.setTo(cfg.probeStep);
         }
+
+        this._m_ShCoeffs = null;
+        this._m_ShCoeffsBufferData = null;
+        this._m_PrefilterEnvMap = null;
+        this._m_PrefilterMipmap = 0;
+        this._m_Bounding = new BoundingSphere();
+    }
+
+    /**
+     * 设置PrefilterMipmap级别数量。<br/>
+     * @param {Number}[pfmm]
+     */
+    setPrefilterMipmap(pfmm){
+        this._m_PrefilterMipmap = pfmm;
+    }
+
+    /**
+     * 返回PrefilterMipmap级别数量。<br/>
+     * @return {Number}
+     */
+    getPrefilterMipmap(){
+        return this._m_PrefilterMipmap;
+    }
+
+    /**
+     * 设置预过滤环境纹理。<br/>
+     * @param {TextureCubeVars}[prefilterEnvMap]
+     */
+    setPrefilterEnvMap(prefilterEnvMap){
+        this._m_PrefilterEnvMap = prefilterEnvMap;
+    }
+
+    /**
+     * 返回预过滤环境纹理。<br/>
+     * @return {TextureCubeVars}
+     */
+    getPrefilterEnvMap(){
+        return this._m_PrefilterEnvMap;
     }
 
     /**
@@ -69,6 +110,35 @@ export default class GIProbes extends GIProbe{
      */
     getProbeStep(){
         return this._m_ProbeStep;
+    }
+    flush(){
+        let count = this._m_ProbeCount._m_X * this._m_ProbeCount._m_Y * this._m_ProbeCount._m_Z;
+        if(count){
+            this._m_ShCoeffs = [9 * 3 * count];
+            this._m_ShCoeffsBufferData = new UniformBuffer(9 * 3 * count);
+        }
+    }
+    /**
+     * 设置球谐系数。<br/>
+     * @param {Number}[index]
+     * @param {Vector3[]}[shCoeffs 9个球谐系数]
+     */
+    setShCoeffsIndex(index, shCoeffs){
+        if(!this._m_ShCoeffsBufferData){
+            this.flush();
+        }
+        this._m_ShCoeffs[index] = new Vec3ArrayVars({length:9 * 3});
+        let array = this._m_ShCoeffsBufferData.getArray();
+        for(let i = 0,t = index * 9 * 3;i < shCoeffs.length;i++){
+            array[t++] = shCoeffs[i]._m_X;
+            array[t++] = shCoeffs[i]._m_Y;
+            array[t++] = shCoeffs[i]._m_Z;
+
+            this._m_ShCoeffs[index].valueFromXYZ(i, shCoeffs[i]._m_X, shCoeffs[i]._m_Y, shCoeffs[i]._m_Z);
+        }
+    }
+    getShCoeffsIndex(index){
+        return this._m_ShCoeffs[index];
     }
 
 }

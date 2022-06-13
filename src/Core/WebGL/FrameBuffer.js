@@ -107,8 +107,9 @@ export default class FrameBuffer {
      * @param {Number}[y 开始偏移量]
      * @param {Number}[w 读取宽度]
      * @param {Number}[h 读取高度]
+     * @param {Number}[attachmentId 附件id]
      */
-    readPixels(gl, name, format, type, x, y, w, h){
+    readPixels(gl, name, format, type, x, y, w, h, attachmentId){
         x = x || 0;
         y = y || 0;
         w = w || this._m_Width;
@@ -140,6 +141,9 @@ export default class FrameBuffer {
         const _format = gl.getParameter(gl.IMPLEMENTATION_COLOR_READ_FORMAT);
         const _type = gl.getParameter(gl.IMPLEMENTATION_COLOR_READ_TYPE);
         let pixels = new pixelType(w * h * pixelUnit);
+        if(attachmentId != undefined){
+            gl.readBuffer(gl.COLOR_ATTACHMENT0 + attachmentId);
+        }
         gl.readPixels(x, y, w, h, format, type, pixels);
         return pixels;
     }

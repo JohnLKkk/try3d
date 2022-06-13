@@ -6,7 +6,14 @@
  */
 import Vector2 from "../Math3d/Vector2.js";
 import Mesh from "../WebGL/Mesh.js";
-import Vector3 from "../Math3d/Vector3";
+import Vector3 from "../Math3d/Vector3.js";
+import Node from "../Node/Node.js";
+import Tools from "./Tools.js";
+import Sphere from "../Node/Shape/Sphere.js";
+import Material from "../Material/Material.js";
+import Vec4Vars from "../WebGL/Vars/Vec4Vars.js";
+import MaterialDef from "../Material/MaterialDef.js";
+import Internal from "../Render/Internal.js";
 
 export default class MeshFactor {
     static count = 0;
@@ -23,27 +30,22 @@ export default class MeshFactor {
         array.push(vec3._m_Y);
         array.push(vec3._m_Z);
     }
-    static createDebugProbesMesh(probeOrigin, probeCount, probeStep){
-        let debugGIProbes = new Node();
-        let totalCount = probeCount._m_X * probeCount._m_Y * probeCount._m_Z;
-        let probeLocations = new Array(totalCount);
-        let index = 0;
-        let location = new Vector3();
-        let diff = new Vector3();
-        let temp = new Vector3();
-        for (let z = 0; z < probeCount._m_Z; ++z) {
-            for (let y = 0; y < probeCount._m_Y; ++y) {
-                for (let x = 0; x < probeCount._m_X; ++x) {
-
-                    temp.setToInXYZ(x, y, z);
-                    temp.mult(probeStep, diff);
-                    probeOrigin.add(diff, location);
-
-                    probeLocations[index++] = location;
-
-                }
-            }
+    static createDebugProbes(scene, probeLocations, matDef, giProbes){
+        let giProbesNode = new Node(scene, {id:'giProbesNode_' + Tools.nextId()});
+        // 创建探针,后续改为instanceDrawing
+        if(!matDef){
+            matDef = MaterialDef.parse(Internal.S_PROBE_INFO_DEF_DATA);
         }
+        for(let i = 0;i < probeLocations.length;i++){
+            let mat = new Material(scene, {id:'probe_mat_' + Tools.nextId(), materialDef:matDef});
+            // mat.setParam('color', new Vec4Vars().valueFromXYZW(0.7, 0.7, 0.7, 1.0));
+            mat.setParam('probeData', giProbes.getShCoeffsIndex(i));
+            let probe = new Sphere(giProbesNode, {id:'probe_' + Tools.nextId(), radius:0.15, widthSegments: 5, heightSegments: 5});
+            probe.setMaterial(mat);
+            probe.setLocalTranslation(probeLocations[i]);
+            giProbesNode.addChildren(probe);
+        }
+        return giProbesNode;
     }
 
     /**
