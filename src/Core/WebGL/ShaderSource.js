@@ -92,7 +92,7 @@ export default class ShaderSource {
     // 常用宏
     static S_SRGB_SRC = '_C_SRGB';
     static S_GIPROBES_SRC = '_C_GIPROBES';
-    static S_GIPROBES_GROUP_SRC = '_C_GIPROBES_GROUP';
+    static S_GI_PROBES_GROUP_SRC = '_C_GI_PROBES_GROUP';
     static S_PSSM_SRC = '_C_PSSM';
     static S_POINTLIGHT_SHADOWS_SRC = '_C_POINTLIGHT_SHADOWS';
     static S_SPOTLIGHT_SHADOWS_SRC = '_C_SPOTLIGHT_SHADOWS';
@@ -195,14 +195,14 @@ export default class ShaderSource {
     static S_LOW_RESOLUTION_DOWNSAMPLE_FACTOR = '_lowResolutionDownsampleFactor';
     static S_PROBE_GRID = "_probeGrid";
     static S_DIST_PROBE_GRID = "distProbeGrid";
-    static GI_PROBES_GROUP = "layout (std140) uniform LightFieldSurface\n" +
+    static GI_PROBES_GROUP = "layout (std140) uniform GI_PROBES_GROUP\n" +
         "{\n" +
-        "highp ivec3 " + ShaderSource.S_PROBE_COUNTS + ";\n" +
+        "vec3 " + ShaderSource.S_PROBE_COUNTS + ";\n" +
         "vec3 " + ShaderSource.S_PROBE_START_POSITION + ";\n" +
         "vec3 " + ShaderSource.S_PROBE_STEP + ";\n" +
-        "int " + ShaderSource.S_LOW_RESOLUTION_DOWNSAMPLE_FACTOR + ";\n" +
-        "vec3 " + ShaderSource.S_PROBE_GRID + "[512];\n" +
-        "vec3 " + ShaderSource.S_DIST_PROBE_GRID + "[512];\n" +
+        "vec3 " + ShaderSource.S_LOW_RESOLUTION_DOWNSAMPLE_FACTOR + ";\n" +
+        "vec3 " + ShaderSource.S_PROBE_GRID + "[256];\n" +
+        "vec3 " + ShaderSource.S_DIST_PROBE_GRID + "[256];\n" +
         "};\n";
     static BLOCKS = {
         'MAT':{blockIndex:0x001, blockDef:ShaderSource.MAT},
@@ -787,7 +787,7 @@ export default class ShaderSource {
         "Context.Skins":{src:ShaderSource.S_SKINS_SRC, pattern:/Context.Skins/, pattern2:/Context.Skins[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Skins/g, tag:ShaderSource.S_SKINS_SRC, isFlagVariable:true},
         "Context.Srgb":{src:ShaderSource.S_SRGB_SRC, pattern:/Context.Srgb/, pattern2:/Context.Srgb[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Srgb/g, tag:ShaderSource.S_SRGB_SRC, isFlagVariable:true},
         "Context.GIProbes":{src:ShaderSource.S_GIPROBES_SRC, pattern:/Context.GIProbes/, pattern2:/Context.GIProbes[\s+-;.,\*\\]{1,}/, tagPattern:/Context.GIProbes/g, tag:ShaderSource.S_GIPROBES_SRC, isFlagVariable:true},
-        "Context.GIProbesGroup":{src:ShaderSource.S_GIPROBES_GROUP_SRC, pattern:/Context.GIProbesGroup/, pattern2:/Context.GIProbesGroup[\s+-;.,\*\\]{1,}/, tagPattern:/Context.GIProbesGroup/g, tag:ShaderSource.S_GIPROBES_GROUP_SRC, isFlagVariable:true},
+        "Context.GI_ProbesGroup":{src:ShaderSource.S_GI_PROBES_GROUP_SRC, pattern:/Context.GI_ProbesGroup/, pattern2:/Context.GI_ProbesGroup[\s+-;.,\*\\]{1,}/, tagPattern:/Context.GI_ProbesGroup/g, tag:ShaderSource.S_GI_PROBES_GROUP_SRC, isFlagVariable:true},
         "Context.Pssm":{src:ShaderSource.S_PSSM_SRC, pattern:/Context.Pssm/, pattern2:/Context.Pssm[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Pssm/g, tag:ShaderSource.S_PSSM_SRC, isFlagVariable:true},
         "Context.PointLightShadows":{src:ShaderSource.S_POINTLIGHT_SHADOWS_SRC, pattern:/Context.PointLightShadows/, pattern2:/Context.PointLightShadows[\s+-;.,\*\\]{1,}/, tagPattern:/Context.PointLightShadows/g, tag:ShaderSource.S_POINTLIGHT_SHADOWS_SRC, isFlagVariable:true},
         "Context.SpotLightShadows":{src:ShaderSource.S_SPOTLIGHT_SHADOWS_SRC, pattern:/Context.SpotLightShadows/, pattern2:/Context.SpotLightShadows[\s+-;.,\*\\]{1,}/, tagPattern:/Context.SpotLightShadows/g, tag:ShaderSource.S_SPOTLIGHT_SHADOWS_SRC, isFlagVariable:true},
@@ -797,7 +797,7 @@ export default class ShaderSource {
         '_C_SKINS':"#define " + ShaderSource.S_SKINS_SRC + " " + ShaderSource.S_SKINS_SRC,
         '_C_SRGB':"#define " + ShaderSource.S_SRGB_SRC + " " + ShaderSource.S_SRGB_SRC,
         '_C_GIPROBES':"#define " + ShaderSource.S_GIPROBES_SRC + " " + ShaderSource.S_GIPROBES_SRC,
-        '_C_GIPROBES_GROUP':"#define " + ShaderSource.S_GIPROBES_GROUP_SRC + " " + ShaderSource.S_GIPROBES_GROUP_SRC,
+        '_C_GI_PROBES_GROUP':"#define " + ShaderSource.S_GI_PROBES_GROUP_SRC + " " + ShaderSource.S_GI_PROBES_GROUP_SRC,
         '_C_PSSM':"#define " + ShaderSource.S_PSSM_SRC + " " + ShaderSource.S_PSSM_SRC,
         '_C_POINTLIGHT_SHADOWS':"#define " + ShaderSource.S_POINTLIGHT_SHADOWS_SRC + " " + ShaderSource.S_POINTLIGHT_SHADOWS_SRC,
         '_C_SPOTLIGHT_SHADOWS':"#define " + ShaderSource.S_SPOTLIGHT_SHADOWS_SRC + " " + ShaderSource.S_SPOTLIGHT_SHADOWS_SRC,

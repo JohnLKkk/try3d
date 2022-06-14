@@ -116,6 +116,16 @@ export default class Render extends Component{
             this.updateTileInfo(w, h);
         });
         this.setTileSize(32);
+
+        this._initOther();
+    }
+
+    /**
+     * 初始化其他。<br/>
+     * @private
+     */
+    _initOther(){
+
     }
 
     /**

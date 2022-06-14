@@ -402,6 +402,10 @@ Def PrincipledLightingDef{
                         Context.OutColor.rgb += giLighting * step( 0.0f, Context.WGIProbe.w );
                         // Context.OutColor.rgb = textureLod(Context.InPrefEnvMap, normal.xyz, 0.0f).rgb;
                     #endif
+                    #ifdef Context.GI_ProbesGroup
+                        // GIProbes
+                        Context.OutColor.rgb = Context.ProbeCounts;
+                    #endif
                 }
 
                 // 唯一shading阶段,在这里处理自发光或只shading一次的逻辑

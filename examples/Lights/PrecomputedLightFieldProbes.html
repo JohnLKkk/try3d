@@ -53,6 +53,7 @@
             let giProbes = new Try3d.GIProbes(scene, {id:'giProbes'});
             giProbes.getProbeOrigin().setToInXYZ(-6, 0, -6);
             giProbes.getProbeStep().setToInXYZ(4, 2, 4);
+            giProbes.flush();
             // 内置ColorDef
             Try3d.ProbeTools.bakeGIProbes(scene, giProbes, {resolute:128});
             let giProbesDebug = Try3d.MeshFactor.createDebugProbes(scene, Try3d.ProbeTools.bakeProbes(scene, giProbes), null, giProbes);

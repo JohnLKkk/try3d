@@ -5,6 +5,7 @@ import TempVars from "../../Util/TempVars.js";
 import Matrix44 from "../../Math3d/Matrix44.js";
 import Log from "../../Util/Log.js";
 import ShaderSource from "../../WebGL/ShaderSource.js";
+import GIProbes from "../../Light/GIProbes.js";
 
 /**
  * 在单个pass中批量处理多个灯光。<br/>
@@ -22,6 +23,7 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
     static S_PREF_ENV_MAP_SRC = '_prefEnvMap';
     static S_WGIPROBE_SRC = '_wGIProbe';
     static S_SH_COEFFS_SRC = "_ShCoeffs";
+    static S_WGIPROBE_GROUP_SRC = '_wGIProbesGroup';
     constructor(props) {
         super(props);
         this._m_AccumulationLights = new RenderState();
@@ -72,13 +74,27 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
                 // 这里,检测已经提交的探头数据,然后分析是否与之相交,否则关闭探头数据,避免错误的渲染和额外的渲染
             }
         }
+        else if(conVars[ShaderSource.S_PROBE_COUNTS] != null){
+            if(this._m_m_LastSubShader != frameContext.m_LastSubShader){
+                console.log('update...')
+            }
+        }
         else{
             // 检测探头
             let giProbes = scene.getGIProbes();
             if(giProbes && giProbes.length > 0){
-                // 找出与之相交的探头
-                // 首次,更新材质定义
-                frameContext.m_LastMaterial.addDefine(ShaderSource.S_GIPROBES_SRC, true);
+                // 这里需要根据情况选择是GIProbes还是GIProbe
+                // 然后激活对应的GIProbes/GIProbe数据
+                // 但目前仅假设场景只有一个并且只有一种GIProbe/GIProbes
+                if(giProbes[0] instanceof GIProbes){
+                    // 光探针组
+                    frameContext.m_LastMaterial.addDefine(ShaderSource.S_GI_PROBES_GROUP_SRC, true);
+                }
+                else{
+                    // 找出与之相交的探头
+                    // 首次,更新材质定义
+                    frameContext.m_LastMaterial.addDefine(ShaderSource.S_GIPROBES_SRC, true);
+                }
             }
         }
     }

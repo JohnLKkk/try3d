@@ -3,6 +3,7 @@ import Probe from "./Probe.js";
 import BoundingSphere from "../Math3d/Bounding/BoundingSphere.js";
 import UniformBuffer from "../WebGL/UniformBuffer.js";
 import Vec3ArrayVars from "../WebGL/Vars/Vec3ArrayVars.js";
+import ShaderSource from "../WebGL/ShaderSource.js";
 
 /**
  * GI探头集合，用于模拟光场信息，提供光场中任意物体表面可达的光照信息，<br/>
@@ -116,6 +117,22 @@ export default class GIProbes extends Probe{
         if(count){
             this._m_ShCoeffs = [9 * 3 * count];
             this._m_ShCoeffsBufferData = new UniformBuffer(9 * 3 * count);
+            // 预建缓存
+            let frameContext = this._m_Scene.getRender().getFrameContext();
+            let gl = this._m_Scene.getCanvas().getGLContext();
+            if(!frameContext.getContextBlock('GI_PROBES_GROUP')){
+                let GI_PROBES_GROUP = gl.createBuffer();
+                this.GI_PROBES_GROUP = GI_PROBES_GROUP;
+                gl.bindBuffer(gl.UNIFORM_BUFFER, GI_PROBES_GROUP);
+                gl.bufferData(gl.UNIFORM_BUFFER, 8256, gl.STATIC_DRAW);
+                gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+
+                gl.bindBufferRange(gl.UNIFORM_BUFFER, ShaderSource.BLOCKS['GI_PROBES_GROUP'].blockIndex, GI_PROBES_GROUP, 0, 8256);
+                gl.bindBuffer(gl.UNIFORM_BUFFER, GI_PROBES_GROUP);
+                let vec3 = new Vector3(1, 1, 0);
+                gl.bufferSubData(gl.UNIFORM_BUFFER, 0, vec3.getBufferData());
+                frameContext.addContextBlock('GI_PROBES_GROUP', this.GI_PROBES_GROUP);
+            }
         }
     }
     /**

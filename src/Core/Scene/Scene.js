@@ -8,6 +8,7 @@ import Node from "../Node/Node.js";
 import Picture from "../Node/Picture.js";
 import GIProbe from "../Light/GIProbe.js";
 import Vector3 from "../Math3d/Vector3.js";
+import GIProbes from "../Light/GIProbes.js";
 
 /**
  * Scene表示渲染一个3D世界的容器，包含各种组件，但它不能作为其他组件的子组件。<br/>
@@ -326,6 +327,12 @@ export default class Scene extends Component{
                 // 检测是否为light类型组件
                 if(component instanceof Light){
                     if(component instanceof GIProbe){
+                        if(!this._m_GIProbeIds[component.getId()]){
+                            this._m_GIProbes.push(component);
+                            this._m_GIProbeIds[component.getId()] = component;
+                        }
+                    }
+                    else if(component instanceof GIProbes){
                         if(!this._m_GIProbeIds[component.getId()]){
                             this._m_GIProbes.push(component);
                             this._m_GIProbeIds[component.getId()] = component;
