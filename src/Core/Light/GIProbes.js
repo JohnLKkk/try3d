@@ -137,6 +137,12 @@ export default class GIProbes extends Probe{
             this._m_ShCoeffs[index].valueFromXYZ(i, shCoeffs[i]._m_X, shCoeffs[i]._m_Y, shCoeffs[i]._m_Z);
         }
     }
+
+    /**
+     * 返回指定探头的球谐系数。<br/>
+     * @param {Number}[index]
+     * @return {Array}
+     */
     getShCoeffsIndex(index){
         return this._m_ShCoeffs[index];
     }

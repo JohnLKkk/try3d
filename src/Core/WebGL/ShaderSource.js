@@ -92,6 +92,7 @@ export default class ShaderSource {
     // 常用宏
     static S_SRGB_SRC = '_C_SRGB';
     static S_GIPROBES_SRC = '_C_GIPROBES';
+    static S_GIPROBES_GROUP_SRC = '_C_GIPROBES_GROUP';
     static S_PSSM_SRC = '_C_PSSM';
     static S_POINTLIGHT_SHADOWS_SRC = '_C_POINTLIGHT_SHADOWS';
     static S_SPOTLIGHT_SHADOWS_SRC = '_C_SPOTLIGHT_SHADOWS';
@@ -133,6 +134,10 @@ export default class ShaderSource {
     static S_WGIPROBE_SRC = "_wGIProbe";
     // 球谐系数
     static S_SH_COEFFS_SRC = "_ShCoeffs";
+    // 光探头组数据
+    static S_WGIPROBE_GROUP_SRC = "_wGIProbeGroup";
+    // 球谐系数组数据
+    static S_SH_COEFFS_GROUP_SRC = "_wShCoeffsGroup";
 
     // 分辨率倒数
     static S_RESOLUTION_INVERSE = '_ResolutionInverse';
@@ -184,10 +189,26 @@ export default class ShaderSource {
         "{\n" +
         "vec2 " + ShaderSource.S_RESOLUTION_INVERSE + ';\n' +
         '};\n';
+    static S_PROBE_COUNTS = '_probeCounts';
+    static S_PROBE_START_POSITION = '_probeStartPosition';
+    static S_PROBE_STEP = '_probeStep';
+    static S_LOW_RESOLUTION_DOWNSAMPLE_FACTOR = '_lowResolutionDownsampleFactor';
+    static S_PROBE_GRID = "_probeGrid";
+    static S_DIST_PROBE_GRID = "distProbeGrid";
+    static GI_PROBES_GROUP = "layout (std140) uniform LightFieldSurface\n" +
+        "{\n" +
+        "highp ivec3 " + ShaderSource.S_PROBE_COUNTS + ";\n" +
+        "vec3 " + ShaderSource.S_PROBE_START_POSITION + ";\n" +
+        "vec3 " + ShaderSource.S_PROBE_STEP + ";\n" +
+        "int " + ShaderSource.S_LOW_RESOLUTION_DOWNSAMPLE_FACTOR + ";\n" +
+        "vec3 " + ShaderSource.S_PROBE_GRID + "[512];\n" +
+        "vec3 " + ShaderSource.S_DIST_PROBE_GRID + "[512];\n" +
+        "};\n";
     static BLOCKS = {
         'MAT':{blockIndex:0x001, blockDef:ShaderSource.MAT},
         'VIEW':{blockIndex:0x002, blockDef:ShaderSource.VIEW},
         'VIEW_PORT':{blockIndex:0x003, blockDef:ShaderSource.VIEW_PORT},
+        'GI_PROBES_GROUP':{blockIndex:0x004, blockDef:ShaderSource.GI_PROBES_GROUP},
     };
     static Context_RenderDataRefFBs = {
         "_gBuffer0":'DefaultDeferredShadingFrameBuffer',
@@ -707,6 +728,14 @@ export default class ShaderSource {
         "Context.AmbientLightColor":{src:ShaderSource.S_AMBIENT_LIGHT_COLOR, pattern:/Context.AmbientLightColor/, pattern2:/Context.AmbientLightColor[\s+-;.,\*\\]{1,}/, tagPattern:/Context.AmbientLightColor/g, tag:ShaderSource.S_AMBIENT_LIGHT_COLOR, type:"vec3", utype:"uniform vec3"},
         "Context.CurLightCount":{src:ShaderSource.S_CUR_LIGHT_COUNT_SRC, pattern:/Context.CurLightCount/, pattern2:/Context.CurLightCount[\s+-;.,\*\\]{1,}/, tagPattern:/Context.CurLightCount/g, tag:ShaderSource.S_CUR_LIGHT_COUNT_SRC, type:"int", utype:'uniform int'},
         "Context.CameraPosition":{src:ShaderSource.S_CAMERA_POSITION_SRC, pattern:/Context.CameraPosition/, pattern2:/Context.CameraPosition[\s+-;.,\*\\]{1,}/, tagPattern:/Context.CameraPosition/g, tag:ShaderSource.S_CAMERA_POSITION_SRC, def:'VIEW'},
+
+        "Context.ProbeCounts":{src:ShaderSource.S_PROBE_COUNTS, pattern:/Context.ProbeCounts/, pattern2:/Context.ProbeCounts[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ProbeCounts/g, tag:ShaderSource.S_PROBE_COUNTS, def:'GI_PROBES_GROUP'},
+        "Context.ProbeStartPosition":{src:ShaderSource.S_PROBE_START_POSITION, pattern:/Context.ProbeStartPosition/, pattern2:/Context.ProbeStartPosition[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ProbeStartPosition/g, tag:ShaderSource.S_PROBE_START_POSITION, def:'GI_PROBES_GROUP'},
+        "Context.ProbeStep":{src:ShaderSource.S_PROBE_STEP, pattern:/Context.ProbeStep/, pattern2:/Context.ProbeStep[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ProbeStep/g, tag:ShaderSource.S_PROBE_STEP, def:'GI_PROBES_GROUP'},
+        "Context.LowResolutionDownsampleFactor":{src:ShaderSource.S_LOW_RESOLUTION_DOWNSAMPLE_FACTOR, pattern:/Context.LowResolutionDownsampleFactor/, pattern2:/Context.LowResolutionDownsampleFactor[\s+-;.,\*\\]{1,}/, tagPattern:/Context.LowResolutionDownsampleFactor/g, tag:ShaderSource.S_LOW_RESOLUTION_DOWNSAMPLE_FACTOR, def:'GI_PROBES_GROUP'},
+        "Context.ProbeGrid":{src:ShaderSource.S_PROBE_GRID, pattern:/Context.ProbeGrid/, pattern2:/Context.ProbeGrid[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ProbeGrid/g, tag:ShaderSource.S_PROBE_GRID, def:'GI_PROBES_GROUP'},
+        "Context.DistProbeGrid":{src:ShaderSource.S_DIST_PROBE_GRID, pattern:/Context.DistProbeGrid/, pattern2:/Context.DistProbeGrid[\s+-;.,\*\\]{1,}/, tagPattern:/Context.DistProbeGrid/g, tag:ShaderSource.S_DIST_PROBE_GRID, def:'GI_PROBES_GROUP'},
+
         "Context.WGIProbe":{src:ShaderSource.S_WGIPROBE_SRC, pattern:/Context.WGIProbe/, pattern2:/Context.WGIProbe[\s+-;.,\*\\]{1,}/, tagPattern:/Context.WGIProbe/g, tag:ShaderSource.S_WGIPROBE_SRC, type:"vec4", utype:"uniform vec4"},
         "Context.ShCoeffs":{src:ShaderSource.S_SH_COEFFS_SRC, pattern:/Context.ShCoeffs/, pattern2:/Context.ShCoeffs[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ShCoeffs/g, tag:ShaderSource.S_SH_COEFFS_SRC, type:"vec3", utype:"uniform vec3", modifier:'[' + 9 + ']'},
 
@@ -758,6 +787,7 @@ export default class ShaderSource {
         "Context.Skins":{src:ShaderSource.S_SKINS_SRC, pattern:/Context.Skins/, pattern2:/Context.Skins[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Skins/g, tag:ShaderSource.S_SKINS_SRC, isFlagVariable:true},
         "Context.Srgb":{src:ShaderSource.S_SRGB_SRC, pattern:/Context.Srgb/, pattern2:/Context.Srgb[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Srgb/g, tag:ShaderSource.S_SRGB_SRC, isFlagVariable:true},
         "Context.GIProbes":{src:ShaderSource.S_GIPROBES_SRC, pattern:/Context.GIProbes/, pattern2:/Context.GIProbes[\s+-;.,\*\\]{1,}/, tagPattern:/Context.GIProbes/g, tag:ShaderSource.S_GIPROBES_SRC, isFlagVariable:true},
+        "Context.GIProbesGroup":{src:ShaderSource.S_GIPROBES_GROUP_SRC, pattern:/Context.GIProbesGroup/, pattern2:/Context.GIProbesGroup[\s+-;.,\*\\]{1,}/, tagPattern:/Context.GIProbesGroup/g, tag:ShaderSource.S_GIPROBES_GROUP_SRC, isFlagVariable:true},
         "Context.Pssm":{src:ShaderSource.S_PSSM_SRC, pattern:/Context.Pssm/, pattern2:/Context.Pssm[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Pssm/g, tag:ShaderSource.S_PSSM_SRC, isFlagVariable:true},
         "Context.PointLightShadows":{src:ShaderSource.S_POINTLIGHT_SHADOWS_SRC, pattern:/Context.PointLightShadows/, pattern2:/Context.PointLightShadows[\s+-;.,\*\\]{1,}/, tagPattern:/Context.PointLightShadows/g, tag:ShaderSource.S_POINTLIGHT_SHADOWS_SRC, isFlagVariable:true},
         "Context.SpotLightShadows":{src:ShaderSource.S_SPOTLIGHT_SHADOWS_SRC, pattern:/Context.SpotLightShadows/, pattern2:/Context.SpotLightShadows[\s+-;.,\*\\]{1,}/, tagPattern:/Context.SpotLightShadows/g, tag:ShaderSource.S_SPOTLIGHT_SHADOWS_SRC, isFlagVariable:true},
@@ -767,6 +797,7 @@ export default class ShaderSource {
         '_C_SKINS':"#define " + ShaderSource.S_SKINS_SRC + " " + ShaderSource.S_SKINS_SRC,
         '_C_SRGB':"#define " + ShaderSource.S_SRGB_SRC + " " + ShaderSource.S_SRGB_SRC,
         '_C_GIPROBES':"#define " + ShaderSource.S_GIPROBES_SRC + " " + ShaderSource.S_GIPROBES_SRC,
+        '_C_GIPROBES_GROUP':"#define " + ShaderSource.S_GIPROBES_GROUP_SRC + " " + ShaderSource.S_GIPROBES_GROUP_SRC,
         '_C_PSSM':"#define " + ShaderSource.S_PSSM_SRC + " " + ShaderSource.S_PSSM_SRC,
         '_C_POINTLIGHT_SHADOWS':"#define " + ShaderSource.S_POINTLIGHT_SHADOWS_SRC + " " + ShaderSource.S_POINTLIGHT_SHADOWS_SRC,
         '_C_SPOTLIGHT_SHADOWS':"#define " + ShaderSource.S_SPOTLIGHT_SHADOWS_SRC + " " + ShaderSource.S_SPOTLIGHT_SHADOWS_SRC,

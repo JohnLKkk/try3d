@@ -41,7 +41,8 @@
         // scene.setSky(sky);
 
         let gltfLoader = new Try3d.GLTFLoader();
-        gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/Light/");
+        // gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/Light/");
+        gltfLoader.useMatDef(Try3d.AssetLoader.loadMaterialSourceDef('../../src/Core/Assets/MaterialDef/Light/PrincipledLightingDef'));
         gltfLoader.load(scene, './../Assets/Models/GLTF/Room/test_room.gltf', modelNode=>{
             rootNode.addChildren(modelNode);
             let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'sceneControl'});
