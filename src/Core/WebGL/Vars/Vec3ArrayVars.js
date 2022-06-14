@@ -4,7 +4,7 @@ import Vars from "./Vars.js";
  * Vec3ArrayVars。<br/>
  * 定义vec3Array变量。<br/>
  * @author Kkk
- * @date 2021年9月21日17点06分
+ * @date 2022年6月13日18点41分
  */
 export default class Vec3ArrayVars extends Vars{
     constructor(props) {

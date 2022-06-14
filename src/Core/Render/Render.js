@@ -704,7 +704,14 @@ export default class Render extends Component{
         // 检测是否启用了自定义forwardFrameBuffer
         if(useBackForwardFrameBuffer){
             // 则在这里渲染到默认内置frameBuffer
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            if(this._m_CustomDefaultFrameBuffer){
+                // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                this._m_CustomDefaultFrameBuffer.use(this);
+                this.setViewPort(gl, 0, 0, this._m_CustomDefaultFrameBuffer.getWidth(), this._m_CustomDefaultFrameBuffer.getHeight());
+            }
+            else{
+                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            }
             // 渲染forwardPicture
             let forwardPicture = this._m_FrameContext.getFrameBuffer(Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER).getFramePicture();
             let currentTechnology = forwardPicture.getMaterial().getCurrentTechnology();
@@ -729,13 +736,26 @@ export default class Render extends Component{
     }
 
     /**
+     * 使用自定义默认输出缓存。<br/>
+     * @param {FrameBuffer}[customDefaultFrameBuffer]
+     */
+    useCustomDefaultFrame(customDefaultFrameBuffer){
+        this._m_CustomDefaultFrameBuffer = customDefaultFrameBuffer;
+    }
+
+    /**
      * 使用默认输出缓存。<br/>
      */
     useDefaultFrame(){
         if(this._m_FrameContext.m_LastFrameBuffer != null){
-            let gl = this._m_Scene.getCanvas().getGLContext();
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-            this._m_FrameContext.m_LastFrameBuffer = null;
+            if(this._m_CustomDefaultFrameBuffer){
+                this._m_CustomDefaultFrameBuffer.use(this);
+            }
+            else{
+                let gl = this._m_Scene.getCanvas().getGLContext();
+                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                this._m_FrameContext.m_LastFrameBuffer = null;
+            }
         }
     }
 

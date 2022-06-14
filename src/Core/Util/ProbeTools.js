@@ -185,7 +185,7 @@ class EnvCapture {
         let render = this._m_Scene.getRender();
         let pixels = null;
 
-        render.setViewPort(gl, 0, 0, this._m_Resolute, this._m_Resolute);
+        // render.setViewPort(gl, 0, 0, this._m_Resolute, this._m_Resolute);
         let at = new Vector3();
         for(let i = 0;i < 6;i++){
             EnvCapture._S_CAPTURE_CONFIG[i].dir.add(position, at);
@@ -193,8 +193,13 @@ class EnvCapture {
             this._m_Scene.setMainCamera(this._m_CaptureCameres[i]);
             this._m_CaptureFrames[i].use(render);
             this._m_CaptureFrames[i].clear(gl);
+            render.setViewPort(gl, 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight());
+            this._m_Scene.getRender().useCustomDefaultFrame(this._m_CaptureFrames[i]);
+            // 收集当前可见列表
+            // this._m_Scene.gatherVisDrawables();
             // 目前仅支持捕捉环境（后续完善对场景的捕捉）
-            this._m_Scene.getRender()._drawEnv(gl);
+            // this._m_Scene.getRender()._drawEnv(gl);
+            this._m_Scene.render(0);
 
             pixels = this._m_CaptureFrames[i].readPixels(gl, '', gl.RGBA, gl.FLOAT, undefined, undefined, undefined, undefined, 0);
             this._m_CapturePixels[i] = pixels;
@@ -209,6 +214,7 @@ class EnvCapture {
             this._m_CaptureResult.setWrap(this._m_Scene, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE);
 
         this._m_Scene.setMainCamera(mainCamera);
+        this._m_Scene.getRender().useCustomDefaultFrame(null);
         this._m_Scene.getRender().useDefaultFrame();
         render.setViewPort(gl, 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight());
     }
