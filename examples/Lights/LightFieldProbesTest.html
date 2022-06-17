@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PrecomputedLightFieldProbes</title>
+    <title>LightFieldProbesTest</title>
 </head>
 <body>
 <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
@@ -74,24 +74,16 @@
             sceneControl.setTargetDistance(18);
             sceneControl.setTargetAngle(Try3d.MoreMath.toRadians(135));
             sceneControl.focusCamera();
-            let giProbes = new Try3d.GIProbes(scene, {id:'giProbes'});
-            // giProbes.getProbeOrigin().setToInXYZ(-6, 0, -6);
-            // giProbes.getProbeStep().setToInXYZ(4, 2, 4);
-            giProbes.getProbeOrigin().setToInXYZ(0, 3, 0);
-            giProbes.getProbeCount().setToInXYZ(1, 1, 1);
-            giProbes.preCache();
-            giProbes.getProbeCenter().setToInXYZW(0, 3, 0, 10);
-            giProbes.setProbeRange(10);
+            let giProbe = new Try3d.GIProbe(scene, {id:'giProbe'});
+            giProbe.setPositionFromXYZ(0, 3, 0);
+            giProbe.setRadius(10);
             // 内置ColorDef
-            let envCapture = Try3d.ProbeTools.bakeGIProbes(scene, giProbes, {resolute:128});
-            console.log('sh:\n',giProbes.getShCoeffsIndex(0));
-            let probeLocations = Try3d.ProbeTools.bakeProbes(scene, giProbes);
-            let giProbesDebug = Try3d.MeshFactor.createDebugProbes(scene, probeLocations, null, giProbes);
-            rootNode.addChildren(giProbesDebug);
+            let envCapture = Try3d.ProbeTools.bakeGIProbe(scene, giProbe, {resolute:128});
+            console.log('sh:\n',giProbe.getShCoeffs());
 
             // 添加一个渲染探头,将捕捉数据渲染出来
             let refProbeGeo = new Try3d.Sphere(scene, {id:'refProbeGeo'});
-            refProbeGeo.setLocalTranslationXYZ(giProbes.getProbeCenter()._m_X, giProbes.getProbeCenter()._m_Y, giProbes.getProbeCenter()._m_Z);
+            refProbeGeo.setLocalTranslation(giProbe.getPosition());
             refProbeGeo.setLocalScaleXYZ(0.5, 0.5, 0.5);
             let refProbeMat = new Try3d.Material(scene, {id:'refProbeMat', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_ENV_CAPTURE_OUT_DEF)});
             refProbeMat.setParam('envCaptureMap', envCapture.getCaptureTextureCube());

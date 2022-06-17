@@ -64,6 +64,7 @@ export default class Scene extends Component{
 
         // 初始化
         this._m_Render.startUp();
+        GIProbes.preBuild(this);
     }
 
     /**

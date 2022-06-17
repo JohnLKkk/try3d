@@ -74,11 +74,6 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
                 // 这里,检测已经提交的探头数据,然后分析是否与之相交,否则关闭探头数据,避免错误的渲染和额外的渲染
             }
         }
-        else if(conVars[ShaderSource.S_PROBE_COUNTS] != null){
-            if(this._m_m_LastSubShader != frameContext.m_LastSubShader){
-                console.log('update...')
-            }
-        }
         else{
             // 检测探头
             let giProbes = scene.getGIProbes();
@@ -89,6 +84,10 @@ export default class SinglePassIBLLightingRenderProgram extends DefaultRenderPro
                 if(giProbes[0] instanceof GIProbes){
                     // 光探针组
                     frameContext.m_LastMaterial.addDefine(ShaderSource.S_GI_PROBES_GROUP_SRC, true);
+                    if(this._m_m_LastSubShader != frameContext.m_LastSubShader){
+                        giProbes[0].upload();
+                        this._m_m_LastSubShader = frameContext.m_LastSubShader;
+                    }
                 }
                 else{
                     // 找出与之相交的探头

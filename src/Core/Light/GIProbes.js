@@ -4,6 +4,8 @@ import BoundingSphere from "../Math3d/Bounding/BoundingSphere.js";
 import UniformBuffer from "../WebGL/UniformBuffer.js";
 import Vec3ArrayVars from "../WebGL/Vars/Vec3ArrayVars.js";
 import ShaderSource from "../WebGL/ShaderSource.js";
+import ProbeTools from "../Util/ProbeTools.js";
+import Vector4 from "../Math3d/Vector4.js";
 
 /**
  * GI探头集合，用于模拟光场信息，提供光场中任意物体表面可达的光照信息，<br/>
@@ -40,6 +42,8 @@ export default class GIProbes extends Probe{
         this._m_ProbeOrigin = new Vector3();
         this._m_ProbeCount = new Vector3(4, 4, 4);
         this._m_ProbeStep = new Vector3(2, 2, 2);
+        this._m_ProbeCenter = new Vector4();
+        this._m_ProbeRange = 0;
         if(cfg.probeOrigin){
             this._m_ProbeOrigin.setTo(cfg.probeOrigin);
         }
@@ -55,6 +59,15 @@ export default class GIProbes extends Probe{
         this._m_PrefilterEnvMap = null;
         this._m_PrefilterMipmap = 0;
         this._m_Bounding = new BoundingSphere();
+        this._m_Change = false;
+    }
+
+    /**
+     * 设置探针组范围。<br/>
+     * @param {Number}[probeRange]
+     */
+    setProbeRange(probeRange){
+        this._m_ProbeRange = probeRange;
     }
 
     /**
@@ -63,6 +76,9 @@ export default class GIProbes extends Probe{
      */
     setPrefilterMipmap(pfmm){
         this._m_PrefilterMipmap = pfmm;
+        if(this._m_ProbeRange){
+            this._m_ProbeCenter._m_W = 1.0 / this._m_ProbeRange + pfmm;
+        }
     }
 
     /**
@@ -98,6 +114,14 @@ export default class GIProbes extends Probe{
     }
 
     /**
+     * 返回探头中心。<br/>
+     * @return {Vector4}
+     */
+    getProbeCenter(){
+        return this._m_ProbeCenter;
+    }
+
+    /**
      * 返回探头数目。<br/>
      * @returns {Vector3}
      */
@@ -112,29 +136,80 @@ export default class GIProbes extends Probe{
     getProbeStep(){
         return this._m_ProbeStep;
     }
-    flush(){
-        let count = this._m_ProbeCount._m_X * this._m_ProbeCount._m_Y * this._m_ProbeCount._m_Z;
-        if(count){
-            this._m_ShCoeffs = [9 * 3 * count];
-            this._m_ShCoeffsBufferData = new UniformBuffer(9 * 3 * count);
-            // 预建缓存
+
+    /**
+     * 上载数据。<br/>
+     */
+    upload(){
+        let frameContext = this._m_Scene.getRender().getFrameContext();
+        this.GI_PROBES_GROUP = frameContext.getContextBlock('GI_PROBES_GROUP');
+        if(this.GI_PROBES_GROUP && this._m_Change){
+            let gl = this._m_Scene.getCanvas().getGLContext();
+            gl.bindBuffer(gl.UNIFORM_BUFFER, this.GI_PROBES_GROUP);
+            let offsetP = 16;
+            let offsetD = 0;
+            // probeCount
+            gl.bufferSubData(gl.UNIFORM_BUFFER, offsetP * offsetD, this._m_ProbeCount.getBufferData());
+            // probeOrigin
+            offsetD++;
+            gl.bufferSubData(gl.UNIFORM_BUFFER, offsetP * offsetD, this._m_ProbeOrigin.getBufferData());
+            // probeStep
+            offsetD++;
+            gl.bufferSubData(gl.UNIFORM_BUFFER, offsetP * offsetD, this._m_ProbeStep.getBufferData());
+            // probeCenter
+            offsetD++;
+            gl.bufferSubData(gl.UNIFORM_BUFFER, offsetP * offsetD, this._m_ProbeCenter.getBufferData());
+            // lowResolutionDownsampleFactor
+            offsetD++;
+            // gl.bufferSubData(gl.UNIFORM_BUFFER, offsetP * offsetD, this._m_ProbeCenter.getBufferData());
+            // probeGrid
+            offsetD++;
+            gl.bufferSubData(gl.UNIFORM_BUFFER, offsetP * offsetD, this._m_ShCoeffsBufferData.getBufferData());
+            this._m_Change = false;
+        }
+        {
             let frameContext = this._m_Scene.getRender().getFrameContext();
             let gl = this._m_Scene.getCanvas().getGLContext();
-            if(!frameContext.getContextBlock('GI_PROBES_GROUP')){
-                let GI_PROBES_GROUP = gl.createBuffer();
-                this.GI_PROBES_GROUP = GI_PROBES_GROUP;
-                gl.bindBuffer(gl.UNIFORM_BUFFER, GI_PROBES_GROUP);
-                gl.bufferData(gl.UNIFORM_BUFFER, 8256, gl.STATIC_DRAW);
-                gl.bindBuffer(gl.UNIFORM_BUFFER, null);
-
-                gl.bindBufferRange(gl.UNIFORM_BUFFER, ShaderSource.BLOCKS['GI_PROBES_GROUP'].blockIndex, GI_PROBES_GROUP, 0, 8256);
-                gl.bindBuffer(gl.UNIFORM_BUFFER, GI_PROBES_GROUP);
-                let vec3 = new Vector3(1, 1, 0);
-                gl.bufferSubData(gl.UNIFORM_BUFFER, 0, vec3.getBufferData());
-                frameContext.addContextBlock('GI_PROBES_GROUP', this.GI_PROBES_GROUP);
-            }
+            let conVars = frameContext.m_LastSubShader.getContextVars();
+            // prefilterEnvMap
+            if(conVars[ShaderSource.S_PREF_ENV_MAP_SRC] != null && this.getPrefilterEnvMap())
+                this.getPrefilterEnvMap()._upload(gl, conVars[ShaderSource.S_PREF_ENV_MAP_SRC].loc);
         }
     }
+    static preBuild(scene){
+        // 预建全局缓存
+        let frameContext = scene.getRender().getFrameContext();
+        let gl = scene.getCanvas().getGLContext();
+        if(!frameContext.getContextBlock('GI_PROBES_GROUP')){
+            let GI_PROBES_GROUP = gl.createBuffer();
+            this.GI_PROBES_GROUP = GI_PROBES_GROUP;
+            gl.bindBuffer(gl.UNIFORM_BUFFER, GI_PROBES_GROUP);
+            gl.bufferData(gl.UNIFORM_BUFFER, 36944, gl.STATIC_DRAW);
+            gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+
+            gl.bindBufferRange(gl.UNIFORM_BUFFER, ShaderSource.BLOCKS['GI_PROBES_GROUP'].blockIndex, GI_PROBES_GROUP, 0, 36944);
+            frameContext.addContextBlock('GI_PROBES_GROUP', this.GI_PROBES_GROUP);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 预建缓存。<br/>
+     */
+    preCache(){
+        let count = this._m_ProbeCount._m_X * this._m_ProbeCount._m_Y * this._m_ProbeCount._m_Z;
+        if(count){
+            this._m_ShCoeffs = [count];
+            this._m_ShCoeffsBufferData = new UniformBuffer(9 * 4 * count);
+            if(GIProbes.preBuild(this._m_Scene)){
+                this.reset();
+            }
+            ProbeTools.placeProbes(this._m_ProbeOrigin, this._m_ProbeCount, this._m_ProbeStep, this._m_ProbeCenter);
+            this._m_ProbeRange = this._m_ProbeCenter._m_W;
+        }
+    }
+
     /**
      * 设置球谐系数。<br/>
      * @param {Number}[index]
@@ -142,14 +217,16 @@ export default class GIProbes extends Probe{
      */
     setShCoeffsIndex(index, shCoeffs){
         if(!this._m_ShCoeffsBufferData){
-            this.flush();
+            this.preCache();
         }
-        this._m_ShCoeffs[index] = new Vec3ArrayVars({length:9 * 3});
+        this._m_ShCoeffs[index] = new Vec3ArrayVars({length:9});
         let array = this._m_ShCoeffsBufferData.getArray();
-        for(let i = 0,t = index * 9 * 3;i < shCoeffs.length;i++){
+        for(let i = 0,t = index * 9 * 4;i < shCoeffs.length;i++){
             array[t++] = shCoeffs[i]._m_X;
             array[t++] = shCoeffs[i]._m_Y;
             array[t++] = shCoeffs[i]._m_Z;
+            // 跳过w
+            t++;
 
             this._m_ShCoeffs[index].valueFromXYZ(i, shCoeffs[i]._m_X, shCoeffs[i]._m_Y, shCoeffs[i]._m_Z);
         }
@@ -162,6 +239,27 @@ export default class GIProbes extends Probe{
      */
     getShCoeffsIndex(index){
         return this._m_ShCoeffs[index];
+    }
+
+    /**
+     * 重置，以便重新烘焙。<br/>
+     */
+    reset(){
+        if(this.GI_PROBES_GROUP){
+            let frameContext = this._m_Scene.getRender().getFrameContext();
+            let gl = this._m_Scene.getCanvas().getGLContext();
+            gl.bindBuffer(gl.UNIFORM_BUFFER, this.GI_PROBES_GROUP);
+            let tempCount = new Vector3(0, 0, 0);
+            gl.bufferSubData(gl.UNIFORM_BUFFER, 0, tempCount.getBufferData());
+            this._m_Change = false;
+        }
+    }
+
+    /**
+     * 表明更新。<br/>
+     */
+    flush(){
+        this._m_Change = true;
     }
 
 }

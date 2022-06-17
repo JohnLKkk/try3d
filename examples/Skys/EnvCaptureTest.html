@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EnvCaptureTest</title>
+</head>
+<body>
+<div style="width: 100%;height: 100%;position:fixed;left: 0px;top: 0px;">
+    <canvas id="canvas" style="position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+</div>
+<!--<script src="../../build/try3d.min.js"></script>-->
+<script type="module">
+    import Try3d from "../../src/Try3d.js";
+    window.Try3d = Try3d;
+</script>
+<script type="module">
+    import Stats from "../stats.min.js";
+    let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    let mainCamera = scene.getComponent('mainCamera');
+    mainCamera.lookAt(new Try3d.Vector3(10.00694701577273,4.752059754747693,-0.8094167189698362), new Try3d.Vector3(9.020200568330681,4.844430342194254,-0.6760033649333097), new Try3d.Vector3(0, 1, 0));
+
+    let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+    // 环境纹理加载完再开始创建创建
+    let radianceLoader = new Try3d.RadianceLoader();
+    radianceLoader.loadHDR('./../Assets/Textures/hdr/newport_loft.hdr', imageData=> {
+        // 创建一个sky
+        let sky = new Try3d.SkyBox(scene, {id:'sky'});
+        // 使用cubeMap作为天空盒材质
+        let envMap = new Try3d.Texture2DVars(scene);
+        envMap.setPreloadColor(scene, new Try3d.Vector4(0.5, 0.5, 0.5, 1.0));
+        envMap.setWrap(scene, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Try3d.Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+        envMap.setFilter(scene, Try3d.Texture2DVars.S_FILTERS.S_LINEAR, Try3d.Texture2DVars.S_FILTERS.S_LINEAR);
+        envMap.setTextureFormat(Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB16F, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_RGB, Try3d.Texture2DVars.S_TEXTURE_FORMAT.S_FLOAT);
+        envMap.setImage(scene, imageData, {rgbe:true, linearFloat:true});
+        sky.getMaterial().setParam('envMap', envMap);
+        sky.getMaterial().setParam('useEnvMap', new Try3d.BoolVars().valueOf(true));
+        sky.getMaterial().setParam('useHDR', new Try3d.BoolVars().valueOf(true));
+
+        scene.setSky(sky);
+        let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'sceneControl'});
+        sceneControl.lookScene(sky);
+        sceneControl.setTargetDistance(18);
+        sceneControl.setTargetAngle(Try3d.MoreMath.toRadians(135));
+        sceneControl.focusCamera();
+        // 添加一个GI探头
+        let giProbe = new Try3d.GIProbe(scene, {id:'GIProbe'});
+        giProbe.setPositionFromXYZ(0, 0, 0);
+        rootNode.addChildren(giProbe);
+        // 捕捉环境数据
+        let envCapture = Try3d.ProbeTools.bakeGIProbe(scene, giProbe, {resolute:128});
+        // 添加一个渲染探头,将捕捉数据渲染出来
+        let refProbeGeo = new Try3d.Sphere(scene, {id:'refProbeGeo'});
+        let refProbeMat = new Try3d.Material(scene, {id:'refProbeMat', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_PROBE_INFO_DEF_DATA)});
+        refProbeMat.setParam('probeData', giProbe.getShCoeffs());
+        // let refProbeMat = new Try3d.Material(scene, {id:'refProbeMat', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_ENV_CAPTURE_OUT_DEF)});
+        // refProbeMat.setParam('envCaptureMap', envCapture.getCaptureTextureCube());
+        refProbeGeo.setMaterial(refProbeMat);
+        rootNode.addChildren(refProbeGeo);
+    });
+
+    let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
+    dirLight.setDirectionXYZ(-1, -1, 1);
+    dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+    rootNode.addChildren(dirLight);
+    let renderEngine = new Try3d.RenderEngine();
+    scene.addSceneNode(rootNode);
+    renderEngine.addScene(scene);
+    renderEngine.launch();
+    // 使用stats.js统计fps
+    let stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+    document.body.appendChild(stats.domElement);
+    scene.on('update', (exTime)=>{
+        stats.update();
+    });
+
+
+
+</script>
+</body>
+</html>

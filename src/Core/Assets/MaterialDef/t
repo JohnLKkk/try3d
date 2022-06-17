@@ -1,15 +1,127 @@
+fs:
 #version 300 es
-#define probeData probeData
+#define baseColor baseColor
+#define roughness roughness
+#define metallic metallic
 
 precision mediump float;
 
+uniform vec3 _ambientLightColor;
+uniform int _curLightCount;
+uniform vec4 _wLightData[12];
 out vec4 _outColor;
+uniform bool _blend_gi_probes;
+uniform vec4 _wGIProbe;
+uniform vec3 _ShCoeffs[9];
+uniform samplerCube _prefEnvMap;
+uniform bool _uniqueShading;
+layout (std140) uniform VIEW
+{
+vec3 _cameraPosition;
+};
+layout (std140) uniform GI_PROBES_GROUP
+{
+vec4 _probeCounts;
+vec4 _probeStartPosition;
+vec4 _probeStep;
+vec4 _probeCenter;
+vec4 _lowResolutionDownsampleFactor;
+vec4 _probeGrid[1152];
+vec4 distProbeGrid[1152];
+};
 
-in vec3 wDir;
+in vec3 wPosition;
+in vec2 wUv0;
+in vec3 wNormal;
+in vec4 wTangent;
+in vec2 wUv1;
 
-uniform vec4 color;
-uniform vec3 probeData[9];
-vec3 probeDiffuses( const in vec3 normal, const vec3 sph[9] ){
+uniform vec4 baseColor;
+uniform sampler2D baseColorMap;
+uniform float alphaDiscard;
+uniform sampler2D normalMap;
+uniform sampler2D metallicRoughnessMap;
+uniform float metallic;
+uniform float roughness;
+uniform sampler2D roughnessMap;
+uniform sampler2D metallicMap;
+uniform bool useSpecGloss;
+uniform sampler2D specularGlossinessMap;
+uniform vec4 specular;
+uniform float glossiness;
+uniform sampler2D specularMap;
+uniform sampler2D glossinessMap;
+uniform sampler2D lightMap;
+uniform bool lightMapTexCoord;
+uniform bool aoMap;
+uniform vec4 emissive;
+uniform float emissivePower;
+uniform float emissiveIntensity;
+uniform sampler2D emissiveMap;
+void ComputeLightDir(in vec3 worldPos, in float lightType, in vec4 position, out vec4 lightDir, out vec3 lightVec){
+float posLight = step(0.5f, lightType);
+
+lightVec = position.xyz * sign(posLight - 0.5f) - (worldPos * posLight);
+float dist = length(lightVec);
+
+#ifndef _C_SRGB
+lightDir.w = (1.0f - position.w * dist) / (1.0f + position.w * dist * dist);
+lightDir.w = clamp(lightDir.w, 1.0f - posLight, 1.0f);
+#else
+lightDir.w = clamp(1.0f - position.w * dist * posLight, 0.0f, 1.0f);
+#endif
+
+lightDir.xyz = lightVec / vec3(dist);
+}
+#define PI 3.14159265358979323846264
+vec3 F_Shlick(float vh,	vec3 F0){
+float fresnelFact = pow(2.0f, (-5.55473f * vh - 6.98316f) * vh);
+return mix(F0, vec3(1.0f, 1.0f, 1.0f), fresnelFact);
+}
+vec3 F_Schlick2(float cosTheta, vec3 F0)
+{
+return F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
+}
+void ComputeDirectLighting(in vec3 normal, in vec3 viewDir, in vec3 lightDir, in vec3 lightColor, in vec3 diffuseColor, in vec3 fZero, in float roughness, in float ndotv, out vec3 directLighting){
+vec3 h = normalize(lightDir + viewDir);
+float ndotl = max( dot( normal, lightDir ), 0.0f );
+float ndoth = max( dot( normal, h), 0.0f );
+float hdotv = max( dot( h, viewDir ), 0.0f );
+
+vec3 diffuse = vec3( ndotl ) * lightColor * diffuseColor;
+
+float alpha = roughness * roughness;
+
+float alpha2 = alpha * alpha;
+float sum = (( ndoth * ndoth ) * ( alpha2 - 1.0f ) + 1.0f);
+float denom = PI * sum * sum;
+float D = alpha2 / denom;
+
+vec3 F = F_Shlick( hdotv, fZero );
+
+float k = alpha * 0.5f;
+float G_V = ndotv + sqrt( ( ndotv - ndotv * k ) * ndotv + k );
+float G_L = ndotl + sqrt( ( ndotl - ndotl * k ) * ndotl + k );
+float G = 1.0f / max( G_V * G_L ,0.01f );
+
+float t = D * G * ndotl;
+vec3 specular =  vec3( t ) * F * lightColor;
+
+directLighting = diffuse + specular;
+}
+float ComputeSpotFalloff(in vec4 spotDirection, in vec3 lightDir){
+float curAngleCos = dot(lightDir, -spotDirection.xyz);
+float innerAngleCos = floor(spotDirection.w) * 0.001f;
+float outerAngleCos = fract(spotDirection.w);
+float innerMinusOuter = innerAngleCos - outerAngleCos;
+
+#ifndef _C_SRGB
+return pow(clamp((curAngleCos - outerAngleCos) / innerMinusOuter, 0.0f, 1.0f), 4.0f);
+#else
+return clamp((curAngleCos - outerAngleCos) / innerMinusOuter, step(spotDirection.w, 0.001f), 1.0f);
+#endif
+}
+vec3 sphericalHarmonics( const in vec3 normal, const vec3 sph[9] ){
 float x = normal.x;
 float y = normal.y;
 float z = normal.z;
@@ -30,12 +142,307 @@ sph[8] * (x*x - y*y)
 
 return max(result, vec3(0.0f));
 }
+vec3 getSpecularDominantDir(const in vec3 N, const in vec3 R, const in float realRoughness){
+
+float smoothness = 1.0f - realRoughness;
+float lerpFactor = smoothness * (sqrt(smoothness) + realRoughness);
+vec3 dominant = mix(N, R, lerpFactor);
+
+return dominant;
+}
+vec3 integrateBRDFApprox( const in vec3 specular, in float roughness, in float NoV ){
+const vec4 c0 = vec4( -1.0f, -0.0275f, -0.572f, 0.022f );
+const vec4 c1 = vec4( 1.0f, 0.0425f, 1.04f, -0.04f );
+vec4 r = roughness * c0 + c1;
+float a004 = min( r.x * r.x, exp2( -9.28f * NoV ) ) * r.x + r.y;
+vec2 ab = vec2( -1.04f, 1.04f ) * a004 + r.zw;
+return specular * ab.x + ab.y;
+}
+vec3 approximateSpecularIBLPolynomial(in samplerCube envMap, in vec3 specularColor , in float roughness, in float ndotv, in vec3 refVec, in float mipMaps){
+float lod = sqrt( roughness ) * (mipMaps - 1.0f);
+vec3 prefilteredColor = textureLod(envMap, refVec.xyz, lod).rgb;
+return prefilteredColor * integrateBRDFApprox(specularColor, roughness, ndotv);
+}
+ivec3 baseGridCoord(in vec3 probeStartPosition, in vec3 probeCounts, in vec3 probeStep, vec3 X){
+return clamp(ivec3((X - probeStartPosition) / probeStep), ivec3(0, 0, 0), ivec3(probeCounts) - ivec3(1, 1, 1));
+}
+vec3 gridCoordToPosition(in vec3 probeStartPosition, in vec3 probeStep, ivec3 c) {
+return probeStep * vec3(c) + probeStartPosition;
+}
+int gridCoordToProbeIndex(in vec3 probeCounts, in vec3 probeCoords) {
+return int(probeCoords.x + probeCoords.y * float(probeCounts.x) + probeCoords.z * float(probeCounts.x) * float(probeCounts.y));
+}
+vec3 irradianceProbeData( const in vec3 normal, const in vec4 probeData[1152], int probeId ){
+float x = normal.x;
+float y = normal.y;
+float z = normal.z;
+
+int i = probeId * 12;
+vec3 result = (
+probeData[i + 0] +
+
+probeData[i + 1] * y +
+probeData[i + 2] * z +
+probeData[i + 4] * x +
+
+probeData[i + 5] * y * x +
+probeData[i + 6] * y * z +
+probeData[i + 8] * (3.0f * z * z - 1.0f) +
+probeData[i + 9] * (z * x) +
+probeData[i + 10] * (x*x - y*y)
+);
+
+return max(result, vec3(0.0f));
+}
+#define GAMMA 2.2f
+#define GAMMA_T 1.0f / GAMMA
 void main(){
-_outColor = vec4(1.0f);
-#ifdef color
-_outColor = color;
+vec4 lightColor;
+vec4 lightData1;
+vec4 lightDir = vec4(0.0f);
+vec3 lightVec = vec3(0.0f);
+vec3 directLighting = vec3(0.0f);
+vec3 viewDir = normalize(_cameraPosition.xyz - wPosition.xyz);
+
+#ifdef baseColor
+#ifdef baseColorMap
+vec4 albedo = texture(baseColorMap, wUv0) * baseColor * vec4(_ambientLightColor, 1.0);
+#else
+vec4 albedo = baseColor * vec4(_ambientLightColor, 1.0);
 #endif
-#ifdef probeData
-_outColor = probeDiffuses(wDir, probeData);
+#else
+#ifdef baseColorMap
+vec4 albedo = texture(baseColorMap, wUv0) * vec4(_ambientLightColor, 1.0);
+#else
+vec4 albedo = vec4(1.0f) * vec4(_ambientLightColor, 1.0);
 #endif
+#endif
+
+#ifdef alphaDiscard
+if(albedo.a < alphaDiscard){
+discard;
+}
+#endif
+
+vec3 normal = wNormal;
+#ifdef normalMap
+vec3 normalHeight = texture(normalMap, wUv0).xyz;
+vec3 tangent = normalize(wTangent.xyz);
+mat3 tbnMat = mat3(tangent, wTangent.w * cross(normal, tangent), normal);
+normal = normalize(tbnMat * ( normalHeight * 2.0f - 1.0f ));
+#endif
+
+#ifdef metallicRoughnessMap
+vec2 rm = texture(metallicRoughnessMap, wUv0).gb;
+#ifdef roughness
+float _roughness = rm.x * max(roughness, 1e-4);
+#else
+float _roughness = rm.x;
+#endif
+#ifdef metallic
+float _metallic = rm.y * max(metallic, 0.0f);
+#else
+float _metallic = rm.y;
+#endif
+#else
+#ifdef roughnessMap
+#ifdef roughness
+float _roughness = texture(roughnessMap, wUv0).r * max(roughness, 1e-4);
+#else
+float _roughness = texture(roughnessMap, wUv0).r;
+#endif
+#else
+#ifdef roughness
+float _roughness = max(roughness, 1e-4);
+#else
+float _roughness = 1.0f;
+#endif
+#endif
+#ifdef metallicMap
+#ifdef metallic
+float _metallic = texture(metallicMap, wUv0).r * max(metallic, 0.0f);
+#else
+float _metallic = texture(metallicMap, wUv0).r;
+#endif
+#else
+#ifdef metallic
+float _metallic = max(metallic, 0.0f);
+#else
+float _metallic = 1.0f;
+#endif
+#endif
+#endif
+
+#ifdef useSpecGloss
+#ifdef specularGlossinessMap
+vec4 _specularColor = texture(specularGlossinessMap, wUv0);
+#ifdef glossiness
+float _glossiness = _specularColor.a * glossiness;
+#else
+float _glossiness = _specularColor.a;
+#endif
+#ifdef specular
+_specularColor *= specular;
+#endif
+#else
+#ifdef specularMap
+vec4 _specularColor = texture(specularMap, wUv0);
+#else
+vec4 _specularColor = vec4(1.0f);
+#endif
+#ifdef specular
+_specularColor *= specular;
+#endif
+#ifdef glossinessMap
+#ifdef glossiness
+float _glossiness = texture(glossinessMap, wUv0).r * glossiness;
+#else
+float _glossiness = texture(glossinessMap, wUv0).r;
+#endif
+#else
+#ifdef glossiness
+float _glossiness = glossiness;
+#else
+float _glossiness = 1.0f;
+#endif
+#endif
+#endif
+vec4 _diffuseColor = albedo;
+_roughness = 1.0f - _glossiness;
+vec3 fZero = _specularColor.rgb;
+#else
+float nonMetalSpec = 0.04f;
+vec4 _specularColor = (nonMetalSpec - nonMetalSpec * _metallic) + albedo * _metallic;
+vec4 _diffuseColor = albedo - albedo * _metallic;
+vec3 fZero = vec3( 0.5f );
+#endif
+
+#ifdef lightMap
+vec3 _lightMapColor;
+#ifdef lightMapTexCoord
+_lightMapColor = texture(lightMap, wUv1).rgb;
+#else
+_lightMapColor = texture(lightMap, wUv0).rgb;
+#endif
+#ifdef aoMap
+_lightMapColor.gb = _lightMapColor.rr;
+vec3 ao = _lightMapColor;
+#else
+_specularColor.rgb *= _lightMapColor;
+_diffuseColor.rgb  *= _lightMapColor;
+vec3 ao = vec3(1.0f);
+#endif
+#else
+vec3 ao = vec3(1.0f);
+#endif
+
+float ndotv = max( dot( normal, viewDir ), 0.0f );
+for( int i = 0;i < _curLightCount;i+=3 ){
+lightColor = _wLightData[i];
+lightData1 = _wLightData[i + 1];
+ComputeLightDir(wPosition, lightColor.w, lightData1, lightDir, lightVec);
+
+float spotFallOff = 1.0 * lightDir.w;
+if( lightColor.w > 1.0f )
+{
+spotFallOff = ComputeSpotFalloff( _wLightData[i + 2], lightDir.xyz );
+}
+
+ComputeDirectLighting(normal, viewDir, lightDir.xyz, lightColor.rgb, _diffuseColor.rgb, fZero, _roughness, ndotv, directLighting);
+_outColor.rgb += directLighting * spotFallOff;
+}
+
+if(_blend_gi_probes){
+#ifdef _C_GIPROBES
+
+vec3 _rv = reflect( -viewDir.xyz, normal.xyz );
+float _r = fract( _wGIProbe.w );
+float _mipMaps = _wGIProbe.w - _r;
+_rv = _r * ( wPosition.xyz - _wGIProbe.xyz ) + _rv;
+
+vec3 giLighting = sphericalHarmonics(normal.xyz, _ShCoeffs) * _diffuseColor.rgb;
+
+float horiz = dot(_rv, wNormal);
+float horizFadePower = 1.0f - _roughness;
+horiz = clamp( 1.0f + horizFadePower * horiz, 0.0f, 1.0f );
+horiz *= horiz;
+
+vec3 _dominantR = getSpecularDominantDir( normal, _rv.xyz, _roughness * _roughness );
+giLighting += approximateSpecularIBLPolynomial(_prefEnvMap, _specularColor.rgb, _roughness, ndotv, _dominantR, _mipMaps) * vec3( horiz );
+giLighting *= ao;
+
+_outColor.rgb += giLighting * step( 0.0f, _wGIProbe.w );
+#endif
+#ifdef _C_GI_PROBES_GROUP
+if(_probeCounts.x > 0.0f){
+
+vec3 giLighting = vec3(0.0f);
+ivec3 _baseGridCoord = baseGridCoord(_probeStartPosition.xyz, _probeCounts.xyz, _probeStep.xyz, wPosition.xyz);
+vec3 _baseProbePos = gridCoordToPosition(_probeStartPosition.xyz, _probeStep.xyz, _baseGridCoord);
+float sumWeight = 0.0f;
+vec3 alpha = clamp((wPosition.xyz - _baseProbePos) / _probeStep.xyz, vec3(0.0f), vec3(1.0f));
+for (int i = 0; i < 8; ++i) {
+ivec3 offset = ivec3(i, i >> 1, i >> 2) & ivec3(1);
+ivec3 probeGridCoord = clamp(_baseGridCoord + offset, ivec3(0), ivec3(_probeCounts.xyz - 1.0f));
+int p = gridCoordToProbeIndex(_probeCounts.xyz, vec3(probeGridCoord));
+
+vec3 trilinear = mix(1.0f - alpha, alpha, vec3(offset));
+float weight = trilinear.x * trilinear.y * trilinear.z;
+
+vec3 probePos = gridCoordToPosition(_probeStartPosition.xyz, _probeStep.xyz, probeGridCoord);
+vec3 probeToPoint = wPosition.xyz - probePos;
+vec3 dir = normalize(-probeToPoint);
+
+weight *= max(0.05f, dot(dir, wNormal));
+
+weight = max(0.0002, weight);
+
+sumWeight += weight;
+
+vec3 irradianceDir = normalize(wNormal);
+
+vec3 probeIrradiance = irradianceProbeData(irradianceDir, _probeGrid, p);
+giLighting += weight * probeIrradiance;
+}
+
+
+
+}
+#endif
+}
+
+if(_uniqueShading){
+#ifdef emissive
+float _emissivePower = 3.0f;
+#ifdef emissivePower
+_emissivePower = emissivePower;
+#endif
+float _emissiveIntensity = 2.0f;
+#ifdef emissiveIntensity
+_emissiveIntensity = emissiveIntensity;
+#endif
+#ifdef emissiveMap
+vec4 eMap = texture(emissiveMap, wUv0);
+_outColor.rgb += emissive.rgb * eMap.rgb * pow(emissive.a * eMap.a, _emissivePower) * _emissiveIntensity;
+#else
+_outColor.rgb += emissive.rgb * pow(emissive.a, _emissivePower) * _emissiveIntensity;
+#endif
+#else
+#ifdef emissiveMap
+float _emissivePower = 3.0f;
+#ifdef emissivePower
+_emissivePower = emissivePower;
+#endif
+float _emissiveIntensity = 2.0f;
+#ifdef emissiveIntensity
+_emisiveIntensity = emissiveIntensity;
+#endif
+vec4 eMap = texture(emissiveMap, wUv0);
+_outColor.rgb += eMap.rgb * pow(eMap.a, _emissivePower) * _emissiveIntensity;
+#endif
+#endif
+}
+
+_outColor.a = albedo.a;
+
 }

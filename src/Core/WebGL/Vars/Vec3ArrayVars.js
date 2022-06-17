@@ -15,8 +15,8 @@ export default class Vec3ArrayVars extends Vars{
         if(!props.length){
             props.length = 1;
         }
-        this._m_Length = props.length;
-        this._m_Array = new Float32Array(this._m_Length * 3);
+        this._m_Length = props.length * 3;
+        this._m_Array = new Float32Array(this._m_Length);
     }
     valueFromXYZ(index, x, y, z){
         let array = this._m_Array;

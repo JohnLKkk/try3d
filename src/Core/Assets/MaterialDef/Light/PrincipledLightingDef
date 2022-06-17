@@ -215,6 +215,40 @@ Def PrincipledLightingDef{
                 vec3 prefilteredColor = textureLod(envMap, refVec.xyz, lod).rgb;
                 return prefilteredColor * integrateBRDFApprox(specularColor, roughness, ndotv);
             }
+            // Begin_LightProbes
+            ivec3 baseGridCoord(in vec3 probeStartPosition, in vec3 probeCounts, in vec3 probeStep, vec3 X){
+                return clamp(ivec3((X - probeStartPosition) / probeStep), ivec3(0, 0, 0), ivec3(probeCounts) - ivec3(1, 1, 1));
+            }
+            vec3 gridCoordToPosition(in vec3 probeStartPosition, in vec3 probeStep, ivec3 c) {
+                return probeStep * vec3(c) + probeStartPosition;
+            }
+            // 返回探针在光场的编号
+            int gridCoordToProbeIndex(in vec3 probeCounts, in vec3 probeCoords) {
+                return int(probeCoords.x + probeCoords.y * float(probeCounts.x) + probeCoords.z * float(probeCounts.x) * float(probeCounts.y));
+            }
+            vec3 irradianceProbeData( const in vec3 normal, const in vec4 probeData[1152], int probeId ){
+                float x = normal.x;
+                float y = normal.y;
+                float z = normal.z;
+
+                int i = probeId * 9;
+                vec3 result = (
+                    probeData[i + 0].xyz +
+
+                    probeData[i + 1].xyz * y +
+                    probeData[i + 2].xyz * z +
+                    probeData[i + 3].xyz * x +
+
+                    probeData[i + 4].xyz * y * x +
+                    probeData[i + 5].xyz * y * z +
+                    probeData[i + 6].xyz * (3.0f * z * z - 1.0f) +
+                    probeData[i + 7].xyz * (z * x) +
+                    probeData[i + 8].xyz * (x*x - y*y)
+                );
+
+                return max(result, vec3(0.0f));
+            }
+            // End_LightProbes
             #define GAMMA 2.2f
             #define GAMMA_T 1.0f / GAMMA
             void main(){
@@ -404,7 +438,65 @@ Def PrincipledLightingDef{
                     #endif
                     #ifdef Context.GI_ProbesGroup
                         // GIProbes
-                        Context.OutColor.rgb = Context.ProbeCounts;
+                        if(Context.ProbeCounts.x > 0.0f){
+                            // 计算反射视线
+                            //vec3 _rv = reflect( -viewDir.xyz, normal.xyz );
+                            //float _r = fract( Context.ProbeCenter.w );
+                            //float _mipMaps = Context.ProbeCenter.w - _r;
+                            //_rv = _r * ( wPosition.xyz - Context.ProbeCenter.xyz ) + _rv;
+
+                            vec3 giLighting = vec3(0.0f);
+                            // PrefilteredIrradiance
+                            ivec3 _baseGridCoord = baseGridCoord(Context.ProbeStartPosition.xyz, Context.ProbeCounts.xyz, Context.ProbeStep.xyz, wPosition.xyz);
+                            vec3 _baseProbePos = gridCoordToPosition(Context.ProbeStartPosition.xyz, Context.ProbeStep.xyz, _baseGridCoord);
+                            float sumWeight = 0.0f;
+                            // 三线性插值因子
+                            vec3 alpha = clamp((wPosition.xyz - _baseProbePos) / Context.ProbeStep.xyz, vec3(0.0f), vec3(1.0f));
+                            // 遍历周围8个探针
+                            for (int i = 0; i < 8; ++i) {
+                                // 遍历获取相邻的探针编号
+                                ivec3 offset = ivec3(i, i >> 1, i >> 2) & ivec3(1);
+                                ivec3 probeGridCoord = clamp(_baseGridCoord + offset, ivec3(0), ivec3(Context.ProbeCounts.xyz - 1.0f));
+                                int p = gridCoordToProbeIndex(Context.ProbeCounts.xyz, vec3(probeGridCoord));
+
+                                // 根据网格单元顶点计算三线性权重，以在探针之间平滑过渡。 避免完全归零，因为这会导致边境调查出现问题。
+                                vec3 trilinear = mix(1.0f - alpha, alpha, vec3(offset));
+                                float weight = trilinear.x * trilinear.y * trilinear.z;
+
+                                // 相对于从表面到探头的角度，在切平面上进行余弦衰减，这样我们就永远不会测试在表面*后面*的探头。 它不一定是余弦，但计算起来很有效，我们必须剪裁到切平面。
+                                vec3 probePos = gridCoordToPosition(Context.ProbeStartPosition.xyz, Context.ProbeStep.xyz, probeGridCoord);
+                                vec3 probeToPoint = wPosition.xyz - probePos;
+                                vec3 dir = normalize(-probeToPoint);
+
+                                // 平滑背面测试
+                                weight *= max(0.05f, dot(dir, wNormal));
+
+                                // 避免零
+                                weight = max(0.0002f, weight);
+
+                                sumWeight += weight;
+
+                                vec3 irradianceDir = normalize(normal.xyz);
+
+                                vec3 probeIrradiance = irradianceProbeData(irradianceDir, Context.ProbeGrid, p);
+                                giLighting += weight * probeIrradiance;
+                            }
+                            //vec3 giLighting = alpha * _diffuseColor.rgb;
+                            giLighting = 2.0f * PI * giLighting / sumWeight;
+
+                            //float horiz = dot(_rv, wNormal);
+                            //float horizFadePower = 1.0f - _roughness;
+                            //horiz = clamp( 1.0f + horizFadePower * horiz, 0.0f, 1.0f );
+                            //horiz *= horiz;
+
+                            //vec3 _dominantR = getSpecularDominantDir( normal, _rv.xyz, _roughness * _roughness );
+                            //giLighting += approximateSpecularIBLPolynomial(Context.InPrefEnvMap, _specularColor.rgb, _roughness, ndotv, _dominantR, _mipMaps) * vec3( horiz );
+                            //giLighting *= ao;
+
+                            //Context.OutColor.rgb += giLighting * step( 0.0f, Context.ProbeCenter.w );
+                            Context.OutColor.rgb += giLighting * _diffuseColor.rgb;
+                        }
+                        //Context.OutColor.rgb = Context.ProbeCounts;
                     #endif
                 }
 

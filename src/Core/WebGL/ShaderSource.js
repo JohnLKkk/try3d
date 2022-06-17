@@ -192,17 +192,19 @@ export default class ShaderSource {
     static S_PROBE_COUNTS = '_probeCounts';
     static S_PROBE_START_POSITION = '_probeStartPosition';
     static S_PROBE_STEP = '_probeStep';
+    static S_PROBE_CENTER = '_probeCenter';
     static S_LOW_RESOLUTION_DOWNSAMPLE_FACTOR = '_lowResolutionDownsampleFactor';
     static S_PROBE_GRID = "_probeGrid";
     static S_DIST_PROBE_GRID = "distProbeGrid";
     static GI_PROBES_GROUP = "layout (std140) uniform GI_PROBES_GROUP\n" +
         "{\n" +
-        "vec3 " + ShaderSource.S_PROBE_COUNTS + ";\n" +
-        "vec3 " + ShaderSource.S_PROBE_START_POSITION + ";\n" +
-        "vec3 " + ShaderSource.S_PROBE_STEP + ";\n" +
-        "vec3 " + ShaderSource.S_LOW_RESOLUTION_DOWNSAMPLE_FACTOR + ";\n" +
-        "vec3 " + ShaderSource.S_PROBE_GRID + "[256];\n" +
-        "vec3 " + ShaderSource.S_DIST_PROBE_GRID + "[256];\n" +
+        "vec4 " + ShaderSource.S_PROBE_COUNTS + ";\n" +
+        "vec4 " + ShaderSource.S_PROBE_START_POSITION + ";\n" +
+        "vec4 " + ShaderSource.S_PROBE_STEP + ";\n" +
+        "vec4 " + ShaderSource.S_PROBE_CENTER + ";\n" +
+        "vec4 " + ShaderSource.S_LOW_RESOLUTION_DOWNSAMPLE_FACTOR + ";\n" +
+        "vec4 " + ShaderSource.S_PROBE_GRID + "[1152];\n" +
+        "vec4 " + ShaderSource.S_DIST_PROBE_GRID + "[1152];\n" +
         "};\n";
     static BLOCKS = {
         'MAT':{blockIndex:0x001, blockDef:ShaderSource.MAT},
@@ -732,6 +734,7 @@ export default class ShaderSource {
         "Context.ProbeCounts":{src:ShaderSource.S_PROBE_COUNTS, pattern:/Context.ProbeCounts/, pattern2:/Context.ProbeCounts[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ProbeCounts/g, tag:ShaderSource.S_PROBE_COUNTS, def:'GI_PROBES_GROUP'},
         "Context.ProbeStartPosition":{src:ShaderSource.S_PROBE_START_POSITION, pattern:/Context.ProbeStartPosition/, pattern2:/Context.ProbeStartPosition[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ProbeStartPosition/g, tag:ShaderSource.S_PROBE_START_POSITION, def:'GI_PROBES_GROUP'},
         "Context.ProbeStep":{src:ShaderSource.S_PROBE_STEP, pattern:/Context.ProbeStep/, pattern2:/Context.ProbeStep[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ProbeStep/g, tag:ShaderSource.S_PROBE_STEP, def:'GI_PROBES_GROUP'},
+        "Context.ProbeCenter":{src:ShaderSource.S_PROBE_CENTER, pattern:/Context.ProbeCenter/, pattern2:/Context.ProbeCenter[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ProbeCenter/g, tag:ShaderSource.S_PROBE_CENTER, def:'GI_PROBES_GROUP'},
         "Context.LowResolutionDownsampleFactor":{src:ShaderSource.S_LOW_RESOLUTION_DOWNSAMPLE_FACTOR, pattern:/Context.LowResolutionDownsampleFactor/, pattern2:/Context.LowResolutionDownsampleFactor[\s+-;.,\*\\]{1,}/, tagPattern:/Context.LowResolutionDownsampleFactor/g, tag:ShaderSource.S_LOW_RESOLUTION_DOWNSAMPLE_FACTOR, def:'GI_PROBES_GROUP'},
         "Context.ProbeGrid":{src:ShaderSource.S_PROBE_GRID, pattern:/Context.ProbeGrid/, pattern2:/Context.ProbeGrid[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ProbeGrid/g, tag:ShaderSource.S_PROBE_GRID, def:'GI_PROBES_GROUP'},
         "Context.DistProbeGrid":{src:ShaderSource.S_DIST_PROBE_GRID, pattern:/Context.DistProbeGrid/, pattern2:/Context.DistProbeGrid[\s+-;.,\*\\]{1,}/, tagPattern:/Context.DistProbeGrid/g, tag:ShaderSource.S_DIST_PROBE_GRID, def:'GI_PROBES_GROUP'},

@@ -143,6 +143,8 @@ export default class Canvas extends Component{
         gl.cullFace(gl.BACK);
         // <=
         gl.depthFunc(gl.LEQUAL);
+        let MAX_UNIFORM_BLOCK_SIZE = gl.getParameter(gl.MAX_UNIFORM_BLOCK_SIZE);
+        console.log('MAX_UNIFORM_BLOCK_SIZE:' + MAX_UNIFORM_BLOCK_SIZE);
     }
 
     /**

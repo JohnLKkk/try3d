@@ -966,6 +966,14 @@ export default class Render extends Component{
     }
 
     /**
+     * 返回当前gamma编码因子。<br/>
+     * @return {Number}
+     */
+    getGameFactor(){
+        return this._m_GammaFactor;
+    }
+
+    /**
      * 执行渲染调用,先判断是否需要重新构建渲染列表,然后判断是否需要优化排序,以便把所有材质一致的渲染元素排列在一起,加速渲染调用。<br/>
      * @param exTime
      */
