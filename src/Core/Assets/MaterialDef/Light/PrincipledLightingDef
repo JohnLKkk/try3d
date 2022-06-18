@@ -456,7 +456,7 @@ Def PrincipledLightingDef{
                             for (int i = 0; i < 8; ++i) {
                                 // 遍历获取相邻的探针编号
                                 ivec3 offset = ivec3(i, i >> 1, i >> 2) & ivec3(1);
-                                ivec3 probeGridCoord = clamp(_baseGridCoord + offset, ivec3(0), ivec3(Context.ProbeCounts.xyz - 1.0f));
+                                ivec3 probeGridCoord = clamp(_baseGridCoord + offset, ivec3(0), ivec3(ceil(Context.ProbeCounts.xyz) - 1.0f));
                                 int p = gridCoordToProbeIndex(Context.ProbeCounts.xyz, vec3(probeGridCoord));
 
                                 // 根据网格单元顶点计算三线性权重，以在探针之间平滑过渡。 避免完全归零，因为这会导致边境调查出现问题。
@@ -478,7 +478,7 @@ Def PrincipledLightingDef{
 
                                 vec3 irradianceDir = normalize(normal.xyz);
 
-                                vec3 probeIrradiance = irradianceProbeData(irradianceDir, Context.ProbeGrid, p);
+                                vec3 probeIrradiance = irradianceProbeData(irradianceDir, Context.ProbeGrid, p) * Context.ProbeCounts.w;
                                 giLighting += weight * probeIrradiance;
                             }
                             //vec3 giLighting = alpha * _diffuseColor.rgb;
@@ -495,6 +495,7 @@ Def PrincipledLightingDef{
 
                             //Context.OutColor.rgb += giLighting * step( 0.0f, Context.ProbeCenter.w );
                             Context.OutColor.rgb += giLighting * _diffuseColor.rgb;
+                            //Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));
                         }
                         //Context.OutColor.rgb = Context.ProbeCounts;
                     #endif

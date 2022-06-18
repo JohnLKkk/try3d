@@ -40,10 +40,11 @@ export default class GIProbes extends Probe{
     constructor(owner, cfg) {
         super(owner, cfg);
         this._m_ProbeOrigin = new Vector3();
-        this._m_ProbeCount = new Vector3(4, 4, 4);
+        this._m_ProbeCount = new Vector4(4, 4, 4, 1.0);
         this._m_ProbeStep = new Vector3(2, 2, 2);
         this._m_ProbeCenter = new Vector4();
         this._m_ProbeRange = 0;
+        this._m_DiffuseGIIntensity = 1.0;
         if(cfg.probeOrigin){
             this._m_ProbeOrigin.setTo(cfg.probeOrigin);
         }
@@ -60,6 +61,15 @@ export default class GIProbes extends Probe{
         this._m_PrefilterMipmap = 0;
         this._m_Bounding = new BoundingSphere();
         this._m_Change = false;
+    }
+
+    /**
+     * 设置漫反射GI强度。<br/>
+     * @param {Number}[giIntensity]
+     */
+    setDiffuseGIIntensity(giIntensity){
+        this._m_DiffuseGIIntensity = giIntensity;
+        this._m_ProbeCount._m_W = this._m_DiffuseGIIntensity;
     }
 
     /**
@@ -123,7 +133,7 @@ export default class GIProbes extends Probe{
 
     /**
      * 返回探头数目。<br/>
-     * @returns {Vector3}
+     * @returns {Vector4}
      */
     getProbeCount(){
         return this._m_ProbeCount;

@@ -176,7 +176,7 @@ class EnvCapture {
     /**
      * 捕捉环境数据。<br/>
      */
-    captureProbe(position, final, captureScene){
+    captureProbe(position, final, captureScene, skipSky){
         const gl = this._m_Scene.getCanvas().getGLContext();
         // 以便编译材质
         this._m_Scene.getRender()._resetFrameContext();
@@ -187,6 +187,10 @@ class EnvCapture {
 
         if(!captureScene){
             render.setViewPort(gl, 0, 0, this._m_Resolute, this._m_Resolute);
+        }
+        let oldSky = render.getSky();
+        if(skipSky){
+            render.setSky(null);
         }
         let at = new Vector3();
         for(let i = 0;i < 6;i++){
@@ -219,6 +223,9 @@ class EnvCapture {
             this._m_CaptureResult.setWrap(this._m_Scene, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE);
 
         this._m_Scene.setMainCamera(mainCamera);
+        if(skipSky && oldSky){
+            render.setSky(oldSky);
+        }
         if(captureScene)
             this._m_Scene.getRender().useCustomDefaultFrame(null);
         this._m_Scene.getRender().useDefaultFrame();
@@ -407,14 +414,15 @@ export default class ProbeTools {
      * @param {EnvCapture}[envCapture]
      * @param {Vector3}[probeLocation]
      * @param {Boolean}[captureScene]
+     * @param {Boolean}[skipSky]
      * @param {Boolean}[final]
      * @param {Number}[options.resolute 分辨率,默认256]
      */
-    static captureProbes(scene, envCapture, probeLocation, final, captureScene, options){
+    static captureProbes(scene, envCapture, probeLocation, final, captureScene, skipSky, options){
         // 创建捕捉镜头
         const gl = scene.getCanvas().getGLContext();
         let resolute = (options && options.resolute != null) ? options.resolute : ProbeTools._S_DEFAULT_CAPTURE_RESOLUTE;
-        envCapture.captureProbe(probeLocation, final, captureScene);
+        envCapture.captureProbe(probeLocation, final, captureScene, skipSky);
         return envCapture;
     }
     static bakeGIProbes(scene, giProbes, options){
@@ -422,6 +430,7 @@ export default class ProbeTools {
         options.mipmap = true;
         giProbes.reset();
         let captureScene = true;
+        let skipSky = true;
         let resolute = (options && options.resolute != null) ? options.resolute : ProbeTools._S_DEFAULT_CAPTURE_RESOLUTE;
         let probeLocations = ProbeTools.placeProbes(giProbes.getProbeOrigin(), giProbes.getProbeCount(), giProbes.getProbeStep());
         let envCapture = new EnvCapture(scene, resolute, giProbes.getProbeOrigin(), options.mipmap);
@@ -431,13 +440,13 @@ export default class ProbeTools {
         for(let i = 0,size = probeLocations.length;i < size;i++){
             // 开始捕捉
             Log.time('capture probe[' + i + ']');
-            envCapture = ProbeTools.captureProbes(scene, envCapture, probeLocations[i], false, captureScene, options);
+            envCapture = ProbeTools.captureProbes(scene, envCapture, probeLocations[i], false, captureScene, skipSky, options);
             Log.timeEnd('capture probe[' + i + ']');
             // 可以在子线程中进行
             // 计算球谐系数
             Log.time('shCoeffs[' + i + ']');
             let shCoeffs = ProbeTools.getShCoeffs(resolute, resolute, envCapture.getCapturePixels(), ProbeTools._S_FIX_SEAMS_METHOD.Wrap);
-            ProbeTools.prepareShCoefs(shCoeffs);
+            ProbeTools.prepareShCoefs(shCoeffs, 1);
             giProbes.setShCoeffsIndex(i, shCoeffs);
             Log.timeEnd('shCoeffs[' + i + ']');
         }
@@ -622,13 +631,17 @@ export default class ProbeTools {
     /**
      * 准备球谐系数。<br/>
      * @param {Vector3[]}[shCoefs]
+     * @param {Number}[factor]
      */
-    static prepareShCoefs(shCoefs){
+    static prepareShCoefs(shCoefs, factor){
 
         const sqrtPi = ProbeTools._S_SQRT_PI;
         const sqrt3Pi = ProbeTools._S_SQRT_3PI;
         const sqrt5Pi = ProbeTools._S_SQRT_5PI;
         const sqrt15Pi = ProbeTools._S_SQRT_15PI;
+        if(!factor){
+            factor = -1;
+        }
 
         let coef0 = (1.0 / (2.0 * sqrtPi));
         let coef1 = -sqrt3Pi / 2.0;
@@ -643,10 +656,10 @@ export default class ProbeTools {
         // 不知为何，这里有个地方算得有问题，暂时只能通过*-1来修复
         shCoefs[0].multLength(coef0).multLength(ProbeTools._S_SH_BAND_FACTOR[0]);
         shCoefs[1].multLength(coef1).multLength(ProbeTools._S_SH_BAND_FACTOR[1]);
-        shCoefs[2].multLength(-coef2).multLength(ProbeTools._S_SH_BAND_FACTOR[2]);
-        shCoefs[3].multLength(-coef3).multLength(ProbeTools._S_SH_BAND_FACTOR[3]);
-        shCoefs[4].multLength(-coef4).multLength(ProbeTools._S_SH_BAND_FACTOR[4]);
-        shCoefs[5].multLength(-coef5).multLength(ProbeTools._S_SH_BAND_FACTOR[5]);
+        shCoefs[2].multLength(factor * coef2).multLength(ProbeTools._S_SH_BAND_FACTOR[2]);
+        shCoefs[3].multLength(factor * coef3).multLength(ProbeTools._S_SH_BAND_FACTOR[3]);
+        shCoefs[4].multLength(factor * coef4).multLength(ProbeTools._S_SH_BAND_FACTOR[4]);
+        shCoefs[5].multLength(factor * coef5).multLength(ProbeTools._S_SH_BAND_FACTOR[5]);
         shCoefs[6].multLength(coef6).multLength(ProbeTools._S_SH_BAND_FACTOR[6]);
         shCoefs[7].multLength(coef7).multLength(ProbeTools._S_SH_BAND_FACTOR[7]);
         shCoefs[8].multLength(coef8).multLength(ProbeTools._S_SH_BAND_FACTOR[8]);
@@ -844,7 +857,7 @@ export default class ProbeTools {
         store.normal();
         return store;
     }
-    static bakeProbes(scene, giProbes){
+    static getProbesLocations(scene, giProbes){
         return ProbeTools.placeProbes(giProbes.getProbeOrigin(), giProbes.getProbeCount(), giProbes.getProbeStep());
     }
 

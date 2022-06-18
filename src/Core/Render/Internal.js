@@ -46,7 +46,7 @@ export default class Internal {
         '                #endif\n' +
         '                // 使用probe数据\n' +
         '                #ifdef Params.probeData\n' +
-        '                    Context.OutColor = vec4(probeDiffuses(wDir, Params.probeData), 1.0f);\n' +
+        '                    Context.OutColor = vec4(vec3(length(probeDiffuses(wDir, Params.probeData))), 1.0f);\n' +
         '                #endif\n' +
         '            }\n' +
         '        }\n' +

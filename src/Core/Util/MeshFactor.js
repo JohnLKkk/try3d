@@ -14,6 +14,7 @@ import Material from "../Material/Material.js";
 import Vec4Vars from "../WebGL/Vars/Vec4Vars.js";
 import MaterialDef from "../Material/MaterialDef.js";
 import Internal from "../Render/Internal.js";
+import Geometry from "../Node/Geometry.js";
 
 export default class MeshFactor {
     static count = 0;
@@ -36,15 +37,293 @@ export default class MeshFactor {
         if(!matDef){
             matDef = MaterialDef.parse(Internal.S_PROBE_INFO_DEF_DATA);
         }
+        // probeGroups
+        let positions = [];
+        let indices = [];
         for(let i = 0;i < probeLocations.length;i++){
+            // positions.push(probeLocations[i]._m_X);
+            // positions.push(probeLocations[i]._m_Y);
+            // positions.push(probeLocations[i]._m_Z);
+            // indices.push(i);
+
             let mat = new Material(scene, {id:'probe_mat_' + Tools.nextId(), materialDef:matDef});
             // mat.setParam('color', new Vec4Vars().valueFromXYZW(0.7, 0.7, 0.7, 1.0));
             mat.setParam('probeData', giProbes.getShCoeffsIndex(i));
             let probe = new Sphere(giProbesNode, {id:'probe_' + Tools.nextId(), radius:0.15, widthSegments: 5, heightSegments: 5});
+            probe.receiveShadow(false);
+            probe.castShadow(false);
             probe.setMaterial(mat);
             probe.setLocalTranslation(probeLocations[i]);
             giProbesNode.addChildren(probe);
         }
+        let comp = (v1, v2)=>{
+            return (v1.distance(v2) <= 0.1);
+        };
+        let findProbe = (probeLocation)=>{
+            for(let i = 0;i < probeLocations.length;i++){
+                if(comp(probeLocation, probeLocations[i])){
+                    return i;
+                }
+            }
+            return 0;
+        };
+        let v = new Vector3();
+        let probeStep = giProbes.getProbeStep();
+        let n = 0, n2 = 0;
+        for(let i = 0;i < probeLocations.length;i++){
+            // 查找周围18个probe
+
+            v.setToInXYZ(probeLocations[i]._m_X + probeStep._m_X, probeLocations[i]._m_Y, probeLocations[i]._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 1
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+            v.setToInXYZ(probeLocations[i]._m_X, probeLocations[i]._m_Y, probeLocations[i]._m_Z + probeStep._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 2
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+            v.setToInXYZ(probeLocations[i]._m_X, probeLocations[i]._m_Y + probeStep._m_Y, probeLocations[i]._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 3
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+            v.setToInXYZ(probeLocations[i]._m_X + probeStep._m_X, probeLocations[i]._m_Y + probeStep._m_Y, probeLocations[i]._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 4
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+            v.setToInXYZ(probeLocations[i]._m_X, probeLocations[i]._m_Y + probeStep._m_Y, probeLocations[i]._m_Z + probeStep._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 5
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+            v.setToInXYZ(probeLocations[i]._m_X + probeStep._m_X, probeLocations[i]._m_Y + probeStep._m_Y, probeLocations[i]._m_Z + probeStep._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 6
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+            v.setToInXYZ(probeLocations[i]._m_X - probeStep._m_X, probeLocations[i]._m_Y - probeStep._m_Y, probeLocations[i]._m_Z - probeStep._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 7
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+            v.setToInXYZ(probeLocations[i]._m_X + probeStep._m_X, probeLocations[i]._m_Y - probeStep._m_Y, probeLocations[i]._m_Z + probeStep._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 8
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+            v.setToInXYZ(probeLocations[i]._m_X + probeStep._m_X, probeLocations[i]._m_Y - probeStep._m_Y, probeLocations[i]._m_Z - probeStep._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 9
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+            v.setToInXYZ(probeLocations[i]._m_X - probeStep._m_X, probeLocations[i]._m_Y, probeLocations[i]._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 10
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+            v.setToInXYZ(probeLocations[i]._m_X, probeLocations[i]._m_Y - probeStep._m_Y, probeLocations[i]._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 11
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+            v.setToInXYZ(probeLocations[i]._m_X, probeLocations[i]._m_Y, probeLocations[i]._m_Z - probeStep._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 12
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+            v.setToInXYZ(probeLocations[i]._m_X - probeStep._m_X, probeLocations[i]._m_Y, probeLocations[i]._m_Z - probeStep._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 12
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+            v.setToInXYZ(probeLocations[i]._m_X, probeLocations[i]._m_Y - probeStep._m_Y, probeLocations[i]._m_Z - probeStep._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 12
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+            v.setToInXYZ(probeLocations[i]._m_X - probeStep._m_X, probeLocations[i]._m_Y - probeStep._m_Y, probeLocations[i]._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 15
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+            v.setToInXYZ(probeLocations[i]._m_X + probeStep._m_X, probeLocations[i]._m_Y, probeLocations[i]._m_Z - probeStep._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 16
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+            v.setToInXYZ(probeLocations[i]._m_X - probeStep._m_X, probeLocations[i]._m_Y, probeLocations[i]._m_Z + probeStep._m_Z);
+            n = findProbe(v);
+            if(n){
+                // 0
+                positions.push(probeLocations[i]._m_X);
+                positions.push(probeLocations[i]._m_Y);
+                positions.push(probeLocations[i]._m_Z);
+                // 17
+                positions.push(probeLocations[n]._m_X);
+                positions.push(probeLocations[n]._m_Y);
+                positions.push(probeLocations[n]._m_Z);
+                indices.push(n2++);
+                indices.push(n2++);
+            }
+        }
+        let mesh = new Mesh();
+        mesh.setData(Mesh.S_POSITIONS, positions);
+        mesh.setData(Mesh.S_INDICES, indices);
+        mesh.setPrimitive(Mesh.S_PRIMITIVE_LINES);
+        let probeGroups = new Geometry(scene, {id:'probeGroups_' + Tools.nextId()});
+        probeGroups.setMesh(mesh);
+        probeGroups.setMaterial(new Material(scene, {id:'probe_groups_mat_' + Tools.nextId(), materialDef:MaterialDef.parse(Internal.S_COLOR_DEF_DATA)}));
+        probeGroups.updateBound();
+        probeGroups.getMaterial().setParam('color', new Vec4Vars().valueFromXYZW(1, 204/255.0, 0, 1));
+        probeGroups.receiveShadow(false);
+        probeGroups.castShadow(false);
+        giProbesNode.addChildren(probeGroups);
         return giProbesNode;
     }
 

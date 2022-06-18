@@ -16,6 +16,8 @@
 <script type="module">
     import Stats from "../stats.min.js";
     let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+    // scene.getRender().setGammaFactor(1);
+    scene.getCanvas().setClearColor(0, 0, 0, 1);
     let mainCamera = scene.getComponent('mainCamera');
     mainCamera.lookAt(new Try3d.Vector3(10.00694701577273,4.752059754747693,-0.8094167189698362), new Try3d.Vector3(9.020200568330681,4.844430342194254,-0.6760033649333097), new Try3d.Vector3(0, 1, 0));
 
@@ -75,34 +77,64 @@
             sceneControl.setTargetAngle(Try3d.MoreMath.toRadians(135));
             sceneControl.focusCamera();
             let giProbes = new Try3d.GIProbes(scene, {id:'giProbes'});
-            // giProbes.getProbeOrigin().setToInXYZ(-6, 0, -6);
-            // giProbes.getProbeStep().setToInXYZ(4, 2, 4);
-            giProbes.getProbeOrigin().setToInXYZ(0, 3, 0);
-            giProbes.getProbeCount().setToInXYZ(1, 1, 1);
+            giProbes.getProbeOrigin().setToInXYZ(-6, 0, -6);
+            giProbes.getProbeStep().setToInXYZ(4, 1.7, 4);
+            giProbes.setDiffuseGIIntensity(1.5);
+            // giProbes.getProbeOrigin().setToInXYZ(0, 3, 0);
+            // giProbes.getProbeCount().setToInXYZ(1, 1, 1);
             giProbes.preCache();
-            giProbes.getProbeCenter().setToInXYZW(0, 3, 0, 10);
-            giProbes.setProbeRange(10);
+            // giProbes.getProbeCenter().setToInXYZW(0, 3, 0, 10);
+            // giProbes.setProbeRange(10);
             // 内置ColorDef
             let envCapture = Try3d.ProbeTools.bakeGIProbes(scene, giProbes, {resolute:128});
-            console.log('sh:\n',giProbes.getShCoeffsIndex(0));
-            let probeLocations = Try3d.ProbeTools.bakeProbes(scene, giProbes);
+            let probeLocations = Try3d.ProbeTools.getProbesLocations(scene, giProbes);
             let giProbesDebug = Try3d.MeshFactor.createDebugProbes(scene, probeLocations, null, giProbes);
             rootNode.addChildren(giProbesDebug);
 
-            // 添加一个渲染探头,将捕捉数据渲染出来
-            let refProbeGeo = new Try3d.Sphere(scene, {id:'refProbeGeo'});
-            refProbeGeo.setLocalTranslationXYZ(giProbes.getProbeCenter()._m_X, giProbes.getProbeCenter()._m_Y, giProbes.getProbeCenter()._m_Z);
-            refProbeGeo.setLocalScaleXYZ(0.5, 0.5, 0.5);
-            let refProbeMat = new Try3d.Material(scene, {id:'refProbeMat', materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_ENV_CAPTURE_OUT_DEF)});
-            refProbeMat.setParam('envCaptureMap', envCapture.getCaptureTextureCube());
-            refProbeGeo.setMaterial(refProbeMat);
-            rootNode.addChildren(refProbeGeo);
+            // // 添加一个渲染探头,将捕捉数据渲染出来
+            // let refProbeGeo = new Try3d.Sphere(scene, {id:'refProbeGeo'});
+            // refProbeGeo.setLocalTranslationXYZ(giProbes.getProbeCenter()._m_X, giProbes.getProbeCenter()._m_Y, giProbes.getProbeCenter()._m_Z);
+            // refProbeGeo.setLocalScaleXYZ(0.5, 0.5, 0.5);
+            // let refProbeMat = new Try3d.Material(scene, {id:'refProbeMat', materialDef:Try3d.MaterialDef.load("../../src/Core/Assets/MaterialDef/Misc/EnvCaptureOutDef")});
+            // // refProbeMat.setParam('envCaptureMap', envCapture.getCaptureTextureCube());
+            // refProbeMat.setParam('sphData', giProbes.getShCoeffsIndex(0));
+            // refProbeGeo.setMaterial(refProbeMat);
+            // rootNode.addChildren(refProbeGeo);
+
+
+            // // 添加一个Picture,用于展示渲染到纹理的效果(Picture是GUI层，所以会在最后进行绘制，以确保获取场景帧渲染结果)
+            // // 将默认帧缓存数据渲染到Picture上
+            // let picture = new Try3d.Picture(scene, {id:'target'});
+            // picture.setMaterial(new Try3d.Material(scene, {id:'shData', materialDef:Try3d.MaterialDef.load("../../src/Core/Assets/MaterialDef/Misc/PictureEquirectDef")}));
+            // // picture.useDefaultMat();
+            // let texture = new Try3d.Texture2DTargetVars(scene);
+            // texture.target(scene.getRender().getFrameContext().getFrameBuffer(Try3d.Render.DEFAULT_FORWARD_SHADING_FRAMEBUFFER));
+            // // picture.getMaterial().setParam('colorMap', texture);
+            // picture.getMaterial().setParam('sphData', giProbes.getShCoeffsIndex(0));
+            // picture.setSize(0.3, 0.3);
+            // picture.setLeftTop(0.7, -0.7);
+            // picture.setZIndex(0);
+            // rootNode.addChildren(picture);
         }, {batch:false});
 
         let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
-        dirLight.setDirectionXYZ(-1, -1, 1);
-        dirLight.setColorRGBA(1.0, 1.0, 1.0, 1.0);
+        dirLight.setDirectionXYZ(-0.15518534183502197, -0.22172605991363525, 0.962681233882904);
+        dirLight.setColorRGBA(1.0, 0.803, 0.433, 1.0);
+        dirLight.proShadow(true);
+        dirLight.getShadow().setShadowIntensity(0.5);
         rootNode.addChildren(dirLight);
+
+        // 定义一个directionalLight
+        // let spotLight = new Try3d.SpotLight(scene, {id:'spotLight'});
+        // spotLight.setInnerAngle(Try3d.MoreMath.toRadians(10));
+        // spotLight.setOuterAngle(Try3d.MoreMath.toRadians(35));
+        // spotLight.setPositionXYZ(-3.5459878, 16.842323, 0.31434864);
+        // spotLight.setDirectionXYZ(0.5, -1, 0);
+        // spotLight.setSpotRange(500);
+        // spotLight.setColorRGBA(1.0, 0.6, 2.0, 1.0);
+        // spotLight.proShadow(true);
+        // spotLight.getShadow().setShadowIntensity(0.5);
+        // rootNode.addChildren(spotLight);
 
 
         // let giProbe = new Try3d.GIProbe(scene, {id:'giProbe'});

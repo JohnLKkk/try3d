@@ -3,6 +3,7 @@
 Def EnvCaptureOutDef{
     Params{
         samplerCube envCaptureMap;
+        vec3 sphData[9];
         float lod;
     }
     SubTechnology EnvCaptureOut{
@@ -16,6 +17,27 @@ Def EnvCaptureOutDef{
             }
         }
         Fs_Shader{
+            vec3 sphericalHarmonics( const in vec3 normal, const vec3 sph[9] ){
+                float x = normal.x;
+                float y = normal.y;
+                float z = normal.z;
+
+                vec3 result = (
+                    sph[0] +
+
+                    sph[1] * y +
+                    sph[2] * z +
+                    sph[3] * x +
+
+                    sph[4] * y * x +
+                    sph[5] * y * z +
+                    sph[6] * (3.0f * z * z - 1.0f) +
+                    sph[7] * (z * x) +
+                    sph[8] * (x*x - y*y)
+                );
+
+                return max(result, vec3(0.0f));
+            }
             void main(){
                 #ifdef Params.envCaptureMap
                     #ifdef Params.lod
@@ -24,7 +46,11 @@ Def EnvCaptureOutDef{
                         Context.OutColor = texture(Params.envCaptureMap, normalize(wPosition));
                     #endif
                 #else
-                    Context.OutColor = vec4(1.0f);
+                    #ifdef Params.sphData
+                        Context.OutColor = vec4(sphericalHarmonics(wPosition, Params.sphData), 1.0f);
+                    #else
+                        Context.OutColor = vec4(1.0f);
+                    #endif
                 #endif
             }
         }
@@ -45,6 +71,27 @@ Def EnvCaptureOutDef{
             }
         }
         Fs_Shader{
+            vec3 sphericalHarmonics( const in vec3 normal, const vec3 sph[9] ){
+                float x = normal.x;
+                float y = normal.y;
+                float z = normal.z;
+
+                vec3 result = (
+                    sph[0] +
+
+                    sph[1] * y +
+                    sph[2] * z +
+                    sph[3] * x +
+
+                    sph[4] * y * x +
+                    sph[5] * y * z +
+                    sph[6] * (3.0f * z * z - 1.0f) +
+                    sph[7] * (z * x) +
+                    sph[8] * (x*x - y*y)
+                );
+
+                return max(result, vec3(0.0f));
+            }
             void main(){
                 #ifdef Params.envCaptureMap
                     #ifdef Params.lod
@@ -53,7 +100,11 @@ Def EnvCaptureOutDef{
                         Context.OutColor = texture(Params.envCaptureMap, normalize(wPosition));
                     #endif
                 #else
-                    Context.OutColor = vec4(1.0f);
+                    #ifdef Params.sphData
+                        Context.OutColor = vec4(sphericalHarmonics(wPosition, Params.sphData), 1.0f);
+                    #else
+                        Context.OutColor = vec4(1.0f);
+                    #endif
                 #endif
             }
         }

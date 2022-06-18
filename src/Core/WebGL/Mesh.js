@@ -55,6 +55,7 @@ export default class Mesh {
     // 图元类型
     static S_PRIMITIVE_TRIANGLES = 'triangles';
     static S_PRIMITIVE_LINES = 'lines';
+    static S_PRIMITIVE_LINE_STRIP = 'line_strip';
 
     constructor() {
         this._m_Datas = {};
@@ -86,6 +87,9 @@ export default class Mesh {
                     break;
                 case Mesh.S_PRIMITIVE_LINES:
                     this._m_DrawPrimitive = this._m_GL.LINES;
+                    break;
+                case Mesh.S_PRIMITIVE_LINE_STRIP:
+                    this._m_DrawPrimitive = this._m_GL.LINE_STRIP;
                     break;
             }
         }
@@ -268,6 +272,9 @@ export default class Mesh {
                 case Mesh.S_PRIMITIVE_LINES:
                     this._m_DrawPrimitive = this._m_GL.LINES;
                     break;
+                case Mesh.S_PRIMITIVE_LINE_STRIP:
+                    this._m_DrawPrimitive = this._m_GL.LINE_STRIP;
+                    break;
             }
         }
     }
@@ -320,6 +327,7 @@ export default class Mesh {
                     return drawCount / 3;
                     break;
                 case Mesh.S_PRIMITIVE_LINES:
+                case Mesh.S_PRIMITIVE_LINE_STRIP:
                     return drawCount / 2;
                     break;
             }
