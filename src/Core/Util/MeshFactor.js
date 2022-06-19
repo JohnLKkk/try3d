@@ -50,6 +50,7 @@ export default class MeshFactor {
             // mat.setParam('color', new Vec4Vars().valueFromXYZW(0.7, 0.7, 0.7, 1.0));
             mat.setParam('probeData', giProbes.getShCoeffsIndex(i));
             let probe = new Sphere(giProbesNode, {id:'probe_' + Tools.nextId(), radius:0.15, widthSegments: 5, heightSegments: 5});
+            probe.setLocalScaleXYZ(0.25, 0.25, 0.25);
             probe.receiveShadow(false);
             probe.castShadow(false);
             probe.setMaterial(mat);

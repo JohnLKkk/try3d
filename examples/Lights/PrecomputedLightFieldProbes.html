@@ -69,7 +69,7 @@
         let gltfLoader = new Try3d.GLTFLoader();
         // gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/Light/");
         gltfLoader.useMatDef(Try3d.AssetLoader.loadMaterialSourceDef('../../src/Core/Assets/MaterialDef/Light/PrincipledLightingDef'));
-        gltfLoader.load(scene, './../Assets/Models/GLTF/Test/lightFiledScene.gltf', modelNode=>{
+        gltfLoader.load(scene, './../Assets/Models/GLTF/Test/simple_scene.gltf', modelNode=>{
             rootNode.addChildren(modelNode);
             let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'sceneControl'});
             sceneControl.lookScene(modelNode);
@@ -77,9 +77,22 @@
             sceneControl.setTargetAngle(Try3d.MoreMath.toRadians(135));
             sceneControl.focusCamera();
             let giProbes = new Try3d.GIProbes(scene, {id:'giProbes'});
-            giProbes.getProbeOrigin().setToInXYZ(-6, 0, -6);
-            giProbes.getProbeStep().setToInXYZ(4, 1.7, 4);
-            giProbes.setDiffuseGIIntensity(1.5);
+            // giProbes.getProbeOrigin().setToInXYZ(-6, 0, -6);
+            // giProbes.getProbeStep().setToInXYZ(3, 1.7, 3);
+            // giProbes.getProbeCount().setToInXYZW(5, 5, 5, 1);
+            // giProbes.setDiffuseGIIntensity(0.5);
+
+
+            // giProbes.getProbeCount().setToInXYZW(3, 3, 4, 1);
+            // // giProbes.setDiffuseGIIntensity(1.5);
+            // giProbes.getProbeStep().setToInXYZ(1.0, 0.7, 1.2);
+            // giProbes.getProbeOrigin().setToInXYZ(0.5, -0.5, -2.0);
+            // // giProbes.setDiffuseGIIntensity(0.5);
+
+            giProbes.getProbeCount().setToInXYZW(3, 2, 3, 1);
+            giProbes.getProbeStep().setToInXYZ(0.5, 0.7, 0.5);
+            giProbes.getProbeOrigin().setToInXYZ(1.25, -0.4, 0.5);
+
             // giProbes.getProbeOrigin().setToInXYZ(0, 3, 0);
             // giProbes.getProbeCount().setToInXYZ(1, 1, 1);
             giProbes.preCache();
@@ -118,9 +131,12 @@
         }, {batch:false});
 
         let dirLight = new Try3d.DirectionalLight(scene, {id:'dirLight'});
-        dirLight.setDirectionXYZ(-0.15518534183502197, -0.22172605991363525, 0.962681233882904);
+        // dirLight.setDirectionXYZ(-0.15518534183502197, -0.22172605991363525, 0.962681233882904);
+        dirLight.setDirectionXYZ(-0.2, -0.5, 0);
         dirLight.setColorRGBA(1.0, 0.803, 0.433, 1.0);
         dirLight.proShadow(true);
+        // dirLight.getShadow().setBackfaceShadows(true);
+        // dirLight.getShadow().setBias(2, -1);
         dirLight.getShadow().setShadowIntensity(0.5);
         rootNode.addChildren(dirLight);
 
