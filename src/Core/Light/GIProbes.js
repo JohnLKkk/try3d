@@ -57,6 +57,8 @@ export default class GIProbes extends Probe{
 
         this._m_ShCoeffs = null;
         this._m_ShCoeffsBufferData = null;
+        this._m_DistShCoeffs = null;
+        this._m_DistShCoeffsBufferData = null;
         this._m_PrefilterEnvMap = null;
         this._m_PrefilterMipmap = 0;
         this._m_Bounding = new BoundingSphere();
@@ -175,6 +177,9 @@ export default class GIProbes extends Probe{
             // probeGrid
             offsetD++;
             gl.bufferSubData(gl.UNIFORM_BUFFER, offsetP * offsetD, this._m_ShCoeffsBufferData.getBufferData());
+            // probeDist
+            offsetP = 18512;
+            gl.bufferSubData(gl.UNIFORM_BUFFER, offsetP, this._m_DistShCoeffsBufferData.getBufferData());
             this._m_Change = false;
         }
         {
@@ -212,12 +217,44 @@ export default class GIProbes extends Probe{
         if(count){
             this._m_ShCoeffs = [count];
             this._m_ShCoeffsBufferData = new UniformBuffer(9 * 4 * count);
+            this._m_DistShCoeffs = [count];
+            this._m_DistShCoeffsBufferData = new UniformBuffer(9 * 4 * count);
             if(GIProbes.preBuild(this._m_Scene)){
                 this.reset();
             }
             ProbeTools.placeProbes(this._m_ProbeOrigin, this._m_ProbeCount, this._m_ProbeStep, this._m_ProbeCenter);
             this._m_ProbeRange = this._m_ProbeCenter._m_W;
         }
+    }
+    /**
+     * 设置球谐距离系数。<br/>
+     * @param {Number}[index]
+     * @param {Vector3[]}[distShCoeffs 9个球谐距离系数]
+     */
+    setDistShCoeffsIndex(index, distShCoeffs){
+        if(!this._m_DistShCoeffsBufferData){
+            this.preCache();
+        }
+        this._m_DistShCoeffs[index] = new Vec3ArrayVars({length:9});
+        let array = this._m_DistShCoeffsBufferData.getArray();
+        for(let i = 0,t = index * 9 * 4;i < distShCoeffs.length;i++){
+            array[t++] = distShCoeffs[i]._m_X;
+            array[t++] = distShCoeffs[i]._m_Y;
+            array[t++] = distShCoeffs[i]._m_Z;
+            // 跳过w
+            t++;
+
+            this._m_DistShCoeffs[index].valueFromXYZ(i, distShCoeffs[i]._m_X, distShCoeffs[i]._m_Y, distShCoeffs[i]._m_Z);
+        }
+    }
+
+    /**
+     * 返回指定探头的球谐距离系数。<br/>
+     * @param {Number}[index]
+     * @return {Array}
+     */
+    getDistShCoeffsIndex(index){
+        return this._m_DistShCoeffs[index];
     }
 
     /**

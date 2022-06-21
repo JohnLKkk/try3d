@@ -5,6 +5,7 @@ Def PictureEquirectDef{
         sampler2D colorMap;
         float alphaDiscard;
         vec3 sphData[9];
+        bool useDist;
     }
     SubTechnology DefaultPass{
         Vars{
@@ -72,7 +73,13 @@ Def PictureEquirectDef{
                 // 使用球谐系数
                 #ifdef Params.sphData
                     Context.OutColor *= vec4(sphericalHarmonics(Decode(uv0), Params.sphData), 1.0f);
-                    //Context.OutColor *= vec4(vec3(1, 0, 0), 1.0f);
+                    #ifdef Params.useDist
+                        if(Params.useDist){
+                            float val = Context.OutColor.r;
+                            float remapped = val / (val + 1.0f);
+                            Context.OutColor.rgb = vec3(pow(abs(remapped), 15.0f));
+                        }
+                    #endif
                 #endif
             }
         }

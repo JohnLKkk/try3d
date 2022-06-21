@@ -46,6 +46,7 @@ export default class ShaderSource {
     static S_WEIGHT_0_SRC = "_weight_0";
     static S_JOINTS_SRC = "_joints";
     static S_OUT_COLOR = "_outColor";
+    static S_OUT_ADDITIONAL_PACKAGED = "_outAdditionalPackaged";
     static S_OUT_POSITION = "gl_Position";
     static S_MODEL_MATRIX_SRC = "_model_matrix";
     static S_VIEW_MATRIX_SRC = "_view_matrix";
@@ -58,6 +59,8 @@ export default class ShaderSource {
     // 着色选项
     // 唯一shading阶段
     static S_UNIQUE_SHADING_SRC = '_uniqueShading';
+    // 用于输出probe dist信息
+    static S_LIGHT_PROBE_DIST_BAKING_SRC = '_lightProbeDistBaking';
     // 灯光系统
     static S_V_LIGHT_DATA_SRC = '_vLightData';
     static S_W_LIGHT_DATA_SRC = '_wLightData';
@@ -712,7 +715,8 @@ export default class ShaderSource {
         "Context.ProjectMatrix":{src:ShaderSource.S_PROJECT_MATRIX_SRC, pattern:/Context.ProjectMatrix/, pattern2:/Context.ProjectMatrix[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ProjectMatrix/g, tag:ShaderSource.S_PROJECT_MATRIX_SRC, def:'MAT'},
         "Context.ModelMatrix":{src:ShaderSource.S_MODEL_MATRIX_SRC, pattern:/Context.ModelMatrix/, pattern2:/Context.ModelMatrix[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ModelMatrix/g, tag:ShaderSource.S_MODEL_MATRIX_SRC, type:"mat4", utype:"uniform mat4"},
         "Context.ProjectViewMatrix":{src:ShaderSource.S_VP_SRC, pattern:/Context.ProjectViewMatrix/, pattern2:/Context.ProjectViewMatrix[\s+-;.,\*\\]{1,}/, tagPattern:/Context.ProjectViewMatrix/g, tag:ShaderSource.S_VP_SRC, def:'MAT'},
-        "Context.OutColor":{src:ShaderSource.S_OUT_COLOR, pattern:/Context.OutColor/, pattern2:/Context.OutColor[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutColor/g, tag:"_outColor", type:"out vec4"},
+        "Context.OutColor":{src:ShaderSource.S_OUT_COLOR, pattern:/Context.OutColor/, pattern2:/Context.OutColor[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutColor/g, tag:"_outColor", type:"layout (location=0) out vec4"},
+        "Context.OutAdditionalPackaged":{src:ShaderSource.S_OUT_ADDITIONAL_PACKAGED, pattern:/Context.OutAdditionalPackaged/, pattern2:/Context.OutAdditionalPackaged[\s+-;.,\*\\]{1,}/, tagPattern:/Context.OutAdditionalPackaged/g, tag:"_outAdditionalPackaged", type:"layout (location=1) out vec4"},
         "Context.Joints":{src:ShaderSource.S_JOINTS_SRC, pattern:/Context.Joints/, pattern2:/Context.Joints[\s+-;.,\*\\]{1,}/, tagPattern:/Context.Joints/g, tag:ShaderSource.S_JOINTS_SRC, type:"mat4", utype:"uniform mat4", modifier:'[' + ShaderSource.S_MAX_BONE + ']'},
         "Context.VLightData":{src:ShaderSource.S_V_LIGHT_DATA_SRC, pattern:/Context.VLightData/, pattern2:/Context.VLightData[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLightData/g, tag:ShaderSource.S_V_LIGHT_DATA_SRC, type:"vec4", utype:"uniform vec4", modifier:'[' + ShaderSource.S_BATCH_LIGHT_SIZE + ']'},
         "Context.MultiId":{src:ShaderSource.S_MULTI_ID_SRC, pattern:/Context.MultiId/, pattern2:/Context.MultiId[\s+-;.,\*\\]{1,}/, tagPattern:/Context.MultiId/g, tag:ShaderSource.S_MULTI_ID_SRC, type:"int", utype:"uniform int"},
@@ -720,6 +724,7 @@ export default class ShaderSource {
         "Context.TileLightOffsetSize":{src:ShaderSource.S_TILE_LIGHT_OFFSET_SIZE, pattern:/Context.TileLightOffsetSize/, pattern2:/Context.TileLightOffsetSize[\s+-;.,\*\\]{1,}/, tagPattern:/Context.TileLightOffsetSize/g, tag:ShaderSource.S_TILE_LIGHT_OFFSET_SIZE, type:"float", utype:"uniform float"},
         "Context.BlendGiProbes":{src:ShaderSource.S_BLEND_GI_PROBES, pattern:/Context.BlendGiProbes/, pattern2:/Context.BlendGiProbes[\s+-;.,\*\\]{1,}/, tagPattern:/Context.BlendGiProbes/g, tag:ShaderSource.S_BLEND_GI_PROBES, type:"bool", utype:"uniform bool"},
         "Context.UniqueShading":{src:ShaderSource.S_UNIQUE_SHADING_SRC, pattern:/Context.UniqueShading/, pattern2:/Context.UniqueShading[\s+-;.,\*\\]{1,}/, tagPattern:/Context.UniqueShading/g, tag:ShaderSource.S_UNIQUE_SHADING_SRC, type:"bool", utype:"uniform bool"},
+        "Context.LightProbeDistBaking":{src:ShaderSource.S_LIGHT_PROBE_DIST_BAKING_SRC, pattern:/Context.LightProbeDistBaking/, pattern2:/Context.LightProbeDistBaking[\s+-;.,\*\\]{1,}/, tagPattern:/Context.LightProbeDistBaking/g, tag:ShaderSource.S_LIGHT_PROBE_DIST_BAKING_SRC, type:"bool", utype:"uniform bool"},
         "Context.VLight_Data_0":{src:ShaderSource.S_V_LIGHT_DATA0_SRC, pattern:/Context.VLight_Data_0/, pattern2:/Context.VLight_Data_0[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLight_Data_0/g, tag:ShaderSource.S_V_LIGHT_DATA0_SRC, type:"vec4", utype:"uniform vec4"},
         "Context.VLight_Data_1":{src:ShaderSource.S_V_LIGHT_DATA1_SRC, pattern:/Context.VLight_Data_1/, pattern2:/Context.VLight_Data_1[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLight_Data_1/g, tag:ShaderSource.S_V_LIGHT_DATA1_SRC, type:"vec4", utype:"uniform vec4"},
         "Context.VLight_Data_2":{src:ShaderSource.S_V_LIGHT_DATA2_SRC, pattern:/Context.VLight_Data_2/, pattern2:/Context.VLight_Data_2[\s+-;.,\*\\]{1,}/, tagPattern:/Context.VLight_Data_2/g, tag:ShaderSource.S_V_LIGHT_DATA2_SRC, type:"vec4", utype:"uniform vec4"},

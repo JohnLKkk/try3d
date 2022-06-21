@@ -77,6 +77,8 @@ export default class Render extends Component{
         this._m_FrameContext = new FrameContext();
         // 所有可用渲染程序
         this._m_RenderPrograms = {};
+        // 绘制前强制系统上下文参数设置
+        this._m_ForceContextValue = {};
 
         // 初始化渲染状态
         this.m_InitState = new RenderState(true);
@@ -782,6 +784,44 @@ export default class Render extends Component{
     }
 
     /**
+     * 强制系统上下文参数值。<br/>
+     * @param {String}[contextId]
+     * @param {Object}[contextValue]
+     */
+    addForceContextValue(contextId, contextValue){
+        this._m_ForceContextValue[contextId] = contextValue;
+    }
+
+    /**
+     * 清楚强制上下文参数值。<br/>
+     * @param {String}[contextId]
+     */
+    resetForceContextValue(contextId){
+        this._m_ForceContextValue[contextId] = null;
+    }
+
+    /**
+     * 清除所有强制上下文参数值。<br/>
+     */
+    clearAllForceContextValue(){
+        this._m_ForceContextValue = [];
+    }
+
+    /**
+     * 启用强制上下文参数。<br/>
+     * @private
+     */
+    _useForceContextValue(){
+        let conVars = this._m_FrameContext.m_LastSubShader.getContextVars();
+        const gl = this._m_Scene.getCanvas().getGLContext();
+        for(let contextId in this._m_ForceContextValue){
+            if(conVars[contextId] && this._m_ForceContextValue[contextId]){
+                this._m_ForceContextValue[contextId]._upload(gl, conVars[contextId].loc);
+            }
+        }
+    }
+
+    /**
      * 强制在接下来中使用指定的某个材质。<br/>
      * @param {String}[path]
      * @param {Material}[mat]
@@ -884,6 +924,7 @@ export default class Render extends Component{
                             // 依次检测所有项
                             this._checkRenderState(gl, subShaders[subShader].renderState, this._m_FrameContext.getRenderState());
                         }
+                        this._useForceContextValue();
                         this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].drawArrays(gl, this._m_Scene, this._m_FrameContext, bucks[matId], lights);
 
                     }
@@ -927,6 +968,7 @@ export default class Render extends Component{
                     }
                     // 指定subShader
                     mat._selectSubShader(subShaders[subShader].subShader);
+                    this._useForceContextValue();
                     this._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].draw(gl, this._m_Scene, this._m_FrameContext, this._m_Sky, lights);
                     // geo.draw(this._m_FrameContext);
                 }

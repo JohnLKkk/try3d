@@ -122,6 +122,7 @@ export default class Deferred extends Base{
                 gl.disable(gl.DEPTH_TEST);
                 // gl.depthMask(false);
             }
+            this._m_Render._useForceContextValue();
             this._m_Render._m_RenderPrograms[deferredShadingPass.subShader.getRenderProgramType()].draw(gl, scene, frameContext, dfbFramePicture, lights);
             // dfbFramePicture.draw(this._m_FrameContext);
             if(frameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){

@@ -226,7 +226,7 @@ Def PrincipledLightingDef{
             int gridCoordToProbeIndex(in vec3 probeCounts, in vec3 probeCoords) {
                 return int(probeCoords.x + probeCoords.y * float(probeCounts.x) + probeCoords.z * float(probeCounts.x) * float(probeCounts.y));
             }
-            vec3 irradianceProbeData( const in vec3 normal, const in vec4 probeData[1152], int probeId ){
+            vec3 unpackData( const in vec3 normal, const in vec4 probeData[1152], int probeId ){
                 float x = normal.x;
                 float y = normal.y;
                 float z = normal.z;
@@ -252,289 +252,308 @@ Def PrincipledLightingDef{
             #define GAMMA 2.2f
             #define GAMMA_T 1.0f / GAMMA
             void main(){
-                vec4 lightColor;
-                vec4 lightData1;
-                vec4 lightDir = vec4(0.0f);
-                vec3 lightVec = vec3(0.0f);
-                vec3 directLighting = vec3(0.0f);
-                vec3 viewDir = normalize(Context.CameraPosition.xyz - wPosition.xyz);
+                // light probe dist bake
+                if(Context.LightProbeDistBaking){
+                    // 烘焙探针最近距离,防止漏光现象
+                    float distance_to_fragment = length(Context.CameraPosition.xyz - wPosition.xyz);
+                    Context.OutColor = vec4(distance_to_fragment, distance_to_fragment * distance_to_fragment, 0.0f, 0.0f);
+                }
+                else{
+                    vec4 lightColor;
+                    vec4 lightData1;
+                    vec4 lightDir = vec4(0.0f);
+                    vec3 lightVec = vec3(0.0f);
+                    vec3 directLighting = vec3(0.0f);
+                    vec3 viewDir = normalize(Context.CameraPosition.xyz - wPosition.xyz);
 
-                #ifdef Params.baseColor
-                    #ifdef Params.baseColorMap
-                        vec4 albedo = texture(Params.baseColorMap, wUv0) * Params.baseColor * vec4(Context.AmbientLightColor, 1.0);
+                    #ifdef Params.baseColor
+                        #ifdef Params.baseColorMap
+                            vec4 albedo = texture(Params.baseColorMap, wUv0) * Params.baseColor * vec4(Context.AmbientLightColor, 1.0);
+                        #else
+                            vec4 albedo = Params.baseColor * vec4(Context.AmbientLightColor, 1.0);
+                        #endif
                     #else
-                        vec4 albedo = Params.baseColor * vec4(Context.AmbientLightColor, 1.0);
+                        #ifdef Params.baseColorMap
+                            vec4 albedo = texture(Params.baseColorMap, wUv0) * vec4(Context.AmbientLightColor, 1.0);
+                        #else
+                            vec4 albedo = vec4(1.0f) * vec4(Context.AmbientLightColor, 1.0);
+                        #endif
                     #endif
-                #else
-                    #ifdef Params.baseColorMap
-                        vec4 albedo = texture(Params.baseColorMap, wUv0) * vec4(Context.AmbientLightColor, 1.0);
-                    #else
-                        vec4 albedo = vec4(1.0f) * vec4(Context.AmbientLightColor, 1.0);
-                    #endif
-                #endif
 
-                #ifdef Params.alphaDiscard
-                    if(albedo.a < Params.alphaDiscard){
-                        discard;
-                    }
-                #endif
-
-                vec3 normal = wNormal;
-                #ifdef Params.normalMap
-                    // 这里做了一种简化,理论上应该在fs阶段计算tbn,但是从插值的角度来看,可以简化为tbn插值,减少在fs阶段计算tbn开销(虽然这么做不精确,但是折中下可以接受)
-                    vec3 normalHeight = texture(Params.normalMap, wUv0).xyz;
-                    vec3 tangent = normalize(wTangent.xyz);
-                    mat3 tbnMat = mat3(tangent, wTangent.w * cross(normal, tangent), normal);
-                    normal = normalize(tbnMat * ( normalHeight * 2.0f - 1.0f ));
-                #endif
-
-                #ifdef Params.metallicRoughnessMap
-                    vec2 rm = texture(Params.metallicRoughnessMap, wUv0).gb;
-                    #ifdef Params.roughness
-                        float _roughness = rm.x * max(Params.roughness, 1e-4);
-                    #else
-                        float _roughness = rm.x;
+                    #ifdef Params.alphaDiscard
+                        if(albedo.a < Params.alphaDiscard){
+                            discard;
+                        }
                     #endif
-                    #ifdef Params.metallic
-                        float _metallic = rm.y * max(Params.metallic, 0.0f);
-                    #else
-                        float _metallic = rm.y;
+
+                    vec3 normal = wNormal;
+                    #ifdef Params.normalMap
+                        // 这里做了一种简化,理论上应该在fs阶段计算tbn,但是从插值的角度来看,可以简化为tbn插值,减少在fs阶段计算tbn开销(虽然这么做不精确,但是折中下可以接受)
+                        vec3 normalHeight = texture(Params.normalMap, wUv0).xyz;
+                        vec3 tangent = normalize(wTangent.xyz);
+                        mat3 tbnMat = mat3(tangent, wTangent.w * cross(normal, tangent), normal);
+                        normal = normalize(tbnMat * ( normalHeight * 2.0f - 1.0f ));
                     #endif
-                #else
-                    #ifdef Params.roughnessMap
+
+                    #ifdef Params.metallicRoughnessMap
+                        vec2 rm = texture(Params.metallicRoughnessMap, wUv0).gb;
                         #ifdef Params.roughness
-                            float _roughness = texture(Params.roughnessMap, wUv0).r * max(Params.roughness, 1e-4);
+                            float _roughness = rm.x * max(Params.roughness, 1e-4);
                         #else
-                            float _roughness = texture(Params.roughnessMap, wUv0).r;
+                            float _roughness = rm.x;
                         #endif
-                    #else
-                        #ifdef Params.roughness
-                            float _roughness = max(Params.roughness, 1e-4);
-                        #else
-                            float _roughness = 1.0f;
-                        #endif
-                    #endif
-                    #ifdef Params.metallicMap
                         #ifdef Params.metallic
-                            float _metallic = texture(Params.metallicMap, wUv0).r * max(Params.metallic, 0.0f);
+                            float _metallic = rm.y * max(Params.metallic, 0.0f);
                         #else
-                            float _metallic = texture(Params.metallicMap, wUv0).r;
+                            float _metallic = rm.y;
                         #endif
                     #else
-                        #ifdef Params.metallic
-                            float _metallic = max(Params.metallic, 0.0f);
-                        #else
-                            float _metallic = 1.0f;
-                        #endif
-                    #endif
-                #endif
-
-                #ifdef Params.useSpecGloss
-                    #ifdef Params.specularGlossinessMap
-                        vec4 _specularColor = texture(Params.specularGlossinessMap, wUv0);
-                        #ifdef Params.glossiness
-                            float _glossiness = _specularColor.a * Params.glossiness;
-                        #else
-                            float _glossiness = _specularColor.a;
-                        #endif
-                        #ifdef Params.specular
-                            _specularColor *= Params.specular;
-                        #endif
-                    #else
-                        #ifdef Params.specularMap
-                            vec4 _specularColor = texture(Params.specularMap, wUv0);
-                        #else
-                            vec4 _specularColor = vec4(1.0f);
-                        #endif
-                        #ifdef Params.specular
-                            _specularColor *= Params.specular;
-                        #endif
-                        #ifdef Params.glossinessMap
-                            #ifdef Params.glossiness
-                                float _glossiness = texture(Params.glossinessMap, wUv0).r * Params.glossiness;
+                        #ifdef Params.roughnessMap
+                            #ifdef Params.roughness
+                                float _roughness = texture(Params.roughnessMap, wUv0).r * max(Params.roughness, 1e-4);
                             #else
-                                float _glossiness = texture(Params.glossinessMap, wUv0).r;
+                                float _roughness = texture(Params.roughnessMap, wUv0).r;
                             #endif
                         #else
-                            #ifdef Params.glossiness
-                                float _glossiness = Params.glossiness;
+                            #ifdef Params.roughness
+                                float _roughness = max(Params.roughness, 1e-4);
                             #else
-                                float _glossiness = 1.0f;
+                                float _roughness = 1.0f;
+                            #endif
+                        #endif
+                        #ifdef Params.metallicMap
+                            #ifdef Params.metallic
+                                float _metallic = texture(Params.metallicMap, wUv0).r * max(Params.metallic, 0.0f);
+                            #else
+                                float _metallic = texture(Params.metallicMap, wUv0).r;
+                            #endif
+                        #else
+                            #ifdef Params.metallic
+                                float _metallic = max(Params.metallic, 0.0f);
+                            #else
+                                float _metallic = 1.0f;
                             #endif
                         #endif
                     #endif
-                    vec4 _diffuseColor = albedo;
-                    _roughness = 1.0f - _glossiness;
-                    vec3 fZero = _specularColor.rgb;
-                #else
-                    float nonMetalSpec = 0.04f;
-                    vec4 _specularColor = (nonMetalSpec - nonMetalSpec * _metallic) + albedo * _metallic;
-                    vec4 _diffuseColor = albedo - albedo * _metallic;
-                    vec3 fZero = vec3( 0.5f );
-                #endif
 
-                #ifdef Params.lightMap
-                    vec3 _lightMapColor;
-                    #ifdef Params.lightMapTexCoord
-                        _lightMapColor = texture(Params.lightMap, wUv1).rgb;
+                    #ifdef Params.useSpecGloss
+                        #ifdef Params.specularGlossinessMap
+                            vec4 _specularColor = texture(Params.specularGlossinessMap, wUv0);
+                            #ifdef Params.glossiness
+                                float _glossiness = _specularColor.a * Params.glossiness;
+                            #else
+                                float _glossiness = _specularColor.a;
+                            #endif
+                            #ifdef Params.specular
+                                _specularColor *= Params.specular;
+                            #endif
+                        #else
+                            #ifdef Params.specularMap
+                                vec4 _specularColor = texture(Params.specularMap, wUv0);
+                            #else
+                                vec4 _specularColor = vec4(1.0f);
+                            #endif
+                            #ifdef Params.specular
+                                _specularColor *= Params.specular;
+                            #endif
+                            #ifdef Params.glossinessMap
+                                #ifdef Params.glossiness
+                                    float _glossiness = texture(Params.glossinessMap, wUv0).r * Params.glossiness;
+                                #else
+                                    float _glossiness = texture(Params.glossinessMap, wUv0).r;
+                                #endif
+                            #else
+                                #ifdef Params.glossiness
+                                    float _glossiness = Params.glossiness;
+                                #else
+                                    float _glossiness = 1.0f;
+                                #endif
+                            #endif
+                        #endif
+                        vec4 _diffuseColor = albedo;
+                        _roughness = 1.0f - _glossiness;
+                        vec3 fZero = _specularColor.rgb;
                     #else
-                        _lightMapColor = texture(Params.lightMap, wUv0).rgb;
+                        float nonMetalSpec = 0.04f;
+                        vec4 _specularColor = (nonMetalSpec - nonMetalSpec * _metallic) + albedo * _metallic;
+                        vec4 _diffuseColor = albedo - albedo * _metallic;
+                        vec3 fZero = vec3( 0.5f );
                     #endif
-                    #ifdef Params.aoMap
-                        _lightMapColor.gb = _lightMapColor.rr;
-                        vec3 ao = _lightMapColor;
+
+                    #ifdef Params.lightMap
+                        vec3 _lightMapColor;
+                        #ifdef Params.lightMapTexCoord
+                            _lightMapColor = texture(Params.lightMap, wUv1).rgb;
+                        #else
+                            _lightMapColor = texture(Params.lightMap, wUv0).rgb;
+                        #endif
+                        #ifdef Params.aoMap
+                            _lightMapColor.gb = _lightMapColor.rr;
+                            vec3 ao = _lightMapColor;
+                        #else
+                            _specularColor.rgb *= _lightMapColor;
+                            _diffuseColor.rgb  *= _lightMapColor;
+                            vec3 ao = vec3(1.0f);
+                        #endif
                     #else
-                        _specularColor.rgb *= _lightMapColor;
-                        _diffuseColor.rgb  *= _lightMapColor;
                         vec3 ao = vec3(1.0f);
                     #endif
-                #else
-                    vec3 ao = vec3(1.0f);
-                #endif
 
-                float ndotv = max( dot( normal, viewDir ), 0.0f );
-                for( int i = 0;i < Context.CurLightCount;i+=3 ){
-                    lightColor = Context.WLightData[i];
-                    lightData1 = Context.WLightData[i + 1];
-                    ComputeLightDir(wPosition, lightColor.w, lightData1, lightDir, lightVec);
+                    float ndotv = max( dot( normal, viewDir ), 0.0f );
+                    for( int i = 0;i < Context.CurLightCount;i+=3 ){
+                        lightColor = Context.WLightData[i];
+                        lightData1 = Context.WLightData[i + 1];
+                        ComputeLightDir(wPosition, lightColor.w, lightData1, lightDir, lightVec);
 
-                    // 计算PointLight的衰减
-                    float spotFallOff = 1.0 * lightDir.w;
-                    // 计算SpotLight的衰减
-                    if( lightColor.w > 1.0f )
-                    {
-                        // 计算SpotLight的范围衰减
-                        spotFallOff = ComputeSpotFalloff( Context.WLightData[i + 2], lightDir.xyz );
+                        // 计算PointLight的衰减
+                        float spotFallOff = 1.0 * lightDir.w;
+                        // 计算SpotLight的衰减
+                        if( lightColor.w > 1.0f )
+                        {
+                            // 计算SpotLight的范围衰减
+                            spotFallOff = ComputeSpotFalloff( Context.WLightData[i + 2], lightDir.xyz );
+                        }
+
+                        ComputeDirectLighting(normal, viewDir, lightDir.xyz, lightColor.rgb, _diffuseColor.rgb, fZero, _roughness, ndotv, directLighting);
+                        Context.OutColor.rgb += directLighting * spotFallOff;
                     }
 
-                    ComputeDirectLighting(normal, viewDir, lightDir.xyz, lightColor.rgb, _diffuseColor.rgb, fZero, _roughness, ndotv, directLighting);
-                    Context.OutColor.rgb += directLighting * spotFallOff;
-                }
+                    if(Context.BlendGiProbes){
+                        #ifdef Context.GIProbes
+                            // 作为webGL项目,暂时不实现探针混合(但作为可拓展,仍然加结尾s命名)
 
-                if(Context.BlendGiProbes){
-                    #ifdef Context.GIProbes
-                        // 作为webGL项目,暂时不实现探针混合(但作为可拓展,仍然加结尾s命名)
-
-                        // 计算反射视线
-                        vec3 _rv = reflect( -viewDir.xyz, normal.xyz );
-                        float _r = fract( Context.WGIProbe.w );
-                        float _mipMaps = Context.WGIProbe.w - _r;
-                        _rv = _r * ( wPosition.xyz - Context.WGIProbe.xyz ) + _rv;
-
-                        // 使用球谐计算diffuse( 避免Irr采样 )
-                        vec3 giLighting = sphericalHarmonics(normal.xyz, Context.ShCoeffs) * _diffuseColor.rgb;
-
-                        float horiz = dot(_rv, wNormal);
-                        float horizFadePower = 1.0f - _roughness;
-                        horiz = clamp( 1.0f + horizFadePower * horiz, 0.0f, 1.0f );
-                        horiz *= horiz;
-
-                        vec3 _dominantR = getSpecularDominantDir( normal, _rv.xyz, _roughness * _roughness );
-                        giLighting += approximateSpecularIBLPolynomial(Context.InPrefEnvMap, _specularColor.rgb, _roughness, ndotv, _dominantR, _mipMaps) * vec3( horiz );
-                        giLighting *= ao;
-
-                        Context.OutColor.rgb += giLighting * step( 0.0f, Context.WGIProbe.w );
-                        // Context.OutColor.rgb = textureLod(Context.InPrefEnvMap, normal.xyz, 0.0f).rgb;
-                    #endif
-                    #ifdef Context.GI_ProbesGroup
-                        // GIProbes
-                        if(Context.ProbeCounts.x > 0.0f){
                             // 计算反射视线
-                            //vec3 _rv = reflect( -viewDir.xyz, normal.xyz );
-                            //float _r = fract( Context.ProbeCenter.w );
-                            //float _mipMaps = Context.ProbeCenter.w - _r;
-                            //_rv = _r * ( wPosition.xyz - Context.ProbeCenter.xyz ) + _rv;
+                            vec3 _rv = reflect( -viewDir.xyz, normal.xyz );
+                            float _r = fract( Context.WGIProbe.w );
+                            float _mipMaps = Context.WGIProbe.w - _r;
+                            _rv = _r * ( wPosition.xyz - Context.WGIProbe.xyz ) + _rv;
 
-                            vec3 giLighting = vec3(0.0f);
-                            // PrefilteredIrradiance
-                            ivec3 _baseGridCoord = baseGridCoord(Context.ProbeStartPosition.xyz, Context.ProbeCounts.xyz, Context.ProbeStep.xyz, wPosition.xyz);
-                            vec3 _baseProbePos = gridCoordToPosition(Context.ProbeStartPosition.xyz, Context.ProbeStep.xyz, _baseGridCoord);
-                            float sumWeight = 0.0f;
-                            // 三线性插值因子
-                            vec3 alpha = clamp((wPosition.xyz - _baseProbePos) / Context.ProbeStep.xyz, vec3(0.0f), vec3(1.0f));
-                            // 遍历周围8个探针
-                            for (int i = 0; i < 8; ++i) {
-                                // 遍历获取相邻的探针编号
-                                ivec3 offset = ivec3(i, i >> 1, i >> 2) & ivec3(1);
-                                ivec3 probeGridCoord = clamp(_baseGridCoord + offset, ivec3(0), ivec3(ceil(Context.ProbeCounts.xyz) - 1.0f));
-                                int p = gridCoordToProbeIndex(Context.ProbeCounts.xyz, vec3(probeGridCoord));
+                            // 使用球谐计算diffuse( 避免Irr采样 )
+                            vec3 giLighting = sphericalHarmonics(normal.xyz, Context.ShCoeffs) * _diffuseColor.rgb;
 
-                                // 根据网格单元顶点计算三线性权重，以在探针之间平滑过渡。 避免完全归零，因为这会导致边境调查出现问题。
-                                vec3 trilinear = mix(1.0f - alpha, alpha, vec3(offset));
-                                float weight = trilinear.x * trilinear.y * trilinear.z;
+                            float horiz = dot(_rv, wNormal);
+                            float horizFadePower = 1.0f - _roughness;
+                            horiz = clamp( 1.0f + horizFadePower * horiz, 0.0f, 1.0f );
+                            horiz *= horiz;
 
-                                // 相对于从表面到探头的角度，在切平面上进行余弦衰减，这样我们就永远不会测试在表面*后面*的探头。 它不一定是余弦，但计算起来很有效，我们必须剪裁到切平面。
-                                vec3 probePos = gridCoordToPosition(Context.ProbeStartPosition.xyz, Context.ProbeStep.xyz, probeGridCoord);
-                                vec3 probeToPoint = wPosition.xyz - probePos;
-                                vec3 dir = normalize(-probeToPoint);
+                            vec3 _dominantR = getSpecularDominantDir( normal, _rv.xyz, _roughness * _roughness );
+                            giLighting += approximateSpecularIBLPolynomial(Context.InPrefEnvMap, _specularColor.rgb, _roughness, ndotv, _dominantR, _mipMaps) * vec3( horiz );
+                            giLighting *= ao;
 
-                                // 平滑背面测试
-                                weight *= max(0.05f, dot(dir, wNormal));
+                            Context.OutColor.rgb += giLighting * step( 0.0f, Context.WGIProbe.w );
+                            // Context.OutColor.rgb = textureLod(Context.InPrefEnvMap, normal.xyz, 0.0f).rgb;
+                        #endif
+                        #ifdef Context.GI_ProbesGroup
+                            // GIProbes
+                            if(Context.ProbeCounts.x > 0.0f){
+                                // 计算反射视线
+                                //vec3 _rv = reflect( -viewDir.xyz, normal.xyz );
+                                //float _r = fract( Context.ProbeCenter.w );
+                                //float _mipMaps = Context.ProbeCenter.w - _r;
+                                //_rv = _r * ( wPosition.xyz - Context.ProbeCenter.xyz ) + _rv;
 
-                                // 避免零
-                                weight = max(0.0002f, weight);
+                                vec3 giLighting = vec3(0.0f);
+                                // PrefilteredIrradiance
+                                ivec3 _baseGridCoord = baseGridCoord(Context.ProbeStartPosition.xyz, Context.ProbeCounts.xyz, Context.ProbeStep.xyz, wPosition.xyz);
+                                vec3 _baseProbePos = gridCoordToPosition(Context.ProbeStartPosition.xyz, Context.ProbeStep.xyz, _baseGridCoord);
+                                float sumWeight = 0.0f;
+                                // 三线性插值因子
+                                vec3 alpha = clamp((wPosition.xyz - _baseProbePos) / Context.ProbeStep.xyz, vec3(0.0f), vec3(1.0f));
+                                // 遍历周围8个探针
+                                for (int i = 0; i < 8; ++i) {
+                                    // 遍历获取相邻的探针编号
+                                    ivec3 offset = ivec3(i, i >> 1, i >> 2) & ivec3(1);
+                                    ivec3 probeGridCoord = clamp(_baseGridCoord + offset, ivec3(0), ivec3(ceil(Context.ProbeCounts.xyz) - 1.0f));
+                                    int p = gridCoordToProbeIndex(Context.ProbeCounts.xyz, vec3(probeGridCoord));
 
-                                sumWeight += weight;
+                                    // 根据网格单元顶点计算三线性权重，以在探针之间平滑过渡。 避免完全归零，因为这会导致边境调查出现问题。
+                                    vec3 trilinear = mix(1.0f - alpha, alpha, vec3(offset));
+                                    float weight = trilinear.x * trilinear.y * trilinear.z;
 
-                                vec3 irradianceDir = normalize(normal.xyz);
+                                    // 相对于从表面到探头的角度，在切平面上进行余弦衰减，这样我们就永远不会测试在表面*后面*的探头。 它不一定是余弦，但计算起来很有效，我们必须剪裁到切平面。
+                                    vec3 probePos = gridCoordToPosition(Context.ProbeStartPosition.xyz, Context.ProbeStep.xyz, probeGridCoord);
+                                    vec3 probeToPoint = wPosition.xyz - probePos;
+                                    vec3 dir = normalize(-probeToPoint);
 
-                                vec3 probeIrradiance = irradianceProbeData(irradianceDir, Context.ProbeGrid, p) * Context.ProbeCounts.w;
-                                giLighting += weight * probeIrradiance;
+                                    // 平滑背面测试,防止背向probe的着色点获得gi
+                                    weight *= max(0.05f, dot(dir, wNormal));
+
+                                    // 防止漏光
+                                    vec2 temp = unpackData(-dir, Context.DistProbeGrid, p).rg;
+                                    float mean = temp.x;
+                                    float variance = abs(temp.y - (mean * mean));
+                                    float distToProbe = length(probeToPoint);
+                                    // http://www.punkuser.net/vsm/vsm_paper.pdf; equation 5
+                                    float t_sub_mean = distToProbe - mean;
+                                    float chebychev = variance / (variance + (t_sub_mean * t_sub_mean));
+
+                                    weight *= ((distToProbe <= mean) ? 1.0f : max(chebychev, 0.0f));
+
+                                    // 避免零
+                                    weight = max(0.0002f, weight);
+
+                                    sumWeight += weight;
+
+                                    vec3 irradianceDir = normalize(normal.xyz);
+
+                                    vec3 probeIrradiance = unpackData(irradianceDir, Context.ProbeGrid, p);
+                                    giLighting += weight * probeIrradiance;
+                                }
+                                //vec3 giLighting = alpha * _diffuseColor.rgb;
+                                giLighting = 2.0f * PI * giLighting / sumWeight;
+
+                                //float horiz = dot(_rv, wNormal);
+                                //float horizFadePower = 1.0f - _roughness;
+                                //horiz = clamp( 1.0f + horizFadePower * horiz, 0.0f, 1.0f );
+                                //horiz *= horiz;
+
+                                //vec3 _dominantR = getSpecularDominantDir( normal, _rv.xyz, _roughness * _roughness );
+                                //giLighting += approximateSpecularIBLPolynomial(Context.InPrefEnvMap, _specularColor.rgb, _roughness, ndotv, _dominantR, _mipMaps) * vec3( horiz );
+                                //giLighting *= ao;
+
+                                //Context.OutColor.rgb += giLighting * step( 0.0f, Context.ProbeCenter.w );
+                                Context.OutColor.rgb += giLighting * _diffuseColor.rgb;
+                                //Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));
                             }
-                            //vec3 giLighting = alpha * _diffuseColor.rgb;
-                            giLighting = 2.0f * PI * giLighting / sumWeight;
-
-                            //float horiz = dot(_rv, wNormal);
-                            //float horizFadePower = 1.0f - _roughness;
-                            //horiz = clamp( 1.0f + horizFadePower * horiz, 0.0f, 1.0f );
-                            //horiz *= horiz;
-
-                            //vec3 _dominantR = getSpecularDominantDir( normal, _rv.xyz, _roughness * _roughness );
-                            //giLighting += approximateSpecularIBLPolynomial(Context.InPrefEnvMap, _specularColor.rgb, _roughness, ndotv, _dominantR, _mipMaps) * vec3( horiz );
-                            //giLighting *= ao;
-
-                            //Context.OutColor.rgb += giLighting * step( 0.0f, Context.ProbeCenter.w );
-                            Context.OutColor.rgb += giLighting * _diffuseColor.rgb;
-                            //Context.OutColor.rgb = Context.OutColor.rgb / (Context.OutColor.rgb + vec3(1.0f));
-                        }
-                        //Context.OutColor.rgb = Context.ProbeCounts;
-                    #endif
-                }
-
-                // 唯一shading阶段,在这里处理自发光或只shading一次的逻辑
-                if(Context.UniqueShading){
-                    #ifdef Params.emissive
-                        float _emissivePower = 3.0f;
-                        #ifdef Params.emissivePower
-                            _emissivePower = Params.emissivePower;
+                            //Context.OutColor.rgb = Context.ProbeCounts;
                         #endif
-                        float _emissiveIntensity = 2.0f;
-                        #ifdef Params.emissiveIntensity
-                            _emissiveIntensity = Params.emissiveIntensity;
-                        #endif
-                        #ifdef Params.emissiveMap
-                            vec4 eMap = texture(Params.emissiveMap, wUv0);
-                            Context.OutColor.rgb += Params.emissive.rgb * eMap.rgb * pow(Params.emissive.a * eMap.a, _emissivePower) * _emissiveIntensity;
-                        #else
-                            Context.OutColor.rgb += Params.emissive.rgb * pow(Params.emissive.a, _emissivePower) * _emissiveIntensity;
-                        #endif
-                    #else
-                        #ifdef Params.emissiveMap
+                    }
+
+                    // 唯一shading阶段,在这里处理自发光或只shading一次的逻辑
+                    if(Context.UniqueShading){
+                        #ifdef Params.emissive
                             float _emissivePower = 3.0f;
                             #ifdef Params.emissivePower
                                 _emissivePower = Params.emissivePower;
                             #endif
                             float _emissiveIntensity = 2.0f;
                             #ifdef Params.emissiveIntensity
-                                _emisiveIntensity = Params.emissiveIntensity;
+                                _emissiveIntensity = Params.emissiveIntensity;
                             #endif
-                            vec4 eMap = texture(Params.emissiveMap, wUv0);
-                            Context.OutColor.rgb += eMap.rgb * pow(eMap.a, _emissivePower) * _emissiveIntensity;
+                            #ifdef Params.emissiveMap
+                                vec4 eMap = texture(Params.emissiveMap, wUv0);
+                                Context.OutColor.rgb += Params.emissive.rgb * eMap.rgb * pow(Params.emissive.a * eMap.a, _emissivePower) * _emissiveIntensity;
+                            #else
+                                Context.OutColor.rgb += Params.emissive.rgb * pow(Params.emissive.a, _emissivePower) * _emissiveIntensity;
+                            #endif
+                        #else
+                            #ifdef Params.emissiveMap
+                                float _emissivePower = 3.0f;
+                                #ifdef Params.emissivePower
+                                    _emissivePower = Params.emissivePower;
+                                #endif
+                                float _emissiveIntensity = 2.0f;
+                                #ifdef Params.emissiveIntensity
+                                    _emisiveIntensity = Params.emissiveIntensity;
+                                #endif
+                                vec4 eMap = texture(Params.emissiveMap, wUv0);
+                                Context.OutColor.rgb += eMap.rgb * pow(eMap.a, _emissivePower) * _emissiveIntensity;
+                            #endif
                         #endif
-                    #endif
-                }
+                    }
 
-                Context.OutColor.a = albedo.a;
+                    Context.OutColor.a = albedo.a;
+                }
 
             }
         }

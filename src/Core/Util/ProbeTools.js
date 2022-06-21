@@ -11,6 +11,7 @@ import MaterialDef from "../Material/MaterialDef.js";
 import Material from "../Material/Material.js";
 import Internal from "../Render/Internal.js";
 import FloatVars from "../WebGL/Vars/FloatVars.js";
+import BoolVars from "../WebGL/Vars/BoolVars.js";
 
 /**
  * EnvCapture。<br/>
@@ -58,6 +59,7 @@ class EnvCapture {
         this._m_IsProbeGropu = isProbeGroup;
         this._m_CaptureCameres = [];
         this._m_CaptureFrames = [];
+        this._m_CaptureDistanceFrames = [];
         this._m_CaptureResult = new TextureCubeVars(scene);
         this._m_CaptureResult.setTextureFormat(TextureCubeVars.S_TEXTURE_FORMAT.S_RGBA16F, TextureCubeVars.S_TEXTURE_FORMAT.S_RGBA, TextureCubeVars.S_TEXTURE_FORMAT.S_FLOAT);
         this._m_CapturePixels = [];
@@ -114,7 +116,11 @@ class EnvCapture {
             this._m_CaptureFrames[i] = new FrameBuffer(gl, 'capture_frame_' + i + "_" + Tools.nextId(), this._m_Resolute, this._m_Resolute);
             this._m_CaptureFrames[i].addTexture(gl, 'capture_texture_0_' + i, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT0, false, this._m_MipMap);
             if(isProbeGroup){
-                this._m_CaptureFrames[i].addTexture(gl, 'capture_texture_1_' + i, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT1, false, this._m_MipMap);
+                // this._m_CaptureFrames[i].addTexture(gl, 'capture_texture_1_' + i, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT1, false, this._m_MipMap);
+                this._m_CaptureDistanceFrames[i] = new FrameBuffer(gl, 'capture_distance_frame_' + i + "_" + Tools.nextId(), this._m_Resolute, this._m_Resolute);
+                this._m_CaptureDistanceFrames[i].addTexture(gl, 'capture_distance_texture_0_' + i, gl.RGBA16F, 0, gl.RGBA, gl.FLOAT, gl.COLOR_ATTACHMENT0, false, this._m_MipMap);
+                this._m_CaptureDistanceFrames[i].addBuffer(gl, 'capture_distance_depth_' + i, gl.DEPTH24_STENCIL8, gl.DEPTH_STENCIL_ATTACHMENT);
+                this._m_CaptureDistanceFrames[i].finish(gl, this._m_Scene, false);
             }
             this._m_CaptureFrames[i].addBuffer(gl, 'capture_depth_' + i, gl.DEPTH24_STENCIL8, gl.DEPTH_STENCIL_ATTACHMENT);
             this._m_CaptureFrames[i].finish(gl, this._m_Scene, false);
@@ -216,8 +222,25 @@ class EnvCapture {
             // 将像素数据设置到结果纹理中
             if(final)
                 this._m_CaptureResult.setImage(this._m_Scene, EnvCapture._S_CAPTURE_FACE[i], pixels, {width:this._m_Resolute, height:this._m_Resolute});
-            // pixels = this._m_CaptureFrames[i].readPixels(gl, '', gl.RGBA, gl.FLOAT, undefined, undefined, undefined, undefined, 1);
-            // this._m_CaptureDistancePixels[i] = pixels;
+            // dist
+            // 可以切换物体的technology来完成,避免复杂的光照计算,但是暂时先这样
+            // 我们需要开启LightProbeBaking烘焙
+            this._m_Scene.getRender().addForceContextValue(ShaderSource.S_LIGHT_PROBE_DIST_BAKING_SRC, new BoolVars().valueOf(true));
+            this._m_CaptureDistanceFrames[i].use(render);
+            this._m_CaptureDistanceFrames[i].clear(gl);
+
+            if(!captureScene){
+                // 目前仅支持捕捉环境（后续完善对场景的捕捉）
+                this._m_Scene.getRender()._drawEnv(gl);
+            }
+            else{
+                render.setViewPort(gl, 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight());
+                this._m_Scene.getRender().useCustomDefaultFrame(this._m_CaptureDistanceFrames[i]);
+                this._m_Scene.render(0);
+            }
+            pixels = this._m_CaptureDistanceFrames[i].readPixels(gl, '', gl.RGBA, gl.FLOAT, undefined, undefined, undefined, undefined, 0);
+            this._m_CaptureDistancePixels[i] = pixels;
+            this._m_Scene.getRender().addForceContextValue(ShaderSource.S_LIGHT_PROBE_DIST_BAKING_SRC, new BoolVars().valueOf(false));
         }
         if(final)
             this._m_CaptureResult.setWrap(this._m_Scene, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE, TextureCubeVars.S_WRAPS.S_CLAMP_TO_EDGE);
@@ -288,6 +311,14 @@ class EnvCapture {
      */
     getCapturePixels(){
         return this._m_CapturePixels;
+    }
+
+    /**
+     * 返回捕捉距离数据。<br/>
+     * @return {ArrayBuffer[]}
+     */
+    getCaptureDistPixels(){
+        return this._m_CaptureDistancePixels;
     }
 
     /**
@@ -433,7 +464,7 @@ export default class ProbeTools {
         let skipSky = true;
         let resolute = (options && options.resolute != null) ? options.resolute : ProbeTools._S_DEFAULT_CAPTURE_RESOLUTE;
         let probeLocations = ProbeTools.placeProbes(giProbes.getProbeOrigin(), giProbes.getProbeCount(), giProbes.getProbeStep());
-        let envCapture = new EnvCapture(scene, resolute, giProbes.getProbeOrigin(), options.mipmap);
+        let envCapture = new EnvCapture(scene, resolute, giProbes.getProbeOrigin(), options.mipmap, true);
         // 我们需要线性光照数据,因此必须输出非伽马校正之前的数据
         let oldGammaFactor = scene.getRender().getGameFactor();
         scene.getRender().setGammaFactor(1.0);
@@ -449,12 +480,19 @@ export default class ProbeTools {
             ProbeTools.prepareShCoefs(shCoeffs, 1);
             giProbes.setShCoeffsIndex(i, shCoeffs);
             Log.timeEnd('shCoeffs[' + i + ']');
+            // 计算球谐距离系数
+            Log.time('distShCoeffs[' + i + ']');
+            let distShCoeffs = ProbeTools.getShCoeffs(resolute, resolute, envCapture.getCaptureDistPixels(), ProbeTools._S_FIX_SEAMS_METHOD.Wrap);
+            ProbeTools.prepareShCoefs(distShCoeffs, 1);
+            giProbes.setDistShCoeffsIndex(i, distShCoeffs);
+            Log.timeEnd('distShCoeffs[' + i + ']');
         }
         // 开始捕捉
         Log.time('capture center');
         envCapture = ProbeTools.captureProbes(scene, envCapture, new Vector3(giProbes.getProbeCenter()._m_X, giProbes.getProbeCenter()._m_Y, giProbes.getProbeCenter()._m_Z), true, captureScene, options);
         Log.timeEnd('capture center');
         scene.getRender().setGammaFactor(oldGammaFactor);
+        scene.getRender().addForceContextValue(ShaderSource.S_LIGHT_PROBE_DIST_BAKING_SRC, new BoolVars().valueOf(false));
 
 
         // 计算prefilterMap

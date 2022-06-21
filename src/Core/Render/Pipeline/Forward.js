@@ -40,6 +40,7 @@ export default class Forward extends Base{
                         }
                         // 指定subShader
                         mat._selectSubShader(subShaders[subShader].subShader);
+                        this._m_Render._useForceContextValue();
                         this._m_Render._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].drawArrays(gl, scene, frameContext, cfg.bucket[matId], lights);
                     }
                 }
@@ -70,6 +71,7 @@ export default class Forward extends Base{
                         }
                         // 指定subShader
                         mat._selectSubShader(subShaders[subShader].subShader);
+                        this._m_Render._useForceContextValue();
                         this._m_Render._m_RenderPrograms[subShaders[subShader].subShader.getRenderProgramType()].draw(gl, scene, frameContext, geo, lights);
                         // geo.draw(this._m_FrameContext);
                     }

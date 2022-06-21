@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PrecomputedLightFieldProbes</title>
+    <title>PrecomputedLightFieldProbes2</title>
 </head>
 <body>
 <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
@@ -69,7 +69,7 @@
         let gltfLoader = new Try3d.GLTFLoader();
         // gltfLoader.setAssetsPath("../../src/Core/Assets/MaterialDef/Light/");
         gltfLoader.useMatDef(Try3d.AssetLoader.loadMaterialSourceDef('../../src/Core/Assets/MaterialDef/Light/PrincipledLightingDef'));
-        gltfLoader.load(scene, './../Assets/Models/GLTF/Test/simple_scene.gltf', modelNode=>{
+        gltfLoader.load(scene, './../Assets/Models/GLTF/Test/lightFiledScene.gltf', modelNode=>{
             rootNode.addChildren(modelNode);
             let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'sceneControl'});
             sceneControl.lookScene(modelNode);
@@ -89,12 +89,12 @@
             // giProbes.getProbeOrigin().setToInXYZ(0.5, -0.5, -2.0);
             // // giProbes.setDiffuseGIIntensity(0.5);
 
-            giProbes.getProbeCount().setToInXYZW(3, 2, 3, 1);
-            giProbes.getProbeStep().setToInXYZ(0.5, 0.7, 0.5);
-            giProbes.getProbeOrigin().setToInXYZ(1.25, -0.4, 0.5);
+            // giProbes.getProbeCount().setToInXYZW(3, 2, 3, 1);
+            // giProbes.getProbeStep().setToInXYZ(0.5, 0.7, 0.5);
+            // giProbes.getProbeOrigin().setToInXYZ(1.25, -0.4, 0.5);
 
-            // giProbes.getProbeOrigin().setToInXYZ(0, 3, 0);
-            // giProbes.getProbeCount().setToInXYZ(1, 1, 1);
+            giProbes.getProbeOrigin().setToInXYZ(0, 3, 0);
+            giProbes.getProbeCount().setToInXYZW(1, 1, 1, 1);
             giProbes.preCache();
             // giProbes.getProbeCenter().setToInXYZW(0, 3, 0, 10);
             // giProbes.setProbeRange(10);

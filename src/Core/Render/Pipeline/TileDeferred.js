@@ -138,6 +138,7 @@ export default class TileDeferred extends Deferred{
                 gl.bindTexture(gl.TEXTURE_2D, frameContext.getFrameBuffer(renderDatas[k].refId).getTexture(renderDatas[k].dataId).getLoc());
             }
 
+            this._m_Render._useForceContextValue();
             this._m_Render._m_RenderPrograms[globalPass.subShader.getRenderProgramType()].draw(gl, scene, frameContext, dfbFramePicture, dirLights, 0);
 
 
@@ -168,6 +169,7 @@ export default class TileDeferred extends Deferred{
                 gl.bindTexture(gl.TEXTURE_2D, frameContext.getFrameBuffer(renderDatas[k].refId).getTexture(renderDatas[k].dataId).getLoc());
             }
 
+            this._m_Render._useForceContextValue();
             this._m_Render._m_RenderPrograms[tilePass.subShader.getRenderProgramType()].draw(gl, scene, frameContext, dfbFramePicture, otherLights, 1);
             // dfbFramePicture.draw(this._m_FrameContext);
             if(frameContext.getRenderState().getFlag(RenderState.S_STATES[3]) == 'On'){
