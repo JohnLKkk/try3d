@@ -243,7 +243,7 @@ export default {
     UniformBufferI,
     Component,
     BillboardControl,
-    FxiedControl: FixedControl,
+    FixedControl,
     Globals,
     RenderEngine,
     GLTFLoader,
