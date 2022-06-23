@@ -15,6 +15,7 @@ import Vec4Vars from "../WebGL/Vars/Vec4Vars.js";
 import MaterialDef from "../Material/MaterialDef.js";
 import Internal from "../Render/Internal.js";
 import Geometry from "../Node/Geometry.js";
+import MoreMath from "../Math3d/MoreMath.js";
 
 export default class MeshFactor {
     static count = 0;
@@ -326,6 +327,36 @@ export default class MeshFactor {
         probeGroups.castShadow(false);
         giProbesNode.addChildren(probeGroups);
         return giProbesNode;
+    }
+
+    /**
+     * 创建圆形几何。<br/>
+     * @param {Number}[texSize 分块大小]
+     * @param {Boolean}[dashed 虚线]
+     * @return {Mesh}
+     */
+    static createRoundMesh(texSize, dashed){
+        let mesh = new Mesh();
+        let positions = [];
+        let indices = [];
+        let t = 0, u = 0;
+        const size = 360;
+        const tw = texSize;
+        for(let i = 0;i < 360;i+=tw){
+            positions[t] = Math.sin(MoreMath.toRadians(i));
+            positions[t + 1] = 0;
+            positions[t + 2] = Math.cos(MoreMath.toRadians(i));
+            t+=3;
+            indices[u] = u;
+            u++;
+        }
+        mesh.setData(Mesh.S_POSITIONS, positions);
+        mesh.setData(Mesh.S_INDICES, indices);
+        if(dashed)
+            mesh.setPrimitive(Mesh.S_PRIMITIVE_LINES);
+        else
+            mesh.setPrimitive(Mesh.S_PRIMITIVE_LINE_LOOP);
+        return mesh;
     }
 
     /**

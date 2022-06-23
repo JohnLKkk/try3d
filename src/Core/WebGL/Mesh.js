@@ -56,6 +56,7 @@ export default class Mesh {
     static S_PRIMITIVE_TRIANGLES = 'triangles';
     static S_PRIMITIVE_LINES = 'lines';
     static S_PRIMITIVE_LINE_STRIP = 'line_strip';
+    static S_PRIMITIVE_LINE_LOOP = 'line_loop';
 
     constructor() {
         this._m_Datas = {};
@@ -90,6 +91,9 @@ export default class Mesh {
                     break;
                 case Mesh.S_PRIMITIVE_LINE_STRIP:
                     this._m_DrawPrimitive = this._m_GL.LINE_STRIP;
+                    break;
+                case Mesh.S_PRIMITIVE_LINE_LOOP:
+                    this._m_DrawPrimitive = this._m_GL.LINE_LOOP;
                     break;
             }
         }
@@ -275,6 +279,9 @@ export default class Mesh {
                 case Mesh.S_PRIMITIVE_LINE_STRIP:
                     this._m_DrawPrimitive = this._m_GL.LINE_STRIP;
                     break;
+                case Mesh.S_PRIMITIVE_LINE_LOOP:
+                    this._m_DrawPrimitive = this._m_GL.LINE_LOOP;
+                    break;
             }
         }
     }
@@ -328,6 +335,7 @@ export default class Mesh {
                     break;
                 case Mesh.S_PRIMITIVE_LINES:
                 case Mesh.S_PRIMITIVE_LINE_STRIP:
+                case Mesh.S_PRIMITIVE_LINE_LOOP:
                     return drawCount / 2;
                     break;
             }

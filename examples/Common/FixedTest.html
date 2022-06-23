@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PickableTest</title>
+    <title>FixedTest</title>
 </head>
 <body>
 <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;">
@@ -39,6 +39,15 @@
     import Pickable from "../../src/Core/Filters/Pickable.js";
     import Input from "../../src/Core/InputControl/Input.js";
     import SelectedFilter from "../../src/Core/Filters/SelectedFilter.js";
+    import GroupPlane from "../../src/Core/Node/Shape/GroupPlane.js";
+    import MoreMath from "../../src/Core/Math3d/MoreMath.js";
+    import BillboardControl from "../../src/Core/Scene/Control/BillboardControl.js";
+    import FixedControl from "../../src/Core/Scene/Control/FixedControl.js";
+    import MeshFactor from "../../src/Core/Util/MeshFactor.js";
+    import Geometry from "../../src/Core/Node/Geometry.js";
+    import Internal from "../../src/Core/Render/Internal.js";
+    import DirectionalLight from "../../src/Core/Light/DirectionalLight.js";
+    import FloatVars from "../../src/Core/WebGL/Vars/FloatVars.js";
     let scene = new Scene({cavnas:document.getElementById('canvas')});
     let mainCamera = scene.getComponent('mainCamera');
     let pickableFilter = new Pickable(scene, {id:'pickableFilter'});
@@ -76,6 +85,7 @@
             sceneControl.setMinVerticalRotation(0);
             sceneControl.lookScene(modelNode);
             sceneControl.setTargetDistance(10);
+            sceneControl.setMaxDistance(50);
         }, {batch:false});
 
         window.giProbe = new GIProbe(scene, {id:'giProbe'});
@@ -95,12 +105,66 @@
             }
         });
     });
+
     let pointLight = new PointLight(scene, {id:'pointLight'});
-    pointLight.setRadius(8.0);
+    pointLight.setRadius(2.0);
     pointLight.setColorRGBA(0.5, 0.5, 0.5, 1.0);
     pointLight.setPositionXYZ(0, 0.5, 0);
     pointLight.proShadow(true);
     rootNode.addChildren(pointLight);
+    // 添加一个光源图标
+    // 颜色材质定义
+    let colorMatDef = MaterialDef.load("../../src/Core/Assets/MaterialDef/Misc/ColorDef");
+    let lightMat = new Material(scene, {id:'lightMat', materialDef:colorMatDef});
+    let colorMap = new Texture2DVars(scene);
+    colorMap.setPreloadColor(scene, new Vector4(0.2, 0.2, 0.2, 1.0));
+    colorMap.setWrap(scene, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE, Texture2DVars.S_WRAPS.S_CLAMP_TO_EDGE);
+    colorMap.setImageSrc(scene, '../Assets/Textures/lightbulb32.png');
+    lightMat.setParam('colorMap', colorMap);
+    lightMat.setParam('alphaDiscard', new FloatVars().valueOf(0.1));
+    let lightBulbNode = new Node(scene, {id:'lightBulbNode'});
+    let lightBulb = new GroupPlane(scene, {id:'lightBulb', xSize:2, zSize:2});
+    lightBulb.setMaterial(lightMat);
+    lightBulb.receiveShadow(false);
+    lightBulb.castShadow(false);
+    lightBulb.setLocalRotationFromEuler(MoreMath.toRadians(90), 0, 0);
+    lightBulb.setLocalScaleXYZ(0.1, 0.1, 0.1);
+    let billboardControl = new BillboardControl(lightBulbNode, {id:'billboardControl'});
+    billboardControl.setAlignment(BillboardControl.Alignment.Screen);
+    lightBulbNode.addChildren(lightBulb);
+    let fixedControl = new FixedControl(lightBulbNode, {id:'fixedControl'});
+    fixedControl.setWorldSizeFactor(0.2);
+    let roundMesh = MeshFactor.createRoundMesh(3, false);
+    let round = new Geometry(scene, {id:'round'});
+    round.receiveShadow(false);
+    round.castShadow(false);
+    round.setLocalScaleXYZ(pointLight.getRadius(), pointLight.getRadius(), pointLight.getRadius());
+    round.setMesh(roundMesh);
+    round.setMaterial(new Material(scene, {id:'roundMat', materialDef:MaterialDef.load("../../src/Core/Assets/MaterialDef/Misc/DebugDef")}));
+    round.updateBound();
+    round.setLocalRotationFromEuler(MoreMath.toRadians(90), 0, 0);
+    lightBulbNode.addChildren(round);
+    pointLight.addChildren(lightBulbNode);
+
+    // 定义一个directionalLight
+    let directionalLight = new DirectionalLight(scene, {id:'directionalLight'});
+    directionalLight.setDirectionXYZ(-1, -1, -1);
+    directionalLight.setColorRGBA(1, 1, 1, 1);
+    let lightBulbNode2 = new Node(scene, {id:'lightBulbNode2'});
+    let lightBulb2 = new GroupPlane(scene, {id:'lightBulb2', xSize:2, zSize:2});
+    lightBulb2.setMaterial(lightMat);
+    lightBulb2.receiveShadow(false);
+    lightBulb2.castShadow(false);
+    lightBulb2.setLocalRotationFromEuler(MoreMath.toRadians(90), 0, 0);
+    lightBulb2.setLocalScaleXYZ(0.1, 0.1, 0.1);
+    let billboardControl2 = new BillboardControl(lightBulbNode2, {id:'billboardControl2'});
+    billboardControl.setAlignment(BillboardControl.Alignment.Screen);
+    lightBulbNode2.addChildren(lightBulb2);
+    let fixedControl2 = new FixedControl(lightBulbNode2, {id:'fixedControl2'});
+    fixedControl2.setWorldSizeFactor(0.2);
+    directionalLight.addChildren(lightBulbNode2);
+    directionalLight.setLocalTranslationXYZ(2, 2, 2);
+    rootNode.addChildren(directionalLight);
 
     // 使用dat gui
     let gui = new dat.GUI();

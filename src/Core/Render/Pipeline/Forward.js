@@ -67,7 +67,7 @@ export default class Forward extends Base{
                         // 检测是否需要更新渲染状态
                         if(subShaders[subShader].renderState){
                             // 依次检测所有项
-                            stateChange = this._checkRenderState(gl, subShaders[subShader].renderState, frameContext.getRenderState());
+                            stateChange = this._m_Render._checkRenderState(gl, subShaders[subShader].renderState, frameContext.getRenderState());
                         }
                         // 指定subShader
                         mat._selectSubShader(subShaders[subShader].subShader);
@@ -77,7 +77,7 @@ export default class Forward extends Base{
                     }
                 }
                 if(stateChange){
-                    this._m_Render._checkRenderState(gl, frameContext.restore(), frameContext.getRenderState());
+                    this._m_Render._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
                 }
             });
         }

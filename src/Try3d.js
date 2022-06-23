@@ -122,7 +122,7 @@ import Cylinder from "./Core/Node/Shape/Cylinder.js";
 import Torus from "./Core/Node/Shape/Torus.js";
 import Teapot from "./Core/Node/Shape/Teapot.js";
 import BillboardControl from "./Core/Scene/Control/BillboardControl.js";
-import FxiedControl from "./Core/Scene/Control/FxiedControl.js";
+import FixedControl from "./Core/Scene/Control/FixedControl.js";
 
 export default {
     Scene,
@@ -243,7 +243,7 @@ export default {
     UniformBufferI,
     Component,
     BillboardControl,
-    FxiedControl,
+    FxiedControl: FixedControl,
     Globals,
     RenderEngine,
     GLTFLoader,

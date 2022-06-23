@@ -4,11 +4,11 @@ import Log from "../../Util/Log.js";
 import Vector3 from "../../Math3d/Vector3.js";
 
 /**
- * FxiedControl提供对指定节点的固定大小控制，不随着距离相机距离而发生变化。<br/>
+ * FixedControl提供对指定节点的固定大小控制，不随着距离相机距离而发生变化。<br/>
  * @author Kkk
  * @date 2022年6月9日14点26分
  */
-export default class FxiedControl extends Component{
+export default class FixedControl extends Component{
     constructor(owner, cfg) {
         super(owner, cfg);
         if(!(owner instanceof Node)){
@@ -44,8 +44,8 @@ export default class FxiedControl extends Component{
             }
             else{
                 // 暂时只处理透射投影
-                const worldNearSize = Math.tan(currentMainCamera.getFovy() * 0.5) * dist;
-                const size = this._m_WorldSizeFactor * worldNearSize;
+                const worldWidthSize = Math.tan(currentMainCamera.getFovy() * 0.5) * dist;
+                const size = this._m_WorldSizeFactor * worldWidthSize;
                 // 更新缩放
                 this._m_Owner.setLocalScaleXYZ(size, size, size);
                 this._m_LastDist = dist;

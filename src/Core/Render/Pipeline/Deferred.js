@@ -70,7 +70,7 @@ export default class Deferred extends Base{
                     deferredShadingPass = subShaders[subShader] ? subShaders[subShader] : subShaders[Deferred.S_DEFERRED_SHADING_PASS_GROUP_2[1]];
                 }
                 if(stateChange){
-                    this._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
+                    this._m_Render._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
                 }
             });
         }

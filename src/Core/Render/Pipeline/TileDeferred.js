@@ -78,7 +78,7 @@ export default class TileDeferred extends Deferred{
                     tilePass = subShaders[subShader] ? subShaders[subShader] : subShaders[TileDeferred.S_TILE_DEFERRED_SHADING_PASS_GROUP_2[2]];
                 }
                 if(stateChange){
-                    this._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
+                    this._m_Render._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
                 }
             });
         }
