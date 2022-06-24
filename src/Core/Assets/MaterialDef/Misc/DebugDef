@@ -5,7 +5,7 @@ Def DebugDef{
         sampler2D colorMap;
         float alphaDiscard;
     }
-    SubTechnology ColorPass{
+    SubTechnology DebugPass{
         Vars{
             vec4 wordPosition;
             vec2 uv0;
@@ -41,7 +41,7 @@ Def DebugDef{
     }
     Technology{
         Sub_Pass{
-            Pass ColorPass{
+            Pass DebugPass{
             }
         }
     }

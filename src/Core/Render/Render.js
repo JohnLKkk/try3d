@@ -475,7 +475,7 @@ export default class Render extends Component{
                             gl.disable(gl.DEPTH_TEST);
                         }
                         break;
-                    case RenderState.S_STATES[8]:
+                    case RenderState.S_STATES[9]:
                         let r = null;
                         switch (state[k]) {
                             case 'NEVER':

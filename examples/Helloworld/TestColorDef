@@ -1,0 +1,90 @@
+// 颜色材质,提供指定颜色或颜色纹理并渲染
+Def TestColorDef{
+    Params{
+        vec4 color;
+        sampler2D colorMap;
+        float alphaDiscard;
+    }
+    SubTechnology ColorPass{
+        Vars{
+            vec4 wordPosition;
+            vec2 uv0;
+        }
+        Vs_Shader{
+            void main(){
+                //Context.OutPosition = Context.ProjectViewModelMatrix * vec4(Context.InPosition, 1.0f);
+                Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                wordPosition = Context.OutPosition;
+                uv0 = Context.InUv0;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                // 使用自定义颜色输出
+                #ifdef Params.color
+                    Context.OutColor = Params.color;
+                #else
+                    // 使用纹理
+                    #ifdef Params.colorMap
+                        Context.OutColor = texture(Params.colorMap, uv0);
+                        #ifdef Params.alphaDiscard
+                            if(Context.OutColor.a < Params.alphaDiscard){
+                                discard;
+                            }
+                        #endif
+                    #else
+                        Context.OutColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+                    #endif
+                #endif
+            }
+        }
+    }
+    SubTechnology ColorPass2{
+        Vars{
+            vec4 wordPosition;
+            vec2 uv0;
+        }
+        Vs_Shader{
+            void main(){
+                //Context.OutPosition = Context.ProjectViewModelMatrix * vec4(Context.InPosition, 1.0f);
+                Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * Context.ModelMatrix * vec4(Context.InPosition, 1.0f);
+                wordPosition = Context.OutPosition;
+                uv0 = Context.InUv0;
+            }
+        }
+        Fs_Shader{
+            void main(){
+                // 使用自定义颜色输出
+                #ifdef Params.color
+                    Context.OutColor = Params.color;
+                #else
+                    // 使用纹理
+                    #ifdef Params.colorMap
+                        Context.OutColor = texture(Params.colorMap, uv0);
+                        #ifdef Params.alphaDiscard
+                            if(Context.OutColor.a < Params.alphaDiscard){
+                                discard;
+                            }
+                        #endif
+                    #else
+                        Context.OutColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+                    #endif
+                #endif
+            }
+        }
+    }
+    Technology{
+        Sub_Pass{
+            Pass ColorPass{
+                //DepthTest Off;
+            }
+        }
+    }
+    Technology OffDepth{
+        Sub_Pass{
+            Pass ColorPass2{
+                DepthTest Off;
+            }
+        }
+    }
+}

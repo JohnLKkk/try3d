@@ -96,6 +96,7 @@ export default class PointLight extends Light{
     setRadius(radius){
         this._m_Radius = radius;
         this._m_InvRadius = 1.0 / radius;
+        this.setLocalScaleXYZ(radius, radius, radius);
         this._updateBounding();
     }
 
