@@ -162,4 +162,15 @@ function resetSliders(gui, name, value){
 
     }
 }
+function createRound(options){
+    let radiusMesh = Try3d.MeshFactor.createRoundMesh(3, options.dashed);
+    let radius = new Try3d.Geometry(options.scene, {id:'radius_' + Try3d.Tools.nextId()});
+    radius.receiveShadow(false);
+    radius.castShadow(false);
+    radius.setMesh(radiusMesh);
+    radius.setMaterial(new Try3d.Material(options.scene, {id:'radiusMat_' + Try3d.Tools.nextId(), materialDef:Try3d.MaterialDef.parse(Try3d.Internal.S_COLOR_DEF_DATA)}));
+    radius.updateBound();
+    radius.setLocalRotationFromEuler(Try3d.MoreMath.toRadians(90), 0, 0);
+    return radius;
+}
 // var blackColorMaterial = new Try3d.Material(window.scene, {id:"blackColorMaterial", colorDef});

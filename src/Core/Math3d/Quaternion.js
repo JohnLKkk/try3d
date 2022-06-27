@@ -147,7 +147,9 @@ export default class Quaternion {
         else{
             Vector3.S_UNIT_AXIS_Y.cross(zAxisDirection, Quaternion._S_TEMP_VEC3_0);
         }
+        Quaternion._S_TEMP_VEC3_0.normal();
         zAxisDirection.cross(Quaternion._S_TEMP_VEC3_0, Quaternion._S_TEMP_VEC3_1);
+        Quaternion._S_TEMP_VEC3_1.normal();
         this.fromAxis(Quaternion._S_TEMP_VEC3_0, Quaternion._S_TEMP_VEC3_1, zAxisDirection);
     }
 
