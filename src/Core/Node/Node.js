@@ -12,6 +12,8 @@ import Log from "../Util/Log.js";
  * @author Kkk
  */
 export default class Node extends Component{
+    // Events
+    static S_WORLD_MATRIX_UPDATE = 'S_WORLD_MATRIX_UPDATE';
     // 默认视锥剔除
     static S_DEFAULT_FRUSTUM_CULLING = 1 << 1;
     // 动态剔除
@@ -549,6 +551,7 @@ export default class Node extends Component{
         if(this._m_UpdateWorldMatrix){
             // 更新世界矩阵
             this._buildWorldMatrix();
+            this.fire(Node.S_WORLD_MATRIX_UPDATE, [this._m_WorldMatrix]);
         }
         return this._m_WorldMatrix;
     }

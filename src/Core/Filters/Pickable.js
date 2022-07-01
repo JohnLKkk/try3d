@@ -7,6 +7,7 @@ import Camera from "../Scene/Camera.js";
 import RenderState from "../WebGL/RenderState.js";
 import Vec4Vars from "../WebGL/Vars/Vec4Vars.js";
 import Events from "../Util/Events.js";
+import Vector4 from "../Math3d/Vector4.js";
 
 /**
  * Pickable用于提供拾取操作的功能，包含两个部分，生成拾取数据和绘制拾取数据，绘制拾取数据可以使用材质参数验收forward管线渲染,也可以在postFrame阶段以后处理方式<br/>
@@ -37,6 +38,9 @@ export default class Pickable extends Filter{
 
     // listener
     _m_Events;
+
+    // temp
+    _m_OldClearColor;
     constructor(owner, cfg) {
         super(owner, cfg);
         this._m_PickStart = false;
@@ -53,6 +57,7 @@ export default class Pickable extends Filter{
         this._m_PickCamera = new Camera(this._m_Scene, {id:'pickableCamera'});
 
         this._m_Events = new Events();
+        this._m_OldClearColor = new Vector4();
     }
 
     /**
@@ -118,6 +123,81 @@ export default class Pickable extends Filter{
         });
     }
 
+    /**
+     * 立即pick。<br/>
+     * @param {Number}[x]
+     * @param {Number}[y]
+     * @param {Array}[pickableDrawables]
+     * @return {Array}[{id, pickResult}]
+     */
+    immediatelyPick(x, y, pickableDrawables){
+        let result = null;
+        if(pickableDrawables.length){
+            let mainCamera = this._m_Scene.getMainCamera();
+            let canvas = this._m_Scene.getCanvas();
+            const aspect = canvas.getWidth() / canvas.getHeight();
+            const top = Math.tan(mainCamera.getFovy() * 0.5) * mainCamera.getNear();
+            const bottom = -top;
+            const left = aspect * bottom;
+            const right = aspect * top;
+            const width = Math.abs(right - left);
+            const height = Math.abs(top - bottom);
+
+            y = canvas.getHeight() - y - 1;
+            this._m_PickPointer.x = x, this._m_PickPointer.y = y;
+
+            this._m_PickWidth = width / canvas.getWidth();
+            this._m_PickHeight = height / canvas.getHeight();
+            this._m_PickLeft = left + x * this._m_PickWidth;
+            this._m_PickBottom = bottom + y * this._m_PickHeight;
+            // 保存状态
+            let render = this._m_Scene.getRender();
+            let frameContext = render.getFrameContext();
+            const gl = this._m_Scene.getCanvas().getGLContext();
+            frameContext.getRenderState().store();
+            // render._checkRenderState(gl, this._m_PickableRenderState, frameContext.getRenderState());
+            this._m_OldClearColor.setTo(this._m_Scene.getCanvas().getClearColor());
+
+            // pick drawing...
+            this._m_PickCamera.setFrustum(this._m_PickLeft, this._m_PickLeft + this._m_PickWidth, this._m_PickBottom + this._m_PickHeight, this._m_PickBottom, mainCamera.getNear(), mainCamera.getFar());
+            this._m_PickCamera.setViewMatrix(mainCamera.getViewMatrix());
+            this._m_Scene.setMainCamera(this._m_PickCamera);
+            this._m_PickableFB.use(render);
+            this._m_Scene.getCanvas().setClearColor(0, 0, 0, 1);
+            this._m_PickableFB.clear(gl);
+            let drawableId = null;
+            let pickableDrawableMap = {};
+            pickableDrawables.forEach(iDrawable=>{
+                // set PickDrawableId
+                drawableId = iDrawable.getDrawableId();
+                pickableDrawableMap[drawableId] = iDrawable;
+                this._m_PickableMat.setParam(Pickable.S_PARAM_ID, new Vec4Vars().valueFromXYZW(
+                    ((drawableId >>  0) & 0xFF) / 0xFF,
+                    ((drawableId >>  8) & 0xFF) / 0xFF,
+                    ((drawableId >> 16) & 0xFF) / 0xFF,
+                    ((drawableId >> 24) & 0xFF) / 0xFF
+                ));
+                // 由于这里使用同一个材质实例来执行pickdrawing,所有更新参数后需要强制上载一次
+                render.useForcedMat('PreFrame', this._m_PickableMat, 0);
+                iDrawable.draw(frameContext);
+            });
+            let pick = this._m_PickableFB.readPixels(gl, '', gl.RGBA, gl.UNSIGNED_BYTE, 0, 0, 1, 1);
+            const id = pick[0] + (pick[1] << 8) + (pick[2] << 16) + (pick[3] << 24);
+            let pickResult = pickableDrawableMap[id];
+            if(pickResult){
+                result = {id, pickResult};
+            }
+
+            // 恢复状态
+            this._m_Scene.getCanvas().setClearColor(this._m_OldClearColor._m_X, this._m_OldClearColor._m_Y, this._m_OldClearColor._m_Z, this._m_OldClearColor._m_W);
+            this._m_Scene.setMainCamera(mainCamera);
+            this._m_Scene.getRender().useDefaultFrame();
+            render.setViewPort(gl, 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight());
+            render._checkRenderState(gl, frameContext.getRenderState().restore(), frameContext.getRenderState());
+        }
+        return result;
+    }
+
     preFrame(){
         // 只在pick时执行绘制
         if(this._m_PickStart){
@@ -131,7 +211,7 @@ export default class Pickable extends Filter{
                 const gl = this._m_Scene.getCanvas().getGLContext();
                 frameContext.getRenderState().store();
                 // render._checkRenderState(gl, this._m_PickableRenderState, frameContext.getRenderState());
-                let clearColor = this._m_Scene.getCanvas().getClearColor();
+                this._m_OldClearColor.setTo(this._m_Scene.getCanvas().getClearColor());
 
                 // pick drawing...
                 this._m_PickCamera.setFrustum(this._m_PickLeft, this._m_PickLeft + this._m_PickWidth, this._m_PickBottom + this._m_PickHeight, this._m_PickBottom, mainCamera.getNear(), mainCamera.getFar());
@@ -163,7 +243,7 @@ export default class Pickable extends Filter{
                 }
 
                 // 恢复状态
-                this._m_Scene.getCanvas().setClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
+                this._m_Scene.getCanvas().setClearColor(this._m_OldClearColor._m_X, this._m_OldClearColor._m_Y, this._m_OldClearColor._m_Z, this._m_OldClearColor._m_W);
                 this._m_Scene.setMainCamera(mainCamera);
                 this._m_Scene.getRender().useDefaultFrame();
                 render.setViewPort(gl, 0, 0, this._m_Scene.getCanvas().getWidth(), this._m_Scene.getCanvas().getHeight());

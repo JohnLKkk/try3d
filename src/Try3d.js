@@ -123,6 +123,8 @@ import Torus from "./Core/Node/Shape/Torus.js";
 import Teapot from "./Core/Node/Shape/Teapot.js";
 import BillboardControl from "./Core/Scene/Control/BillboardControl.js";
 import FixedControl from "./Core/Scene/Control/FixedControl.js";
+import Pickable from "./Core/Filters/Pickable.js";
+import SelectedFilter from "./Core/Filters/SelectedFilter.js";
 
 export default {
     Scene,
@@ -142,6 +144,8 @@ export default {
     Vector4Keyframe,
     Canvas,
     Filter,
+    Pickable,
+    SelectedFilter,
     CameraIps,
     FirstPersonController,
     Input,

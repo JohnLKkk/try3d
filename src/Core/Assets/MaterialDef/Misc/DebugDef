@@ -42,6 +42,7 @@ Def DebugDef{
     Technology{
         Sub_Pass{
             Pass DebugPass{
+                DepthTest Off;
             }
         }
     }

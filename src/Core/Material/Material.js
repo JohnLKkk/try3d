@@ -395,7 +395,8 @@ export default class Material extends Component{
                 }
             }
             // 将其移除参数列表
-            this._m_ParamValues[paramName].unowner(this);
+            if(this._m_ParamValues[paramName])
+                this._m_ParamValues[paramName].unowner(this);
         }
     }
 

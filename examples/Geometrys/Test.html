@@ -42,36 +42,38 @@
         rootNode.addChildren(groupPlane);
 
 
-        // spotLight
-        let spotLight = new Try3d.SpotLight(scene, {id:'spotLight_' + Try3d.Tools.nextId()});
-        spotLight.setPositionXYZ(-3.5459878, 2.842323, 0.31434864);
-        spotLight.setDirectionXYZ(0.5, -1, -1);
-        spotLight.setInnerAngle(Try3d.MoreMath.toRadians(10));
-        spotLight.setOuterAngle(Try3d.MoreMath.toRadians(35));
-        spotLight.setSpotRange(10);
-        spotLight.setColorRGBA(1, 1, 1, 1.0);
-        spotLight.proShadow(true);
-        let lightLabelNode = new Try3d.Node(scene, {id:'lightLabelNode'});
+        // 定义一个arrowHeadY
+        let arrowHeadY = new Try3d.Cylinder(scene, {id:'arrowHeadY', radiusTop:0.001, radiusBottom:0.07, height:0.2});
+        // 创建arrowHeadYMat
+        let arrowHeadYMat = new Try3d.Material(scene, {id:'arrowHeadYMat', materialDef:basicDef});
+        arrowHeadYMat.setParam('ambientColor', new Try3d.Vec4Vars().valueFromXYZW(1, 1, 1, 1));
+        arrowHeadYMat.setParam("diffuseColor", new Try3d.Vec4Vars().valueFromXYZW(0, 1, 0, 1));
+        arrowHeadY.setMaterial(arrowHeadYMat);
+        arrowHeadY.setLocalTranslationXYZ(0, 1.1, 0);
+        // arrowHeadY.setLocalRotationFromEuler(Try3d.MoreMath.toRadians(90), Try3d.MoreMath.toRadians(45), 0);
+        rootNode.addChildren(arrowHeadY);
 
-        let outerAngle = spotLight.getOuterAngle();
-        let innerAngle = spotLight.getInnerAngle();
-        let lastRange = spotLight.getSpotRange();
-        let angleRadiusNode = new Try3d.Node(scene, {id:'angleRadiusNode'});
-        // 外角度
-        let outerRadius = lastRange * Math.atan(outerAngle);
-        let outerRadiusShape = createRound({scene, dashed:true});
-        outerRadiusShape.setLocalScaleXYZ(outerRadius, outerRadius, outerRadius);
-        angleRadiusNode.addChildren(outerRadiusShape);
-        // 内角度
-        let innerRadius = lastRange * Math.atan(innerAngle);
-        let innerRadiusShape = createRound({scene, dashed:false});
-        innerRadiusShape.setLocalScaleXYZ(innerRadius, innerRadius, innerRadius);
-        angleRadiusNode.addChildren(innerRadiusShape);
+        // 定义一个axisY
+        let axisY = new Try3d.Cylinder(scene, {id:'axisY', radiusTop:0.01, radiusBottom:0.01, height:1.0});
+        // 创建arrowHeadYMat
+        let axisYMat = new Try3d.Material(scene, {id:'axisYMat', materialDef:basicDef});
+        axisYMat.setParam('ambientColor', new Try3d.Vec4Vars().valueFromXYZW(1, 1, 1, 1));
+        axisYMat.setParam("diffuseColor", new Try3d.Vec4Vars().valueFromXYZW(0, 1, 0, 1));
+        axisY.setMaterial(axisYMat);
+        axisY.setLocalTranslationXYZ(0, 0.5, 0);
+        // arrowHeadY.setLocalRotationFromEuler(Try3d.MoreMath.toRadians(90), Try3d.MoreMath.toRadians(45), 0);
+        rootNode.addChildren(axisY);
 
-        angleRadiusNode.setLocalTranslationXYZ(0, 0, lastRange);
-        lightLabelNode.addChildren(angleRadiusNode);
-        spotLight.addChildren(lightLabelNode);
-        rootNode.addChildren(spotLight);
+        // 定义一个Torus
+        let torus = new Try3d.Torus(scene, {id:'torus', tube:0.01, radius:0.8, segmentsR:64, segmentsT:64});
+        // 创建torusMat
+        let torusMat = new Try3d.Material(scene, {id:'torusMat', materialDef:basicDef});
+        torusMat.setParam('ambientColor', new Try3d.Vec4Vars().valueFromXYZW(1, 1, 1, 1));
+        torusMat.setParam("diffuseColor", new Try3d.Vec4Vars().valueFromXYZW(0, 1, 0, 1));
+        torus.setMaterial(torusMat);
+        torus.setLocalRotationFromEuler(Try3d.MoreMath.toRadians(90), 0, 0);
+        torus.setLocalTranslationXYZ(0, 0, 0);
+        rootNode.addChildren(torus);
         // 创建一个控制器
         let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
         sceneControl.lookScene(rootNode);
