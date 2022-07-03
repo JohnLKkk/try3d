@@ -514,6 +514,13 @@ export default class SubShader {
         }
         else{
             if(this._m_ShaderProgram){
+                // 判断是否删除当前对应DefId
+                if(this._m_DefId == this._m_ShaderProgram._m_DefId && this._m_ShaderProgram.isLastHold()){
+                    // 清空
+                    this._m_Defines = null;
+                    this._m_NeedLoadShaderCaches = true;
+                    return;
+                }
                 this._m_ShaderProgram.deleteHold(this);
                 if(this._m_ShaderProgram.canDestroy()){
                     // 删除

@@ -286,6 +286,18 @@ export default class Quaternion {
         // 返回无效结果以标记错误
         return null;
     }
+    multLocal(q){
+        let qw = q._m_W, qx = q._m_X, qy = q._m_Y, qz = q._m_Z;
+        let x = this._m_X;
+        let y = this._m_Y;
+        let z = this._m_Z;
+        let w = this._m_W;
+        this._m_X = x * qw + y * qz - z * qy + w * qx;
+        this._m_Y = -x * qz + y * qw + z * qx + w * qy;
+        this._m_Z = x * qy - y * qx + z * qw + w * qz;
+        this._m_W = -x * qx - y * qy - z * qz + w * qw;
+        return this;
+    }
     mult(q, res){
         if(!res){
             res = new Quaternion();

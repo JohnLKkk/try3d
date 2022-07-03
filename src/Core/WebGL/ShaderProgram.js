@@ -47,6 +47,14 @@ export default class ShaderProgram {
     }
 
     /**
+     * 是否为最后一个句柄。<br/>
+     * @returns {Boolean}
+     */
+    isLastHold(){
+        return this._m_Hold == 1;
+    }
+
+    /**
      * 增加一个句柄。<br/>
      */
     addHold(hold){

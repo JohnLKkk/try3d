@@ -320,6 +320,26 @@ export default class Node extends Component{
     }
 
     /**
+     * 缩放。<br/>
+     * @param {Vector3}[scale]
+     */
+    scale(scale){
+        this._m_LocalScale.mult(scale);
+        this._updateLocalMatrix();
+    }
+
+    /**
+     * 缩放。<br/>
+     * @param {Number}[x]
+     * @param {Number}[y]
+     * @param {Number}[z]
+     */
+    scaleXYZ(x, y, z){
+        this._m_LocalScale.multInXYZ(x, y, z);
+        this._updateLocalMatrix();
+    }
+
+    /**
      * 设置局部缩放。<br/>
      * @param {Vector3}[scale]
      */
@@ -358,6 +378,28 @@ export default class Node extends Component{
     }
 
     /**
+     * 根据指定四元数旋转。<br/>
+     * @param {Quaternion}[q]
+     */
+    rotate(q){
+        this._m_LocalRotation.multLocal(q);
+        this._updateLocalMatrix();
+    }
+
+    /**
+     * 根据指定欧拉角旋转。<br/>
+     * @param {Number}[x 弧度]
+     * @param {Number}[y 弧度]
+     * @param {Number}[z 弧度]
+     */
+    rotateFromEuler(x, y, z){
+        Node.S_TEMP_Q.fromEuler(x, y, z);
+        // 累加到当前旋转。
+        this._m_LocalRotation.multLocal(Node.S_TEMP_Q);
+        this._updateLocalMatrix();
+    }
+
+    /**
      * 设置旋转。<br/>
      * @param {Quaternion}[rotation]
      */
@@ -393,7 +435,15 @@ export default class Node extends Component{
      * @param {Number}[z 轴欧拉角]
      */
     setLocalRotationFromEuler(x, y, z){
-        this._m_LocalRotation.fromEuler(x, y, z);
+        // 四元数fromEuler是绕世界x,y,z旋转,而不是绕自身基轴旋转
+        // 所以这里改为依次绕自身轴旋转到指定状态
+        // this._m_LocalRotation.fromEuler(x, y, z);
+        // 先绕y轴旋转
+        this._m_LocalRotation.fromEuler(0, y, 0);
+        // 接着绕自身x轴旋转
+        this.rotateFromEuler(x, 0, 0);
+        // 接着绕自身z轴旋转
+        this.rotateFromEuler(0, 0, z);
         this._updateLocalMatrix();
     }
 
@@ -425,6 +475,26 @@ export default class Node extends Component{
         // 更新当前最新的变换
         this.getWorldMatrix();
         return this._m_WorldRotation;
+    }
+
+    /**
+     * 平移。<br/>
+     * @param {Vector3}[translation]
+     */
+    translate(translation){
+        this._m_LocalTranslation.add(translation);
+        this._updateLocalMatrix();
+    }
+
+    /**
+     * 平移。<br/>
+     * @param {Number}[x]
+     * @param {Number}[y]
+     * @param {Number}[z]
+     */
+    translateXYZ(x, y, z){
+        this._m_LocalTranslation.addInXYZ(x, y, z);
+        this._updateLocalMatrix();
     }
 
     /**
