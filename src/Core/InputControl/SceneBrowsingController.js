@@ -46,6 +46,7 @@ export default class SceneBrowsingController extends Component{
     _m_RotationSensitivity = 5.0;
     _m_TrailingEnabled = true;
     _m_SmoothMotion = true;
+    _m_Deviation = 0.01;
     _m_TargetLocation = new Vector3();
     _m_TargetDir = new Vector3();
     _m_OffsetDistance = 0.002;
@@ -60,6 +61,11 @@ export default class SceneBrowsingController extends Component{
     _m_ChasingSensitivity = 5.0;
     _m_Input;
     _m_TargetMoves = false;
+    static S_MODE_SCENE_MODE = 'S_MODE_SCENE_MODE';
+    static S_MODE_FREE_MODE = 'S_MODE_FREE_MODE';
+    _m_Panning = false;
+    _m_MoveSpeed = 1;
+    _m_Mode = SceneBrowsingController.S_MODE_SCENE_MODE;
     constructor(owner, cfg) {
         super(owner, cfg);
         this._m_Cam = cfg.camera || this._m_Scene.getMainCamera();
@@ -77,6 +83,31 @@ export default class SceneBrowsingController extends Component{
                 this.analog(offset > 0 ? CameraIps.CHASECAM_ZOOMIN : CameraIps.CHASECAM_ZOOMOUT, (offset > 0 ? offset : -offset) * this._m_ZoomSpeed, lastTPF);
             }
         });
+        // 增加自由度操作控制
+        this._m_Input.on('mousedown', (mouseButtonId)=>{
+            if(this._m_Mode == SceneBrowsingController.S_MODE_FREE_MODE){
+                if(mouseButtonId == Input.S_MOUSE_BUTTON1_DOWN){
+                    this._m_Panning = true;
+                }
+            }
+            else{
+                this._m_Panning = false;
+            }
+        });
+        this._m_Input.on('mouseup', (mouseButtonId)=>{
+            this._m_Panning = false;
+        });
+    }
+
+    /**
+     * 设置为自由模式。<br/>
+     * @param {Number}[initDistance 初始化距离]
+     */
+    setupFreeMode(initDistance){
+        let v = new Vector3(0, 0, 0);
+        this.setTarget(v);
+        this.setTargetDistance(initDistance);
+        this._m_Mode = SceneBrowsingController.S_MODE_FREE_MODE;
     }
 
     /**
@@ -225,6 +256,50 @@ export default class SceneBrowsingController extends Component{
     }
 
     /**
+     * 设置移动速率。<br/>
+     * @param {Number}[moveSpeed]
+     */
+    setMoveSpeed(moveSpeed){
+        this._m_MoveSpeed = moveSpeed;
+    }
+
+    /**
+     * 返回移动速率。<br/>
+     * @return {Number}
+     */
+    getMoveSpeed(){
+        return this._m_MoveSpeed;
+    }
+
+    /**
+     * 移动指定距离。<br/>
+     * @param {Number}[val]
+     * @private
+     */
+    _panning1(val){
+        if(!this._m_Panning){
+            return;
+        }
+        this.temp.setTo(this._m_Cam.getCamLeft());
+        this.temp.multLength(val);
+        this._m_Target.add(this.temp);
+    }
+
+    /**
+     * 移动指定距离。<br/>
+     * @param {Number}[val]
+     * @private
+     */
+    _panning2(val){
+        if(!this._m_Panning){
+            return;
+        }
+        this.temp.setTo(this._m_Cam.getUp());
+        this.temp.multLength(val);
+        this._m_Target.add(this.temp);
+    }
+
+    /**
      * 旋转指定弧度。<br/>
      * @param h
      * @param v
@@ -365,7 +440,7 @@ export default class SceneBrowsingController extends Component{
      * @private
      */
     _checkInput(tpf){
-        if(this._m_Input.getMouseButtonDown(Input.S_MOUSE_BUTTON0)){
+        if(this._m_Input.getMouseButtonDown(Input.S_MOUSE_BUTTON0) || this._m_Input.getMouseButtonDown(Input.S_MOUSE_BUTTON1)){
             let dx = this._m_Input.getAmountX();
             let dy = this._m_Input.getAmountY();
             if(dx != 0){
@@ -535,6 +610,18 @@ export default class SceneBrowsingController extends Component{
 
         }
     }
+
+    /**
+     * 是否平滑过渡。<br/>
+     * @param {Boolean}[smoothMotion]
+     */
+    enableSmoothMotion(smoothMotion){
+        this._m_SmoothMotion = smoothMotion;
+    }
+
+    /**
+     * 计算最终位置。<br/>
+     */
     computePosition() {
 
         let hDistance = (this._m_Distance) * Math.sin((Math.PI / 2) - this._m_VRotation);
@@ -550,13 +637,33 @@ export default class SceneBrowsingController extends Component{
      */
     analog(name, val, tpf){
         if (name == CameraIps.CHASECAM_MOVELEFT) {
-            this._rotate1(-val * tpf);
+            if(this._m_Panning){
+                this._panning1(val * this._m_MoveSpeed * tpf);
+            }
+            else{
+                this._rotate1(-val * tpf);
+            }
         } else if (name == CameraIps.CHASECAM_MOVERIGHT) {
-            this._rotate1(val * tpf);
+            if(this._m_Panning){
+                this._panning1(-val * this._m_MoveSpeed * tpf);
+            }
+            else{
+                this._rotate1(val * tpf);
+            }
         } else if (name == CameraIps.CHASECAM_UP) {
-            this._rotate2(val * tpf);
+            if(this._m_Panning){
+                this._panning2(-val * this._m_MoveSpeed * tpf);
+            }
+            else{
+                this._rotate2(val * tpf);
+            }
         } else if (name == CameraIps.CHASECAM_DOWN) {
-            this._rotate2(-val * tpf);
+            if(this._m_Panning){
+                this._panning2(val * this._m_MoveSpeed * tpf);
+            }
+            else{
+                this._rotate2(-val * tpf);
+            }
         } else if (name == CameraIps.CHASECAM_ZOOMIN) {
             this._zoomCamera(-val * tpf);
             if (this._m_Zoomin == false) {

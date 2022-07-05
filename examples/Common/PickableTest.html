@@ -75,7 +75,9 @@
             let sceneControl = new SceneBrowsingController(scene, {id:"controller"});
             sceneControl.setMinVerticalRotation(0);
             sceneControl.lookScene(modelNode);
-            sceneControl.setTargetDistance(10);
+            // sceneControl.setTargetDistance(10);
+            sceneControl.enableSmoothMotion(false);
+            sceneControl.setupFreeMode(10);
         }, {batch:false});
 
         window.giProbe = new GIProbe(scene, {id:'giProbe'});

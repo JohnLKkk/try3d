@@ -44,6 +44,7 @@ export default class Camera extends Component{
         this._m_Eye = new Vector3(0, 0, 10);
         this._m_At = new Vector3(0, 0, -10);
         this._m_Up = new Vector3(0, 1, 0);
+        this._m_Left = new Vector3(1, 0, 0);
         this._m_Dir = new Vector3();
         this._m_ViewMatrix = new Matrix44();
         this._m_ProjectMatrix = new Matrix44();
@@ -528,6 +529,14 @@ export default class Camera extends Component{
     }
 
     /**
+     * 返回相机左轴。<br/>
+     * @return {Vector3}
+     */
+    getCamLeft(){
+        return this._m_Left;
+    }
+
+    /**
      * 设置镜头eye,at,up。<br/>
      * @param {Vector3}[eye]
      * @param {Vector3}[at]
@@ -539,6 +548,7 @@ export default class Camera extends Component{
         this._m_At.sub(this._m_Eye, this._m_Dir);
         this._m_Dir.normal();
         up.cross(this._m_Dir, Camera.S_TEMP_VEC3).normal();
+        this._m_Left.setTo(Camera.S_TEMP_VEC3).normal();
         this._m_Dir.cross(Camera.S_TEMP_VEC3, this._m_Up).normal();
         // this._m_Up.setTo(up);
         this._m_ViewMatrix.lookAt(this._m_Eye, this._m_At, this._m_Up);
@@ -747,6 +757,7 @@ export default class Camera extends Component{
         if(g){
             this._m_Eye.setToInXYZ(g.m[12], g.m[13], g.m[14]);
             this._m_Up.setToInXYZ(g.m[4], g.m[5], g.m[6]);
+            this._m_Left.setToInXYZ(g.m[0], g.m[1], g.m[2]);
             // 别忘了ndc是右手
             TempVars.S_TEMP_VEC3.setToInXYZ(-g.m[8], -g.m[9], -g.m[10]);
             TempVars.S_TEMP_VEC3.add(this._m_Eye, this._m_At);
