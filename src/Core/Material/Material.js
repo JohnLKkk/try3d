@@ -32,6 +32,8 @@ export default class Material extends Component{
         this._m_Params = {};
         // 材质参数描述
         this._m_ParamDescriptions = {};
+        // 材质定义名称
+        this._m_MatDefName = null;
         // 参数值列表
         this._m_ParamValues = {};
         // 可定义材质参数
@@ -58,6 +60,7 @@ export default class Material extends Component{
             let gl = this._m_Scene.getCanvas().getGLContext();
             // 获取技术块
             let materialDef = cfg.materialDef;
+            this._m_MatDefName = materialDef.getName();
             // 开始解析
             let mp = materialDef.getParams();
             for(let p in mp){
@@ -322,6 +325,14 @@ export default class Material extends Component{
         // let ubi = gl.getUniformBlockIndex(this._m_ShaderProgram.getProgram(), "VP");
         // gl.uniformBlockBinding(this._m_ShaderProgram.getProgram(), ubi, 0x001);
         // gl.useProgram(null);
+    }
+
+    /**
+     * 返回当前材质定义名称。<br/>
+     * @return {String}
+     */
+    getMatDefName(){
+        return this._m_MatDefName;
     }
 
     /**
