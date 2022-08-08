@@ -9,6 +9,11 @@
     <span><img src="./Assets/Textures/pond/Pond_NRM.png" width="128" height="128"><div style="text-align: center;width: 128px;color: white">sdsd</div></span>
     <script type="module">
         import Matrix44 from "../src/Core/Math3d/Matrix44.js";
+        let f = 1.0 / Math.tan(45.0 * (Math.PI / 360.0));
+        console.log('tan(f):' + (45.0 * (Math.PI / 360.0)));
+        let mm = new Matrix44();
+        Matrix44.perspectiveM(mm.m, 0, 45.0, 640 / 480.0, 0.1, 10000);
+        console.log('mm:\n', mm.toString());
 
         let array = [250, 500, 15, 1000];
         array.sort((a, b)=>{return b - a;});

@@ -30,6 +30,8 @@ export default class Material extends Component{
         // this._m_ShaderProgram = new ShaderProgram(this._m_Scene.getCanvas().getGLContext(), this._m_MaterialSource.getShaderSource());
         // 材质参数
         this._m_Params = {};
+        // 材质参数描述
+        this._m_ParamDescriptions = {};
         // 参数值列表
         this._m_ParamValues = {};
         // 可定义材质参数
@@ -62,6 +64,7 @@ export default class Material extends Component{
                 // 默认所有参数值为null
                 this._m_ParamValues[mp[p].getName()] = null;
                 this._m_Params[mp[p].getName()] = true;
+                this._m_ParamDescriptions[mp[p].getName] = mp[p];
                 this._m_CanDefineParams[mp[p].getName()] = true;
             }
             let subShaderDefs = materialDef.getSubShaderDefs();
@@ -319,6 +322,23 @@ export default class Material extends Component{
         // let ubi = gl.getUniformBlockIndex(this._m_ShaderProgram.getProgram(), "VP");
         // gl.uniformBlockBinding(this._m_ShaderProgram.getProgram(), ubi, 0x001);
         // gl.useProgram(null);
+    }
+
+    /**
+     * 返回材质参数描述。<br/>
+     * @return {{}}
+     */
+    getParamDescriptions(){
+        return this._m_ParamDescriptions;
+    }
+
+    /**
+     * 返回指定的材质参数描述。<br/>
+     * @param {String}[paramName]
+     * @return {*}
+     */
+    getParamDescription(paramName){
+        return this._m_ParamDescriptions[paramName];
     }
 
     /**
