@@ -336,6 +336,14 @@ export default class Material extends Component{
     }
 
     /**
+     * 返回所有材质参数值。<br/>
+     * @return {{}}
+     */
+    getParamValues(){
+        return this._m_ParamValues;
+    }
+
+    /**
      * 返回材质参数描述。<br/>
      * @return {{}}
      */
