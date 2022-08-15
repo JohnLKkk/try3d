@@ -67,7 +67,7 @@ export default class Material extends Component{
                 // 默认所有参数值为null
                 this._m_ParamValues[mp[p].getName()] = null;
                 this._m_Params[mp[p].getName()] = true;
-                this._m_ParamDescriptions[mp[p].getName] = mp[p];
+                this._m_ParamDescriptions[mp[p].getName()] = mp[p];
                 this._m_CanDefineParams[mp[p].getName()] = true;
             }
             let subShaderDefs = materialDef.getSubShaderDefs();
