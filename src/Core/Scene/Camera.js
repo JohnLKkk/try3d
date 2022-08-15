@@ -132,7 +132,8 @@ export default class Camera extends Component{
                     this._m_ProjectMatrix.parallelM(this._m_FrustumLeft, this._m_FrustumRight, this._m_FrustumTop, this._m_FrustumBottom, this._m_FrustumNear, this._m_FrustumFar);
                 }
                 else{
-                    this._m_ProjectMatrix.perspectiveM(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (this._m_Width * 1.0 / this._m_Height), this._m_FrustumNear, this._m_FrustumFar);
+                    this.setFrustumPerspective(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (this._m_Width * 1.0 / this._m_Height), this._m_FrustumNear, this._m_FrustumFar);
+                    // this._m_ProjectMatrix.perspectiveM(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (this._m_Width * 1.0 / this._m_Height), this._m_FrustumNear, this._m_FrustumFar);
                 }
                 this._m_ProjectMatrixUpdate = true;
             }
@@ -306,9 +307,9 @@ export default class Camera extends Component{
 
 
         this._m_Fovy = fovy;
-        this._m_FixedAspect = aspect;
+        // this._m_FixedAspect = aspect;
         let h = Math.tan(MoreMath.toRadians(this._m_Fovy) * 0.5) * near;
-        let w = h * this._m_FixedAspect;
+        let w = h * aspect;
         // Log.debug("w:" + w + ";h:" + h + ";as:" + this._m_FixedAspect);
         this._m_FrustumLeft = -w;
         this._m_FrustumRight = w;
@@ -316,7 +317,7 @@ export default class Camera extends Component{
         this._m_FrustumTop = h;
         this._m_FrustumNear = near;
         this._m_FrustumFar = far;
-        this._m_ProjectMatrix.perspectiveM(this._m_Fovy, this._m_FixedAspect ? this._m_FixedAspect : (this._m_Width * 1.0 / this._m_Height), this._m_FrustumNear, this._m_FrustumFar);
+        this._m_ProjectMatrix.perspectiveM(this._m_Fovy, aspect, this._m_FrustumNear, this._m_FrustumFar);
     }
 
     /**
