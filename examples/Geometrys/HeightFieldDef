@@ -17,6 +17,7 @@ Def HeightFieldDef{
         Vs_Shader{
             void main(){
                 vec3 pos = Context.InPosition;
+                // 在vertexShader中根据刷的区域进行顶点偏移高度场信息
                 #ifdef Params.area
                     if(abs(length(Context.InPosition - vec3(area.xyz))) <= area.w)
                     {

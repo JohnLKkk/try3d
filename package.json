@@ -1,6 +1,10 @@
 {
   "name": "try3d",
+<<<<<<< HEAD
   "version": "0.4.3",
+=======
+  "version": "0.4.2",
+>>>>>>> 5a573801f1d86782b1fde9005afef5d8d4b2d98c
   "description": "Based on webGL renderer(The essence of rendering technology)",
   "main": "index.js",
   "scripts": {
