@@ -797,7 +797,7 @@ export default class Internal {
         "    }\n" +
         "}\n";
     static S_COLOR_DEF_DATA = "// 颜色材质,提供指定颜色或颜色纹理并渲染\n" +
-        "Def ColorDef{\n" +
+        "Def HeightFieldDef{\n" +
         "    Params{\n" +
         "        vec4 color;\n" +
         "        sampler2D colorMap;\n" +

@@ -152,7 +152,7 @@
         // 演示了如何编写一个材质定义
         // 注意,如果你的材质定义,SubTechnology完全与另一个材质定义计算的hashId一致,系统会自动选择最后一次那个
         // 所以,最好为你的材质定义设置一个不太可能冲突的路径名
-        // 定义材质名为My/ColorDef
+        // 定义材质名为My/HeightFieldDef
         Def My/ColorDef{
             // 定义材质参数
             Params{

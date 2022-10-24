@@ -151,7 +151,7 @@ Officially named Try3d.js (Early TEORT_WebGL), it is my first attempt on webGL. 
         // Demonstrates how to write a material definition
         // Note that if your material definition, SubTechnology is completely consistent with the hashId calculated by another material definition, the system will automatically select the last one
         // So, it is best to set a path name for your material definition that is unlikely to conflict
-        // Define the material name as My/ColorDef
+        // Define the material name as My/HeightFieldDef
         Def My/ColorDef{
             // Define material parameters
             Params{

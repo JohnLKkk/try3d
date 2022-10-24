@@ -537,7 +537,7 @@ export default class GLTFLoader {
                 // 添加一个默认材质
                 if(!this._m_DefaultMatDef){
                     if(this._m_AssetsPath){
-                        // this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "ColorDef");
+                        // this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "HeightFieldDef");
                         this._m_DefaultMatDef = MaterialDef.parse(Internal.S_COLOR_DEF_DATA);
                     }
                     else{
@@ -836,7 +836,7 @@ export default class GLTFLoader {
             else{
                 // 添加一个默认材质
                 if(!this._m_DefaultMatDef){
-                    // this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "ColorDef");
+                    // this._m_DefaultMatDef = MaterialDef.load(this._m_AssetsPath + "HeightFieldDef");
                     this._m_DefaultMatDef = MaterialDef.parse(Internal.S_COLOR_DEF_DATA);
                 }
                 let matId = 'default_gltf_mat';

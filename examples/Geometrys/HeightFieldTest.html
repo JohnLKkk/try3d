@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HeightFieldTest</title>
+</head>
+<script src="../../build/try3d.min.js"></script>
+<script src="./../dat.gui.min.js"></script>
+<script src="../helpers.js"></script>
+<body>
+    <div style="width: 100%;height: 100%;position:fixed;margin: 0px;padding: 0px;left: 0px;top: 0px;margin: 0px;">
+        <canvas id="canvas" style="padding: 0px;margin: 0px;position:absolute;left: 0px;top: 0px;background-color: aliceblue" tabindex="0"></canvas>
+    </div>
+    <script type="module">
+        // if(!window.Try3d){
+        //     import Try3d from '../../src/Try3d.js';
+        //     window.Try3d = Try3d;
+        // }
+
+        // 创建场景对象(渲染器至少包含一个scene,否则,将什么事情都不做)
+        let scene = new Try3d.Scene({cavnas:document.getElementById('canvas')});
+        scene.getCanvas().setClearColor(0.1, 0.12, 0.1, 1.0);
+        scene.setAmbientLightColor(0.2, 0.2, 0.2);
+        let heightFieldDef = Try3d.MaterialDef.load('HeightFieldDef');
+        let basicDef = Try3d.MaterialDef.parse(Try3d.Internal.S_BASIC_LIGHTING_DEF_DATA);
+
+        // 定义一个根节点
+        let rootNode = new Try3d.Node(scene, {id:'rootNode'});
+        scene.addSceneNode(rootNode);
+
+
+        // 定义一个GroupPlane
+        let groupPlane = new Try3d.GroupPlane(scene, {id:'groupPlane', xSize:10, zSize:10, xSegments:5, zSegments:5});
+        // 创建groupPlaneMat
+        let groupPlaneMat = new Try3d.Material(scene, {id:'groupPlaneMat', materialDef:heightFieldDef});
+        groupPlaneMat.setParam("area", new Try3d.Vec4Vars().valueFromXYZW(0, 0, 0, 2.0));
+        groupPlaneMat.setParam("color", new Try3d.Vec4Vars().valueFromXYZW(1, 1, 1, 1));
+        groupPlane.setMaterial(groupPlaneMat);
+        groupPlane.setLocalTranslationXYZ(0, 0, 0);
+        rootNode.addChildren(groupPlane);
+
+
+        // 定义一个Sphere
+        let sphere = new Try3d.Sphere(scene, {id:'sphere', radius:2});
+        // 创建sphereMat
+        let sphereMat = new Try3d.Material(scene, {id:'sphereMat', materialDef:basicDef});
+        sphereMat.setParam('ambientColor', new Try3d.Vec4Vars().valueFromXYZW(1, 1, 1, 1));
+        sphereMat.setParam("diffuseColor", new Try3d.Vec4Vars().valueFromXYZW(0.2, 1.0, 0.2, 1));
+        sphere.setMaterial(sphereMat);
+        sphere.setLocalTranslationXYZ(2, 2, -2);
+        rootNode.addChildren(sphere);
+        // 创建一个控制器
+        let sceneControl = new Try3d.SceneBrowsingController(scene, {id:'control'});
+        sceneControl.lookScene(rootNode);
+        sceneControl.setTargetAngle(Try3d.MoreMath.toRadians(99));
+        sceneControl.setTargetVerticalAngle(Try3d.MoreMath.toRadians(10));
+        sceneControl.setMinVerticalRotation(Try3d.MoreMath.toRadians(1));
+        sceneControl.setMinDistance(25);
+        sceneControl.focusCamera();
+
+        // 使用dat gui
+        let gui = new dat.GUI();
+        var settings = {
+            height:-5.0
+        };
+        gui.add(settings, 'height', -10, 10).step(1.0).onChange(function(value) {
+            groupPlaneMat.setParam("height", new Try3d.FloatVars().valueOf(value));
+        });
+
+        // 初始化光源
+        initDirLight(scene, rootNode, [1, 1, 1, 1], [-1, -1, 0], true);
+
+        // 创建渲染器
+        let renderEngine = new Try3d.RenderEngine();
+        // 添加要渲染的场景对象
+        renderEngine.addScene(scene);
+        // 启动渲染器
+        renderEngine.launch();
+        showStats(scene);
+    </script>
+</body>
+</html>

@@ -53,6 +53,8 @@ export default class Texture2DVars extends Vars{
         // 数据更新标记
         this._m_UpdateImage = false;
         this._m_Image = null;
+        // 用于保持原始数据的引用
+        this._m_ImageSource = null;
         this._m_Rgbe = false;
         this._m_Width = -1;
         this._m_Height = -1;
@@ -373,6 +375,7 @@ export default class Texture2DVars extends Vars{
             }
             this.updateTextureFilter();
             this._m_UpdateImage = false;
+            this._m_ImageSource = this._m_Image;
             this._m_Image = null;
             this._m_Width = this._m_Height = -1;
             this._m_Rgbe = false;

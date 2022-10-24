@@ -1,0 +1,54 @@
+Def HeightFieldDef{
+    // 定义材质参数
+    Params{
+        vec4 color;
+        vec4 area;
+        float height;
+    }
+
+    // 定义一个SubTechnology
+    SubTechnology MixColor{
+        // 定义一个内部结构体
+        Vars{
+            vec4 wPosition;
+        }
+
+        // 定义VertexShader
+        Vs_Shader{
+            void main(){
+                vec3 pos = Context.InPosition;
+                #ifdef Params.area
+                    if(abs(length(Context.InPosition - vec3(area.xyz))) <= area.w)
+                    {
+                        float offsetHeight = -5.0f;
+                        #ifdef Params.height
+                            offsetHeight = Params.height;
+                        #endif
+                        pos.y += offsetHeight;
+                    }
+                #endif
+                wPosition = Context.ModelMatrix * vec4(pos, 1.0f);
+                Context.OutPosition = Context.ProjectMatrix * Context.ViewMatrix * wPosition;
+            }
+        }
+
+        // 定义FragmentShader
+        Fs_Shader{
+            void main(){
+                vec4 result = vec4(1.0f);
+                #ifdef Params.color
+                    result = Params.color;
+                #endif
+                Context.OutColor = result;
+            }
+        }
+    }
+
+    Technology{
+        Sub_Pass{
+            Pass MixColor{
+
+            }
+        }
+    }
+}
